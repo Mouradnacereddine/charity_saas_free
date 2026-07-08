@@ -8,6 +8,7 @@ import {
   FolderOpen,
   Stethoscope,
   Menu,
+  X,
 } from 'lucide-react';
 
 const navItems = [
@@ -43,26 +44,34 @@ export function Layout({
   }, [sidebarOpen]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar — always full viewport height */}
       <aside
-        className={`fixed top-0 right-0 z-50 h-full w-64 bg-primary-900 text-white transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static ${
-          sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
-        }`}
+        className={`
+          fixed top-0 right-0 z-50 h-screen w-64 bg-primary-900 text-white
+          transform transition-transform duration-200 ease-in-out
+          lg:translate-x-0 lg:sticky lg:z-auto
+          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        `}
       >
-        <div className="p-6 border-b border-primary-700">
-          <h1 className="text-xl font-bold text-center">🕌 جمعية خيرية</h1>
-          <p className="text-primary-300 text-sm text-center mt-1">نظام إدارة شامل</p>
+        <div className="flex items-center justify-between p-5 border-b border-primary-700">
+          <h1 className="text-lg font-bold">🕌 جمعية خيرية</h1>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-1 text-primary-300 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <nav className="p-4 space-y-1">
+        <nav className="p-3 space-y-1 overflow-y-auto" style={{ height: 'calc(100vh - 65px)' }}>
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -72,42 +81,43 @@ export function Layout({
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                 activePage === item.id
-                  ? 'bg-primary-700 text-white'
+                  ? 'bg-primary-700 text-white shadow-sm'
                   : 'text-primary-200 hover:bg-primary-800 hover:text-white'
               }`}
             >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
+              <item.icon className="w-5 h-5 shrink-0" />
+              <span className="truncate">{item.label}</span>
             </button>
           ))}
         </nav>
       </aside>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top bar */}
-        <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between no-print">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Sticky header */}
+        <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between no-print">
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
+            aria-label="فتح القائمة"
           >
             <Menu className="w-6 h-6" />
           </button>
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 truncate">
             {navItems.find((n) => n.id === activePage)?.label || 'لوحة التحكم'}
           </h2>
-          <div className="text-sm text-gray-500">
+          <div className="text-xs sm:text-sm text-gray-500 hidden xs:block">
             {new Date().toLocaleDateString('ar-DZ', {
-              weekday: 'long',
+              weekday: 'short',
               year: 'numeric',
-              month: 'long',
+              month: 'short',
               day: 'numeric',
             })}
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">{children}</main>
+        {/* Scrollable page content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );
