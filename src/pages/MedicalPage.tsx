@@ -94,6 +94,11 @@ export default function MedicalPage() {
   };
 
   const handlePrint = (referral: MedicalReferral) => {
+    const caisse = caisses.find((c) => c.id === referral.caisseId)
+    const subCat = caisse?.subCategories.find((s) => s.id === referral.subCategoryId)
+    const caisseRow = caisse ? `<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse.nameAr}</span></div>` : ''
+    const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
+
     printReceipt(
       'توجيه طبي', 'Orientation Médicale',
       `<div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
@@ -101,6 +106,7 @@ export default function MedicalPage() {
 <div class="row"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr}</span></div>
 ${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}
 ${referral.hospitalAr ? `<div class="row"><span class="lbl">المستشفى</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
+${caisseRow}${subCatRow}
 <div class="row"><span class="lbl">التاريخ</span><span class="val">${referral.date}</span></div>`,
       'color:#2563eb',
       formatCurrency(referral.amount), referral.amountInWordsAr, '',

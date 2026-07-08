@@ -237,29 +237,31 @@ export default function FinancePage() {
   }
 
   const handlePrintReceipt = (tx: any) => {
+    const caisse = caisses.find((c) => c.id === tx.caisseId)
+    const subCat = caisse?.subCategories.find((s) => s.id === tx.subCategoryId)
+    const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
+
     if (tx.type === 'credit') {
       const donor = donors.find((d) => d.id === tx.donorId)
-      const caisse = caisses.find((c) => c.id === tx.caisseId)
       printReceipt(
         'وصل تبرع', 'Reçu de Don',
         `<div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
 <div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
 <div class="row"><span class="lbl">المتبرع</span><span class="val">${donor ? `${donor.firstNameAr} ${donor.lastNameAr}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div>
-<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>`,
+<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}`,
         'color:#16a34a',
         formatCurrency(tx.amount), tx.amountInWordsAr, tx.amountInWords,
         tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : '',
         'توقيع المتبرع', 'ختم الجمعية'
       )
     } else {
-      const caisse = caisses.find((c) => c.id === tx.caisseId)
       const benef = beneficiaries.find((b) => b.id === tx.beneficiaryId)
       printReceipt(
         'وصل صرف', 'Bon de Sortie',
         `<div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
 <div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
 <div class="row"><span class="lbl">المستفيد</span><span class="val">${benef ? `${benef.firstNameAr} ${benef.lastNameAr}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div>
-<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>
+<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
 <div class="row"><span class="lbl">المصدر</span><span class="val">${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</span></div>`,
         'background:#fff0f0;color:#dc2626',
         `- ${formatCurrency(tx.amount)}`, tx.amountInWordsAr, tx.amountInWords,
