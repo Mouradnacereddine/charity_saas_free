@@ -539,80 +539,43 @@ export default function DonorsPage() {
               </Button>
             </div>
 
-            {/* Receipt content — print-friendly */}
+            {/* Receipt content — compact print-friendly */}
             <div
               id="receipt-print-area"
-              className="border-2 border-gray-300 rounded-lg p-8 bg-white print:border-black print:shadow-none"
+              className="border border-gray-300 rounded-lg p-5 bg-white print:border-0 print:shadow-none"
             >
-              {/* Association header */}
-              <div className="text-center border-b-2 border-gray-300 pb-4 mb-6 print:border-black">
-                <h2 className="text-xl font-bold text-gray-900">الجمعية الخيرية</h2>
-                <p className="text-sm text-gray-500 mt-1">Association Charitable</p>
-                <p className="text-xs text-gray-400 mt-1">وصل تبرع / Recu de Don</p>
+              {/* Header compact */}
+              <div className="flex items-center justify-between border-b-2 border-primary-600 pb-2 mb-3">
+                <h2 className="text-sm font-bold text-primary-700">🕌 الجمعية الخيرية</h2>
+                <span className="text-[9px] text-gray-500">وصل تبرع</span>
               </div>
 
-              {/* Receipt number & date */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <p className="text-xs text-gray-500">رقم الوصل</p>
-                  <p className="font-bold font-mono text-lg">{selectedReceipt.receiptNumber}</p>
-                </div>
-                <div className="text-left">
-                  <p className="text-xs text-gray-500">التاريخ</p>
-                  <p className="font-bold">{formatDate(selectedReceipt.date)}</p>
-                </div>
+              {/* Info row */}
+              <div className="flex flex-wrap gap-x-5 gap-y-1 text-[10px] mb-3">
+                <div><span className="text-gray-400">رقم الوصل:</span> <strong className="text-xs font-mono">{selectedReceipt.receiptNumber}</strong></div>
+                <div><span className="text-gray-400">التاريخ:</span> <strong>{formatDate(selectedReceipt.date)}</strong></div>
+                <div><span className="text-gray-400">المتبرع:</span> <strong>{selectedReceipt.donorNameAr}</strong> <span dir="ltr" className="text-[9px] text-gray-400">({selectedReceipt.donorName})</span></div>
+                <div><span className="text-gray-400">الصندوق:</span> <strong>{selectedReceipt.caisseNameAr}</strong></div>
               </div>
 
-              {/* Donor info */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 print:bg-transparent print:border print:border-gray-300">
-                <h3 className="font-semibold text-gray-900 mb-2">المتبرع</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-gray-500">الاسم: </span>
-                    <span className="font-medium">{selectedReceipt.donorNameAr}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Nom: </span>
-                    <span className="font-medium" dir="ltr">{selectedReceipt.donorName}</span>
-                  </div>
+              {/* Amount compact */}
+              <div className="bg-blue-50 border border-blue-100 rounded px-3 py-2 text-center mb-3">
+                <div className="text-xl font-bold text-green-600">{formatCurrency(selectedReceipt.amount)}</div>
+                <div className="text-[9px] text-gray-600 leading-relaxed mt-0.5">
+                  {selectedReceipt.amountInWordsAr}<br />
+                  <span dir="ltr" className="italic">{selectedReceipt.amountInWords}</span>
                 </div>
               </div>
 
-              {/* Amount section */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-6 text-center print:border-black">
-                <p className="text-sm text-gray-500 mb-2">المبلغ</p>
-                <p className="text-3xl font-bold text-green-600 print:text-black">
-                  {formatCurrency(selectedReceipt.amount)}
-                </p>
-                <div className="mt-3 bg-gray-50 rounded p-2 print:bg-transparent">
-                  <p className="text-sm text-gray-700">
-                    <span className="text-gray-500">بالحروف: </span>
-                    {selectedReceipt.amountInWordsAr}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1" dir="ltr">
-                    En lettres: {selectedReceipt.amountInWords}
-                  </p>
-                </div>
-              </div>
-
-              {/* Caisse / Fund */}
-              <div className="mb-8 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">الصندوق:</span>
-                  <span className="font-semibold">{selectedReceipt.caisseNameAr}</span>
-                  <span className="text-gray-400">({selectedReceipt.caisseName})</span>
-                </div>
-              </div>
-
-              {/* Signature line */}
-              <div className="grid grid-cols-2 gap-8 pt-8 border-t border-gray-200 print:border-gray-400">
+              {/* Signature compact */}
+              <div className="flex justify-between pt-2 border-t border-dashed border-gray-300 text-[9px] text-gray-500">
                 <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-12">توقيع المتبرع</p>
-                  <div className="border-t border-gray-400 mx-8" />
+                  <div className="border-t border-gray-500 w-24 mx-auto mt-8 mb-0.5"></div>
+                  توقيع المتبرع
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-12">ختم الجمعية وتوقيع المسؤول</p>
-                  <div className="border-t border-gray-400 mx-8" />
+                  <div className="border-t border-gray-500 w-24 mx-auto mt-8 mb-0.5"></div>
+                  ختم الجمعية وتوقيع المسؤول
                 </div>
               </div>
             </div>
@@ -653,7 +616,7 @@ export default function DonorsPage() {
 
       {/* ---- Print-only styles (injected) ---- */}
       <style>{`
-        @media print {
+        @page { size: A5 landscape; margin: 2mm; }\n\t        @media print {
           body * {
             visibility: hidden;
           }
@@ -667,7 +630,7 @@ export default function DonorsPage() {
             left: 0;
             right: 0;
             width: 100%;
-            padding: 2rem;
+            padding: 0; border: none !important;
           }
           .print\\:hidden {
             display: none !important;

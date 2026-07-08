@@ -235,86 +235,86 @@ export default function FinancePage() {
     setBankModalOpen(false)
   }
 
-  const handlePrintReceipt = (tx: any) => {
-    const donor = donors.find((d) => d.id === tx.donorId)
-    const caisse = caisses.find((c) => c.id === tx.caisseId)
-    const donorNameAr = donor ? `${donor.firstNameAr} ${donor.lastNameAr}` : 'متبرع فاعل خير'
-    const donorName = donor ? `${donor.firstName} ${donor.lastName}` : 'Anonyme'
-    const caisseNameAr = caisse ? caisse.nameAr : 'الصندوق العام'
-    const caisseName = caisse ? caisse.name : 'General Fund'
+  const compactReceiptCSS = `
+    @page { size: A5 landscape; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 11px; padding: 8mm; }
+    .receipt { max-width: 210mm; margin: 0 auto; border: 1px solid #ccc; border-radius: 4px; padding: 6mm 8mm; background: #fff; }
+    .hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 4mm; margin-bottom: 4mm; }
+    .hdr h1 { font-size: 14px; color: #2563eb; }
+    .hdr span { font-size: 9px; color: #666; }
+    .info { display: flex; flex-wrap: wrap; gap: 3mm 6mm; margin-bottom: 4mm; font-size: 10px; }
+    .info > div { min-width: 80px; }
+    .info label { color: #888; display: block; font-size: 8px; text-transform: uppercase; }
+    .info strong { font-size: 11px; color: #222; }
+    .amt { background: #f0f4ff; border-radius: 4px; padding: 3mm 4mm; text-align: center; margin-bottom: 3mm; }
+    .amt .num { font-size: 22px; font-weight: bold; color: #16a34a; }
+    .amt .words { font-size: 9px; color: #555; margin-top: 1mm; line-height: 1.4; }
+    .sign { display: flex; justify-content: space-between; margin-top: 4mm; padding-top: 3mm; border-top: 1px dashed #ccc; font-size: 9px; color: #555; }
+    .sign > div { text-align: center; min-width: 80px; }
+    .sign .line { border-top: 1px solid #333; margin-top: 10mm; padding-top: 1mm; font-size: 8px; }
+    @media print { body { padding: 4mm; } .receipt { border: none; padding: 4mm 6mm; } }
+  `
 
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) return
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html dir="rtl" lang="ar">
-      <head>
-        <meta charset="UTF-8">
-        <title>وصل تبرع</title>
-        <style>
-          body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 40px; direction: rtl; }
-          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
-          .header h1 { font-size: 24px; margin: 0; }
-          .header p { color: #666; margin: 5px 0 0; }
-          .content { margin: 20px 0; }
-          .field { display: flex; margin: 10px 0; }
-          .field-label { font-weight: bold; min-width: 150px; }
-          .field-value { flex: 1; }
-          .amount-box { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }
-          .amount-box .number { font-size: 28px; font-weight: bold; color: #16a34a; }
-          .amount-box .words { color: #666; margin-top: 5px; }
-          .footer { margin-top: 50px; display: flex; justify-content: space-between; }
-          .signature { text-align: center; }
-          .signature-line { width: 200px; border-top: 1px solid #333; margin-top: 40px; padding-top: 5px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>🕌 الجمعية الخيرية</h1>
-          <p>وصل تبرع / Reçu de Don</p>
+  const printReceiptDocument = (title: string, subtitle: string, rows: string, amountSection: string, extraSection: string, signatureL: string, signatureR: string) => {
+    const w = window.open('', '_blank')
+    if (!w) return
+    w.document.write(`
+      <!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${title}</title><style>${compactReceiptCSS}</style></head>
+      <body><div class="receipt">
+        <div class="hdr"><h1>🕌 الجمعية الخيرية</h1><span>${subtitle}</span></div>
+        <div class="info">${rows}</div>
+        ${amountSection}
+        ${extraSection}
+        <div class="sign">
+          <div><div class="line">${signatureL}</div></div>
+          <div><div class="line">${signatureR}</div></div>
         </div>
-        <div class="content">
-          <div class="field">
-            <span class="field-label">رقم الوصل:</span>
-            <span class="field-value" style="font-weight: bold; font-family: monospace;">${tx.receiptNumber || '—'}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">التاريخ:</span>
-            <span class="field-value">${formatDate(tx.date)}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">المتبرع:</span>
-            <span class="field-value">${donorNameAr} (${donorName})</span>
-          </div>
-          <div class="field">
-            <span class="field-label">الصندوق:</span>
-            <span class="field-value">${caisseNameAr} (${caisseName})</span>
-          </div>
-          <div class="amount-box">
-            <div class="number">${formatCurrency(tx.amount)}</div>
-            <div class="words">${tx.amountInWordsAr}</div>
-            <div class="words" style="direction: ltr; font-style: italic;">En lettres: ${tx.amountInWords}</div>
-          </div>
-          \${tx.descriptionAr ? \`
-          <div class="field">
-            <span class="field-label">الوصف:</span>
-            <span class="field-value">\${tx.descriptionAr}</span>
-          </div>\` : ''}
-        </div>
-        <div class="footer">
-          <div class="signature">
-            <div class="signature-line">توقيع المتبرع</div>
-          </div>
-          <div class="signature">
-            <div class="signature-line">ختم الجمعية وتوقيع المسؤول</div>
-          </div>
-        </div>
-        <script>window.print();</script>
-      </body>
-      </html>
+      </div><script>window.print();window.close();</script></body></html>
     `)
-    printWindow.document.close()
+    w.document.close()
+  }
+
+  const handlePrintReceipt = (tx: any) => {
+    if (tx.type === 'credit') {
+      const donor = donors.find((d) => d.id === tx.donorId)
+      const caisse = caisses.find((c) => c.id === tx.caisseId)
+      const donorNameAr = donor ? `${donor.firstNameAr} ${donor.lastNameAr}` : 'متبرع'
+      const donorName = donor ? `${donor.firstName} ${donor.lastName}` : 'Anonyme'
+
+      printReceiptDocument(
+        'وصل تبرع', 'Reçu de Don',
+        `
+          <div><label>رقم الوصل</label><strong>${tx.receiptNumber || '—'}</strong></div>
+          <div><label>التاريخ</label><strong>${formatDate(tx.date)}</strong></div>
+          <div><label>المتبرع</label><strong>${donorNameAr}</strong><br><span style="font-size:8px;color:#888" dir="ltr">${donorName}</span></div>
+          <div><label>الصندوق</label><strong>${caisse?.nameAr || '—'}</strong></div>
+        `,
+        `<div class="amt"><div class="num">${formatCurrency(tx.amount)}</div><div class="words">${tx.amountInWordsAr}<br><span dir="ltr">${tx.amountInWords}</span></div></div>`,
+        tx.descriptionAr ? `<div style="font-size:10px;color:#555;margin-bottom:2mm"><label style="color:#888;font-size:8px">البيان</label><p>${tx.descriptionAr}</p></div>` : '',
+        'توقيع المتبرع', 'ختم الجمعية'
+      )
+    } else {
+      // Debit / withdrawal receipt
+      const caisse = caisses.find((c) => c.id === tx.caisseId)
+      const benef = beneficiaries.find((b) => b.id === tx.beneficiaryId)
+      const benefNameAr = benef ? `${benef.firstNameAr} ${benef.lastNameAr}` : 'مستفيد'
+      const benefName = benef ? `${benef.firstName} ${benef.lastName}` : 'Bénéficiaire'
+
+      printReceiptDocument(
+        'وصل صرف', 'Bon de Sortie',
+        `
+          <div><label>رقم الوصل</label><strong>${tx.receiptNumber || '—'}</strong></div>
+          <div><label>التاريخ</label><strong>${formatDate(tx.date)}</strong></div>
+          <div><label>المستفيد</label><strong>${benefNameAr}</strong><br><span style="font-size:8px;color:#888" dir="ltr">${benefName}</span></div>
+          <div><label>الصندوق</label><strong>${caisse?.nameAr || '—'}</strong></div>
+          <div><label>المصدر</label><strong>${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</strong></div>
+        `,
+        `<div class="amt" style="background:#fff0f0"><div class="num" style="color:#dc2626">- ${formatCurrency(tx.amount)}</div><div class="words">${tx.amountInWordsAr}<br><span dir="ltr">${tx.amountInWords}</span></div></div>`,
+        tx.descriptionAr ? `<div style="font-size:10px;color:#555;margin-bottom:2mm"><label style="color:#888;font-size:8px">البيان</label><p>${tx.descriptionAr}</p></div>` : '',
+        'إمضاء المستفيد', 'ختم الجمعية'
+      )
+    }
   }
 
   const handleSubmitTransaction = async (e: React.FormEvent) => {
@@ -844,16 +844,13 @@ export default function FinancePage() {
                           {tx.receiptNumber || '-'}
                         </td>
                         <td className="py-3 px-3 text-center">
-                          {tx.type === 'credit' && tx.donorId && (
-                            <button
-                              onClick={() => handlePrintReceipt(tx)}
-                              className="p-1 text-gray-400 hover:text-success-600 transition-colors"
-                              title="طباعة وصل التبرع"
-                            >
-                              <Plus className="w-0.5 h-0.5 hidden" /> {/* dummy to avoid lucide issues if needed, but let's use Lucide icons */}
-                              <Printer size={16} className="inline" />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handlePrintReceipt(tx)}
+                            className="p-1.5 text-gray-400 hover:text-primary-600 transition-colors"
+                            title={tx.type === 'credit' ? 'طباعة وصل التبرع' : 'طباعة وصل الصرف'}
+                          >
+                            <Printer size={16} />
+                          </button>
                         </td>
                       </tr>
                     )
