@@ -6,9 +6,9 @@
 export const RECEIPT_CSS = `
   @page { size: A4; margin: 10mm 5mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 8px; background: #eee; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 8px; background: #eee; padding: 8mm 0 0 0; }
   .page { width: 200mm; margin: 0 auto 0 0; display: flex; flex-wrap: wrap; gap: 2mm; justify-content: flex-start; }
-  .receipt { width: 65mm; min-height: 130mm; border: 1px solid #bbb; border-radius: 2px; padding: 2mm 2.5mm; background: #fff; break-inside: avoid; }
+  .receipt { width: 65mm; height: 133mm; border: 1px solid #bbb; border-radius: 2px; padding: 2mm 2.5mm; background: #fff; break-inside: avoid; display: flex; flex-direction: column; }
   .hdr { border-bottom: 1.2px solid #2563eb; padding-bottom: 1mm; margin-bottom: 1.5mm; }
   .hdr h1 { font-size: 8.5px; color: #2563eb; margin: 0; display: inline; }
   .hdr .sub { float: left; font-size: 6px; color: #999; }
@@ -21,9 +21,9 @@ export const RECEIPT_CSS = `
   .amt .num { font-size: 15px; font-weight: bold; }
   .amt .words { font-size: 6.5px; color: #555; line-height: 1.3; margin-top: 0.3mm; }
   .amt .words .fr { font-style: italic; display: block; direction: ltr; }
-  .sign { display: flex; justify-content: space-between; margin-top: 1.5mm; padding-top: 1mm; border-top: 1px dashed #ccc; font-size: 6px; color: #999; }
+  .sign { margin-top: auto; display: flex; justify-content: space-between; padding-top: 1mm; border-top: 1px dashed #ccc; font-size: 6px; color: #999; }
   .sign > div { text-align: center; min-width: 20mm; }
-  .sign .line { border-top: 0.8px solid #444; margin-top: 5mm; padding-top: 0.3mm; font-size: 5.5px; }
+  .sign .line { border-top: 0.8px solid #444; margin-top: 1mm; padding-top: 0.3mm; font-size: 5.5px; }
   @media print { body { background: #fff; } .receipt { border: 0.5px solid #ccc; } }
 `
 
