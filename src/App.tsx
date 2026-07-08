@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Layout } from './components/layout/Layout';
-import { seedDefaultData } from './lib/db';
+import { seedRealisticData } from './lib/seed';
 import DashboardPage from './pages/DashboardPage';
 import FinancePage from './pages/FinancePage';
 import CaissesPage from './pages/CaissesPage';
@@ -15,7 +15,7 @@ function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    seedDefaultData().then(() => setReady(true));
+    seedRealisticData().then(() => setReady(true));
   }, []);
 
   if (!ready) {
