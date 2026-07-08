@@ -96,19 +96,15 @@ export default function MedicalPage() {
   const handlePrint = (referral: MedicalReferral) => {
     printReceipt(
       'توجيه طبي', 'Orientation Médicale',
-      `
-        <div class="row"><label>الرمز المرجعي</label><strong>${referral.reference || '—'}</strong></div>
-        <div class="row"><label>المستفيد</label><strong>${referral.beneficiaryNameAr}</strong></div>
-        <div class="row"><label>الطبيب</label><strong>${referral.doctorNameAr}</strong></div>
-        ${referral.analysisTypeAr ? `<div class="row"><label>التحليل</label><strong>${referral.analysisTypeAr}</strong></div>` : ''}
-        ${referral.hospitalAr ? `<div class="row"><label>المستشفى</label><strong>${referral.hospitalAr}</strong></div>` : ''}
-        <div class="row"><label>التاريخ</label><strong>${referral.date}</strong></div>
-      `,
+      `<div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
+<div class="row"><span class="lbl">المستفيد</span><span class="val">${referral.beneficiaryNameAr}</span></div>
+<div class="row"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr}</span></div>
+${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}
+${referral.hospitalAr ? `<div class="row"><span class="lbl">المستشفى</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
+<div class="row"><span class="lbl">التاريخ</span><span class="val">${referral.date}</span></div>`,
       'color:#2563eb',
-      formatCurrency(referral.amount),
-      referral.amountInWordsAr,
-      '',
-      referral.notes ? `<div class="row"><label>ملاحظات</label><strong>${referral.notes}</strong></div>` : '',
+      formatCurrency(referral.amount), referral.amountInWordsAr, '',
+      referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${referral.notes}</span></div>` : '',
       'توقيع المسؤول', 'ختم الجمعية'
     );
   };

@@ -242,17 +242,13 @@ export default function FinancePage() {
       const caisse = caisses.find((c) => c.id === tx.caisseId)
       printReceipt(
         'وصل تبرع', 'Reçu de Don',
-        `
-          <div class="row"><label>رقم الوصل</label><strong>${tx.receiptNumber || '—'}</strong></div>
-          <div class="row"><label>التاريخ</label><strong>${formatDate(tx.date)}</strong></div>
-          <div class="row"><label>المتبرع</label><strong>${donor ? `${donor.firstNameAr} ${donor.lastNameAr}` : '—'}</strong><span dir="ltr" style="font-size:7px;color:#888;margin-right:2mm">${donor ? `${donor.firstName} ${donor.lastName}` : ''}</span></div>
-          <div class="row"><label>الصندوق</label><strong>${caisse?.nameAr || '—'}</strong></div>
-        `,
+        `<div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
+<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
+<div class="row"><span class="lbl">المتبرع</span><span class="val">${donor ? `${donor.firstNameAr} ${donor.lastNameAr}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div>
+<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>`,
         'color:#16a34a',
-        formatCurrency(tx.amount),
-        tx.amountInWordsAr,
-        tx.amountInWords,
-        tx.descriptionAr ? `<div class="row"><label>البيان</label><strong>${tx.descriptionAr}</strong></div>` : '',
+        formatCurrency(tx.amount), tx.amountInWordsAr, tx.amountInWords,
+        tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : '',
         'توقيع المتبرع', 'ختم الجمعية'
       )
     } else {
@@ -260,18 +256,14 @@ export default function FinancePage() {
       const benef = beneficiaries.find((b) => b.id === tx.beneficiaryId)
       printReceipt(
         'وصل صرف', 'Bon de Sortie',
-        `
-          <div class="row"><label>رقم الوصل</label><strong>${tx.receiptNumber || '—'}</strong></div>
-          <div class="row"><label>التاريخ</label><strong>${formatDate(tx.date)}</strong></div>
-          <div class="row"><label>المستفيد</label><strong>${benef ? `${benef.firstNameAr} ${benef.lastNameAr}` : '—'}</strong><span dir="ltr" style="font-size:7px;color:#888;margin-right:2mm">${benef ? `${benef.firstName} ${benef.lastName}` : ''}</span></div>
-          <div class="row"><label>الصندوق</label><strong>${caisse?.nameAr || '—'}</strong></div>
-          <div class="row"><label>المصدر</label><strong>${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</strong></div>
-        `,
+        `<div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
+<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
+<div class="row"><span class="lbl">المستفيد</span><span class="val">${benef ? `${benef.firstNameAr} ${benef.lastNameAr}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div>
+<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>
+<div class="row"><span class="lbl">المصدر</span><span class="val">${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</span></div>`,
         'background:#fff0f0;color:#dc2626',
-        `- ${formatCurrency(tx.amount)}`,
-        tx.amountInWordsAr,
-        tx.amountInWords,
-        tx.descriptionAr ? `<div class="row"><label>البيان</label><strong>${tx.descriptionAr}</strong></div>` : '',
+        `- ${formatCurrency(tx.amount)}`, tx.amountInWordsAr, tx.amountInWords,
+        tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : '',
         'إمضاء المستفيد', 'ختم الجمعية'
       )
     }

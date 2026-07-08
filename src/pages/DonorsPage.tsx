@@ -157,18 +157,13 @@ export default function DonorsPage() {
     if (!selectedReceipt) return
     printReceipt(
       'وصل تبرع', 'Reçu de Don',
-      `
-        <div class="row"><label>رقم الوصل</label><strong>${selectedReceipt.receiptNumber}</strong></div>
-        <div class="row"><label>التاريخ</label><strong>${formatDate(selectedReceipt.date)}</strong></div>
-        <div class="row"><label>المتبرع</label><strong>${selectedReceipt.donorNameAr}</strong><span dir="ltr" style="font-size:7px;color:#888;margin-right:2mm">${selectedReceipt.donorName}</span></div>
-        <div class="row"><label>الصندوق</label><strong>${selectedReceipt.caisseNameAr}</strong></div>
-      `,
+      `<div class="row"><span class="lbl">رقم الوصل</span><span class="val">${selectedReceipt.receiptNumber}</span></div>
+<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(selectedReceipt.date)}</span></div>
+<div class="row"><span class="lbl">المتبرع</span><span class="val">${selectedReceipt.donorNameAr} <i>${selectedReceipt.donorName}</i></span></div>
+<div class="row"><span class="lbl">الصندوق</span><span class="val">${selectedReceipt.caisseNameAr}</span></div>`,
       'color:#16a34a',
-      formatCurrency(selectedReceipt.amount),
-      selectedReceipt.amountInWordsAr,
-      selectedReceipt.amountInWords,
-      '',
-      'توقيع المتبرع', 'ختم الجمعية'
+      formatCurrency(selectedReceipt.amount), selectedReceipt.amountInWordsAr, selectedReceipt.amountInWords,
+      '', 'توقيع المتبرع', 'ختم الجمعية'
     )
   }
 
