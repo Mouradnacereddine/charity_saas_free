@@ -59,6 +59,23 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
 
   addTransaction: async (data) => {
     const now = new Date();
+
+    // Check available balance before debit
+    if (data.type === 'debit') {
+      // Check caisse balance
+      const caisseCheck = await db.caisses.get(data.caisseId);
+      if (caisseCheck && caisseCheck.balance < data.amount) {
+        throw new Error(`رصيد الصندوق غير كافٍ. الرصيد المتاح: ${caisseCheck.balance}`)
+      }
+      // Check bank account balance if source is bank
+      if (data.fundSource === 'banque' && data.bankAccountId) {
+        const bankCheck = await db.bankAccounts.get(data.bankAccountId)
+        if (bankCheck && bankCheck.balance < data.amount) {
+          throw new Error(`رصيد الحساب البنكي غير كافٍ. الرصيد المتاح: ${bankCheck.balance}`)
+        }
+      }
+    }
+
     const transaction: Transaction = {
       ...data,
       id: generateId(),

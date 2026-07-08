@@ -138,7 +138,7 @@ export default function FinancePage() {
 
   // ---- Transaction Form State ----
   const [txType, setTxType] = useState<'credit' | 'debit'>('credit')
-  const [txFundSource, setTxFundSource] = useState<'banque' | 'caisse_physique'>('banque')
+  const [txFundSource, setTxFundSource] = useState<'banque' | 'caisse_physique'>('caisse_physique')
   const [txBankAccountId, setTxBankAccountId] = useState('')
   const [txCaisseId, setTxCaisseId] = useState('')
   const [txSubCategoryId, setTxSubCategoryId] = useState('')
@@ -148,6 +148,7 @@ export default function FinancePage() {
   const [txDescription, setTxDescription] = useState('')
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0])
   const [txSubmitting, setTxSubmitting] = useState(false)
+  const [txError, setTxError] = useState('')
 
   // ---- Filter State ----
   const [filterOpen, setFilterOpen] = useState(false)
@@ -342,8 +343,8 @@ export default function FinancePage() {
       setTxDonorId('')
       setTxBeneficiaryId('')
       setTxSubCategoryId('')
-    } catch (err) {
-      console.error('فشل في إضافة المعاملة:', err)
+    } catch (err: any) {
+      setTxError(err?.message || 'فشل في إضافة المعاملة')
     } finally {
       setTxSubmitting(false)
     }
@@ -543,10 +544,10 @@ export default function FinancePage() {
           {/* Row 2: Bank Account (conditional) & Caisse & SubCategory */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {txFundSource === 'banque' && (
-              <Select
+              <SearchableSelect
                 labelAr="الحساب البنكي"
                 value={txBankAccountId}
-                onChange={(e) => setTxBankAccountId(e.target.value)}
+                onChange={setTxBankAccountId}
                 options={bankAccounts.map((a) => ({
                   value: a.id,
                   label: `${a.bankNameAr} - ${a.accountNumber}`,
@@ -568,10 +569,10 @@ export default function FinancePage() {
               required
             />
             {subCategories.length > 0 && (
-              <Select
+              <SearchableSelect
                 labelAr="الفئة الفرعية"
                 value={txSubCategoryId}
-                onChange={(e) => setTxSubCategoryId(e.target.value)}
+                onChange={setTxSubCategoryId}
                 options={subCategories.map((sc) => ({
                   value: sc.id,
                   label: sc.nameAr,
@@ -653,6 +654,13 @@ export default function FinancePage() {
             placeholder="وصف المعاملة..."
           />
 
+          {txError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{txError}</span>
+              <button onClick={() => setTxError('')} className="mr-auto text-red-500 hover:text-red-700">✕</button>
+            </div>
+          )}
           <div className="flex justify-end">
             <Button type="submit" disabled={txSubmitting || amountNum <= 0 || !txCaisseId}>
               {txSubmitting ? 'جاري الحفظ...' : 'حفظ المعاملة'}

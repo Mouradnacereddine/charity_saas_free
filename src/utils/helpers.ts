@@ -63,6 +63,7 @@ export function numberToArabicWords(amount: number): string {
     const millions = Math.floor(num / 1000000);
     if (millions === 1) parts.push('مليون');
     else if (millions === 2) parts.push('مليونان');
+    else if (millions === 10) parts.push('عشرة ملايين');
     else parts.push(convertHundredsAr(millions) + ' ملايين');
   }
 
@@ -71,7 +72,8 @@ export function numberToArabicWords(amount: number): string {
     const thousands = Math.floor(afterMillions / 1000);
     if (thousands === 1) parts.push('ألف');
     else if (thousands === 2) parts.push('ألفان');
-    else if (thousands <= 10) parts.push(onesAr[thousands] + ' آلاف');
+    else if (thousands === 10) parts.push('عشرة آلاف');
+    else if (thousands <= 9) parts.push(onesAr[thousands] + ' آلاف');
     else parts.push(convertHundredsAr(thousands) + ' ألف');
   }
 

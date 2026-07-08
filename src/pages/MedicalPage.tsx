@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Input, Select, SearchableSelect, Modal, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI';
+import { Card, Button, Input, SearchableSelect, Modal, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { useMedicalStore } from '../stores/medicalStore';
 import { useBeneficiaryStore } from '../stores/beneficiaryStore';
 import { useCaisseStore } from '../stores/caisseStore';
@@ -309,10 +309,10 @@ export default function MedicalPage() {
           </div>
 
           {selectedCaisse && selectedCaisse.subCategories.length > 0 && (
-            <Select
+            <SearchableSelect
               labelAr="الفئة الفرعية"
               value={subCategoryId}
-              onChange={(e) => setSubCategoryId(e.target.value)}
+              onChange={setSubCategoryId}
               options={selectedCaisse.subCategories.map((s) => ({
                 value: s.id,
                 label: s.nameAr,
