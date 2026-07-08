@@ -3,6 +3,7 @@ import { Card, Button, Input, Select, Modal, Badge, TextArea, EmptyState, Loadin
 import { useDonorStore } from '../stores/donorStore'
 import { useCaisseStore } from '../stores/caisseStore'
 import { formatCurrency, formatDate } from '../utils/helpers'
+import { printReceipt } from '../lib/receipt'
 import { Plus, Search, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt } from 'lucide-react'
 import type { DonorFilter, Donor, DonationReceipt } from '../types'
 
@@ -153,7 +154,22 @@ export default function DonorsPage() {
   }
 
   function handlePrintReceipt() {
-    window.print()
+    if (!selectedReceipt) return
+    printReceipt(
+      'وصل تبرع', 'Reçu de Don',
+      `
+        <div class="row"><label>رقم الوصل</label><strong>${selectedReceipt.receiptNumber}</strong></div>
+        <div class="row"><label>التاريخ</label><strong>${formatDate(selectedReceipt.date)}</strong></div>
+        <div class="row"><label>المتبرع</label><strong>${selectedReceipt.donorNameAr}</strong><span dir="ltr" style="font-size:7px;color:#888;margin-right:2mm">${selectedReceipt.donorName}</span></div>
+        <div class="row"><label>الصندوق</label><strong>${selectedReceipt.caisseNameAr}</strong></div>
+      `,
+      'color:#16a34a',
+      formatCurrency(selectedReceipt.amount),
+      selectedReceipt.amountInWordsAr,
+      selectedReceipt.amountInWords,
+      '',
+      'توقيع المتبرع', 'ختم الجمعية'
+    )
   }
 
   function updateField(field: keyof DonorFormData, value: string) {
@@ -614,29 +630,7 @@ export default function DonorsPage() {
         )}
       </Modal>
 
-      {/* ---- Print-only styles (injected) ---- */}
-      <style>{`
-        @page { size: A5 landscape; margin: 2mm; }\n\t        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #receipt-print-area,
-          #receipt-print-area * {
-            visibility: visible;
-          }
-          #receipt-print-area {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            padding: 0; border: none !important;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-        }
-      `}</style>
+      {/* Print styles removed — uses shared receipt module (src/lib/receipt.ts) */}
     </div>
   )
 }

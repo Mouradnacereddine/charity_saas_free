@@ -4,6 +4,7 @@ import { useMedicalStore } from '../stores/medicalStore';
 import { useBeneficiaryStore } from '../stores/beneficiaryStore';
 import { useCaisseStore } from '../stores/caisseStore';
 import { formatCurrency, numberToArabicWords } from '../utils/helpers';
+import { printReceipt } from '../lib/receipt';
 import { Plus, Search, Eye, Trash2, Stethoscope, Printer } from 'lucide-react';
 import type { MedicalReferral } from '../types';
 
@@ -93,87 +94,23 @@ export default function MedicalPage() {
   };
 
   const handlePrint = (referral: MedicalReferral) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html dir="rtl" lang="ar">
-      <head>
-        <meta charset="UTF-8">
-        <title>توجيه طبي</title>
-        <style>
-          body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 40px; direction: rtl; }
-          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
-          .header h1 { font-size: 24px; margin: 0; }
-          .header p { color: #666; margin: 5px 0 0; }
-          .content { margin: 20px 0; }
-          .field { display: flex; margin: 10px 0; }
-          .field-label { font-weight: bold; min-width: 150px; }
-          .field-value { flex: 1; }
-          .amount-box { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }
-          .amount-box .number { font-size: 28px; font-weight: bold; color: #2563eb; }
-          .amount-box .words { color: #666; margin-top: 5px; }
-          .footer { margin-top: 50px; display: flex; justify-content: space-between; }
-          .signature { text-align: center; }
-          .signature-line { width: 200px; border-top: 1px solid #333; margin-top: 40px; padding-top: 5px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>🕌 الجمعية الخيرية</h1>
-          <p>توجيه طبي</p>
-        </div>
-        <div class="content">
-          <div class="field">
-            <span class="field-label">الرمز المرجعي:</span>
-            <span class="field-value" style="font-weight: bold; color: #2563eb;">${referral.reference || '—'}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">المستفيد:</span>
-            <span class="field-value">${referral.beneficiaryNameAr}</span>
-          </div>
-          <div class="field">
-            <span class="field-label">الطبيب:</span>
-            <span class="field-value">${referral.doctorNameAr}</span>
-          </div>
-          ${referral.analysisTypeAr ? `
-          <div class="field">
-            <span class="field-label">نوع التحليل:</span>
-            <span class="field-value">${referral.analysisTypeAr}</span>
-          </div>` : ''}
-          ${referral.hospitalAr ? `
-          <div class="field">
-            <span class="field-label">المستشفى / العيادة:</span>
-            <span class="field-value">${referral.hospitalAr}</span>
-          </div>` : ''}
-          <div class="field">
-            <span class="field-label">التاريخ:</span>
-            <span class="field-value">${referral.date}</span>
-          </div>
-          <div class="amount-box">
-            <div class="number">${formatCurrency(referral.amount)}</div>
-            <div class="words">${referral.amountInWordsAr}</div>
-          </div>
-          ${referral.notes ? `
-          <div class="field">
-            <span class="field-label">ملاحظات:</span>
-            <span class="field-value">${referral.notes}</span>
-          </div>` : ''}
-        </div>
-        <div class="footer">
-          <div class="signature">
-            <div class="signature-line">توقيع المسؤول</div>
-          </div>
-          <div class="signature">
-            <div class="signature-line">ختم الجمعية</div>
-          </div>
-        </div>
-        <script>window.print();</script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+    printReceipt(
+      'توجيه طبي', 'Orientation Médicale',
+      `
+        <div class="row"><label>الرمز المرجعي</label><strong>${referral.reference || '—'}</strong></div>
+        <div class="row"><label>المستفيد</label><strong>${referral.beneficiaryNameAr}</strong></div>
+        <div class="row"><label>الطبيب</label><strong>${referral.doctorNameAr}</strong></div>
+        ${referral.analysisTypeAr ? `<div class="row"><label>التحليل</label><strong>${referral.analysisTypeAr}</strong></div>` : ''}
+        ${referral.hospitalAr ? `<div class="row"><label>المستشفى</label><strong>${referral.hospitalAr}</strong></div>` : ''}
+        <div class="row"><label>التاريخ</label><strong>${referral.date}</strong></div>
+      `,
+      'color:#2563eb',
+      formatCurrency(referral.amount),
+      referral.amountInWordsAr,
+      '',
+      referral.notes ? `<div class="row"><label>ملاحظات</label><strong>${referral.notes}</strong></div>` : '',
+      'توقيع المسؤول', 'ختم الجمعية'
+    );
   };
 
   const filteredReferrals = referrals.filter((r) => {
