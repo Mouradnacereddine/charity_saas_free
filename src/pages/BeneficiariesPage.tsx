@@ -143,17 +143,7 @@ export default function BeneficiariesPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
-  // ---- Filter state ----
-  const [filter, setFilter] = useState<BeneficiaryFilter>({})
-  const [filterSearchTerm, setFilterSearchTerm] = useState('')
-  const [filterAttribut, setFilterAttribut] = useState('')
-  const [filterCaisseId, setFilterCaisseId] = useState('')
-  const [filterMinChildren, setFilterMinChildren] = useState('')
-  const [filterMaxChildAge, setFilterMaxChildAge] = useState('')
-  const [filterSituation, setFilterSituation] = useState('')
-
-  // ---- Attribut management ----
-  const [showAttributModal, setShowAttributModal] = useState(false)
+  // ---- Attribut management (إدارة التصنيفات) ----
   const [attributs, setAttributs] = useState<BeneficiaryAttribut[]>([])
   const [newAttrNameAr, setNewAttrNameAr] = useState('')
   const [newAttrName, setNewAttrName] = useState('')
@@ -169,10 +159,7 @@ export default function BeneficiariesPage() {
   const handleAddAttribut = async () => {
     if (!newAttrNameAr.trim()) return
     await db.beneficiaryAttributs.add({
-      id: generateId(),
-      name: newAttrName.trim(),
-      nameAr: newAttrNameAr.trim(),
-      createdAt: new Date(),
+      id: generateId(), name: newAttrName.trim(), nameAr: newAttrNameAr.trim(), createdAt: new Date(),
     })
     setNewAttrNameAr('')
     setNewAttrName('')
@@ -181,10 +168,7 @@ export default function BeneficiariesPage() {
 
   const handleUpdateAttribut = async () => {
     if (!editAttrId || !editAttrNameAr.trim()) return
-    await db.beneficiaryAttributs.update(editAttrId, {
-      name: editAttrName.trim(),
-      nameAr: editAttrNameAr.trim(),
-    })
+    await db.beneficiaryAttributs.update(editAttrId, { name: editAttrName.trim(), nameAr: editAttrNameAr.trim() })
     setEditAttrId(null)
     setEditAttrNameAr('')
     setEditAttrName('')
@@ -195,6 +179,23 @@ export default function BeneficiariesPage() {
     if (!window.confirm('هل أنت متأكد من حذف هذه الصفة؟')) return
     await db.beneficiaryAttributs.delete(id)
     await loadAttributs()
+  }
+
+  // ---- Filter state ----
+  const [filter, setFilter] = useState<BeneficiaryFilter>({})
+  const [filterSearchTerm, setFilterSearchTerm] = useState('')
+  const [filterAttribut, setFilterAttribut] = useState('')
+  const [filterCaisseId, setFilterCaisseId] = useState('')
+  const [filterMinChildren, setFilterMinChildren] = useState('')
+  const [filterMaxChildAge, setFilterMaxChildAge] = useState('')
+  const [filterSituation, setFilterSituation] = useState('')
+
+  // ---- Tab state ----
+  const [activeTab, setActiveTab] = useState<'list' | 'settings'>('list')
+
+  const handleSettingsTab = () => {
+    loadAttributs()
+    setActiveTab('settings')
   }
 
   // ---- Detail view related data ----
@@ -395,40 +396,9 @@ export default function BeneficiariesPage() {
     return sc?.nameAr || sc?.name || '—'
   }
 
-  // ============================================
-  // Render
-  // ============================================
-
-  return (
-    <div className="space-y-6" dir="rtl">
-      {/* ---- Header ---- */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">المستفيدون</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            إدارة المستفيدين وبياناتهم — إجمالي: {beneficiaries.length}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="w-4 h-4" />
-            بحث متقدم
-          </Button>
-          <Button size="sm" onClick={openAddForm}>
-            <Plus className="w-4 h-4" />
-            إضافة مستفيد
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => { loadAttributs(); setShowAttributModal(true); }}>
-            <Settings className="w-4 h-4" />
-            إدارة التصنيفات
-          </Button>
-        </div>
-      </div>
-
+  // ---- Render helpers ----
+  const renderListTab = () => (
+    <div>
       {/* ---- Quick Search ---- */}
       <div className="relative">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -1234,20 +1204,27 @@ export default function BeneficiariesPage() {
           </div>
         </Modal>
       )}
+    </div>
+  )
 
-      {/* ---- Attribut Management Modal ---- */}
-      <Modal
-        isOpen={showAttributModal}
-        onClose={() => setShowAttributModal(false)}
-        title="إدارة التصنيفات — الصفات"
-        size="lg"
-      >
-        <div className="space-y-6">
+  const renderSettingsTab = () => (
+    <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-primary-600" />
+              إدارة التصنيفات — الصفات
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">إضافة وتعديل وحذف الصفات (الخصائص) للمستفيدين</p>
+          </div>
+
+          {/* Add form */}
           <div className="flex flex-col sm:flex-row gap-3 items-end">
             <Input labelAr="الاسم بالعربية" value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder="مثال: يتيم" />
             <Input labelAr="الاسم بالفرنسية" value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder="Ex: orphelin" dir="ltr" />
             <Button onClick={handleAddAttribut} disabled={!newAttrNameAr.trim()}>إضافة</Button>
           </div>
+
+          {/* Attributs list */}
           <Card>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -1293,7 +1270,63 @@ export default function BeneficiariesPage() {
             </div>
           </Card>
         </div>
-      </Modal>
+      )
+
+  return (
+    <div className="space-y-6" dir="rtl">
+      {/* ---- Header ---- */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">المستفيدون</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            إدارة المستفيدين وبياناتهم — إجمالي: {beneficiaries.length}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="w-4 h-4" />
+            بحث متقدم
+          </Button>
+          <Button size="sm" onClick={openAddForm}>
+            <Plus className="w-4 h-4" />
+            إضافة مستفيد
+          </Button>
+        </div>
+      </div>
+
+      {/* ---- Tabs ---- */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-2 sm:gap-4">
+          <button
+            onClick={() => setActiveTab('list')}
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
+              activeTab === 'list'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Users className="inline-block w-4 h-4 ml-2" />
+            المستفيدون
+          </button>
+          <button
+            onClick={handleSettingsTab}
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
+              activeTab === 'settings'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Settings className="inline-block w-4 h-4 ml-2" />
+            إدارة التصنيفات
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === 'list' ? renderListTab() : renderSettingsTab()}
     </div>
   )
 }
