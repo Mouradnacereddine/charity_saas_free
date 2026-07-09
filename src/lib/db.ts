@@ -8,6 +8,7 @@ import type {
   Article,
   ArticleCategory,
   StorageLocation,
+  BeneficiaryAttribut,
   Loan,
   MedicalReferral,
   DonationReceipt,
@@ -22,13 +23,14 @@ class AssociationDB extends Dexie {
   articles!: Table<Article>;
   articleCategories!: Table<ArticleCategory>;
   storageLocations!: Table<StorageLocation>;
+  beneficiaryAttributs!: Table<BeneficiaryAttribut>;
   loans!: Table<Loan>;
   medicalReferrals!: Table<MedicalReferral>;
   donationReceipts!: Table<DonationReceipt>;
 
   constructor() {
     super('AssociationCharitableDB');
-    this.version(3).stores({
+    this.version(4).stores({
       beneficiaries:
         'id, reference, firstName, lastName, firstNameAr, lastNameAr, phone, nationalCardNumber, attribut, caisseId, subCategoryId, dateOfBirth, createdAt',
       donors:
@@ -41,6 +43,7 @@ class AssociationDB extends Dexie {
         'id, reference, name, nameAr, category, status, storageLocation, isPermanent, createdAt',
       articleCategories: 'id, name, nameAr, createdAt',
       storageLocations: 'id, name, nameAr, createdAt',
+      beneficiaryAttributs: 'id, name, nameAr, createdAt',
       loans:
         'id, reference, beneficiaryId, status, loanDate, expectedReturnDate, createdAt',
       medicalReferrals:
@@ -54,6 +57,20 @@ class AssociationDB extends Dexie {
 export const db = new AssociationDB();
 
 export async function seedDefaultData() {
+  // Seed default attributs
+  const attrCount = await db.beneficiaryAttributs.count();
+  if (attrCount === 0) {
+    const now = new Date();
+    await db.beneficiaryAttributs.bulkAdd([
+      { id: crypto.randomUUID(), name: 'veuve', nameAr: 'أرملة', createdAt: now },
+      { id: crypto.randomUUID(), name: 'orphelin', nameAr: 'يتيم', createdAt: now },
+      { id: crypto.randomUUID(), name: 'personne_agee', nameAr: 'شخص مسن', createdAt: now },
+      { id: crypto.randomUUID(), name: 'handicape', nameAr: 'معاق', createdAt: now },
+      { id: crypto.randomUUID(), name: 'famille_demunie', nameAr: 'عائلة معوزة', createdAt: now },
+      { id: crypto.randomUUID(), name: 'autre', nameAr: 'أخرى', createdAt: now },
+    ]);
+  }
+
   // Seed default categories
   const catCount = await db.articleCategories.count();
   if (catCount === 0) {

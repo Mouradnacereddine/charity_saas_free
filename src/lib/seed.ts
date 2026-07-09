@@ -19,6 +19,19 @@ export async function seedRealisticData() {
 
   const now = new Date();
 
+  // Seed default attributs
+  const attrCount = await db.beneficiaryAttributs.count();
+  if (attrCount === 0) {
+    await db.beneficiaryAttributs.bulkAdd([
+      { id: generateId(), name: 'veuve', nameAr: 'أرملة', createdAt: now },
+      { id: generateId(), name: 'orphelin', nameAr: 'يتيم', createdAt: now },
+      { id: generateId(), name: 'personne_agee', nameAr: 'شخص مسن', createdAt: now },
+      { id: generateId(), name: 'handicape', nameAr: 'معاق', createdAt: now },
+      { id: generateId(), name: 'famille_demunie', nameAr: 'عائلة معوزة', createdAt: now },
+      { id: generateId(), name: 'autre', nameAr: 'أخرى', createdAt: now },
+    ]);
+  }
+
   // ── CAISSES ───────────────────────────────────────────────
   const caisses = [
     {

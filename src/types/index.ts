@@ -11,6 +11,15 @@ export type ArticleStatusEnum = 'disponible' | 'prete' | 'endommage' | 'hors_ser
 export type LoanStatus = 'en_cours' | 'partiellement_retourne' | 'retourne' | 'definitif';
 export type ChildHealthStatus = 'bonne_sante' | 'malade' | 'handicape' | 'autre';
 
+// ---- Beneficiary Attribut (الصفة) ----
+
+export interface BeneficiaryAttribut {
+  id: string;
+  name: string;
+  nameAr: string;
+  createdAt: Date;
+}
+
 // ---- Article Category ----
 
 export interface ArticleCategory {

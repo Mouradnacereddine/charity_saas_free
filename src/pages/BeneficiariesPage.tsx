@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
+import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { useBeneficiaryStore } from '../stores/beneficiaryStore'
 import { useCaisseStore } from '../stores/caisseStore'
-import { calculateAge, formatDate } from '../utils/helpers'
-import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby } from 'lucide-react'
-import type { BeneficiaryFilter, Beneficiary, Child } from '../types'
+import { calculateAge, formatDate, generateId } from '../utils/helpers'
+import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings } from 'lucide-react'
+import type { BeneficiaryFilter, Beneficiary, Child, BeneficiaryAttribut } from '../types'
+import { db } from '../lib/db'
 
 // ---- Constants ----
 
@@ -16,11 +17,6 @@ const ATTRIBUT_LABELS: Record<string, string> = {
   famille_demunie: 'عائلة معوزة',
   autre: 'أخرى',
 }
-
-const ATTRIBUT_OPTIONS = Object.entries(ATTRIBUT_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}))
 
 const HEALTH_STATUS_LABELS: Record<string, string> = {
   bonne_sante: 'بصحة جيدة',
@@ -156,15 +152,60 @@ export default function BeneficiariesPage() {
   const [filterMaxChildAge, setFilterMaxChildAge] = useState('')
   const [filterSituation, setFilterSituation] = useState('')
 
+  // ---- Attribut management ----
+  const [showAttributModal, setShowAttributModal] = useState(false)
+  const [attributs, setAttributs] = useState<BeneficiaryAttribut[]>([])
+  const [newAttrNameAr, setNewAttrNameAr] = useState('')
+  const [newAttrName, setNewAttrName] = useState('')
+  const [editAttrId, setEditAttrId] = useState<string | null>(null)
+  const [editAttrNameAr, setEditAttrNameAr] = useState('')
+  const [editAttrName, setEditAttrName] = useState('')
+
+  const loadAttributs = async () => {
+    const attrs = await db.beneficiaryAttributs.toArray()
+    setAttributs(attrs)
+  }
+
+  const handleAddAttribut = async () => {
+    if (!newAttrNameAr.trim()) return
+    await db.beneficiaryAttributs.add({
+      id: generateId(),
+      name: newAttrName.trim(),
+      nameAr: newAttrNameAr.trim(),
+      createdAt: new Date(),
+    })
+    setNewAttrNameAr('')
+    setNewAttrName('')
+    await loadAttributs()
+  }
+
+  const handleUpdateAttribut = async () => {
+    if (!editAttrId || !editAttrNameAr.trim()) return
+    await db.beneficiaryAttributs.update(editAttrId, {
+      name: editAttrName.trim(),
+      nameAr: editAttrNameAr.trim(),
+    })
+    setEditAttrId(null)
+    setEditAttrNameAr('')
+    setEditAttrName('')
+    await loadAttributs()
+  }
+
+  const handleDeleteAttribut = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذه الصفة؟')) return
+    await db.beneficiaryAttributs.delete(id)
+    await loadAttributs()
+  }
+
   // ---- Detail view related data ----
   const [detailTransactions, setDetailTransactions] = useState<any[]>([])
   const [detailLoans, setDetailLoans] = useState<any[]>([])
   const [detailReferrals, setDetailReferrals] = useState<any[]>([])
 
-  // ---- Initial load ----
   useEffect(() => {
     loadBeneficiaries()
     loadCaisses()
+    loadAttributs()
   }, [loadBeneficiaries, loadCaisses])
 
   // ---- Caisse options ----
@@ -172,6 +213,11 @@ export default function BeneficiariesPage() {
     value: c.id,
     label: c.nameAr || c.name,
   }))
+
+  const attributOptions = attributs.length > 0 ? attributs.map((a) => ({
+    value: a.name,
+    label: a.nameAr,
+  })) : Object.entries(ATTRIBUT_LABELS).map(([value, label]) => ({ value, label }))
 
   // ---- Filter application ----
   const applyFilters = () => {
@@ -376,6 +422,10 @@ export default function BeneficiariesPage() {
             <Plus className="w-4 h-4" />
             إضافة مستفيد
           </Button>
+          <Button size="sm" variant="secondary" onClick={() => { loadAttributs(); setShowAttributModal(true); }}>
+            <Settings className="w-4 h-4" />
+            إدارة التصنيفات
+          </Button>
         </div>
       </div>
 
@@ -401,7 +451,7 @@ export default function BeneficiariesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <SearchableSelect
               labelAr="الصفة"
-              options={ATTRIBUT_OPTIONS}
+              options={attributOptions}
               value={filterAttribut}
               onChange={(val) => setFilterAttribut(val)}
               required={false}
@@ -687,7 +737,7 @@ export default function BeneficiariesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <SearchableSelect
                 labelAr="الصفة"
-                options={ATTRIBUT_OPTIONS}
+                options={attributOptions}
                 value={form.attribut}
                 onChange={(val) => handleFormChange('attribut', val)}
                 required
@@ -717,11 +767,11 @@ export default function BeneficiariesPage() {
                 const activeSubCats = activeCaisse?.subCategories || []
                 if (activeSubCats.length === 0) return null
                 return (
-                  <Select
+                  <SearchableSelect
                     labelAr="الفئة الفرعية"
                     options={activeSubCats.map((sc) => ({ value: sc.id, label: sc.nameAr }))}
                     value={form.subCategoryId}
-                    onChange={(e) => handleFormChange('subCategoryId', e.target.value)}
+                    onChange={(val) => handleFormChange('subCategoryId', val)}
                   />
                 )
               })()}
@@ -808,11 +858,11 @@ export default function BeneficiariesPage() {
                           </p>
                         )}
                       </div>
-                      <Select
+                      <SearchableSelect
                         labelAr="الحالة الصحية"
                         options={HEALTH_STATUS_OPTIONS}
                         value={child.healthStatus}
-                        onChange={(e) => updateChild(index, 'healthStatus', e.target.value)}
+                        onChange={(val) => updateChild(index, 'healthStatus', val)}
                       />
                       <Input
                         labelAr="تفاصيل الحالة الصحية"
@@ -1184,6 +1234,66 @@ export default function BeneficiariesPage() {
           </div>
         </Modal>
       )}
+
+      {/* ---- Attribut Management Modal ---- */}
+      <Modal
+        isOpen={showAttributModal}
+        onClose={() => setShowAttributModal(false)}
+        title="إدارة التصنيفات — الصفات"
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <Input labelAr="الاسم بالعربية" value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder="مثال: يتيم" />
+            <Input labelAr="الاسم بالفرنسية" value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder="Ex: orphelin" dir="ltr" />
+            <Button onClick={handleAddAttribut} disabled={!newAttrNameAr.trim()}>إضافة</Button>
+          </div>
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attributs.map((a) => (
+                    <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      {editAttrId === a.id ? (
+                        <>
+                          <td className="py-2 px-4">
+                            <input value={editAttrNameAr} onChange={(e) => setEditAttrNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" />
+                          </td>
+                          <td className="py-2 px-4">
+                            <input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" />
+                          </td>
+                          <td className="py-2 px-4 text-center flex gap-1 justify-center">
+                            <Button size="sm" onClick={handleUpdateAttribut}>حفظ</Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditAttrId(null)}>إلغاء</Button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-3 px-4 font-medium text-gray-900">{a.nameAr}</td>
+                          <td className="py-3 px-4 text-gray-600">{a.name}</td>
+                          <td className="py-3 px-4 text-center">
+                            <button onClick={() => { setEditAttrId(a.id); setEditAttrNameAr(a.nameAr); setEditAttrName(a.name); }}
+                              className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteAttribut(a.id)}
+                              className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      </Modal>
     </div>
   )
 }
