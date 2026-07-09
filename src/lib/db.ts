@@ -6,6 +6,8 @@ import type {
   Caisse,
   BankAccount,
   Article,
+  ArticleCategory,
+  StorageLocation,
   Loan,
   MedicalReferral,
   DonationReceipt,
@@ -18,13 +20,15 @@ class AssociationDB extends Dexie {
   caisses!: Table<Caisse>;
   bankAccounts!: Table<BankAccount>;
   articles!: Table<Article>;
+  articleCategories!: Table<ArticleCategory>;
+  storageLocations!: Table<StorageLocation>;
   loans!: Table<Loan>;
   medicalReferrals!: Table<MedicalReferral>;
   donationReceipts!: Table<DonationReceipt>;
 
   constructor() {
     super('AssociationCharitableDB');
-    this.version(2).stores({
+    this.version(3).stores({
       beneficiaries:
         'id, reference, firstName, lastName, firstNameAr, lastNameAr, phone, nationalCardNumber, attribut, caisseId, subCategoryId, dateOfBirth, createdAt',
       donors:
@@ -35,6 +39,8 @@ class AssociationDB extends Dexie {
       bankAccounts: 'id, bankName, accountNumber, rib, createdAt',
       articles:
         'id, reference, name, nameAr, category, status, storageLocation, isPermanent, createdAt',
+      articleCategories: 'id, name, nameAr, createdAt',
+      storageLocations: 'id, name, nameAr, createdAt',
       loans:
         'id, reference, beneficiaryId, status, loanDate, expectedReturnDate, createdAt',
       medicalReferrals:
@@ -47,29 +53,47 @@ class AssociationDB extends Dexie {
 
 export const db = new AssociationDB();
 
-// Seed default caisses if empty
 export async function seedDefaultData() {
-  const count = await db.caisses.count();
-  if (count === 0) {
+  // Seed default categories
+  const catCount = await db.articleCategories.count();
+  if (catCount === 0) {
+    const now = new Date();
+    await db.articleCategories.bulkAdd([
+      { id: crypto.randomUUID(), name: 'Medical', nameAr: 'طبي', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Scolaire', nameAr: 'مدرسي', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Alimentaire', nameAr: 'غذائي', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Vêtement', nameAr: 'ملبس', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Mobilier', nameAr: 'أثاث', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Équipement', nameAr: 'معدات', createdAt: now },
+    ]);
+  }
+
+  // Seed default storage locations
+  const locCount = await db.storageLocations.count();
+  if (locCount === 0) {
+    const now = new Date();
+    await db.storageLocations.bulkAdd([
+      { id: crypto.randomUUID(), name: 'Dépôt A - Rayon 1', nameAr: 'المستودع أ - الرف 1', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Dépôt A - Rayon 2', nameAr: 'المستودع أ - الرف 2', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Dépôt B - Rayon 1', nameAr: 'المستودع ب - الرف 1', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Dépôt B - Rayon 2', nameAr: 'المستودع ب - الرف 2', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Dépôt C - Grands équipements', nameAr: 'المستودع ج - معدات كبيرة', createdAt: now },
+    ]);
+  }
+
+  const caisseCount = await db.caisses.count();
+  if (caisseCount === 0) {
     const now = new Date();
     await db.caisses.bulkAdd([
-      {
-        id: crypto.randomUUID(),
-        name: 'Caisse Sociale',
-        nameAr: 'الصندوق الاجتماعي',
+      { id: crypto.randomUUID(), name: 'Caisse Sociale', nameAr: 'الصندوق الاجتماعي',
         subCategories: [
           { id: crypto.randomUUID(), name: 'Aide alimentaire', nameAr: 'مساعدة غذائية' },
           { id: crypto.randomUUID(), name: 'Aide vestimentaire', nameAr: 'مساعدة ملبسية' },
           { id: crypto.randomUUID(), name: 'Aide scolaire', nameAr: 'مساعدة مدرسية' },
         ],
-        balance: 0,
-        createdAt: now,
-        updatedAt: now,
+        balance: 0, createdAt: now, updatedAt: now,
       },
-      {
-        id: crypto.randomUUID(),
-        name: 'Caisse Médicale',
-        nameAr: 'الصندوق الطبي',
+      { id: crypto.randomUUID(), name: 'Caisse Médicale', nameAr: 'الصندوق الطبي',
         subCategories: [
           { id: crypto.randomUUID(), name: 'Analyses', nameAr: 'تحاليل' },
           { id: crypto.randomUUID(), name: 'Ophtalmologie', nameAr: 'طب العيون' },
@@ -77,42 +101,24 @@ export async function seedDefaultData() {
           { id: crypto.randomUUID(), name: 'Chirurgie', nameAr: 'جراحة' },
           { id: crypto.randomUUID(), name: 'Médicaments', nameAr: 'أدوية' },
         ],
-        balance: 0,
-        createdAt: now,
-        updatedAt: now,
+        balance: 0, createdAt: now, updatedAt: now,
       },
-      {
-        id: crypto.randomUUID(),
-        name: 'Caisse Kafala',
-        nameAr: 'صندوق الكفالة',
+      { id: crypto.randomUUID(), name: 'Caisse Kafala', nameAr: 'صندوق الكفالة',
         subCategories: [
           { id: crypto.randomUUID(), name: 'Kafala orphelin', nameAr: 'كفالة يتيم' },
           { id: crypto.randomUUID(), name: 'Kafala veuve', nameAr: 'كفالة أرملة' },
         ],
-        balance: 0,
-        createdAt: now,
-        updatedAt: now,
+        balance: 0, createdAt: now, updatedAt: now,
       },
-      {
-        id: crypto.randomUUID(),
-        name: 'Caisse Zakat',
-        nameAr: 'صندوق الزكاة',
+      { id: crypto.randomUUID(), name: 'Caisse Zakat', nameAr: 'صندوق الزكاة',
         subCategories: [
           { id: crypto.randomUUID(), name: 'Zakat Al-Mal', nameAr: 'زكاة المال' },
           { id: crypto.randomUUID(), name: 'Zakat Al-Fitr', nameAr: 'زكاة الفطر' },
         ],
-        balance: 0,
-        createdAt: now,
-        updatedAt: now,
+        balance: 0, createdAt: now, updatedAt: now,
       },
-      {
-        id: crypto.randomUUID(),
-        name: 'Caisse Générale',
-        nameAr: 'الصندوق العام',
-        subCategories: [],
-        balance: 0,
-        createdAt: now,
-        updatedAt: now,
+      { id: crypto.randomUUID(), name: 'Caisse Générale', nameAr: 'الصندوق العام',
+        subCategories: [], balance: 0, createdAt: now, updatedAt: now,
       },
     ]);
   }
@@ -121,16 +127,9 @@ export async function seedDefaultData() {
   if (bankCount === 0) {
     const now = new Date();
     await db.bankAccounts.add({
-      id: crypto.randomUUID(),
-      bankName: 'Compte Principal',
-      bankNameAr: 'الحساب الرئيسي',
-      accountNumber: '',
-      rib: '',
-      iban: '',
-      swift: '',
-      balance: 0,
-      createdAt: now,
-      updatedAt: now,
+      id: crypto.randomUUID(), bankName: 'Compte Principal', bankNameAr: 'الحساب الرئيسي',
+      accountNumber: '', rib: '', iban: '', swift: '', balance: 0,
+      createdAt: now, updatedAt: now,
     });
   }
 }

@@ -196,19 +196,15 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
         {filterOpen && (
           <Card>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">الصندوق</label>
-                <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={filterCaisseId}
-                  onChange={(e) => setFilterCaisseId(e.target.value)}
-                >
-                  <option value="">الكل</option>
-                  {allCaisses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nameAr}</option>
-                  ))}
-                </select>
-              </div>
+              <SearchableSelect
+                labelAr="الصندوق"
+                value={filterCaisseId}
+                onChange={setFilterCaisseId}
+                options={allCaisses.map((c) => ({
+                  value: c.id,
+                  label: c.nameAr,
+                }))}
+              />
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">المبلغ من</label>
                 <input

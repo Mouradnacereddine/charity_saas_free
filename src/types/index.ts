@@ -11,6 +11,24 @@ export type ArticleStatus = 'disponible' | 'prete' | 'endommage' | 'hors_service
 export type LoanStatus = 'en_cours' | 'partiellement_retourne' | 'retourne' | 'definitif';
 export type ChildHealthStatus = 'bonne_sante' | 'malade' | 'handicape' | 'autre';
 
+// ---- Article Category ----
+
+export interface ArticleCategory {
+  id: string;
+  name: string;
+  nameAr: string;
+  createdAt: Date;
+}
+
+// ---- Storage Location ----
+
+export interface StorageLocation {
+  id: string;
+  name: string;
+  nameAr: string;
+  createdAt: Date;
+}
+
 // ---- Caisse (Fund/Cash Box) ----
 
 export interface SubCategory {

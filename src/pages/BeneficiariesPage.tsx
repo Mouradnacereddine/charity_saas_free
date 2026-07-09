@@ -399,17 +399,18 @@ export default function BeneficiariesPage() {
       {showFilters && (
         <Card titleAr="بحث متقدم">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <Select
+            <SearchableSelect
               labelAr="الصفة"
               options={ATTRIBUT_OPTIONS}
               value={filterAttribut}
-              onChange={(e) => setFilterAttribut(e.target.value)}
+              onChange={(val) => setFilterAttribut(val)}
+              required={false}
             />
-            <Select
+            <SearchableSelect
               labelAr="الصندوق"
               options={caisseOptions}
               value={filterCaisseId}
-              onChange={(e) => setFilterCaisseId(e.target.value)}
+              onChange={(val) => setFilterCaisseId(val)}
             />
             <Input
               labelAr="الحالة (المرض أو غيره)"

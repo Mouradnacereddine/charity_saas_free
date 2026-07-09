@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { useInventoryStore } from '../stores/inventoryStore'
 import { useBeneficiaryStore } from '../stores/beneficiaryStore'
-import { formatDate } from '../utils/helpers'
-import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter } from 'lucide-react'
-import type { Article, Loan, LoanItem } from '../types'
+import { formatDate, generateId } from '../utils/helpers'
+import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin } from 'lucide-react'
+import type { Article, Loan, LoanItem, ArticleCategory, StorageLocation } from '../types'
+import { db } from '../lib/db'
 
 // ---- Constants ----
 
@@ -41,11 +42,9 @@ const EMPTY_ARTICLE_FORM = {
   name: '',
   descriptionAr: '',
   description: '',
-  categoryAr: '',
   category: '',
   quantity: 1,
   status: 'disponible' as Article['status'],
-  storageLocationAr: '',
   storageLocation: '',
   conditionAr: '',
   condition: '',
@@ -53,10 +52,24 @@ const EMPTY_ARTICLE_FORM = {
   notes: '',
 }
 
+// ---- Helpers ----
+
+function getCategoryNameAr(categoryId: string, categories: ArticleCategory[]): string {
+  if (!categoryId) return '—'
+  const found = categories.find((c) => c.id === categoryId)
+  return found ? found.nameAr : categoryId
+}
+
+function getStorageNameAr(storageId: string, locations: StorageLocation[]): string {
+  if (!storageId) return '—'
+  const found = locations.find((l) => l.id === storageId)
+  return found ? found.nameAr : storageId
+}
+
 // ---- Component ----
 
 export default function InventoryPage() {
-  const [activeTab, setActiveTab] = useState<'stock' | 'loans'>('stock')
+  const [activeTab, setActiveTab] = useState<'stock' | 'loans' | 'settings'>('stock')
 
   return (
     <div className="space-y-6">
@@ -90,10 +103,376 @@ export default function InventoryPage() {
             <ArrowLeftRight className="inline-block w-4 h-4 ml-2" />
             الإعارات
           </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
+              activeTab === 'settings'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Settings className="inline-block w-4 h-4 ml-2" />
+            إدارة التصنيفات
+          </button>
         </nav>
       </div>
 
-      {activeTab === 'stock' ? <StockTab /> : <LoansTab />}
+      {activeTab === 'stock' ? (
+        <StockTab />
+      ) : activeTab === 'loans' ? (
+        <LoansTab />
+      ) : (
+        <SettingsTab />
+      )}
+    </div>
+  )
+}
+
+// ============================================================
+// SETTINGS TAB — Categories & Storage Locations
+// ============================================================
+
+function SettingsTab() {
+  const [categories, setCategories] = useState<ArticleCategory[]>([])
+  const [locations, setLocations] = useState<StorageLocation[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Category form state
+  const [newCatNameAr, setNewCatNameAr] = useState('')
+  const [newCatName, setNewCatName] = useState('')
+  const [editCatId, setEditCatId] = useState<string | null>(null)
+  const [editCatNameAr, setEditCatNameAr] = useState('')
+  const [editCatName, setEditCatName] = useState('')
+
+  // Location form state
+  const [newLocNameAr, setNewLocNameAr] = useState('')
+  const [newLocName, setNewLocName] = useState('')
+  const [editLocId, setEditLocId] = useState<string | null>(null)
+  const [editLocNameAr, setEditLocNameAr] = useState('')
+  const [editLocName, setEditLocName] = useState('')
+
+  const loadData = async () => {
+    setLoading(true)
+    const [cats, locs] = await Promise.all([
+      db.articleCategories.toArray(),
+      db.storageLocations.toArray(),
+    ])
+    setCategories(cats)
+    setLocations(locs)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  // ---- Category CRUD ----
+
+  const handleAddCategory = async () => {
+    if (!newCatNameAr.trim()) return
+    const now = new Date()
+    await db.articleCategories.add({
+      id: generateId(),
+      name: newCatName.trim(),
+      nameAr: newCatNameAr.trim(),
+      createdAt: now,
+    })
+    setNewCatNameAr('')
+    setNewCatName('')
+    await loadData()
+  }
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا التصنيف؟')) return
+    await db.articleCategories.delete(id)
+    await loadData()
+  }
+
+  const startEditCategory = (cat: ArticleCategory) => {
+    setEditCatId(cat.id)
+    setEditCatNameAr(cat.nameAr)
+    setEditCatName(cat.name)
+  }
+
+  const handleUpdateCategory = async () => {
+    if (!editCatId || !editCatNameAr.trim()) return
+    await db.articleCategories.update(editCatId, {
+      name: editCatName.trim(),
+      nameAr: editCatNameAr.trim(),
+    })
+    setEditCatId(null)
+    setEditCatNameAr('')
+    setEditCatName('')
+    await loadData()
+  }
+
+  const cancelEditCategory = () => {
+    setEditCatId(null)
+    setEditCatNameAr('')
+    setEditCatName('')
+  }
+
+  // ---- Location CRUD ----
+
+  const handleAddLocation = async () => {
+    if (!newLocNameAr.trim()) return
+    const now = new Date()
+    await db.storageLocations.add({
+      id: generateId(),
+      name: newLocName.trim(),
+      nameAr: newLocNameAr.trim(),
+      createdAt: now,
+    })
+    setNewLocNameAr('')
+    setNewLocName('')
+    await loadData()
+  }
+
+  const handleDeleteLocation = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا الموقع؟')) return
+    await db.storageLocations.delete(id)
+    await loadData()
+  }
+
+  const startEditLocation = (loc: StorageLocation) => {
+    setEditLocId(loc.id)
+    setEditLocNameAr(loc.nameAr)
+    setEditLocName(loc.name)
+  }
+
+  const handleUpdateLocation = async () => {
+    if (!editLocId || !editLocNameAr.trim()) return
+    await db.storageLocations.update(editLocId, {
+      name: editLocName.trim(),
+      nameAr: editLocNameAr.trim(),
+    })
+    setEditLocId(null)
+    setEditLocNameAr('')
+    setEditLocName('')
+    await loadData()
+  }
+
+  const cancelEditLocation = () => {
+    setEditLocId(null)
+    setEditLocNameAr('')
+    setEditLocName('')
+  }
+
+  if (loading) return <LoadingSpinner />
+
+  return (
+    <div className="space-y-8">
+      {/* ========== Article Categories Section ========== */}
+      <Card titleAr="تصنيفات المقالات">
+        {/* Add form */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="flex-1">
+            <Input
+              labelAr="الاسم بالعربية"
+              value={newCatNameAr}
+              onChange={(e) => setNewCatNameAr(e.target.value)}
+              placeholder="مثال: طبي"
+            />
+          </div>
+          <div className="flex-1">
+            <Input
+              labelAr="الاسم بالفرنسية"
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              placeholder="مثال: Medical"
+            />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleAddCategory} disabled={!newCatNameAr.trim()}>
+              <Plus className="w-4 h-4" />
+              إضافة
+            </Button>
+          </div>
+        </div>
+
+        {/* Table */}
+        {categories.length === 0 ? (
+          <EmptyState message="لا توجد تصنيفات بعد" icon={<FolderTree className="w-12 h-12" />} />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالعربية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالفرنسية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((cat) => (
+                  <tr key={cat.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    {editCatId === cat.id ? (
+                      <>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={editCatNameAr}
+                            onChange={(e) => setEditCatNameAr(e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            autoFocus
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={editCatName}
+                            onChange={(e) => setEditCatName(e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" onClick={handleUpdateCategory} disabled={!editCatNameAr.trim()}>
+                              حفظ
+                            </Button>
+                            <Button size="sm" variant="secondary" onClick={cancelEditCategory}>
+                              إلغاء
+                            </Button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-3 px-4 font-medium text-gray-900">{cat.nameAr}</td>
+                        <td className="py-3 px-4 text-gray-600">{cat.name || '—'}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => startEditCategory(cat)}
+                              className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                              title="تعديل"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCategory(cat.id)}
+                              className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
+                              title="حذف"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {/* ========== Storage Locations Section ========== */}
+      <Card titleAr="مواقع التخزين">
+        {/* Add form */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="flex-1">
+            <Input
+              labelAr="الاسم بالعربية"
+              value={newLocNameAr}
+              onChange={(e) => setNewLocNameAr(e.target.value)}
+              placeholder="مثال: المستودع أ - الرف 1"
+            />
+          </div>
+          <div className="flex-1">
+            <Input
+              labelAr="الاسم بالفرنسية"
+              value={newLocName}
+              onChange={(e) => setNewLocName(e.target.value)}
+              placeholder="مثال: Dépôt A - Rayon 1"
+            />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleAddLocation} disabled={!newLocNameAr.trim()}>
+              <Plus className="w-4 h-4" />
+              إضافة
+            </Button>
+          </div>
+        </div>
+
+        {/* Table */}
+        {locations.length === 0 ? (
+          <EmptyState message="لا توجد مواقع تخزين بعد" icon={<MapPin className="w-12 h-12" />} />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالعربية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالفرنسية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {locations.map((loc) => (
+                  <tr key={loc.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    {editLocId === loc.id ? (
+                      <>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={editLocNameAr}
+                            onChange={(e) => setEditLocNameAr(e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            autoFocus
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={editLocName}
+                            onChange={(e) => setEditLocName(e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" onClick={handleUpdateLocation} disabled={!editLocNameAr.trim()}>
+                              حفظ
+                            </Button>
+                            <Button size="sm" variant="secondary" onClick={cancelEditLocation}>
+                              إلغاء
+                            </Button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-3 px-4 font-medium text-gray-900">{loc.nameAr}</td>
+                        <td className="py-3 px-4 text-gray-600">{loc.name || '—'}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => startEditLocation(loc)}
+                              className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                              title="تعديل"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteLocation(loc.id)}
+                              className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
+                              title="حذف"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   )
 }
@@ -104,6 +483,8 @@ export default function InventoryPage() {
 
 function StockTab() {
   const { articles, loading, loadArticles, addArticle, updateArticle, deleteArticle } = useInventoryStore()
+  const [categories, setCategories] = useState<ArticleCategory[]>([])
+  const [locations, setLocations] = useState<StorageLocation[]>([])
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterSearchTerm, setFilterSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
@@ -118,22 +499,31 @@ function StockTab() {
     loadArticles()
   }, [loadArticles])
 
+  useEffect(() => {
+    ;(async () => {
+      const [cats, locs] = await Promise.all([
+        db.articleCategories.toArray(),
+        db.storageLocations.toArray(),
+      ])
+      setCategories(cats)
+      setLocations(locs)
+    })()
+  }, [])
+
   const filtered = articles.filter((a) => {
+    const catNameAr = getCategoryNameAr(a.category, categories)
+
     const matchesSearch =
       !filterSearchTerm ||
       a.nameAr.includes(filterSearchTerm) ||
       a.name.toLowerCase().includes(filterSearchTerm.toLowerCase()) ||
-      a.categoryAr.includes(filterSearchTerm) ||
+      catNameAr.includes(filterSearchTerm) ||
       a.category.toLowerCase().includes(filterSearchTerm.toLowerCase())
     const matchesCategory =
-      !filterCategory ||
-      a.categoryAr.includes(filterCategory) ||
-      a.category.toLowerCase().includes(filterCategory.toLowerCase())
+      !filterCategory || a.category === filterCategory
     const matchesStatus = !filterStatus || a.status === filterStatus
     const matchesStorage =
-      !filterStorage ||
-      a.storageLocationAr.includes(filterStorage) ||
-      a.storageLocation.toLowerCase().includes(filterStorage.toLowerCase())
+      !filterStorage || a.storageLocation === filterStorage
     const matchesType =
       !filterType ||
       (filterType === 'permanent' ? a.isPermanent : !a.isPermanent)
@@ -153,11 +543,9 @@ function StockTab() {
       name: article.name,
       descriptionAr: article.descriptionAr || '',
       description: article.description || '',
-      categoryAr: article.categoryAr,
       category: article.category,
       quantity: article.quantity,
       status: article.status,
-      storageLocationAr: article.storageLocationAr,
       storageLocation: article.storageLocation,
       conditionAr: article.conditionAr,
       condition: article.condition,
@@ -173,12 +561,12 @@ function StockTab() {
       name: form.name,
       descriptionAr: form.descriptionAr || undefined,
       description: form.description || undefined,
-      categoryAr: form.categoryAr,
       category: form.category,
+      categoryAr: '',  // kept for backward compatibility with existing data
       quantity: form.quantity,
       status: form.status,
-      storageLocationAr: form.storageLocationAr,
       storageLocation: form.storageLocation,
+      storageLocationAr: '',  // kept for backward compatibility with existing data
       conditionAr: form.conditionAr,
       condition: form.condition,
       isPermanent: form.isPermanent,
@@ -188,7 +576,7 @@ function StockTab() {
     if (editingArticle) {
       await updateArticle(editingArticle.id, data)
     } else {
-      await addArticle(data)
+      await addArticle(data as any)
     }
 
     setShowModal(false)
@@ -201,6 +589,30 @@ function StockTab() {
       await deleteArticle(id)
     }
   }
+
+  const categoryOptions = categories.map((c) => ({
+    value: c.id,
+    label: `${c.nameAr} (${c.name || ''})`,
+  }))
+
+  const locationOptions = locations.map((l) => ({
+    value: l.id,
+    label: `${l.nameAr} (${l.name || ''})`,
+  }))
+
+  const statusOptions = [
+    { value: '', label: 'الكل' },
+    { value: 'disponible', label: 'متاح' },
+    { value: 'prete', label: 'مُعار' },
+    { value: 'endommage', label: 'تالف' },
+    { value: 'hors_service', label: 'خارج الخدمة' },
+  ]
+
+  const typeOptions = [
+    { value: '', label: 'الكل' },
+    { value: 'permanent', label: 'نهائي' },
+    { value: 'returnable', label: 'قابل للإرجاع' },
+  ]
 
   if (loading) return <LoadingSpinner />
 
@@ -232,37 +644,39 @@ function StockTab() {
       {filterOpen && (
         <Card>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <Input
+            <SearchableSelect
               labelAr="الفئة"
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
+              onChange={setFilterCategory}
+              options={[
+                { value: '', label: 'الكل' },
+                ...categoryOptions,
+              ]}
+              placeholder="الكل"
             />
-            <Select
+            <SearchableSelect
               labelAr="الحالة"
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              options={[
-                { value: '', label: 'الكل' },
-                { value: 'disponible', label: 'متاح' },
-                { value: 'prete', label: 'مُعار' },
-                { value: 'endommage', label: 'تالف' },
-                { value: 'hors_service', label: 'خارج الخدمة' },
-              ]}
+              onChange={setFilterStatus}
+              options={statusOptions}
+              placeholder="الكل"
             />
-            <Input
+            <SearchableSelect
               labelAr="مكان التخزين"
               value={filterStorage}
-              onChange={(e) => setFilterStorage(e.target.value)}
-            />
-            <Select
-              labelAr="النوع"
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              onChange={setFilterStorage}
               options={[
                 { value: '', label: 'الكل' },
-                { value: 'permanent', label: 'نهائي' },
-                { value: 'returnable', label: 'قابل للإرجاع' },
+                ...locationOptions,
               ]}
+              placeholder="الكل"
+            />
+            <SearchableSelect
+              labelAr="النوع"
+              value={filterType}
+              onChange={setFilterType}
+              options={typeOptions}
+              placeholder="الكل"
             />
             <div className="flex items-end md:col-span-4">
               <Button
@@ -310,7 +724,9 @@ function StockTab() {
                       {article.reference || '—'}
                     </td>
                     <td className="py-3 px-4 font-medium text-gray-900">{article.nameAr}</td>
-                    <td className="py-3 px-4 text-gray-600 hidden sm:table-cell">{article.categoryAr}</td>
+                    <td className="py-3 px-4 text-gray-600 hidden sm:table-cell">
+                      {getCategoryNameAr(article.category, categories)}
+                    </td>
                     <td className="py-3 px-4 text-gray-600">{article.quantity}</td>
                     <td className="py-3 px-4 text-gray-600">{article.availableQuantity}</td>
                     <td className="py-3 px-4">
@@ -318,7 +734,9 @@ function StockTab() {
                         {STATUS_LABELS[article.status] || article.status}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-gray-600 hidden md:table-cell">{article.storageLocationAr}</td>
+                    <td className="py-3 px-4 text-gray-600 hidden md:table-cell">
+                      {getStorageNameAr(article.storageLocation, locations)}
+                    </td>
                     <td className="py-3 px-4 text-gray-600 hidden md:table-cell">{article.conditionAr}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">
                       {article.isPermanent ? (
@@ -382,16 +800,18 @@ function StockTab() {
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
-          <Input
-            labelAr="الفئة بالعربية"
-            value={form.categoryAr}
-            onChange={(e) => setForm({ ...form, categoryAr: e.target.value })}
+          <SearchableSelect
+            labelAr="الفئة"
+            value={form.category}
+            onChange={(val) => setForm({ ...form, category: val })}
+            options={categoryOptions}
             required
           />
-          <Input
-            labelAr="الفئة بالفرنسية"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          <SearchableSelect
+            labelAr="مكان التخزين"
+            value={form.storageLocation}
+            onChange={(val) => setForm({ ...form, storageLocation: val })}
+            options={locationOptions}
           />
           <Input
             labelAr="الكمية"
@@ -411,16 +831,6 @@ function StockTab() {
               { value: 'endommage', label: 'تالف' },
               { value: 'hors_service', label: 'خارج الخدمة' },
             ]}
-          />
-          <Input
-            labelAr="مكان التخزين بالعربية"
-            value={form.storageLocationAr}
-            onChange={(e) => setForm({ ...form, storageLocationAr: e.target.value })}
-          />
-          <Input
-            labelAr="مكان التخزين بالفرنسية"
-            value={form.storageLocation}
-            onChange={(e) => setForm({ ...form, storageLocation: e.target.value })}
           />
           <Input
             labelAr="الوضع بالعربية"
@@ -457,7 +867,7 @@ function StockTab() {
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             إلغاء
           </Button>
-          <Button onClick={handleSubmit} disabled={!form.nameAr || !form.categoryAr}>
+          <Button onClick={handleSubmit} disabled={!form.nameAr || !form.category}>
             {editingArticle ? 'تحديث' : 'إضافة'}
           </Button>
         </div>
@@ -485,7 +895,6 @@ function LoansTab() {
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
 
   // Create loan form state
-  const [beneficiarySearch, setBeneficiarySearch] = useState('')
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState('')
   const [loanItems, setLoanItems] = useState<{ articleId: string; quantity: number; conditionOnLoan: string }[]>([])
   const [expectedReturnDate, setExpectedReturnDate] = useState('')
@@ -515,6 +924,7 @@ function LoansTab() {
     const matchesStatus = !filterStatus || l.status === filterStatus
     const matchesBeneficiary =
       !filterBeneficiary ||
+      l.beneficiaryId === filterBeneficiary ||
       l.beneficiaryNameAr.includes(filterBeneficiary) ||
       l.beneficiaryName.toLowerCase().includes(filterBeneficiary.toLowerCase())
     const matchesDateFrom = !filterDateFrom || l.loanDate >= filterDateFrom
@@ -522,21 +932,26 @@ function LoansTab() {
     return matchesSearch && matchesStatus && matchesBeneficiary && matchesDateFrom && matchesDateTo
   })
 
-  const filteredBeneficiaries = beneficiaries.filter(
-    (b) =>
-      b.firstNameAr.includes(beneficiarySearch) ||
-      b.lastNameAr.includes(beneficiarySearch) ||
-      b.firstName.toLowerCase().includes(beneficiarySearch.toLowerCase()) ||
-      b.lastName.toLowerCase().includes(beneficiarySearch.toLowerCase())
-  )
-
   const availableArticles = articles.filter((a) => a.availableQuantity > 0 && !a.isPermanent)
+
+  // Pre-computed beneficiary options for SearchableSelect
+  const beneficiaryOptions = beneficiaries.map((b) => ({
+    value: b.id,
+    label: `${b.firstNameAr} ${b.lastNameAr} (${b.firstName} ${b.lastName})`,
+  }))
+
+  const loanStatusOptions = [
+    { value: '', label: 'الكل' },
+    { value: 'en_cours', label: 'جاري' },
+    { value: 'partiellement_retourne', label: 'مرتجع جزئياً' },
+    { value: 'retourne', label: 'مرتجع' },
+    { value: 'definitif', label: 'نهائي' },
+  ]
 
   // ---- Create Loan ----
 
   const openCreateLoan = () => {
     setSelectedBeneficiaryId('')
-    setBeneficiarySearch('')
     setLoanItems([])
     setExpectedReturnDate('')
     setLoanNotes('')
@@ -719,22 +1134,22 @@ function LoansTab() {
       {filterOpen && (
         <Card>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <Select
+            <SearchableSelect
               labelAr="الحالة"
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              options={[
-                { value: '', label: 'الكل' },
-                { value: 'en_cours', label: 'جاري' },
-                { value: 'partiellement_retourne', label: 'مرتجع جزئياً' },
-                { value: 'retourne', label: 'مرتجع' },
-                { value: 'definitif', label: 'نهائي' },
-              ]}
+              onChange={setFilterStatus}
+              options={loanStatusOptions}
+              placeholder="الكل"
             />
-            <Input
+            <SearchableSelect
               labelAr="المستفيد"
               value={filterBeneficiary}
-              onChange={(e) => setFilterBeneficiary(e.target.value)}
+              onChange={setFilterBeneficiary}
+              options={[
+                { value: '', label: 'الكل' },
+                ...beneficiaryOptions,
+              ]}
+              placeholder="الكل"
             />
             <Input
               labelAr="من تاريخ"
@@ -830,54 +1245,19 @@ function LoansTab() {
       >
         <div className="space-y-6">
           {/* Beneficiary selector */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">المستفيد</label>
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="بحث عن مستفيد..."
-                value={beneficiarySearch}
-                onChange={(e) => setBeneficiarySearch(e.target.value)}
-                className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            {beneficiarySearch && !selectedBeneficiaryId && (
-              <div className="border border-gray-200 rounded-lg max-h-40 overflow-auto">
-                {filteredBeneficiaries.length === 0 ? (
-                  <p className="p-3 text-sm text-gray-400">لا توجد نتائج</p>
-                ) : (
-                  filteredBeneficiaries.map((b) => (
-                    <button
-                      key={b.id}
-                      onClick={() => {
-                        setSelectedBeneficiaryId(b.id)
-                        setBeneficiarySearch(`${b.firstNameAr} ${b.lastNameAr}`)
-                      }}
-                      className="w-full text-right px-4 py-2 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-0"
-                    >
-                      {b.firstNameAr} {b.lastNameAr}
-                      <span className="text-gray-400 mr-2">({b.firstName} {b.lastName})</span>
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
-            {selectedBeneficiaryId && (
-              <div className="flex items-center gap-2">
-                <Badge variant="success">تم الاختيار</Badge>
-                <button
-                  onClick={() => {
-                    setSelectedBeneficiaryId('')
-                    setBeneficiarySearch('')
-                  }}
-                  className="text-xs text-danger-500 hover:underline"
-                >
-                  تغيير
-                </button>
-              </div>
-            )}
-          </div>
+          <SearchableSelect
+            labelAr="المستفيد"
+            value={selectedBeneficiaryId}
+            onChange={(val) => {
+              setSelectedBeneficiaryId(val)
+              const b = beneficiaries.find((ben) => ben.id === val)
+              if (b) {
+              } else {
+              }
+            }}
+            options={beneficiaryOptions}
+            required
+          />
 
           {/* Dynamic items list */}
           <div className="space-y-3">

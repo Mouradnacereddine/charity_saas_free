@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, Input, Select, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
+import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { useDonorStore } from '../stores/donorStore'
 import { useCaisseStore } from '../stores/caisseStore'
 import { formatCurrency, formatDate } from '../utils/helpers'
@@ -218,11 +218,11 @@ export default function DonorsPage() {
           </div>
 
           {/* Filter by caisse */}
-          <Select
+          <SearchableSelect
             labelAr="تصفية حسب الصندوق"
             options={caisseOptions}
             value={filter.caisseId ?? ''}
-            onChange={(e) => handleFilterChange('caisseId', e.target.value)}
+            onChange={(val) => handleFilterChange('caisseId', val)}
           />
 
           {/* Min donation */}
