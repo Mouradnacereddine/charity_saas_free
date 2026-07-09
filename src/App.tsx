@@ -10,12 +10,40 @@ import InventoryPage from './pages/InventoryPage';
 import MedicalPage from './pages/MedicalPage';
 import './index.css';
 
+const PAGE_NAMES: Record<string, string> = {
+  dashboard: 'لوحة التحكم',
+  finance: 'المالية',
+  caisses: 'الصناديق',
+  beneficiaries: 'المستفيدون',
+  donors: 'المتبرعون',
+  inventory: 'المخزون والإعارات',
+  medical: 'التوجيه الطبي',
+};
+
 function App() {
-  const [activePage, setActivePage] = useState('dashboard');
+  const [activePage, setActivePage] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return hash && PAGE_NAMES[hash] ? hash : 'dashboard';
+  });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     seedRealisticData().then(() => setReady(true));
+  }, []);
+
+  const navigate = (page: string) => {
+    setActivePage(page);
+    window.location.hash = page;
+  };
+
+  // Listen for browser back/forward
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && PAGE_NAMES[hash]) setActivePage(hash);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
   if (!ready) {
@@ -29,29 +57,26 @@ function App() {
     );
   }
 
+  const breadcrumbs = [
+    { label: 'الرئيسية', page: 'dashboard' },
+    { label: PAGE_NAMES[activePage] || 'لوحة التحكم', page: activePage },
+  ];
+
   const renderPage = () => {
     switch (activePage) {
-      case 'dashboard':
-        return <DashboardPage />;
-      case 'finance':
-        return <FinancePage />;
-      case 'caisses':
-        return <CaissesPage />;
-      case 'beneficiaries':
-        return <BeneficiariesPage />;
-      case 'donors':
-        return <DonorsPage />;
-      case 'inventory':
-        return <InventoryPage />;
-      case 'medical':
-        return <MedicalPage />;
-      default:
-        return <DashboardPage />;
+      case 'dashboard': return <DashboardPage />;
+      case 'finance': return <FinancePage />;
+      case 'caisses': return <CaissesPage />;
+      case 'beneficiaries': return <BeneficiariesPage />;
+      case 'donors': return <DonorsPage />;
+      case 'inventory': return <InventoryPage />;
+      case 'medical': return <MedicalPage />;
+      default: return <DashboardPage />;
     }
   };
 
   return (
-    <Layout activePage={activePage} onNavigate={setActivePage}>
+    <Layout activePage={activePage} onNavigate={navigate} breadcrumbs={breadcrumbs}>
       {renderPage()}
     </Layout>
   );

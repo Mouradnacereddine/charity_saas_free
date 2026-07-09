@@ -511,6 +511,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
           <h2 className="text-2xl font-bold text-gray-900">التوجيه الطبي</h2>
           <p className="text-sm text-gray-500 mt-1">إدارة التوجيهات الطبية للمستفيدين</p>
         </div>
+        {activeTab === 'list' && (
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => setFilterOpen(!filterOpen)}>
             <Filter className="w-4 h-4" /> بحث متقدم
@@ -519,6 +520,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
             <Plus className="w-4 h-4" /> إضافة توجيه طبي
           </Button>
         </div>
+        )}
       </div>
 
       {/* Tabs */}

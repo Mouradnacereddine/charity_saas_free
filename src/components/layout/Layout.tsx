@@ -9,6 +9,7 @@ import {
   Stethoscope,
   Menu,
   X,
+  ChevronLeft,
 } from 'lucide-react';
 
 const navItems = [
@@ -25,10 +26,12 @@ export function Layout({
   children,
   activePage,
   onNavigate,
+  breadcrumbs,
 }: {
   children: ReactNode;
   activePage: string;
   onNavigate: (page: string) => void;
+  breadcrumbs?: { label: string; page: string }[];
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -95,18 +98,33 @@ export function Layout({
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Sticky header */}
-        <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between no-print">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
-            aria-label="فتح القائمة"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-800 truncate">
-            {navItems.find((n) => n.id === activePage)?.label || 'لوحة التحكم'}
-          </h2>
-          <div className="text-xs sm:text-sm text-gray-500 hidden xs:block">
+        <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 no-print">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
+              aria-label="فتح القائمة"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            {breadcrumbs && (
+              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500" dir="rtl">
+                {breadcrumbs.map((crumb, i) => (
+                  <span key={crumb.page} className="flex items-center gap-1.5">
+                    {i > 0 && <ChevronLeft className="w-3 h-3 text-gray-300" />}
+                    {i < breadcrumbs.length - 1 ? (
+                      <button onClick={() => onNavigate(crumb.page)} className="hover:text-primary-600 transition-colors">
+                        {crumb.label}
+                      </button>
+                    ) : (
+                      <span className="text-gray-900 font-medium">{crumb.label}</span>
+                    )}
+                  </span>
+                ))}
+              </nav>
+            )}
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500">
             {new Date().toLocaleDateString('ar-DZ', {
               weekday: 'short',
               year: 'numeric',

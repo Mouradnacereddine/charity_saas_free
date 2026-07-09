@@ -1282,20 +1282,16 @@ export default function BeneficiariesPage() {
             إدارة المستفيدين وبياناتهم — إجمالي: {beneficiaries.length}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="w-4 h-4" />
-            بحث متقدم
-          </Button>
-          <Button size="sm" onClick={openAddForm}>
-            <Plus className="w-4 h-4" />
-            إضافة مستفيد
-          </Button>
-        </div>
+        {activeTab === 'list' && (
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setShowFilters(!showFilters)}>
+              <Filter className="w-4 h-4" /> بحث متقدم
+            </Button>
+            <Button size="sm" onClick={openAddForm}>
+              <Plus className="w-4 h-4" /> إضافة مستفيد
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* ---- Tabs ---- */}
