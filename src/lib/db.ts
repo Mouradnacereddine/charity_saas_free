@@ -85,7 +85,7 @@ export async function seedDefaultData() {
   if (caisseCount === 0) {
     const now = new Date();
     await db.caisses.bulkAdd([
-      { id: crypto.randomUUID(), name: 'Caisse Sociale', nameAr: 'الصندوق الاجتماعي',
+      { id: crypto.randomUUID(), reference: 'CAI-DEFAULT-001', name: 'Caisse Sociale', nameAr: 'الصندوق الاجتماعي',
         subCategories: [
           { id: crypto.randomUUID(), name: 'Aide alimentaire', nameAr: 'مساعدة غذائية' },
           { id: crypto.randomUUID(), name: 'Aide vestimentaire', nameAr: 'مساعدة ملبسية' },
@@ -93,7 +93,7 @@ export async function seedDefaultData() {
         ],
         balance: 0, createdAt: now, updatedAt: now,
       },
-      { id: crypto.randomUUID(), name: 'Caisse Médicale', nameAr: 'الصندوق الطبي',
+      { id: crypto.randomUUID(), reference: 'CAI-DEFAULT-002', name: 'Caisse Médicale', nameAr: 'الصندوق الطبي',
         subCategories: [
           { id: crypto.randomUUID(), name: 'Analyses', nameAr: 'تحاليل' },
           { id: crypto.randomUUID(), name: 'Ophtalmologie', nameAr: 'طب العيون' },
@@ -103,21 +103,21 @@ export async function seedDefaultData() {
         ],
         balance: 0, createdAt: now, updatedAt: now,
       },
-      { id: crypto.randomUUID(), name: 'Caisse Kafala', nameAr: 'صندوق الكفالة',
+      { id: crypto.randomUUID(), reference: 'CAI-DEFAULT-003', name: 'Caisse Kafala', nameAr: 'صندوق الكفالة',
         subCategories: [
           { id: crypto.randomUUID(), name: 'Kafala orphelin', nameAr: 'كفالة يتيم' },
           { id: crypto.randomUUID(), name: 'Kafala veuve', nameAr: 'كفالة أرملة' },
         ],
         balance: 0, createdAt: now, updatedAt: now,
       },
-      { id: crypto.randomUUID(), name: 'Caisse Zakat', nameAr: 'صندوق الزكاة',
+      { id: crypto.randomUUID(), reference: 'CAI-DEFAULT-004', name: 'Caisse Zakat', nameAr: 'صندوق الزكاة',
         subCategories: [
           { id: crypto.randomUUID(), name: 'Zakat Al-Mal', nameAr: 'زكاة المال' },
           { id: crypto.randomUUID(), name: 'Zakat Al-Fitr', nameAr: 'زكاة الفطر' },
         ],
         balance: 0, createdAt: now, updatedAt: now,
       },
-      { id: crypto.randomUUID(), name: 'Caisse Générale', nameAr: 'الصندوق العام',
+      { id: crypto.randomUUID(), reference: 'CAI-DEFAULT-005', name: 'Caisse Générale', nameAr: 'الصندوق العام',
         subCategories: [], balance: 0, createdAt: now, updatedAt: now,
       },
     ]);

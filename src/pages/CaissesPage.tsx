@@ -5,6 +5,14 @@ import { formatCurrency } from '../utils/helpers';
 import { Plus, Edit, Trash2, FolderOpen, Tag } from 'lucide-react';
 import type { Caisse, SubCategory } from '../types';
 
+const generateCaisseReference = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const r = String(Math.floor(Math.random()*10000)).padStart(4,'0');
+  return `CAI-${y}${m}-${r}`;
+};
+
 export default function CaissesPage() {
   const { caisses, loading, loadCaisses, addCaisse, updateCaisse, deleteCaisse, addSubCategory, updateSubCategory, deleteSubCategory } = useCaisseStore();
 
@@ -25,7 +33,7 @@ export default function CaissesPage() {
 
   const handleAddCaisse = async () => {
     if (!nameAr.trim()) return;
-    await addCaisse(name || nameAr, nameAr);
+    await addCaisse(name || nameAr, nameAr, generateCaisseReference());
     setName('');
     setNameAr('');
     setShowAddModal(false);
@@ -109,7 +117,10 @@ export default function CaissesPage() {
                     <FolderOpen className="w-5 h-5 text-primary-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{caisse.nameAr}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900">{caisse.nameAr}</h3>
+                      <span className="text-xs text-primary-500 font-mono" dir="ltr">{caisse.reference || '—'}</span>
+                    </div>
                     <p className="text-xs text-gray-500">{caisse.name}</p>
                   </div>
                 </div>

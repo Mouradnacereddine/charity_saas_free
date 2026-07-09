@@ -7,7 +7,7 @@ interface CaisseStore {
   caisses: Caisse[];
   loading: boolean;
   loadCaisses: () => Promise<void>;
-  addCaisse: (name: string, nameAr: string) => Promise<void>;
+  addCaisse: (name: string, nameAr: string, reference: string) => Promise<void>;
   updateCaisse: (id: string, data: Partial<Caisse>) => Promise<void>;
   deleteCaisse: (id: string) => Promise<void>;
   addSubCategory: (caisseId: string, name: string, nameAr: string) => Promise<void>;
@@ -26,10 +26,11 @@ export const useCaisseStore = create<CaisseStore>((set, get) => ({
     set({ caisses, loading: false });
   },
 
-  addCaisse: async (name: string, nameAr: string) => {
+  addCaisse: async (name: string, nameAr: string, reference: string) => {
     const now = new Date();
     const caisse: Caisse = {
       id: generateId(),
+      reference,
       name,
       nameAr,
       subCategories: [],

@@ -21,6 +21,7 @@ describe('caisseStore', () => {
       await db.caisses.bulkAdd([
         {
           id: 'caisse-1',
+          reference: 'CAI-TEST-XXX' ,
           name: 'Caisse Sociale',
           nameAr: 'الصندوق الاجتماعي',
           subCategories: [],
@@ -30,6 +31,7 @@ describe('caisseStore', () => {
         },
         {
           id: 'caisse-2',
+          reference: 'CAI-TEST-XXX' ,
           name: 'Caisse Medicale',
           nameAr: 'الصندوق الطبي',
           subCategories: [],
@@ -61,7 +63,7 @@ describe('caisseStore', () => {
   describe('addCaisse', () => {
     it('creates a caisse with correct fields', async () => {
       const store = useCaisseStore.getState();
-      await store.addCaisse('Caisse Test', 'صندوق اختبار');
+      await store.addCaisse('Caisse Test', 'صندوق اختبار', 'CAI-TEST-ADD');
 
       const state = useCaisseStore.getState();
       expect(state.caisses).toHaveLength(1);
@@ -87,6 +89,7 @@ describe('caisseStore', () => {
       const now = new Date();
       await db.caisses.add({
         id: 'caisse-upd',
+          reference: 'CAI-TEST-XXX' ,
         name: 'Old Name',
         nameAr: 'اسم قديم',
         subCategories: [],
@@ -116,6 +119,7 @@ describe('caisseStore', () => {
       const now = new Date();
       await db.caisses.add({
         id: 'caisse-del',
+          reference: 'CAI-TEST-XXX' ,
         name: 'To Delete',
         nameAr: 'للحذف',
         subCategories: [],
@@ -144,6 +148,7 @@ describe('caisseStore', () => {
       const now = new Date();
       await db.caisses.add({
         id: 'caisse-sub',
+          reference: 'CAI-TEST-XXX' ,
         name: 'Caisse Sub',
         nameAr: 'صندوق فرعي',
         subCategories: [],
@@ -171,6 +176,7 @@ describe('caisseStore', () => {
       const now = new Date();
       await db.caisses.add({
         id: 'caisse-sub-upd',
+          reference: 'CAI-TEST-XXX' ,
         name: 'Caisse',
         nameAr: 'صندوق',
         subCategories: [{ id: 'sub-1', name: 'Old Sub', nameAr: 'فرعي قديم' }],
@@ -196,6 +202,7 @@ describe('caisseStore', () => {
       const now = new Date();
       await db.caisses.add({
         id: 'caisse-sub-del',
+          reference: 'CAI-TEST-XXX' ,
         name: 'Caisse',
         nameAr: 'صندوق',
         subCategories: [
@@ -223,6 +230,7 @@ describe('caisseStore', () => {
       const now = new Date();
       await db.caisses.add({
         id: 'caisse-bal',
+          reference: 'CAI-TEST-XXX' ,
         name: 'Balance Caisse',
         nameAr: 'صندوق الرصيد',
         subCategories: [],

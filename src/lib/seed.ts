@@ -22,7 +22,7 @@ export async function seedRealisticData() {
   // ── CAISSES ───────────────────────────────────────────────
   const caisses = [
     {
-      id: generateId(), name: 'Caisse Sociale', nameAr: 'الصندوق الاجتماعي',
+      id: generateId(), reference: 'CAI-SEED-001', name: 'Caisse Sociale', nameAr: 'الصندوق الاجتماعي',
       subCategories: [
         { id: generateId(), name: 'Aide alimentaire', nameAr: 'مساعدة غذائية' },
         { id: generateId(), name: 'Aide vestimentaire', nameAr: 'مساعدة ملبسية' },
@@ -31,7 +31,7 @@ export async function seedRealisticData() {
       ], balance: 85000, createdAt: now, updatedAt: now,
     },
     {
-      id: generateId(), name: 'Caisse Médicale', nameAr: 'الصندوق الطبي',
+      id: generateId(), reference: 'CAI-SEED-002', name: 'Caisse Médicale', nameAr: 'الصندوق الطبي',
       subCategories: [
         { id: generateId(), name: 'Analyses', nameAr: 'تحاليل' },
         { id: generateId(), name: 'Ophtalmologie', nameAr: 'طب العيون' },
@@ -42,7 +42,7 @@ export async function seedRealisticData() {
       ], balance: 120000, createdAt: now, updatedAt: now,
     },
     {
-      id: generateId(), name: 'Caisse Kafala', nameAr: 'صندوق الكفالة',
+      id: generateId(), reference: 'CAI-SEED-003', name: 'Caisse Kafala', nameAr: 'صندوق الكفالة',
       subCategories: [
         { id: generateId(), name: 'Kafala orphelin', nameAr: 'كفالة يتيم' },
         { id: generateId(), name: 'Kafala veuve', nameAr: 'كفالة أرملة' },
@@ -50,7 +50,7 @@ export async function seedRealisticData() {
       ], balance: 200000, createdAt: now, updatedAt: now,
     },
     {
-      id: generateId(), name: 'Caisse Zakat', nameAr: 'صندوق الزكاة',
+      id: generateId(), reference: 'CAI-SEED-004', name: 'Caisse Zakat', nameAr: 'صندوق الزكاة',
       subCategories: [
         { id: generateId(), name: 'Zakat Al-Mal', nameAr: 'زكاة المال' },
         { id: generateId(), name: 'Zakat Al-Fitr', nameAr: 'زكاة الفطر' },
@@ -58,14 +58,14 @@ export async function seedRealisticData() {
       ], balance: 350000, createdAt: now, updatedAt: now,
     },
     {
-      id: generateId(), name: 'Caisse Générale', nameAr: 'الصندوق العام',
+      id: generateId(), reference: 'CAI-SEED-005', name: 'Caisse Générale', nameAr: 'الصندوق العام',
       subCategories: [
         { id: generateId(), name: 'Frais fonctionnement', nameAr: 'مصاريف تشغيل' },
         { id: generateId(), name: 'Projets', nameAr: 'مشاريع' },
       ], balance: 45000, createdAt: now, updatedAt: now,
     },
     {
-      id: generateId(), name: 'Caisse Urgences', nameAr: 'صندوق الطوارئ',
+      id: generateId(), reference: 'CAI-SEED-006', name: 'Caisse Urgences', nameAr: 'صندوق الطوارئ',
       subCategories: [
         { id: generateId(), name: 'Catastrophes naturelles', nameAr: 'كوارث طبيعية' },
         { id: generateId(), name: 'Secours urgent', nameAr: 'إغاثة عاجلة' },

@@ -45,12 +45,6 @@ export default function MedicalPage() {
     loadCaisses();
   }, []);
 
-  // Find medical caisses
-  const medicalCaisses = caisses.filter(
-    (c) => c.nameAr.includes('طب') || c.nameAr.includes('صح') || c.name.toLowerCase().includes('médic')
-  );
-  const allCaisses = medicalCaisses.length > 0 ? medicalCaisses : caisses;
-
   const selectedCaisse = caisses.find((c) => c.id === caisseId);
 
   const resetForm = () => {
@@ -159,48 +153,43 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
           <h2 className="text-2xl font-bold text-gray-900">التوجيه الطبي</h2>
           <p className="text-sm text-gray-500 mt-1">إدارة التوجيهات الطبية للمستفيدين</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="w-4 h-4" />
-          إضافة توجيه طبي
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setFilterOpen(!filterOpen)}
+          >
+            <Filter className="w-4 h-4" />
+            بحث متقدم
+          </Button>
+          <Button size="sm" onClick={() => setShowAddModal(true)}>
+            <Plus className="w-4 h-4" />
+            إضافة توجيه طبي
+          </Button>
+        </div>
       </div>
 
-      {/* Search + Filter */}
-      <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="بحث بالاسم، الطبيب، نوع التحليل..."
-              className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              value={filterSearchTerm}
-              onChange={(e) => setFilterSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilterOpen(!filterOpen)}
-              className={`px-3 py-2 border border-gray-300 rounded-lg text-sm flex items-center gap-2 transition-colors ${
-                filterOpen
-                  ? 'bg-primary-50 border-primary-300 text-primary-700'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              فلترة
-            </button>
-          </div>
-        </div>
+      {/* Quick Search */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="بحث بالاسم، الطبيب، نوع التحليل..."
+          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          value={filterSearchTerm}
+          onChange={(e) => setFilterSearchTerm(e.target.value)}
+        />
+      </div>
 
-        {filterOpen && (
-          <Card>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Advanced Filters */}
+      {filterOpen && (
+        <Card titleAr="بحث متقدم">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <SearchableSelect
                 labelAr="الصندوق"
                 value={filterCaisseId}
                 onChange={setFilterCaisseId}
-                options={allCaisses.map((c) => ({
+                options={caisses.map((c) => ({
                   value: c.id,
                   label: c.nameAr,
                 }))}
@@ -266,9 +255,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 />
               </div>
               <div className="flex items-end gap-2">
-                <button
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 transition-colors"
-                  onClick={() => {
+                <Button size="sm" variant="secondary" onClick={() => {
                     setFilterCaisseId('');
                     setFilterMinAmount('');
                     setFilterMaxAmount('');
@@ -277,15 +264,13 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                     setFilterDoctor('');
                     setFilterAnalysis('');
                     setFilterSearchTerm('');
-                  }}
-                >
+                  }}>
                   إعادة تعيين
-                </button>
+                </Button>
               </div>
             </div>
           </Card>
         )}
-      </div>
 
       {/* Referrals Table */}
       {filteredReferrals.length === 0 ? (
@@ -371,7 +356,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 setCaisseId(val);
                 setSubCategoryId('');
               }}
-              options={allCaisses.map((c) => ({
+              options={caisses.map((c) => ({
                 value: c.id,
                 label: c.nameAr,
               }))}

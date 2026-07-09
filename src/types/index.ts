@@ -7,13 +7,22 @@
 export type AttributType = 'veuve' | 'orphelin' | 'personne_agee' | 'handicape' | 'famille_demunie' | 'autre';
 export type TransactionType = 'credit' | 'debit';
 export type FundSource = 'banque' | 'caisse_physique';
-export type ArticleStatus = 'disponible' | 'prete' | 'endommage' | 'hors_service';
+export type ArticleStatusEnum = 'disponible' | 'prete' | 'endommage' | 'hors_service';
 export type LoanStatus = 'en_cours' | 'partiellement_retourne' | 'retourne' | 'definitif';
 export type ChildHealthStatus = 'bonne_sante' | 'malade' | 'handicape' | 'autre';
 
 // ---- Article Category ----
 
 export interface ArticleCategory {
+  id: string;
+  name: string;
+  nameAr: string;
+  createdAt: Date;
+}
+
+// ---- Article Status ----
+
+export interface ArticleStatus {
   id: string;
   name: string;
   nameAr: string;
@@ -39,6 +48,7 @@ export interface SubCategory {
 
 export interface Caisse {
   id: string;
+  reference: string;
   name: string;
   nameAr: string;
   subCategories: SubCategory[];
@@ -155,7 +165,7 @@ export interface Article {
   categoryAr: string;
   quantity: number;
   availableQuantity: number;
-  status: ArticleStatus;
+  status: ArticleStatusEnum;
   storageLocation: string;
   storageLocationAr: string;
   condition: string;

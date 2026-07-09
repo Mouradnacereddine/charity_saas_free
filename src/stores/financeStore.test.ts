@@ -91,6 +91,7 @@ describe('financeStore', () => {
       const now = new Date();
       await db.caisses.add({
         id: 'caisse-fin',
+        reference: 'CAI-TEST-FIN',
         name: 'Caisse Generale',
         nameAr: 'الصندوق العام',
         subCategories: [],
@@ -229,6 +230,7 @@ describe('financeStore', () => {
       const now = new Date();
       await db.caisses.add({
         id: 'caisse-filter',
+        reference: 'CAI-TEST-FIN',
         name: 'Filter Caisse',
         nameAr: 'صندوق فلتر',
         subCategories: [],
