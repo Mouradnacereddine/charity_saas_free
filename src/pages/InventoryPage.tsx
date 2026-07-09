@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { useInventoryStore } from '../stores/inventoryStore'
 import { useBeneficiaryStore } from '../stores/beneficiaryStore'
@@ -70,12 +70,41 @@ function getStorageNameAr(storageId: string, locations: StorageLocation[]): stri
 
 export default function InventoryPage() {
   const [activeTab, setActiveTab] = useState<'stock' | 'loans' | 'settings'>('stock')
+  const stockActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
+  const loansActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
 
   return (
     <div className="space-y-6">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">إدارة المخزون والإعارات</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">إدارة المخزون والإعارات</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {activeTab === 'stock' ? 'إدارة المواد والمخزون' : activeTab === 'loans' ? 'إدارة الإعارات والمرتجعات' : 'إدارة التصنيفات والمواقع'}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {activeTab === 'stock' && (
+            <>
+              <Button variant="secondary" size="sm" onClick={() => stockActions.current.toggleFilter()}>
+                <Filter className="w-4 h-4" /> بحث متقدم
+              </Button>
+              <Button size="sm" onClick={() => stockActions.current.addItem()}>
+                <Plus className="w-4 h-4" /> إضافة مقال
+              </Button>
+            </>
+          )}
+          {activeTab === 'loans' && (
+            <>
+              <Button variant="secondary" size="sm" onClick={() => loansActions.current.toggleFilter()}>
+                <Filter className="w-4 h-4" /> بحث متقدم
+              </Button>
+              <Button size="sm" onClick={() => loansActions.current.addItem()}>
+                <Plus className="w-4 h-4" /> إنشاء إعارة
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -118,9 +147,9 @@ export default function InventoryPage() {
       </div>
 
       {activeTab === 'stock' ? (
-        <StockTab />
+        <StockTab actionsRef={stockActions} />
       ) : activeTab === 'loans' ? (
-        <LoansTab />
+        <LoansTab actionsRef={loansActions} />
       ) : (
         <SettingsTab />
       )}
@@ -516,10 +545,15 @@ function SettingsTab() {
 // STOCK TAB
 // ============================================================
 
-function StockTab() {
+function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }> }) {
   const { articles, loading, loadArticles, addArticle, updateArticle, deleteArticle } = useInventoryStore()
   const [categories, setCategories] = useState<ArticleCategory[]>([])
   const [locations, setLocations] = useState<StorageLocation[]>([])
+
+  // Expose actions to parent header buttons via effect
+  useEffect(() => {
+    actionsRef.current = { toggleFilter: () => setFilterOpen((v) => !v), addItem: openAdd }
+  })
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterSearchTerm, setFilterSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
@@ -653,26 +687,16 @@ function StockTab() {
 
   return (
     <>
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="بحث عن مقال..."
-            value={filterSearchTerm}
-            onChange={(e) => setFilterSearchTerm(e.target.value)}
-            className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setFilterOpen(!filterOpen)}>
-            <Filter className="w-4 h-4" /> بحث متقدم
-          </Button>
-          <Button size="sm" onClick={openAdd}>
-            <Plus className="w-4 h-4" /> إضافة مقال
-          </Button>
-        </div>
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="بحث عن مقال..."
+          value={filterSearchTerm}
+          onChange={(e) => setFilterSearchTerm(e.target.value)}
+          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
       </div>
 
       {/* Filters */}
@@ -915,7 +939,7 @@ function StockTab() {
 // LOANS TAB
 // ============================================================
 
-function LoansTab() {
+function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }> }) {
   const { articles, loans, loading, loadArticles, loadLoans, createLoan, returnItems, addItemToLoan, removeItemFromLoan, markLoanDefinitive } = useInventoryStore()
   const { beneficiaries, loadBeneficiaries } = useBeneficiaryStore()
 
@@ -928,6 +952,11 @@ function LoansTab() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
+
+  // Expose actions to parent header buttons
+  useEffect(() => {
+    actionsRef.current = { toggleFilter: () => setFilterOpen((v) => !v), addItem: () => setShowCreateModal(true) }
+  })
 
   // Create loan form state
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState('')
@@ -984,14 +1013,6 @@ function LoansTab() {
   ]
 
   // ---- Create Loan ----
-
-  const openCreateLoan = () => {
-    setSelectedBeneficiaryId('')
-    setLoanItems([])
-    setExpectedReturnDate('')
-    setLoanNotes('')
-    setShowCreateModal(true)
-  }
 
   const addLoanItemRow = () => {
     setLoanItems([...loanItems, { articleId: '', quantity: 1, conditionOnLoan: '' }])
@@ -1143,26 +1164,16 @@ function LoansTab() {
 
   return (
     <>
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="بحث عن إعارة..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setFilterOpen(!filterOpen)}>
-            <Filter className="w-4 h-4" /> بحث متقدم
-          </Button>
-          <Button size="sm" onClick={openCreateLoan}>
-            <Plus className="w-4 h-4" /> إنشاء إعارة
-          </Button>
-        </div>
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="بحث عن إعارة..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
       </div>
 
       {/* Filters */}
