@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/layout/Layout';
-import { seedRealisticData } from './lib/seed';
+import { useAuth } from './hooks/useAuth';
 import DashboardPage from './pages/DashboardPage';
 import FinancePage from './pages/FinancePage';
 import CaissesPage from './pages/CaissesPage';
@@ -8,9 +9,23 @@ import BeneficiariesPage from './pages/BeneficiariesPage';
 import DonorsPage from './pages/DonorsPage';
 import InventoryPage from './pages/InventoryPage';
 import MedicalPage from './pages/MedicalPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import './index.css';
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 30_000,
+    },
+  },
+});
+
 const PAGE_NAMES: Record<string, string> = {
+  login: 'تسجيل الدخول',
+  register: 'إنشاء حساب',
   dashboard: 'لوحة التحكم',
   finance: 'المالية',
   caisses: 'الصناديق',
@@ -20,23 +35,18 @@ const PAGE_NAMES: Record<string, string> = {
   medical: 'التوجيه الطبي',
 };
 
-function App() {
+function AppContent() {
   const [activePage, setActivePage] = useState(() => {
     const hash = window.location.hash.replace('#', '');
-    return hash && PAGE_NAMES[hash] ? hash : 'dashboard';
+    return hash && PAGE_NAMES[hash] ? hash : (localStorage.getItem('accessToken') ? 'dashboard' : 'login');
   });
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    seedRealisticData().then(() => setReady(true));
-  }, []);
+  const { isAuthenticated, isLoading } = useAuth();
 
   const navigate = (page: string) => {
     setActivePage(page);
     window.location.hash = page;
   };
 
-  // Listen for browser back/forward
   useEffect(() => {
     const onHashChange = () => {
       const hash = window.location.hash.replace('#', '');
@@ -46,7 +56,13 @@ function App() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
-  if (!ready) {
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && !['login', 'register'].includes(activePage)) {
+      navigate('login');
+    }
+  }, [isAuthenticated, isLoading, activePage]);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -56,6 +72,13 @@ function App() {
       </div>
     );
   }
+
+  // Auth pages (no layout)
+  if (activePage === 'login') return <LoginPage onSuccess={() => navigate('dashboard')} />;
+  if (activePage === 'register') return <RegisterPage onSuccess={() => navigate('dashboard')} />;
+
+  // Protected pages
+  if (!isAuthenticated) return null;
 
   const breadcrumbs = [
     { label: 'الرئيسية', page: 'dashboard' },
@@ -79,6 +102,14 @@ function App() {
     <Layout activePage={activePage} onNavigate={navigate} breadcrumbs={breadcrumbs}>
       {renderPage()}
     </Layout>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
   );
 }
 

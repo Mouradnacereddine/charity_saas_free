@@ -1,0 +1,401 @@
+// Prisma Schema — SaaS Association Charitable
+// PostgreSQL provider with multi-tenant (Association) design
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  admin
+  user
+}
+
+enum TransactionType {
+  credit
+  debit
+}
+
+enum FundSource {
+  banque
+  caisse_physique
+}
+
+enum ArticleStatus {
+  disponible
+  prete
+  endommage
+  hors_service
+}
+
+enum LoanStatus {
+  en_cours
+  partiellement_retourne
+  retourne
+  definitif
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model Association {
+  id        String   @id @default(uuid())
+  name      String
+  nameAr    String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  users              User[]
+  caisses            Caisse[]
+  bankAccounts       BankAccount[]
+  beneficiaries      Beneficiary[]
+  donors             Donor[]
+  transactions       Transaction[]
+  articleCategories  ArticleCategory[]
+  storageLocations   StorageLocation[]
+  articles           Article[]
+  loans              Loan[]
+  medicalAnalysisTypes MedicalAnalysisType[]
+  medicalHospitals   MedicalHospital[]
+  medicalReferrals   MedicalReferral[]
+  donationReceipts   DonationReceipt[]
+  notifications      Notification[]
+
+  @@index([email])
+}
+
+model User {
+  id            String   @id @default(uuid())
+  associationId String
+  email         String   @unique
+  password      String
+  name          String
+  nameAr        String
+  role          Role     @default(user)
+  createdAt     DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId])
+  @@index([email])
+}
+
+model Caisse {
+  id            String   @id @default(uuid())
+  associationId String
+  reference     String
+  name          String
+  nameAr        String
+  balance       Float    @default(0)
+  subCategories Json     @default("[]")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  association      Association       @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  transactions     Transaction[]
+  beneficiaries    Beneficiary[]
+  medicalReferrals MedicalReferral[]
+  donationReceipts DonationReceipt[]
+
+  @@index([associationId])
+}
+
+model BankAccount {
+  id            String   @id @default(uuid())
+  associationId String
+  bankName      String
+  bankNameAr    String
+  accountNumber String
+  rib           String
+  iban          String
+  swift         String
+  balance       Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  association  Association  @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([associationId])
+}
+
+model Beneficiary {
+  id                 String   @id @default(uuid())
+  associationId      String
+  reference          String
+  firstName          String
+  lastName           String
+  firstNameAr        String
+  lastNameAr         String
+  address            String
+  addressAr          String
+  phone              String
+  nationalCardNumber String
+  dateOfBirth        DateTime
+  attribut           String
+  onBehalfOfName     String?
+  situation          String?
+  situationAr        String?
+  children           Json     @default("[]")
+  caisseId           String?
+  subCategoryId      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  association      Association        @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  caisse           Caisse?            @relation(fields: [caisseId], references: [id], onDelete: SetNull)
+  transactions     Transaction[]
+  loans            Loan[]
+  medicalReferrals MedicalReferral[]
+
+  @@index([associationId])
+  @@index([caisseId])
+  @@index([attribut])
+}
+
+model Donor {
+  id            String   @id @default(uuid())
+  associationId String
+  reference     String
+  firstName     String
+  lastName      String
+  firstNameAr   String
+  lastNameAr    String
+  phone         String
+  email         String?
+  address       String?
+  totalDonated  Float    @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  association      Association      @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  transactions     Transaction[]
+  donationReceipts DonationReceipt[]
+
+  @@index([associationId])
+}
+
+model Transaction {
+  id              String          @id @default(uuid())
+  associationId   String
+  type            TransactionType
+  amount          Float
+  amountInWords   String
+  amountInWordsAr String
+  fundSource      FundSource
+  caisseId        String
+  subCategoryId   String?
+  bankAccountId   String?
+  donorId         String?
+  beneficiaryId   String?
+  description     String
+  descriptionAr   String
+  receiptNumber   String?
+  date            DateTime
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  association      Association       @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  caisse           Caisse            @relation(fields: [caisseId], references: [id])
+  bankAccount      BankAccount?      @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
+  donor            Donor?            @relation(fields: [donorId], references: [id], onDelete: SetNull)
+  beneficiary      Beneficiary?      @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
+  donationReceipts DonationReceipt[]
+
+  @@index([associationId])
+  @@index([caisseId])
+  @@index([bankAccountId])
+  @@index([donorId])
+  @@index([beneficiaryId])
+  @@index([date])
+  @@index([type])
+}
+
+model ArticleCategory {
+  id            String   @id @default(uuid())
+  associationId String
+  name          String
+  nameAr        String
+  createdAt     DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  articles    Article[]
+
+  @@index([associationId])
+}
+
+model StorageLocation {
+  id            String   @id @default(uuid())
+  associationId String
+  name          String
+  nameAr        String
+  createdAt     DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  articles    Article[]
+
+  @@index([associationId])
+}
+
+model Article {
+  id                String        @id @default(uuid())
+  associationId     String
+  reference         String
+  name              String
+  nameAr            String
+  description       String?
+  descriptionAr     String?
+  categoryId        String
+  quantity          Int
+  availableQuantity Int
+  status            ArticleStatus @default(disponible)
+  storageLocationId String
+  condition         String
+  conditionAr       String
+  isPermanent       Boolean       @default(false)
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  association     Association     @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  category        ArticleCategory @relation(fields: [categoryId], references: [id])
+  storageLocation StorageLocation @relation(fields: [storageLocationId], references: [id])
+
+  @@index([associationId])
+  @@index([categoryId])
+  @@index([storageLocationId])
+  @@index([status])
+}
+
+model Loan {
+  id                 String     @id @default(uuid())
+  associationId      String
+  reference          String
+  beneficiaryId      String
+  items              Json       @default("[]")
+  status             LoanStatus @default(en_cours)
+  loanDate           DateTime
+  expectedReturnDate DateTime?
+  actualReturnDate   DateTime?
+  notes              String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  association  Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  beneficiary  Beneficiary @relation(fields: [beneficiaryId], references: [id])
+
+  @@index([associationId])
+  @@index([beneficiaryId])
+  @@index([status])
+}
+
+model MedicalAnalysisType {
+  id            String   @id @default(uuid())
+  associationId String
+  name          String
+  nameAr        String
+  createdAt     DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId])
+}
+
+model MedicalHospital {
+  id            String   @id @default(uuid())
+  associationId String
+  name          String
+  nameAr        String
+  createdAt     DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId])
+}
+
+model MedicalReferral {
+  id              String   @id @default(uuid())
+  associationId   String
+  reference       String
+  beneficiaryId   String
+  caisseId        String
+  subCategoryId   String?
+  doctorName      String
+  doctorNameAr    String
+  analysisType    String?
+  analysisTypeAr  String?
+  hospital        String?
+  hospitalAr      String?
+  amount          Float
+  amountInWords   String
+  amountInWordsAr String
+  date            DateTime
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [id])
+  caisse      Caisse      @relation(fields: [caisseId], references: [id])
+
+  @@index([associationId])
+  @@index([beneficiaryId])
+  @@index([caisseId])
+  @@index([date])
+}
+
+model DonationReceipt {
+  id              String   @id @default(uuid())
+  associationId   String
+  receiptNumber   String
+  donorId         String
+  donorName       String
+  donorNameAr     String
+  transactionId   String
+  amount          Float
+  amountInWords   String
+  amountInWordsAr String
+  caisseId        String
+  caisseName      String
+  caisseNameAr    String
+  date            DateTime
+  createdAt       DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  donor       Donor       @relation(fields: [donorId], references: [id])
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  caisse      Caisse      @relation(fields: [caisseId], references: [id])
+
+  @@index([associationId])
+  @@index([donorId])
+  @@index([transactionId])
+  @@index([caisseId])
+  @@index([date])
+}
+
+model Notification {
+  id            String   @id @default(uuid())
+  associationId String
+  type          String
+  message       String
+  messageAr     String
+  read          Boolean  @default(false)
+  link          String?
+  createdAt     DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId])
+  @@index([read])
+}
