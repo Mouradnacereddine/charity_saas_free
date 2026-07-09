@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Input, SearchableSelect, Modal, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI';
+import { Card, Button, Input, SearchableSelect, Modal, TextArea, EmptyState } from '../components/common/UI';
 import { useMedicalStore } from '../stores/medicalStore';
 import { useBeneficiaryStore } from '../stores/beneficiaryStore';
 import { useCaisseStore } from '../stores/caisseStore';
 import { formatCurrency, numberToArabicWords } from '../utils/helpers';
 import { printReceipt } from '../lib/receipt';
-import { Plus, Search, Eye, Trash2, Stethoscope, Printer, Filter } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import type { MedicalReferral } from '../types';
 
 export default function MedicalPage() {
-  const { referrals, loading, loadReferrals, addReferral, deleteReferral } = useMedicalStore();
+  const { referrals, loadReferrals, addReferral, deleteReferral } = useMedicalStore();
   const { beneficiaries, loadBeneficiaries } = useBeneficiaryStore();
   const { caisses, loadCaisses } = useCaisseStore();
 
+  const [activeTab, setActiveTab] = useState<'list' | 'settings'>('list');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState<MedicalReferral | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -44,8 +45,6 @@ export default function MedicalPage() {
     loadBeneficiaries();
     loadCaisses();
   }, []);
-
-  const selectedCaisse = caisses.find((c) => c.id === caisseId);
 
   const resetForm = () => {
     setBeneficiaryId('');
@@ -142,33 +141,8 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
 
     return true;
   });
-
-  if (loading) return <LoadingSpinner />;
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">التوجيه الطبي</h2>
-          <p className="text-sm text-gray-500 mt-1">إدارة التوجيهات الطبية للمستفيدين</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setFilterOpen(!filterOpen)}
-          >
-            <Filter className="w-4 h-4" />
-            بحث متقدم
-          </Button>
-          <Button size="sm" onClick={() => setShowAddModal(true)}>
-            <Plus className="w-4 h-4" />
-            إضافة توجيه طبي
-          </Button>
-        </div>
-      </div>
-
+  const renderListTab = () => (
+    <>
       {/* Quick Search */}
       <div className="relative">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -197,80 +171,58 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">المبلغ من</label>
                 <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
+                  type="number" min="0" placeholder="0"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={filterMinAmount}
-                  onChange={(e) => setFilterMinAmount(e.target.value)}
+                  value={filterMinAmount} onChange={(e) => setFilterMinAmount(e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">المبلغ إلى</label>
                 <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
+                  type="number" min="0" placeholder="0"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={filterMaxAmount}
-                  onChange={(e) => setFilterMaxAmount(e.target.value)}
+                  value={filterMaxAmount} onChange={(e) => setFilterMaxAmount(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">التاريخ من</label>
-                <input
-                  type="date"
+                <label className="block text-xs font-medium text-gray-600 mb-1">من تاريخ</label>
+                <input type="date"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={filterDateFrom}
-                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                  value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">التاريخ إلى</label>
-                <input
-                  type="date"
+                <label className="block text-xs font-medium text-gray-600 mb-1">إلى تاريخ</label>
+                <input type="date"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={filterDateTo}
-                  onChange={(e) => setFilterDateTo(e.target.value)}
+                  value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">اسم الطبيب</label>
-                <input
-                  type="text"
-                  placeholder="بحث باسم الطبيب..."
+                <input type="text" placeholder="بحث..."
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={filterDoctor}
-                  onChange={(e) => setFilterDoctor(e.target.value)}
+                  value={filterDoctor} onChange={(e) => setFilterDoctor(e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">نوع التحليل</label>
-                <input
-                  type="text"
-                  placeholder="بحث بنوع التحليل..."
+                <input type="text" placeholder="بحث..."
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={filterAnalysis}
-                  onChange={(e) => setFilterAnalysis(e.target.value)}
+                  value={filterAnalysis} onChange={(e) => setFilterAnalysis(e.target.value)}
                 />
               </div>
               <div className="flex items-end gap-2">
-                <Button size="sm" variant="secondary" onClick={() => {
-                    setFilterCaisseId('');
-                    setFilterMinAmount('');
-                    setFilterMaxAmount('');
-                    setFilterDateFrom('');
-                    setFilterDateTo('');
-                    setFilterDoctor('');
-                    setFilterAnalysis('');
-                    setFilterSearchTerm('');
-                  }}>
+                <Button size="sm" onClick={() => {
+                  setFilterCaisseId(''); setFilterMinAmount(''); setFilterMaxAmount('');
+                  setFilterDateFrom(''); setFilterDateTo(''); setFilterDoctor(''); setFilterAnalysis('');
+                }}>
                   إعادة تعيين
                 </Button>
               </div>
-            </div>
-          </Card>
-        )}
+          </div>
+        </Card>
+      )}
 
       {/* Referrals Table */}
       {filteredReferrals.length === 0 ? (
@@ -293,9 +245,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
               <tbody>
                 {filteredReferrals.map((referral) => (
                   <tr key={referral.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
-                      {referral.reference || '—'}
-                    </td>
+                    <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">{referral.reference || '—'}</td>
                     <td className="py-3 px-4 font-medium">{referral.beneficiaryNameAr}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr}</td>
                     <td className="py-3 px-4 hidden md:table-cell">{referral.analysisTypeAr || '—'}</td>
@@ -303,24 +253,9 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                     <td className="py-3 px-4 text-gray-500 hidden sm:table-cell">{referral.date}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => setShowDetailModal(referral)}
-                          className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handlePrint(referral)}
-                          className="p-1.5 text-gray-400 hover:text-success-600 hover:bg-green-50 rounded"
-                        >
-                          <Printer className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(referral.id)}
-                          className="p-1.5 text-gray-400 hover:text-danger-500 hover:bg-red-50 rounded"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <button onClick={() => setShowDetailModal(referral)} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded"><Eye className="w-4 h-4" /></button>
+                        <button onClick={() => handlePrint(referral)} className="p-1.5 text-gray-400 hover:text-success-600 hover:bg-green-50 rounded"><Printer className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(referral.id)} className="p-1.5 text-gray-400 hover:text-danger-500 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -332,192 +267,133 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
       )}
 
       {/* Add Referral Modal */}
-      <Modal
-        isOpen={showAddModal}
-        onClose={() => { setShowAddModal(false); resetForm(); }}
-        title="إضافة توجيه طبي"
-        size="lg"
-      >
+      <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); resetForm(); }} title="إضافة توجيه طبي" size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableSelect
-              labelAr="المستفيد"
-              value={beneficiaryId}
-              onChange={setBeneficiaryId}
-              options={beneficiaries.map((b) => ({
-                value: b.id,
-                label: `${b.firstNameAr} ${b.lastNameAr} (${b.reference || ''})`,
-              }))}
-            />
-            <SearchableSelect
-              labelAr="الصندوق"
-              value={caisseId}
-              onChange={(val) => {
-                setCaisseId(val);
-                setSubCategoryId('');
-              }}
-              options={caisses.map((c) => ({
-                value: c.id,
-                label: c.nameAr,
-              }))}
-            />
+            <SearchableSelect labelAr="المستفيد" value={beneficiaryId} onChange={setBeneficiaryId}
+              options={beneficiaries.map((b) => ({ value: b.id, label: `${b.firstNameAr} ${b.lastNameAr} (${b.reference || ''})` }))} />
+            <SearchableSelect labelAr="الصندوق" value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
+              options={caisses.map((c) => ({ value: c.id, label: c.nameAr }))} />
           </div>
-
-          {selectedCaisse && selectedCaisse.subCategories.length > 0 && (
-            <SearchableSelect
-              labelAr="الفئة الفرعية"
-              value={subCategoryId}
-              onChange={setSubCategoryId}
-              options={selectedCaisse.subCategories.map((s) => ({
-                value: s.id,
-                label: s.nameAr,
-              }))}
-            />
-          )}
-
+          {(() => {
+            const sc = caisses.find((c) => c.id === caisseId)
+            const subs = sc?.subCategories || []
+            if (subs.length === 0) return null
+            return <SearchableSelect labelAr="الفئة الفرعية" value={subCategoryId} onChange={setSubCategoryId}
+              options={subs.map((s) => ({ value: s.id, label: s.nameAr }))} />
+          })()}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              labelAr="اسم الطبيب بالعربية"
-              value={doctorNameAr}
-              onChange={(e) => setDoctorNameAr(e.target.value)}
-              placeholder="د. محمد ..."
-            />
-            <Input
-              labelAr="اسم الطبيب بالفرنسية (اختياري)"
-              value={doctorName}
-              onChange={(e) => setDoctorName(e.target.value)}
-              dir="ltr"
-            />
+            <Input labelAr="اسم الطبيب بالعربية" value={doctorNameAr} onChange={(e) => setDoctorNameAr(e.target.value)} placeholder="د. محمد ..." />
+            <Input labelAr="اسم الطبيب بالفرنسية (اختياري)" value={doctorName} onChange={(e) => setDoctorName(e.target.value)} dir="ltr" />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              labelAr="نوع التحليل / الفحص بالعربية"
-              value={analysisTypeAr}
-              onChange={(e) => setAnalysisTypeAr(e.target.value)}
-              placeholder="تحليل دم، أشعة..."
-            />
-            <Input
-              labelAr="نوع التحليل بالفرنسية (اختياري)"
-              value={analysisType}
-              onChange={(e) => setAnalysisType(e.target.value)}
-              dir="ltr"
-            />
+            <Input labelAr="نوع التحليل / الفحص بالعربية" value={analysisTypeAr} onChange={(e) => setAnalysisTypeAr(e.target.value)} placeholder="تحليل دم، أشعة..." />
+            <Input labelAr="نوع التحليل بالفرنسية (اختياري)" value={analysisType} onChange={(e) => setAnalysisType(e.target.value)} dir="ltr" />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              labelAr="المستشفى / العيادة بالعربية"
-              value={hospitalAr}
-              onChange={(e) => setHospitalAr(e.target.value)}
-            />
-            <Input
-              labelAr="المستشفى بالفرنسية (اختياري)"
-              value={hospital}
-              onChange={(e) => setHospital(e.target.value)}
-              dir="ltr"
-            />
+            <Input labelAr="المستشفى / العيادة بالعربية" value={hospitalAr} onChange={(e) => setHospitalAr(e.target.value)} />
+            <Input labelAr="المستشفى بالفرنسية (اختياري)" value={hospital} onChange={(e) => setHospital(e.target.value)} dir="ltr" />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Input
-                labelAr="المبلغ (دج)"
-                type="number"
-                value={amount || ''}
-                onChange={(e) => setAmount(Number(e.target.value))}
-                min={0}
-              />
-              {amount > 0 && (
-                <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(amount)}</p>
-              )}
+              <Input labelAr="المبلغ (دج)" type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
+              {amount > 0 && <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(amount)}</p>}
             </div>
-            <Input
-              labelAr="التاريخ"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+            <Input labelAr="التاريخ" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
-
-          <TextArea
-            labelAr="ملاحظات"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-
+          <TextArea labelAr="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
           <div className="flex gap-3 justify-end pt-4">
-            <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>
-              إلغاء
-            </Button>
-            <Button onClick={handleAddReferral} disabled={!beneficiaryId || !caisseId || !doctorNameAr}>
-              إضافة التوجيه
-            </Button>
+            <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>إلغاء</Button>
+            <Button onClick={handleAddReferral} disabled={!beneficiaryId || !caisseId || !doctorNameAr}>إضافة التوجيه</Button>
           </div>
         </div>
       </Modal>
 
       {/* Detail Modal */}
-      <Modal
-        isOpen={!!showDetailModal}
-        onClose={() => setShowDetailModal(null)}
-        title="تفاصيل التوجيه الطبي"
-        size="lg"
-      >
+      <Modal isOpen={!!showDetailModal} onClose={() => setShowDetailModal(null)} title="تفاصيل التوجيه الطبي" size="lg">
         {showDetailModal && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500">الرمز المرجعي</p>
-                <p className="font-semibold text-primary-700" dir="ltr">{showDetailModal.reference || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">المستفيد</p>
-                <p className="font-medium">{showDetailModal.beneficiaryNameAr}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">الطبيب</p>
-                <p className="font-medium">{showDetailModal.doctorNameAr}</p>
-              </div>
-              {showDetailModal.analysisTypeAr && (
-                <div>
-                  <p className="text-xs text-gray-500">نوع التحليل</p>
-                  <p className="font-medium">{showDetailModal.analysisTypeAr}</p>
-                </div>
-              )}
-              {showDetailModal.hospitalAr && (
-                <div>
-                  <p className="text-xs text-gray-500">المستشفى</p>
-                  <p className="font-medium">{showDetailModal.hospitalAr}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-xs text-gray-500">التاريخ</p>
-                <p className="font-medium">{showDetailModal.date}</p>
-              </div>
+              <div><p className="text-xs text-gray-500">الرمز المرجعي</p><p className="font-semibold text-primary-700" dir="ltr">{showDetailModal.reference || '—'}</p></div>
+              <div><p className="text-xs text-gray-500">المستفيد</p><p className="font-medium">{showDetailModal.beneficiaryNameAr}</p></div>
+              <div><p className="text-xs text-gray-500">الطبيب</p><p className="font-medium">{showDetailModal.doctorNameAr}</p></div>
+              {showDetailModal.analysisTypeAr && <div><p className="text-xs text-gray-500">نوع التحليل</p><p className="font-medium">{showDetailModal.analysisTypeAr}</p></div>}
+              {showDetailModal.hospitalAr && <div><p className="text-xs text-gray-500">المستشفى</p><p className="font-medium">{showDetailModal.hospitalAr}</p></div>}
+              <div><p className="text-xs text-gray-500">التاريخ</p><p className="font-medium">{showDetailModal.date}</p></div>
             </div>
-
             <div className="bg-primary-50 rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-primary-700">{formatCurrency(showDetailModal.amount)}</p>
               <p className="text-sm text-primary-600 mt-1">{showDetailModal.amountInWordsAr}</p>
             </div>
-
             {showDetailModal.notes && (
-              <div>
-                <p className="text-xs text-gray-500">ملاحظات</p>
-                <p className="text-sm bg-gray-50 rounded-lg p-3">{showDetailModal.notes}</p>
-              </div>
+              <div><p className="text-xs text-gray-500">ملاحظات</p><p className="text-sm bg-gray-50 rounded-lg p-3">{showDetailModal.notes}</p></div>
             )}
-
             <div className="flex justify-end">
-              <Button onClick={() => handlePrint(showDetailModal)} variant="success">
-                <Printer className="w-4 h-4" />
-                طباعة التوجيه
-              </Button>
+              <Button onClick={() => handlePrint(showDetailModal)} variant="success"><Printer className="w-4 h-4" /> طباعة التوجيه</Button>
             </div>
           </div>
         )}
       </Modal>
+    </>
+  )
+
+  const renderSettingsTab = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Settings className="w-5 h-5 text-primary-600" />
+          إدارة التصنيفات
+        </h3>
+        <p className="text-sm text-gray-500">إعدادات التوجيه الطبي — قيد التطوير</p>
+      </div>
+      <Card>
+        <div className="p-4 text-center text-gray-500">
+          <Stethoscope className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <p>سيتم إضافة إدارة التصنيفات الطبية قريباً</p>
+        </div>
+      </Card>
     </div>
-  );
+  )
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">التوجيه الطبي</h2>
+          <p className="text-sm text-gray-500 mt-1">إدارة التوجيهات الطبية للمستفيدين</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setFilterOpen(!filterOpen)}>
+            <Filter className="w-4 h-4" /> بحث متقدم
+          </Button>
+          <Button size="sm" onClick={() => setShowAddModal(true)}>
+            <Plus className="w-4 h-4" /> إضافة توجيه طبي
+          </Button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-2 sm:gap-4">
+          <button onClick={() => setActiveTab('list')}
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
+              activeTab === 'list' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}>
+            <Stethoscope className="inline-block w-4 h-4 ml-2" />
+            التوجيه الطبي
+          </button>
+          <button onClick={() => setActiveTab('settings')}
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
+              activeTab === 'settings' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}>
+            <Settings className="inline-block w-4 h-4 ml-2" />
+            إدارة التصنيفات
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === 'list' ? renderListTab() : renderSettingsTab()}
+    </div>
+  )
 }
