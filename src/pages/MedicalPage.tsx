@@ -345,12 +345,10 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
             <Input labelAr="اسم الطبيب بالفرنسية (اختياري)" value={doctorName} onChange={(e) => setDoctorName(e.target.value)} dir="ltr" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input labelAr="نوع التحليل / الفحص بالعربية" value={analysisTypeAr} onChange={(e) => setAnalysisTypeAr(e.target.value)} placeholder="تحليل دم، أشعة..." />
-            <Input labelAr="نوع التحليل بالفرنسية (اختياري)" value={analysisType} onChange={(e) => setAnalysisType(e.target.value)} dir="ltr" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input labelAr="المستشفى / العيادة بالعربية" value={hospitalAr} onChange={(e) => setHospitalAr(e.target.value)} />
-            <Input labelAr="المستشفى بالفرنسية (اختياري)" value={hospital} onChange={(e) => setHospital(e.target.value)} dir="ltr" />
+            <SearchableSelect labelAr="نوع التحليل / الفحص" value={analysisTypeAr} onChange={(val) => { const a = analysisTypes.find(x => x.nameAr === val); setAnalysisTypeAr(val); setAnalysisType(a?.name || val); }}
+              options={analysisTypes.map((a) => ({ value: a.nameAr, label: a.nameAr }))} placeholder="اختر تحليلاً..." />
+            <SearchableSelect labelAr="المستشفى / العيادة" value={hospitalAr} onChange={(val) => { const h = hospitals.find(x => x.nameAr === val); setHospitalAr(val); setHospital(h?.name || val); }}
+              options={hospitals.map((h) => ({ value: h.nameAr, label: h.nameAr }))} placeholder="اختر مستشفى..." />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
