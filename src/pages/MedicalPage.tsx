@@ -5,7 +5,7 @@ import { useBeneficiaryStore } from '../stores/beneficiaryStore';
 import { useCaisseStore } from '../stores/caisseStore';
 import { formatCurrency, numberToArabicWords } from '../utils/helpers';
 import { printReceipt } from '../lib/receipt';
-import { Plus, Search, Eye, Trash2, Stethoscope, Printer } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Stethoscope, Printer, Filter } from 'lucide-react';
 import type { MedicalReferral } from '../types';
 
 export default function MedicalPage() {
@@ -15,7 +15,15 @@ export default function MedicalPage() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState<MedicalReferral | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterSearchTerm, setFilterSearchTerm] = useState('');
+  const [filterCaisseId, setFilterCaisseId] = useState('');
+  const [filterMinAmount, setFilterMinAmount] = useState('');
+  const [filterMaxAmount, setFilterMaxAmount] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [filterDoctor, setFilterDoctor] = useState('');
+  const [filterAnalysis, setFilterAnalysis] = useState('');
 
   // Form states
   const [beneficiaryId, setBeneficiaryId] = useState('');
@@ -116,16 +124,29 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
   };
 
   const filteredReferrals = referrals.filter((r) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
+    const term = filterSearchTerm.toLowerCase();
+    if (term && !(
       r.beneficiaryNameAr.includes(term) ||
-      r.beneficiaryName.toLowerCase().includes(term) ||
+      r.beneficiaryName?.toLowerCase().includes(term) ||
       r.doctorNameAr.includes(term) ||
-      r.doctorName.toLowerCase().includes(term) ||
+      r.doctorName?.toLowerCase().includes(term) ||
       r.analysisTypeAr?.includes(term) ||
       r.hospitalAr?.includes(term)
-    );
+    )) return false;
+
+    if (filterCaisseId && r.caisseId !== filterCaisseId) return false;
+
+    if (filterMinAmount && r.amount < Number(filterMinAmount)) return false;
+    if (filterMaxAmount && r.amount > Number(filterMaxAmount)) return false;
+
+    if (filterDateFrom && r.date < filterDateFrom) return false;
+    if (filterDateTo && r.date > filterDateTo) return false;
+
+    if (filterDoctor && !r.doctorNameAr.includes(filterDoctor)) return false;
+
+    if (filterAnalysis && !(r.analysisTypeAr?.includes(filterAnalysis))) return false;
+
+    return true;
   });
 
   if (loading) return <LoadingSpinner />;
@@ -144,16 +165,130 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="بحث بالاسم، الطبيب، نوع التحليل..."
-          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      {/* Search + Filter */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="بحث بالاسم، الطبيب، نوع التحليل..."
+              className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              value={filterSearchTerm}
+              onChange={(e) => setFilterSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className={`px-3 py-2 border border-gray-300 rounded-lg text-sm flex items-center gap-2 transition-colors ${
+                filterOpen
+                  ? 'bg-primary-50 border-primary-300 text-primary-700'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              فلترة
+            </button>
+          </div>
+        </div>
+
+        {filterOpen && (
+          <Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">الصندوق</label>
+                <select
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  value={filterCaisseId}
+                  onChange={(e) => setFilterCaisseId(e.target.value)}
+                >
+                  <option value="">الكل</option>
+                  {allCaisses.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nameAr}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">المبلغ من</label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  value={filterMinAmount}
+                  onChange={(e) => setFilterMinAmount(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">المبلغ إلى</label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  value={filterMaxAmount}
+                  onChange={(e) => setFilterMaxAmount(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">التاريخ من</label>
+                <input
+                  type="date"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  value={filterDateFrom}
+                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">التاريخ إلى</label>
+                <input
+                  type="date"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  value={filterDateTo}
+                  onChange={(e) => setFilterDateTo(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">اسم الطبيب</label>
+                <input
+                  type="text"
+                  placeholder="بحث باسم الطبيب..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  value={filterDoctor}
+                  onChange={(e) => setFilterDoctor(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">نوع التحليل</label>
+                <input
+                  type="text"
+                  placeholder="بحث بنوع التحليل..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  value={filterAnalysis}
+                  onChange={(e) => setFilterAnalysis(e.target.value)}
+                />
+              </div>
+              <div className="flex items-end gap-2">
+                <button
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 transition-colors"
+                  onClick={() => {
+                    setFilterCaisseId('');
+                    setFilterMinAmount('');
+                    setFilterMaxAmount('');
+                    setFilterDateFrom('');
+                    setFilterDateTo('');
+                    setFilterDoctor('');
+                    setFilterAnalysis('');
+                    setFilterSearchTerm('');
+                  }}
+                >
+                  إعادة تعيين
+                </button>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* Referrals Table */}

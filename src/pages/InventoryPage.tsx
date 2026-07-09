@@ -3,7 +3,7 @@ import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, 
 import { useInventoryStore } from '../stores/inventoryStore'
 import { useBeneficiaryStore } from '../stores/beneficiaryStore'
 import { formatDate } from '../utils/helpers'
-import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter } from 'lucide-react'
 import type { Article, Loan, LoanItem } from '../types'
 
 // ---- Constants ----
@@ -104,7 +104,12 @@ export default function InventoryPage() {
 
 function StockTab() {
   const { articles, loading, loadArticles, addArticle, updateArticle, deleteArticle } = useInventoryStore()
-  const [searchTerm, setSearchTerm] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterSearchTerm, setFilterSearchTerm] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterStorage, setFilterStorage] = useState('')
+  const [filterType, setFilterType] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
   const [form, setForm] = useState(EMPTY_ARTICLE_FORM)
@@ -113,13 +118,27 @@ function StockTab() {
     loadArticles()
   }, [loadArticles])
 
-  const filtered = articles.filter(
-    (a) =>
-      a.nameAr.includes(searchTerm) ||
-      a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.categoryAr.includes(searchTerm) ||
-      a.category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filtered = articles.filter((a) => {
+    const matchesSearch =
+      !filterSearchTerm ||
+      a.nameAr.includes(filterSearchTerm) ||
+      a.name.toLowerCase().includes(filterSearchTerm.toLowerCase()) ||
+      a.categoryAr.includes(filterSearchTerm) ||
+      a.category.toLowerCase().includes(filterSearchTerm.toLowerCase())
+    const matchesCategory =
+      !filterCategory ||
+      a.categoryAr.includes(filterCategory) ||
+      a.category.toLowerCase().includes(filterCategory.toLowerCase())
+    const matchesStatus = !filterStatus || a.status === filterStatus
+    const matchesStorage =
+      !filterStorage ||
+      a.storageLocationAr.includes(filterStorage) ||
+      a.storageLocation.toLowerCase().includes(filterStorage.toLowerCase())
+    const matchesType =
+      !filterType ||
+      (filterType === 'permanent' ? a.isPermanent : !a.isPermanent)
+    return matchesSearch && matchesCategory && matchesStatus && matchesStorage && matchesType
+  })
 
   const openAdd = () => {
     setEditingArticle(null)
@@ -188,22 +207,80 @@ function StockTab() {
   return (
     <>
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="relative flex-1 sm:max-w-sm">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             placeholder="بحث عن مقال..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={filterSearchTerm}
+            onChange={(e) => setFilterSearchTerm(e.target.value)}
             className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
+        <Button variant="secondary" onClick={() => setFilterOpen(!filterOpen)}>
+          <Filter className="w-4 h-4" />
+          فلترة
+        </Button>
         <Button onClick={openAdd}>
           <Plus className="w-4 h-4" />
           إضافة مقال
         </Button>
       </div>
+
+      {/* Filters */}
+      {filterOpen && (
+        <Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <Input
+              labelAr="الفئة"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            />
+            <Select
+              labelAr="الحالة"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              options={[
+                { value: '', label: 'الكل' },
+                { value: 'disponible', label: 'متاح' },
+                { value: 'prete', label: 'مُعار' },
+                { value: 'endommage', label: 'تالف' },
+                { value: 'hors_service', label: 'خارج الخدمة' },
+              ]}
+            />
+            <Input
+              labelAr="مكان التخزين"
+              value={filterStorage}
+              onChange={(e) => setFilterStorage(e.target.value)}
+            />
+            <Select
+              labelAr="النوع"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              options={[
+                { value: '', label: 'الكل' },
+                { value: 'permanent', label: 'نهائي' },
+                { value: 'returnable', label: 'قابل للإرجاع' },
+              ]}
+            />
+            <div className="flex items-end md:col-span-4">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilterCategory('')
+                  setFilterStatus('')
+                  setFilterStorage('')
+                  setFilterType('')
+                  setFilterSearchTerm('')
+                }}
+              >
+                إعادة تعيين
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Articles table */}
       <Card>
@@ -398,6 +475,11 @@ function LoansTab() {
   const { beneficiaries, loadBeneficiaries } = useBeneficiaryStore()
 
   const [searchTerm, setSearchTerm] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterBeneficiary, setFilterBeneficiary] = useState('')
+  const [filterDateFrom, setFilterDateFrom] = useState('')
+  const [filterDateTo, setFilterDateTo] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
@@ -425,11 +507,20 @@ function LoansTab() {
     loadBeneficiaries()
   }, [loadLoans, loadArticles, loadBeneficiaries])
 
-  const filteredLoans = loans.filter(
-    (l) =>
+  const filteredLoans = loans.filter((l) => {
+    const matchesSearch =
+      !searchTerm ||
       l.beneficiaryNameAr.includes(searchTerm) ||
       l.beneficiaryName.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+    const matchesStatus = !filterStatus || l.status === filterStatus
+    const matchesBeneficiary =
+      !filterBeneficiary ||
+      l.beneficiaryNameAr.includes(filterBeneficiary) ||
+      l.beneficiaryName.toLowerCase().includes(filterBeneficiary.toLowerCase())
+    const matchesDateFrom = !filterDateFrom || l.loanDate >= filterDateFrom
+    const matchesDateTo = !filterDateTo || l.loanDate <= filterDateTo
+    return matchesSearch && matchesStatus && matchesBeneficiary && matchesDateFrom && matchesDateTo
+  })
 
   const filteredBeneficiaries = beneficiaries.filter(
     (b) =>
@@ -603,8 +694,8 @@ function LoansTab() {
   return (
     <>
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
@@ -614,11 +705,65 @@ function LoansTab() {
             className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
+        <Button variant="secondary" onClick={() => setFilterOpen(!filterOpen)}>
+          <Filter className="w-4 h-4" />
+          فلترة
+        </Button>
         <Button onClick={openCreateLoan}>
           <Plus className="w-4 h-4" />
           إنشاء إعارة
         </Button>
       </div>
+
+      {/* Filters */}
+      {filterOpen && (
+        <Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <Select
+              labelAr="الحالة"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              options={[
+                { value: '', label: 'الكل' },
+                { value: 'en_cours', label: 'جاري' },
+                { value: 'partiellement_retourne', label: 'مرتجع جزئياً' },
+                { value: 'retourne', label: 'مرتجع' },
+                { value: 'definitif', label: 'نهائي' },
+              ]}
+            />
+            <Input
+              labelAr="المستفيد"
+              value={filterBeneficiary}
+              onChange={(e) => setFilterBeneficiary(e.target.value)}
+            />
+            <Input
+              labelAr="من تاريخ"
+              type="date"
+              value={filterDateFrom}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+            />
+            <Input
+              labelAr="إلى تاريخ"
+              type="date"
+              value={filterDateTo}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+            />
+            <div className="flex items-end md:col-span-4">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilterStatus('')
+                  setFilterBeneficiary('')
+                  setFilterDateFrom('')
+                  setFilterDateTo('')
+                }}
+              >
+                إعادة تعيين
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Loans table */}
       <Card>
