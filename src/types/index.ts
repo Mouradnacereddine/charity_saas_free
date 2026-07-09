@@ -31,6 +31,20 @@ export interface ArticleCategory {
 
 // ---- Article Status ----
 
+export interface MedicalAnalysisType {
+  id: string;
+  name: string;
+  nameAr: string;
+  createdAt: Date;
+}
+
+export interface MedicalHospital {
+  id: string;
+  name: string;
+  nameAr: string;
+  createdAt: Date;
+}
+
 export interface ArticleStatus {
   id: string;
   name: string;

@@ -12,6 +12,8 @@ import type {
   Loan,
   MedicalReferral,
   DonationReceipt,
+  MedicalAnalysisType,
+  MedicalHospital,
 } from '../types';
 
 class AssociationDB extends Dexie {
@@ -27,10 +29,12 @@ class AssociationDB extends Dexie {
   loans!: Table<Loan>;
   medicalReferrals!: Table<MedicalReferral>;
   donationReceipts!: Table<DonationReceipt>;
+  medicalAnalysisTypes!: Table<MedicalAnalysisType>;
+  medicalHospitals!: Table<MedicalHospital>;
 
   constructor() {
     super('AssociationCharitableDB');
-    this.version(4).stores({
+    this.version(5).stores({
       beneficiaries:
         'id, reference, firstName, lastName, firstNameAr, lastNameAr, phone, nationalCardNumber, attribut, caisseId, subCategoryId, dateOfBirth, createdAt',
       donors:
@@ -50,6 +54,8 @@ class AssociationDB extends Dexie {
         'id, reference, beneficiaryId, caisseId, doctorName, date, createdAt',
       donationReceipts:
         'id, receiptNumber, donorId, transactionId, date, createdAt',
+      medicalAnalysisTypes: 'id, name, nameAr, createdAt',
+      medicalHospitals: 'id, name, nameAr, createdAt',
     });
   }
 }
@@ -148,5 +154,29 @@ export async function seedDefaultData() {
       accountNumber: '', rib: '', iban: '', swift: '', balance: 0,
       createdAt: now, updatedAt: now,
     });
+  }
+
+  // Seed default medical analysis types
+  const analysisTypeCount = await db.medicalAnalysisTypes.count();
+  if (analysisTypeCount === 0) {
+    const now = new Date();
+    await db.medicalAnalysisTypes.bulkAdd([
+      { id: crypto.randomUUID(), name: 'Analyse de sang', nameAr: 'تحاليل دم', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Radiographie', nameAr: 'أشعة', createdAt: now },
+      { id: crypto.randomUUID(), name: 'IRM', nameAr: 'تصوير بالرنين', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Examen cardiaque', nameAr: 'فحص قلب', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Analyse d\'urine', nameAr: 'تحليل بول', createdAt: now },
+    ]);
+  }
+
+  // Seed default medical hospitals
+  const hospitalCount = await db.medicalHospitals.count();
+  if (hospitalCount === 0) {
+    const now = new Date();
+    await db.medicalHospitals.bulkAdd([
+      { id: crypto.randomUUID(), name: 'Hôpital Mustapha Pacha', nameAr: 'مستشفى مصطفى باشا', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Hôpital de Constantine', nameAr: 'مستشفى قسنطينة', createdAt: now },
+      { id: crypto.randomUUID(), name: 'Clinique Belcourt', nameAr: 'عيادة بلكور', createdAt: now },
+    ]);
   }
 }
