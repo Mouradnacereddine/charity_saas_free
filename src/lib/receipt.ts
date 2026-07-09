@@ -12,8 +12,9 @@ export const RECEIPT_CSS = `
   .hdr { border-bottom: 1.2px solid #2563eb; padding-bottom: 1mm; margin-bottom: 1.2mm; }
   .hdr h1 { font-size: 11px; color: #2563eb; margin: 0; display: inline; }
   .hdr .sub { float: left; font-size: 7px; color: #999; }
-  .info { margin-bottom: 1mm; flex-shrink: 1; }
-  .row { margin: 0.4mm 0; line-height: 1.4; }
+  .info { margin-bottom: 1mm; flex-shrink: 1; display: flex; flex-wrap: wrap; gap: 0.3mm 1.5mm; }
+  .col { width: 46%; }
+  .row { margin: 0.3mm 0; line-height: 1.35; }
   .row .lbl { display: block; font-size: 7px; color: #aaa; }
   .row .val { display: block; font-size: 9.5px; color: #222; }
   .row .val i { font-style: normal; font-size: 8px; color: #999; }
@@ -32,7 +33,6 @@ export function printReceipt(
   title: string, subtitle: string,
   rows: string,
   amountClass: string, amount: string, wordsAr: string, wordsFr: string,
-  extra: string,
   signLeft: string, signRight: string,
 ) {
   const w = window.open('', '_blank')
@@ -44,7 +44,6 @@ export function printReceipt(
   <div class="hdr"><h1>🕌 الجمعية الخيرية</h1><span class="sub">${subtitle}</span></div>
   <div class="info">${rows}</div>
   <div class="amt" style="${amountClass}"><div class="num">${amount}</div><div class="words">${wordsAr}<span class="fr">${wordsFr}</span></div></div>
-  ${extra}
   <div class="sign"><div><span class="label">${signLeft}</span><div class="line"></div></div><div><span class="label">${signRight}</span><div class="line"></div></div></div>
 </div></div>
 <script>window.print();window.close();</script>

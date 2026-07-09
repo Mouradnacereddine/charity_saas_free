@@ -157,14 +157,13 @@ export default function DonorsPage() {
     if (!selectedReceipt) return
     printReceipt(
       'وصل تبرع', 'Reçu de Don',
-      `<div class="row"><span class="lbl">رقم الوصل</span><span class="val">${selectedReceipt.receiptNumber}</span></div>
+      `<div class="col"><div class="row"><span class="lbl">رقم الوصل</span><span class="val">${selectedReceipt.receiptNumber}</span></div>
 <div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(selectedReceipt.date)}</span></div>
-<div class="row"><span class="lbl">المتبرع</span><span class="val">${selectedReceipt.donorNameAr} <i>${selectedReceipt.donorName}</i></span></div>
-<div class="row"><span class="lbl">الصندوق</span><span class="val">${selectedReceipt.caisseNameAr}</span></div>`,
+<div class="row"><span class="lbl">المتبرع</span><span class="val">${selectedReceipt.donorNameAr} <i>${selectedReceipt.donorName}</i></span></div></div>
+<div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${selectedReceipt.caisseNameAr}</span></div></div>`,
       'color:#16a34a',
       formatCurrency(selectedReceipt.amount), selectedReceipt.amountInWordsAr, selectedReceipt.amountInWords,
-      '', 'توقيع المتبرع', 'ختم الجمعية'
-    )
+      'توقيع المتبرع', 'ختم الجمعية')
   }
 
   function updateField(field: keyof DonorFormData, value: string) {

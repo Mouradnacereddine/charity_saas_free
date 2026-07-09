@@ -79,6 +79,7 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
     const transaction: Transaction = {
       ...data,
       id: generateId(),
+      receiptNumber: data.receiptNumber || generateReceiptNumber(),
       amountInWords: numberToFrenchWords(data.amount),
       amountInWordsAr: numberToArabicWords(data.amount),
       createdAt: now,

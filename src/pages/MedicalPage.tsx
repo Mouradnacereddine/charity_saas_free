@@ -101,16 +101,16 @@ export default function MedicalPage() {
 
     printReceipt(
       'توجيه طبي', 'Orientation Médicale',
-      `<div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
+      `<div class="col"><div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
 <div class="row"><span class="lbl">المستفيد</span><span class="val">${referral.beneficiaryNameAr}</span></div>
 <div class="row"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr}</span></div>
-${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}
+${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}</div>
+<div class="col">${caisseRow}${subCatRow}
+<div class="row"><span class="lbl">التاريخ</span><span class="val">${referral.date}</span></div>
 ${referral.hospitalAr ? `<div class="row"><span class="lbl">المستشفى</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
-${caisseRow}${subCatRow}
-<div class="row"><span class="lbl">التاريخ</span><span class="val">${referral.date}</span></div>`,
+${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${referral.notes}</span></div>` : ''}</div>`,
       'color:#2563eb',
       formatCurrency(referral.amount), referral.amountInWordsAr, '',
-      referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${referral.notes}</span></div>` : '',
       'توقيع المسؤول', 'ختم الجمعية'
     );
   };
