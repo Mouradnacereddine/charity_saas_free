@@ -685,11 +685,11 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">التصنيف</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Select
+              <SearchableSelect
                 labelAr="الصفة"
                 options={ATTRIBUT_OPTIONS}
                 value={form.attribut}
-                onChange={(e) => handleFormChange('attribut', e.target.value)}
+                onChange={(val) => handleFormChange('attribut', val)}
                 required
               />
               <div className="space-y-1">

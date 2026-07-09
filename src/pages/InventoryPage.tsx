@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
+import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { useInventoryStore } from '../stores/inventoryStore'
 import { useBeneficiaryStore } from '../stores/beneficiaryStore'
 import { formatDate, generateId } from '../utils/helpers'
@@ -473,6 +473,41 @@ function SettingsTab() {
           </div>
         )}
       </Card>
+
+      {/* ========== Article Statuses Section ========== */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-primary-600" />
+          الحالات
+        </h3>
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الوصف</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { ar: 'متاح', fr: 'Disponible', desc: 'متاح للإعارة والاستخدام' },
+                  { ar: 'مُعار', fr: 'Prêté', desc: 'تم إعارته حالياً' },
+                  { ar: 'تالف', fr: 'Endommagé', desc: 'مادة بحاجة للصيانة' },
+                  { ar: 'خارج الخدمة', fr: 'Hors service', desc: 'لا يمكن استخدامها' },
+                ].map((s, i) => (
+                  <tr key={i} className="border-b border-gray-100">
+                    <td className="py-3 px-4 font-medium text-gray-900">{s.ar}</td>
+                    <td className="py-3 px-4 text-gray-600">{s.fr}</td>
+                    <td className="py-3 px-4 text-gray-500 text-xs">{s.desc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
     </div>
   )
 }
@@ -619,7 +654,7 @@ function StockTab() {
   return (
     <>
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -630,14 +665,14 @@ function StockTab() {
             className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
-        <Button variant="secondary" onClick={() => setFilterOpen(!filterOpen)}>
-          <Filter className="w-4 h-4" />
-          فلترة
-        </Button>
-        <Button onClick={openAdd}>
-          <Plus className="w-4 h-4" />
-          إضافة مقال
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setFilterOpen(!filterOpen)}>
+            <Filter className="w-4 h-4" /> بحث متقدم
+          </Button>
+          <Button size="sm" onClick={openAdd}>
+            <Plus className="w-4 h-4" /> إضافة مقال
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -821,10 +856,10 @@ function StockTab() {
             onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })}
             required
           />
-          <Select
+          <SearchableSelect
             labelAr="الحالة"
             value={form.status}
-            onChange={(e) => setForm({ ...form, status: e.target.value as Article['status'] })}
+            onChange={(val) => setForm({ ...form, status: val as Article['status'] })}
             options={[
               { value: 'disponible', label: 'متاح' },
               { value: 'prete', label: 'مُعار' },
@@ -1109,7 +1144,7 @@ function LoansTab() {
   return (
     <>
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -1120,14 +1155,14 @@ function LoansTab() {
             className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
-        <Button variant="secondary" onClick={() => setFilterOpen(!filterOpen)}>
-          <Filter className="w-4 h-4" />
-          فلترة
-        </Button>
-        <Button onClick={openCreateLoan}>
-          <Plus className="w-4 h-4" />
-          إنشاء إعارة
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setFilterOpen(!filterOpen)}>
+            <Filter className="w-4 h-4" /> بحث متقدم
+          </Button>
+          <Button size="sm" onClick={openCreateLoan}>
+            <Plus className="w-4 h-4" /> إنشاء إعارة
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
