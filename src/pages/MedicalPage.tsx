@@ -5,7 +5,7 @@ import { useBeneficiaryStore } from '../stores/beneficiaryStore';
 import { useCaisseStore } from '../stores/caisseStore';
 import { formatCurrency, numberToArabicWords } from '../utils/helpers';
 import { printReceipt } from '../lib/receipt';
-import { Plus, Search, Eye, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import { db } from '../lib/db';
 import { generateId } from '../utils/helpers';
 import type { MedicalReferral, MedicalAnalysisType, MedicalHospital } from '../types';
@@ -28,6 +28,21 @@ export default function MedicalPage() {
   const [filterDoctor, setFilterDoctor] = useState('');
   const [filterAnalysis, setFilterAnalysis] = useState('');
 
+  // Settings tab state
+  const [analysisTypes, setAnalysisTypes] = useState<MedicalAnalysisType[]>([])
+  const [hospitals, setHospitals] = useState<MedicalHospital[]>([])
+  const [settingsLoading, setSettingsLoading] = useState(true)
+  const [newAnalysisAr, setNewAnalysisAr] = useState('')
+  const [newAnalysisFr, setNewAnalysisFr] = useState('')
+  const [editAnalysisId, setEditAnalysisId] = useState<string | null>(null)
+  const [editAnalysisAr, setEditAnalysisAr] = useState('')
+  const [editAnalysisFr, setEditAnalysisFr] = useState('')
+  const [newHospAr, setNewHospAr] = useState('')
+  const [newHospFr, setNewHospFr] = useState('')
+  const [editHospId, setEditHospId] = useState<string | null>(null)
+  const [editHospAr, setEditHospAr] = useState('')
+  const [editHospFr, setEditHospFr] = useState('')
+
   // Form states
   const [beneficiaryId, setBeneficiaryId] = useState('');
   const [caisseId, setCaisseId] = useState('');
@@ -46,7 +61,48 @@ export default function MedicalPage() {
     loadReferrals();
     loadBeneficiaries();
     loadCaisses();
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    setSettingsLoading(true)
+    const [types, hosps] = await Promise.all([
+      db.medicalAnalysisTypes.toArray(),
+      db.medicalHospitals.toArray(),
+    ])
+    setAnalysisTypes(types)
+    setHospitals(hosps)
+    setSettingsLoading(false)
+  }
+
+  const handleAddAnalysis = async () => {
+    if (!newAnalysisAr.trim()) return
+    await db.medicalAnalysisTypes.add({ id: generateId(), name: newAnalysisFr.trim(), nameAr: newAnalysisAr.trim(), createdAt: new Date() })
+    setNewAnalysisAr(''); setNewAnalysisFr(''); await loadSettings()
+  }
+  const handleUpdateAnalysis = async () => {
+    if (!editAnalysisId || !editAnalysisAr.trim()) return
+    await db.medicalAnalysisTypes.update(editAnalysisId, { name: editAnalysisFr.trim(), nameAr: editAnalysisAr.trim() })
+    setEditAnalysisId(null); setEditAnalysisAr(''); setEditAnalysisFr(''); await loadSettings()
+  }
+  const handleDeleteAnalysis = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا التحليل؟')) return
+    await db.medicalAnalysisTypes.delete(id); await loadSettings()
+  }
+  const handleAddHospital = async () => {
+    if (!newHospAr.trim()) return
+    await db.medicalHospitals.add({ id: generateId(), name: newHospFr.trim(), nameAr: newHospAr.trim(), createdAt: new Date() })
+    setNewHospAr(''); setNewHospFr(''); await loadSettings()
+  }
+  const handleUpdateHospital = async () => {
+    if (!editHospId || !editHospAr.trim()) return
+    await db.medicalHospitals.update(editHospId, { name: editHospFr.trim(), nameAr: editHospAr.trim() })
+    setEditHospId(null); setEditHospAr(''); setEditHospFr(''); await loadSettings()
+  }
+  const handleDeleteHospital = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا المستشفى؟')) return
+    await db.medicalHospitals.delete(id); await loadSettings()
+  }
 
   const resetForm = () => {
     setBeneficiaryId('');
@@ -340,340 +396,109 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
   )
 
   const renderSettingsTab = () => {
-    const [analysisTypes, setAnalysisTypes] = useState<MedicalAnalysisType[]>([])
-    const [hospitals, setHospitals] = useState<MedicalHospital[]>([])
-    const [loading, setLoading] = useState(true)
-
-    // Analysis type form
-    const [newAnalysisAr, setNewAnalysisAr] = useState('')
-    const [newAnalysisFr, setNewAnalysisFr] = useState('')
-    const [editAnalysisId, setEditAnalysisId] = useState<string | null>(null)
-    const [editAnalysisAr, setEditAnalysisAr] = useState('')
-    const [editAnalysisFr, setEditAnalysisFr] = useState('')
-
-    // Hospital form
-    const [newHospAr, setNewHospAr] = useState('')
-    const [newHospFr, setNewHospFr] = useState('')
-    const [editHospId, setEditHospId] = useState<string | null>(null)
-    const [editHospAr, setEditHospAr] = useState('')
-    const [editHospFr, setEditHospFr] = useState('')
-
-    const loadData = async () => {
-      setLoading(true)
-      const [types, hosps] = await Promise.all([
-        db.medicalAnalysisTypes.toArray(),
-        db.medicalHospitals.toArray(),
-      ])
-      setAnalysisTypes(types)
-      setHospitals(hosps)
-      setLoading(false)
-    }
-
-    useEffect(() => { loadData() }, [])
-
-    // ---- Analysis Type CRUD ----
-
-    const handleAddAnalysis = async () => {
-      if (!newAnalysisAr.trim()) return
-      const now = new Date()
-      await db.medicalAnalysisTypes.add({
-        id: generateId(),
-        name: newAnalysisFr.trim(),
-        nameAr: newAnalysisAr.trim(),
-        createdAt: now,
-      })
-      setNewAnalysisAr('')
-      setNewAnalysisFr('')
-      await loadData()
-    }
-
-    const handleDeleteAnalysis = async (id: string) => {
-      if (!window.confirm('هل أنت متأكد من حذف هذا النوع؟')) return
-      await db.medicalAnalysisTypes.delete(id)
-      await loadData()
-    }
-
-    const startEditAnalysis = (item: MedicalAnalysisType) => {
-      setEditAnalysisId(item.id)
-      setEditAnalysisAr(item.nameAr)
-      setEditAnalysisFr(item.name)
-    }
-
-    const handleUpdateAnalysis = async () => {
-      if (!editAnalysisId || !editAnalysisAr.trim()) return
-      await db.medicalAnalysisTypes.update(editAnalysisId, {
-        name: editAnalysisFr.trim(),
-        nameAr: editAnalysisAr.trim(),
-      })
-      setEditAnalysisId(null)
-      setEditAnalysisAr('')
-      setEditAnalysisFr('')
-      await loadData()
-    }
-
-    const cancelEditAnalysis = () => {
-      setEditAnalysisId(null)
-      setEditAnalysisAr('')
-      setEditAnalysisFr('')
-    }
-
-    // ---- Hospital CRUD ----
-
-    const handleAddHospital = async () => {
-      if (!newHospAr.trim()) return
-      const now = new Date()
-      await db.medicalHospitals.add({
-        id: generateId(),
-        name: newHospFr.trim(),
-        nameAr: newHospAr.trim(),
-        createdAt: now,
-      })
-      setNewHospAr('')
-      setNewHospFr('')
-      await loadData()
-    }
-
-    const handleDeleteHospital = async (id: string) => {
-      if (!window.confirm('هل أنت متأكد من حذف هذا المستشفى؟')) return
-      await db.medicalHospitals.delete(id)
-      await loadData()
-    }
-
-    const startEditHospital = (item: MedicalHospital) => {
-      setEditHospId(item.id)
-      setEditHospAr(item.nameAr)
-      setEditHospFr(item.name)
-    }
-
-    const handleUpdateHospital = async () => {
-      if (!editHospId || !editHospAr.trim()) return
-      await db.medicalHospitals.update(editHospId, {
-        name: editHospFr.trim(),
-        nameAr: editHospAr.trim(),
-      })
-      setEditHospId(null)
-      setEditHospAr('')
-      setEditHospFr('')
-      await loadData()
-    }
-
-    const cancelEditHospital = () => {
-      setEditHospId(null)
-      setEditHospAr('')
-      setEditHospFr('')
-    }
-
-    if (loading) return <LoadingSpinner />
+    if (settingsLoading) return <LoadingSpinner />
 
     return (
-      <div className="space-y-8">
-        {/* ========== Analysis Types Section ========== */}
-        <Card titleAr="أنواع التحاليل">
-          {/* Add form */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <div className="flex-1">
-              <Input
-                labelAr="الاسم بالعربية"
-                value={newAnalysisAr}
-                onChange={(e) => setNewAnalysisAr(e.target.value)}
-                placeholder="مثال: تحاليل دم"
-              />
-            </div>
-            <div className="flex-1">
-              <Input
-                labelAr="الاسم بالفرنسية"
-                value={newAnalysisFr}
-                onChange={(e) => setNewAnalysisFr(e.target.value)}
-                placeholder="مثال: Analyse de sang"
-              />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={handleAddAnalysis} disabled={!newAnalysisAr.trim()}>
-                <Plus className="w-4 h-4" />
-                إضافة
-              </Button>
-            </div>
+      <div className="space-y-6">
+        {/* Analysis Types */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Stethoscope className="w-5 h-5 text-primary-600" />
+            أنواع التحاليل
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">إدارة أنواع التحاليل والفحوصات الطبية</p>
+          <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+            <Input labelAr="الاسم بالعربية" value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder="مثال: تحليل دم" />
+            <Input labelAr="الاسم بالفرنسية" value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder="Ex: Analyse" dir="ltr" />
+            <Button onClick={handleAddAnalysis} disabled={!newAnalysisAr.trim()}>إضافة</Button>
           </div>
-
-          {/* Table */}
-          {analysisTypes.length === 0 ? (
-            <EmptyState message="لا توجد أنواع تحاليل بعد" icon={<Stethoscope className="w-12 h-12" />} />
-          ) : (
+          <Card>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالعربية</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالفرنسية</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {analysisTypes.map((item) => (
-                    <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      {editAnalysisId === item.id ? (
-                        <>
-                          <td className="py-3 px-4">
-                            <input
-                              type="text"
-                              value={editAnalysisAr}
-                              onChange={(e) => setEditAnalysisAr(e.target.value)}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                              autoFocus
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="text"
-                              value={editAnalysisFr}
-                              onChange={(e) => setEditAnalysisFr(e.target.value)}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              <Button size="sm" onClick={handleUpdateAnalysis} disabled={!editAnalysisAr.trim()}>
-                                حفظ
-                              </Button>
-                              <Button size="sm" variant="secondary" onClick={cancelEditAnalysis}>
-                                إلغاء
-                              </Button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="py-3 px-4">{item.nameAr}</td>
-                          <td className="py-3 px-4 text-gray-500">{item.name || '—'}</td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => startEditAnalysis(item)}
-                                className="text-primary-600 hover:text-primary-800 text-sm font-medium"
-                              >
-                                تعديل
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAnalysis(item.id)}
-                                className="text-danger-500 hover:text-danger-700 text-sm font-medium"
-                              >
-                                حذف
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
+                <tbody>{analysisTypes.map((a) => (
+                  <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    {editAnalysisId === a.id ? (
+                      <>
+                        <td className="py-2 px-4"><input value={editAnalysisAr} onChange={(e) => setEditAnalysisAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
+                        <td className="py-2 px-4"><input value={editAnalysisFr} onChange={(e) => setEditAnalysisFr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                        <td className="py-2 px-4 text-center flex gap-1 justify-center">
+                          <Button size="sm" onClick={handleUpdateAnalysis}>حفظ</Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditAnalysisId(null)}>إلغاء</Button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-3 px-4 font-medium text-gray-900">{a.nameAr}</td>
+                        <td className="py-3 px-4 text-gray-600">{a.name}</td>
+                        <td className="py-3 px-4 text-center">
+                          <button onClick={() => { setEditAnalysisId(a.id); setEditAnalysisAr(a.nameAr); setEditAnalysisFr(a.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteAnalysis(a.id)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}</tbody>
               </table>
             </div>
-          )}
-        </Card>
+          </Card>
+        </div>
 
-        {/* ========== Hospitals Section ========== */}
-        <Card titleAr="المستشفيات">
-          {/* Add form */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <div className="flex-1">
-              <Input
-                labelAr="الاسم بالعربية"
-                value={newHospAr}
-                onChange={(e) => setNewHospAr(e.target.value)}
-                placeholder="مثال: مستشفى مصطفى باشا"
-              />
-            </div>
-            <div className="flex-1">
-              <Input
-                labelAr="الاسم بالفرنسية"
-                value={newHospFr}
-                onChange={(e) => setNewHospFr(e.target.value)}
-                placeholder="مثال: Hôpital Mustapha Pacha"
-              />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={handleAddHospital} disabled={!newHospAr.trim()}>
-                <Plus className="w-4 h-4" />
-                إضافة
-              </Button>
-            </div>
+        {/* Hospitals */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-primary-600" />
+            المستشفيات
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">إدارة المستشفيات والعيادات</p>
+          <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+            <Input labelAr="الاسم بالعربية" value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder="مثال: مستشفى مصطفى باشا" />
+            <Input labelAr="الاسم بالفرنسية" value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder="Ex: CHU" dir="ltr" />
+            <Button onClick={handleAddHospital} disabled={!newHospAr.trim()}>إضافة</Button>
           </div>
-
-          {/* Table */}
-          {hospitals.length === 0 ? (
-            <EmptyState message="لا توجد مستشفيات بعد" icon={<Stethoscope className="w-12 h-12" />} />
-          ) : (
+          <Card>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالعربية</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالفرنسية</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {hospitals.map((item) => (
-                    <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      {editHospId === item.id ? (
-                        <>
-                          <td className="py-3 px-4">
-                            <input
-                              type="text"
-                              value={editHospAr}
-                              onChange={(e) => setEditHospAr(e.target.value)}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                              autoFocus
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="text"
-                              value={editHospFr}
-                              onChange={(e) => setEditHospFr(e.target.value)}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              <Button size="sm" onClick={handleUpdateHospital} disabled={!editHospAr.trim()}>
-                                حفظ
-                              </Button>
-                              <Button size="sm" variant="secondary" onClick={cancelEditHospital}>
-                                إلغاء
-                              </Button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="py-3 px-4">{item.nameAr}</td>
-                          <td className="py-3 px-4 text-gray-500">{item.name || '—'}</td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => startEditHospital(item)}
-                                className="text-primary-600 hover:text-primary-800 text-sm font-medium"
-                              >
-                                تعديل
-                              </button>
-                              <button
-                                onClick={() => handleDeleteHospital(item.id)}
-                                className="text-danger-500 hover:text-danger-700 text-sm font-medium"
-                              >
-                                حذف
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
+                <tbody>{hospitals.map((h) => (
+                  <tr key={h.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    {editHospId === h.id ? (
+                      <>
+                        <td className="py-2 px-4"><input value={editHospAr} onChange={(e) => setEditHospAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
+                        <td className="py-2 px-4"><input value={editHospFr} onChange={(e) => setEditHospFr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                        <td className="py-2 px-4 text-center flex gap-1 justify-center">
+                          <Button size="sm" onClick={handleUpdateHospital}>حفظ</Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditHospId(null)}>إلغاء</Button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-3 px-4 font-medium text-gray-900">{h.nameAr}</td>
+                        <td className="py-3 px-4 text-gray-600">{h.name}</td>
+                        <td className="py-3 px-4 text-center">
+                          <button onClick={() => { setEditHospId(h.id); setEditHospAr(h.nameAr); setEditHospFr(h.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteHospital(h.id)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}</tbody>
               </table>
             </div>
-          )}
-        </Card>
+          </Card>
+        </div>
       </div>
     )
   }
