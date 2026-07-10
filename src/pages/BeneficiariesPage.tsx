@@ -225,14 +225,12 @@ export default function BeneficiariesPage() {
     label: a.nameAr,
   })) : Object.entries(ATTRIBUT_LABELS).map(([value, label]) => ({ value, label }))
 
-  // Compute display list (apply widow filter if active)
+  // Compute display list (show only beneficiaries with the most children)
   const displayBeneficiaries = (() => {
     if (widowFilterActive && beneficiaries.length > 0) {
-      const widows = beneficiaries.filter((b: any) => b.attribut === 'veuve')
-      if (widows.length > 0) {
-        const maxChildren = Math.max(...widows.map((w: any) => (w.children || []).length))
-        return widows.filter((w: any) => (w.children || []).length === maxChildren)
-      }
+      const childrenCounts = beneficiaries.map((b: any) => (b.children || []).length)
+      const maxChildren = Math.max(...childrenCounts)
+      return beneficiaries.filter((b: any) => (b.children || []).length === maxChildren)
     }
     return beneficiaries
   })()
@@ -265,8 +263,7 @@ export default function BeneficiariesPage() {
   }
 
   const handleFindWidowWithMostChildren = async () => {
-    setWidowFilterActive(false)
-    setFilterAttribut('veuve')
+    // Apply current filters, then add the "most children" condition on top
     applyFilters()
     setWidowFilterActive(true)
   }
@@ -488,13 +485,13 @@ export default function BeneficiariesPage() {
               إعادة تعيين
             </Button>
             <Button
-              variant="secondary"
+              variant={widowFilterActive ? 'primary' : 'secondary'}
               size="sm"
               onClick={handleFindWidowWithMostChildren}
               className="mr-auto"
             >
               <Users className="w-4 h-4" />
-              البحث عن الأرملة ذات أكثر أطفال
+              {widowFilterActive ? '✓ المستفيد ذو أكثر أطفال (نشط)' : 'البحث عن المستفيد ذو أكثر أطفال'}
             </Button>
           </div>
         </Card>
@@ -1305,7 +1302,7 @@ export default function BeneficiariesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">المستفيدون</h1>
           <p className="text-sm text-gray-500 mt-1">
-            إدارة المستفيدين وبياناتهم — إجمالي: {displayBeneficiaries.length}{widowFilterActive ? ' (الأرامل الأكثر أطفالاً)' : ''}
+            إدارة المستفيدين وبياناتهم — إجمالي: {displayBeneficiaries.length}{widowFilterActive ? ' (الأكثر أطفالاً — طبقاً للفلاتر المطبقة)' : ''}
           </p>
         </div>
         {activeTab === 'list' && (
