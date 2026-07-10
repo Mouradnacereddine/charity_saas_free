@@ -80,6 +80,26 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   }
 });
 
+// PUT /api/beneficiary-attributs/:attribut — update an attribut's display name
+router.put('/:attribut', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { attribut } = req.params;
+    const { nameAr } = req.body;
+    const associationId = req.user!.associationId;
+
+    // Update firstNameAr on all beneficiaries with this attribut
+    await prisma.beneficiary.updateMany({
+      where: { associationId, attribut },
+      data: { firstNameAr: nameAr || attribut },
+    });
+
+    res.json({ name: attribut, nameAr: nameAr || attribut, message: 'Attribut updated' });
+  } catch (error) {
+    console.error('Error updating beneficiary attribut:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // DELETE /api/beneficiary-attributs/:attribut — delete an attribut value
 router.delete('/:attribut', async (req: AuthRequest, res: Response): Promise<void> => {
   try {

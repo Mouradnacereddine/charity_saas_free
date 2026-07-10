@@ -74,7 +74,7 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
     // Check balance for debit
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     if (caisse.balance < numericAmount) {
-      res.status(400).json({ error: 'Insufficient caisse balance' });
+      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
       return;
     }
 

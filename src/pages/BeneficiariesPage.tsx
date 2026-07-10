@@ -1247,7 +1247,7 @@ export default function BeneficiariesPage() {
                 </thead>
                 <tbody>
                   {attributs.map((a: BeneficiaryAttribut) => (
-                    <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={a.name} className="border-b border-gray-100 hover:bg-gray-50">
                       {editAttrId === a.id ? (
                         <>
                           <td className="py-2 px-4">
@@ -1266,7 +1266,7 @@ export default function BeneficiariesPage() {
                           <td className="py-3 px-4 font-medium text-gray-900">{a.nameAr}</td>
                           <td className="py-3 px-4 text-gray-600">{a.name}</td>
                           <td className="py-3 px-4 text-center">
-                            <button onClick={() => { setEditAttrId(a.id); setEditAttrNameAr(a.nameAr); setEditAttrName(a.name); }}
+                            <button onClick={() => { setEditAttrId(a.name); setEditAttrNameAr(a.nameAr); setEditAttrName(a.name); }}
                               className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
                             <button onClick={() => handleDeleteAttribut(a.name)}
                               className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>

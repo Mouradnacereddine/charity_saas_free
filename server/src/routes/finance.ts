@@ -92,7 +92,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
     const wordsAr = amountInWordsAr || `${amount} دينار`;
 
     // Auto-generate receipt number for credits
-    const ref = receiptNumber || (type === 'credit' ? `BON-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}` : undefined);
+    const ref = receiptNumber || `BON-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
 
     // Verify caisse belongs to association
     const caisse = await prisma.caisse.findFirst({
@@ -110,7 +110,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
 
       if (fundSource === 'caisse_physique') {
         if (caisse.balance < numericAmount) {
-          res.status(400).json({ error: 'Insufficient caisse balance' });
+          res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
           return;
         }
       } else if (fundSource === 'banque') {
