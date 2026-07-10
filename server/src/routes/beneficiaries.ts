@@ -111,13 +111,15 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
-      reference, firstName, lastName, firstNameAr, lastNameAr,
+      reference: refInput, firstName, lastName, firstNameAr, lastNameAr,
       address, addressAr, phone, nationalCardNumber, dateOfBirth,
       attribut, onBehalfOfName, situation, situationAr,
       children, caisseId, subCategoryId,
     } = req.body;
 
-    if (!reference || !firstName || !lastName || !firstNameAr || !lastNameAr || !address || !addressAr || !phone || !nationalCardNumber || !dateOfBirth || !attribut) {
+    const reference = refInput || `BEN-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+
+    if (!firstName || !lastName || !firstNameAr || !lastNameAr || !address || !addressAr || !phone || !nationalCardNumber || !dateOfBirth || !attribut) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
