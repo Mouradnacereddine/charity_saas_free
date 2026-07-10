@@ -110,7 +110,7 @@ export function Layout({
             {breadcrumbs && (
               <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500" dir="rtl">
                 {breadcrumbs.map((crumb, i) => (
-                  <span key={crumb.page} className="flex items-center gap-1.5">
+                  <span key={`bc-${i}`} className="flex items-center gap-1.5">
                     {i > 0 && <ChevronLeft className="w-3 h-3 text-gray-300" />}
                     {i < breadcrumbs.length - 1 ? (
                       <button onClick={() => onNavigate(crumb.page)} className="hover:text-primary-600 transition-colors">

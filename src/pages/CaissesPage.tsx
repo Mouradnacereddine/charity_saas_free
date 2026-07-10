@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, Button, Input, Modal, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { useCaisseStore } from '../stores/caisseStore';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency, generateId } from '../utils/helpers';
 import { Plus, Edit, Trash2, FolderOpen, Tag } from 'lucide-react';
 import type { Caisse, SubCategory } from '../types';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { caissesApi } from '../lib/api';
 
 const generateCaisseReference = () => {
   const now = new Date();
@@ -14,7 +15,27 @@ const generateCaisseReference = () => {
 };
 
 export default function CaissesPage() {
-  const { caisses, loading, loadCaisses, addCaisse, updateCaisse, deleteCaisse, addSubCategory, updateSubCategory, deleteSubCategory } = useCaisseStore();
+  const queryClient = useQueryClient();
+
+  const { data: caisses = [], isLoading } = useQuery({
+    queryKey: ['caisses'],
+    queryFn: () => caissesApi.list().then(r => r.data),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => caissesApi.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['caisses'] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => caissesApi.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['caisses'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => caissesApi.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['caisses'] }),
+  });
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editCaisse, setEditCaisse] = useState<Caisse | null>(null);
@@ -27,13 +48,9 @@ export default function CaissesPage() {
   const [subName, setSubName] = useState('');
   const [subNameAr, setSubNameAr] = useState('');
 
-  useEffect(() => {
-    loadCaisses();
-  }, []);
-
   const handleAddCaisse = async () => {
     if (!nameAr.trim()) return;
-    await addCaisse(name || nameAr, nameAr, generateCaisseReference());
+    await createMutation.mutateAsync({ name: name || nameAr, nameAr, reference: generateCaisseReference() });
     setName('');
     setNameAr('');
     setShowAddModal(false);
@@ -41,7 +58,7 @@ export default function CaissesPage() {
 
   const handleUpdateCaisse = async () => {
     if (!editCaisse || !nameAr.trim()) return;
-    await updateCaisse(editCaisse.id, { name: name || nameAr, nameAr });
+    await updateMutation.mutateAsync({ id: editCaisse.id, data: { name: name || nameAr, nameAr } });
     setName('');
     setNameAr('');
     setEditCaisse(null);
@@ -49,13 +66,23 @@ export default function CaissesPage() {
 
   const handleDeleteCaisse = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا الصندوق؟')) {
-      await deleteCaisse(id);
+      await deleteMutation.mutateAsync(id);
     }
   };
 
   const handleAddSubCategory = async () => {
     if (!showSubCatModal || !subNameAr.trim()) return;
-    await addSubCategory(showSubCatModal, subName || subNameAr, subNameAr);
+    const caisse = caisses.find((c: Caisse) => c.id === showSubCatModal);
+    if (!caisse) return;
+    const newSub: SubCategory = {
+      id: generateId(),
+      name: subName || subNameAr,
+      nameAr: subNameAr.trim(),
+    };
+    await updateMutation.mutateAsync({
+      id: showSubCatModal,
+      data: { subCategories: [...(caisse.subCategories || []), newSub] },
+    });
     setSubName('');
     setSubNameAr('');
     setShowSubCatModal(null);
@@ -63,7 +90,17 @@ export default function CaissesPage() {
 
   const handleUpdateSubCategory = async () => {
     if (!editSubCat || !subNameAr.trim()) return;
-    await updateSubCategory(editSubCat.caisseId, editSubCat.subCat.id, subName || subNameAr, subNameAr);
+    const caisse = caisses.find((c: Caisse) => c.id === editSubCat.caisseId);
+    if (!caisse) return;
+    const updatedSubs = (caisse.subCategories || []).map((s: SubCategory) =>
+      s.id === editSubCat.subCat.id
+        ? { ...s, name: subName || subNameAr, nameAr: subNameAr.trim() }
+        : s
+    );
+    await updateMutation.mutateAsync({
+      id: editSubCat.caisseId,
+      data: { subCategories: updatedSubs },
+    });
     setSubName('');
     setSubNameAr('');
     setEditSubCat(null);
@@ -71,7 +108,13 @@ export default function CaissesPage() {
 
   const handleDeleteSubCategory = async (caisseId: string, subCatId: string) => {
     if (confirm('هل أنت متأكد من حذف هذه الفئة الفرعية؟')) {
-      await deleteSubCategory(caisseId, subCatId);
+      const caisse = caisses.find((c: Caisse) => c.id === caisseId);
+      if (!caisse) return;
+      const updatedSubs = (caisse.subCategories || []).filter((s: SubCategory) => s.id !== subCatId);
+      await updateMutation.mutateAsync({
+        id: caisseId,
+        data: { subCategories: updatedSubs },
+      });
     }
   };
 
@@ -87,7 +130,7 @@ export default function CaissesPage() {
     setEditSubCat({ caisseId, subCat });
   };
 
-  if (loading) return <LoadingSpinner />;
+  if (isLoading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-6">
@@ -108,7 +151,7 @@ export default function CaissesPage() {
         <EmptyState message="لا توجد صناديق بعد" icon={<FolderOpen className="w-12 h-12" />} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {caisses.map((caisse) => (
+          {caisses.map((caisse: Caisse) => (
             <Card key={caisse.id} className="relative">
               {/* Caisse Header */}
               <div className="flex items-center justify-between mb-4">
@@ -160,11 +203,11 @@ export default function CaissesPage() {
                     إضافة
                   </button>
                 </div>
-                {caisse.subCategories.length === 0 ? (
+                {(caisse.subCategories || []).length === 0 ? (
                   <p className="text-xs text-gray-400">لا توجد فئات فرعية</p>
                 ) : (
                   <div className="space-y-1.5">
-                    {caisse.subCategories.map((sub) => (
+                    {caisse.subCategories.map((sub: SubCategory) => (
                       <div
                         key={sub.id}
                         className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"

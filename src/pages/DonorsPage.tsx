@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { useDonorStore } from '../stores/donorStore'
-import { useCaisseStore } from '../stores/caisseStore'
 import { formatCurrency, formatDate } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Search, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt } from 'lucide-react'
 import type { DonorFilter, Donor, DonationReceipt } from '../types'
+import { useDonors, useCreateDonor, useUpdateDonor, useDeleteDonor, useDonorReceipts } from '../hooks/useDonors'
+import { useQuery } from '@tanstack/react-query'
+import { caissesApi } from '../lib/api'
 
 // ---- Initial form state ----
 const emptyDonorForm = {
@@ -22,9 +23,17 @@ const emptyDonorForm = {
 type DonorFormData = typeof emptyDonorForm
 
 export default function DonorsPage() {
-  // ---- Stores ----
-  const { donors, receipts, loading, loadDonors, addDonor, updateDonor, deleteDonor, loadReceipts } = useDonorStore()
-  const { caisses, loadCaisses } = useCaisseStore()
+  // ---- Query params for filtering ----
+  const [queryParams, setQueryParams] = useState<Record<string, string> | undefined>(undefined)
+  const { data: donors = [], isLoading } = useDonors(queryParams)
+  const { data: caisses = [] } = useQuery({
+    queryKey: ['caisses'],
+    queryFn: () => caissesApi.list().then(r => r.data),
+  })
+
+  const createDonor = useCreateDonor()
+  const updateDonor = useUpdateDonor()
+  const deleteDonor = useDeleteDonor()
 
   // ---- Local state ----
   const [filter, setFilter] = useState<DonorFilter>({})
@@ -38,22 +47,20 @@ export default function DonorsPage() {
   const [donorToDelete, setDonorToDelete] = useState<Donor | null>(null)
   const [formData, setFormData] = useState<DonorFormData>(emptyDonorForm)
   const [isEditing, setIsEditing] = useState(false)
+  const [detailDonorId, setDetailDonorId] = useState<string | null>(null)
 
-  // ---- Initial load ----
-  useEffect(() => {
-    loadDonors()
-    loadCaisses()
-  }, [])
-
-  // ---- Reload when filter changes ----
-  useEffect(() => {
-    loadDonors(filter)
-  }, [filter])
+  // Load receipts when a donor is selected for detail view
+  const { data: receipts = [] } = useDonorReceipts(detailDonorId || '')
 
   // ---- Handlers ----
 
   function handleSearch() {
-    setFilter((prev) => ({ ...prev, searchTerm }))
+    const params: Record<string, string> = {}
+    if (searchTerm) params.searchTerm = searchTerm
+    if (filter.caisseId) params.caisseId = filter.caisseId
+    if (filter.minDonation !== undefined) params.minDonation = String(filter.minDonation)
+    if (filter.maxDonation !== undefined) params.maxDonation = String(filter.maxDonation)
+    setQueryParams(Object.keys(params).length > 0 ? params : undefined)
   }
 
   function handleSearchKeyDown(e: React.KeyboardEvent) {
@@ -77,6 +84,7 @@ export default function DonorsPage() {
   function handleResetFilters() {
     setSearchTerm('')
     setFilter({})
+    setQueryParams(undefined)
   }
 
   function openAddModal() {
@@ -103,7 +111,7 @@ export default function DonorsPage() {
 
   async function openDetailModal(donor: Donor) {
     setSelectedDonor(donor)
-    await loadReceipts(donor.id)
+    setDetailDonorId(donor.id)
     setShowDetailModal(true)
   }
 
@@ -114,7 +122,7 @@ export default function DonorsPage() {
 
   async function handleDelete() {
     if (!donorToDelete) return
-    await deleteDonor(donorToDelete.id)
+    await deleteDonor.mutateAsync(donorToDelete.id)
     setShowDeleteConfirm(false)
     setDonorToDelete(null)
   }
@@ -122,18 +130,21 @@ export default function DonorsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (isEditing && selectedDonor) {
-      await updateDonor(selectedDonor.id, {
-        firstNameAr: formData.firstNameAr,
-        lastNameAr: formData.lastNameAr,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        email: formData.email || undefined,
-        address: formData.address || undefined,
-        notes: formData.notes || undefined,
+      await updateDonor.mutateAsync({
+        id: selectedDonor.id,
+        data: {
+          firstNameAr: formData.firstNameAr,
+          lastNameAr: formData.lastNameAr,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          email: formData.email || undefined,
+          address: formData.address || undefined,
+          notes: formData.notes || undefined,
+        },
       })
     } else {
-      await addDonor({
+      await createDonor.mutateAsync({
         firstNameAr: formData.firstNameAr,
         lastNameAr: formData.lastNameAr,
         firstName: formData.firstName,
@@ -174,7 +185,7 @@ export default function DonorsPage() {
   const donorCount = donors.length
 
   // ---- Caisse options for filter ----
-  const caisseOptions = caisses.map((c) => ({ value: c.id, label: c.nameAr }))
+  const caisseOptions = caisses.map((c: any) => ({ value: c.id, label: c.nameAr }))
 
   // ============================================
   // RENDER
@@ -256,7 +267,7 @@ export default function DonorsPage() {
 
       {/* ---- Donors Table ---- */}
       <Card>
-        {loading ? (
+        {isLoading ? (
           <LoadingSpinner />
         ) : donors.length === 0 ? (
           <EmptyState
@@ -277,7 +288,7 @@ export default function DonorsPage() {
                 </tr>
               </thead>
               <tbody>
-                {donors.map((donor) => (
+                {donors.map((donor: Donor) => (
                   <tr key={donor.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
                       {donor.reference || '—'}
@@ -426,7 +437,7 @@ export default function DonorsPage() {
       {/* ============================================ */}
       <Modal
         isOpen={showDetailModal}
-        onClose={() => { setShowDetailModal(false); setSelectedDonor(null) }}
+        onClose={() => { setShowDetailModal(false); setSelectedDonor(null); setDetailDonorId(null) }}
         title="تفاصيل المتبرع"
         size="xl"
       >
@@ -506,7 +517,7 @@ export default function DonorsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {receipts.map((r) => (
+                      {receipts.map((r: DonationReceipt) => (
                         <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-2 px-3 font-mono text-xs">{r.receiptNumber}</td>
                           <td className="py-2 px-3">

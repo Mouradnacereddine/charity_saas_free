@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, StatCard, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { useFinanceStore } from '../stores/financeStore'
-import { useCaisseStore } from '../stores/caisseStore'
-import { useBeneficiaryStore } from '../stores/beneficiaryStore'
-import { useDonorStore } from '../stores/donorStore'
 import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer } from 'lucide-react'
-import type { TransactionFilter } from '../types'
+import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount } from '../hooks/useFinance'
+import { useBeneficiaries } from '../hooks/useBeneficiaries'
+import { useDonors } from '../hooks/useDonors'
+import { useQuery } from '@tanstack/react-query'
+import { caissesApi } from '../lib/api'
+import type { Transaction, BankAccount, Caisse, Beneficiary, Donor } from '../types'
 
 // ---- Bank Account Modal ----
 
@@ -114,23 +115,21 @@ function BankAccountModal({
 // ---- Main Page ----
 
 export default function FinancePage() {
-  const {
-    transactions,
-    bankAccounts,
-    totalCash,
-    loading,
-    loadTransactions,
-    loadBankAccounts,
-    addTransaction,
-    addBankAccount,
-    updateBankAccount,
-    calculateTotalCash,
-    getTotalBankBalance,
-  } = useFinanceStore()
+  // ---- Data Hooks ----
+  const [txFilters, setTxFilters] = useState<Record<string, string> | undefined>(undefined)
+  const { data: transactions = [], isLoading: transactionsLoading } = useTransactions(txFilters)
+  const { data: bankAccounts = [] } = useBankAccounts()
+  const { data: caisses = [] } = useQuery({
+    queryKey: ['caisses'],
+    queryFn: () => caissesApi.list().then(r => r.data),
+  })
+  const { data: beneficiaries = [] } = useBeneficiaries()
+  const { data: donors = [] } = useDonors()
 
-  const { caisses, loadCaisses } = useCaisseStore()
-  const { beneficiaries, loadBeneficiaries } = useBeneficiaryStore()
-  const { donors, loadDonors } = useDonorStore()
+  // ---- Mutations ----
+  const createTransaction = useCreateTransaction()
+  const createBankAccount = useCreateBankAccount()
+  const updateBankAccount = useUpdateBankAccount()
 
   // ---- Bank Account Modal State ----
   const [bankModalOpen, setBankModalOpen] = useState(false)
@@ -171,26 +170,17 @@ export default function FinancePage() {
   const amountInWordsAr = amountNum > 0 ? numberToArabicWords(amountNum) : ''
   const amountInWordsFr = amountNum > 0 ? numberToFrenchWords(amountNum) : ''
 
-  const selectedCaisse = caisses.find((c) => c.id === txCaisseId)
+  const selectedCaisse = caisses.find((c: Caisse) => c.id === txCaisseId)
   const subCategories = selectedCaisse?.subCategories ?? []
 
-  const totalBankBalance = getTotalBankBalance()
+  const totalBankBalance = bankAccounts.reduce((sum: number, acc: BankAccount) => sum + acc.balance, 0)
+  const totalCash = caisses.reduce((sum: number, c: Caisse) => sum + c.balance, 0)
 
   const totalPages = Math.max(1, Math.ceil(transactions.length / pageSize))
   const paginatedTransactions = transactions.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   )
-
-  // ---- Load Data ----
-  useEffect(() => {
-    loadTransactions()
-    loadBankAccounts()
-    loadCaisses()
-    loadBeneficiaries()
-    loadDonors()
-    calculateTotalCash()
-  }, [])
 
   // ---- Handlers ----
   const handleOpenAddBank = () => {
@@ -200,7 +190,7 @@ export default function FinancePage() {
   }
 
   const handleOpenEditBank = (id: string) => {
-    const account = bankAccounts.find((a) => a.id === id)
+    const account = bankAccounts.find((a: BankAccount) => a.id === id)
     if (!account) return
     setEditingBankId(id)
     setBankFormData({
@@ -215,16 +205,19 @@ export default function FinancePage() {
 
   const handleSaveBank = async (data: BankAccountFormData) => {
     if (editingBankId) {
-      await updateBankAccount(editingBankId, {
-        bankNameAr: data.bankNameAr,
-        bankName: data.bankNameAr,
-        accountNumber: data.accountNumber,
-        rib: data.rib,
-        iban: data.iban,
-        swift: data.swift,
+      await updateBankAccount.mutateAsync({
+        id: editingBankId,
+        data: {
+          bankNameAr: data.bankNameAr,
+          bankName: data.bankNameAr,
+          accountNumber: data.accountNumber,
+          rib: data.rib,
+          iban: data.iban,
+          swift: data.swift,
+        },
       })
     } else {
-      await addBankAccount({
+      await createBankAccount.mutateAsync({
         bankName: data.bankNameAr,
         bankNameAr: data.bankNameAr,
         accountNumber: data.accountNumber,
@@ -237,12 +230,12 @@ export default function FinancePage() {
   }
 
   const handlePrintReceipt = (tx: any) => {
-    const caisse = caisses.find((c) => c.id === tx.caisseId)
-    const subCat = caisse?.subCategories.find((s) => s.id === tx.subCategoryId)
+    const caisse = caisses.find((c: Caisse) => c.id === tx.caisseId)
+    const subCat = caisse?.subCategories.find((s: { id: string; name: string; nameAr: string }) => s.id === tx.subCategoryId)
     const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
 
     if (tx.type === 'credit') {
-      const donor = donors.find((d) => d.id === tx.donorId)
+      const donor = donors.find((d: Donor) => d.id === tx.donorId)
       printReceipt(
         'وصل تبرع', 'Reçu de Don',
         `<div class="col"><div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
@@ -255,7 +248,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         'توقيع المتبرع', 'ختم الجمعية'
       )
     } else {
-      const benef = beneficiaries.find((b) => b.id === tx.beneficiaryId)
+      const benef = beneficiaries.find((b: Beneficiary) => b.id === tx.beneficiaryId)
       printReceipt(
         'وصل صرف', 'Bon de Sortie',
         `<div class="col"><div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
@@ -277,9 +270,11 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 
     setTxSubmitting(true)
     try {
-      await addTransaction({
+      await createTransaction.mutateAsync({
         type: txType,
         amount: amountNum,
+        amountInWords: numberToFrenchWords(amountNum),
+        amountInWordsAr: numberToArabicWords(amountNum),
         fundSource: txFundSource,
         caisseId: txCaisseId,
         subCategoryId: txSubCategoryId || undefined,
@@ -298,25 +293,25 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
       setTxBeneficiaryId('')
       setTxSubCategoryId('')
     } catch (err: any) {
-      setTxError(err?.message || 'فشل في إضافة المعاملة')
+      setTxError(err?.response?.data?.error || err?.message || 'فشل في إضافة المعاملة')
     } finally {
       setTxSubmitting(false)
     }
   }
 
   const handleApplyFilter = () => {
-    const newFilter: TransactionFilter = {}
-    if (filterType) newFilter.type = filterType as 'credit' | 'debit'
-    if (filterFundSource) newFilter.fundSource = filterFundSource as 'banque' | 'caisse_physique'
-    if (filterCaisseId) newFilter.caisseId = filterCaisseId
-    if (filterDateFrom) newFilter.dateFrom = filterDateFrom
-    if (filterDateTo) newFilter.dateTo = filterDateTo
-    if (filterMinAmount) newFilter.minAmount = parseFloat(filterMinAmount)
-    if (filterMaxAmount) newFilter.maxAmount = parseFloat(filterMaxAmount)
-    if (filterSearchTerm) newFilter.searchTerm = filterSearchTerm
+    const params: Record<string, string> = {}
+    if (filterType) params.type = filterType
+    if (filterFundSource) params.fundSource = filterFundSource
+    if (filterCaisseId) params.caisseId = filterCaisseId
+    if (filterDateFrom) params.dateFrom = filterDateFrom
+    if (filterDateTo) params.dateTo = filterDateTo
+    if (filterMinAmount) params.minAmount = filterMinAmount
+    if (filterMaxAmount) params.maxAmount = filterMaxAmount
+    if (filterSearchTerm) params.searchTerm = filterSearchTerm
 
     setCurrentPage(1)
-    loadTransactions(newFilter)
+    setTxFilters(Object.keys(params).length > 0 ? params : undefined)
   }
 
   const handleResetFilter = () => {
@@ -329,7 +324,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
     setFilterMaxAmount('')
     setFilterSearchTerm('')
     setCurrentPage(1)
-    loadTransactions()
+    setTxFilters(undefined)
   }
 
   // ---- Render ----
@@ -358,7 +353,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         <StatCard
           title="إجمالي المعاملات"
           value={transactions.length}
-          subtitle={`${transactions.filter((t) => t.type === 'credit').length} إيداع | ${transactions.filter((t) => t.type === 'debit').length} سحب`}
+          subtitle={`${transactions.filter((t: Transaction) => t.type === 'credit').length} إيداع | ${transactions.filter((t: Transaction) => t.type === 'debit').length} سحب`}
           icon={<ArrowUpCircle size={24} />}
           color="bg-purple-500"
         />
@@ -390,7 +385,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 </tr>
               </thead>
               <tbody>
-                {bankAccounts.map((account) => (
+                {bankAccounts.map((account: BankAccount) => (
                   <tr
                     key={account.id}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
@@ -502,7 +497,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 labelAr="الحساب البنكي"
                 value={txBankAccountId}
                 onChange={setTxBankAccountId}
-                options={bankAccounts.map((a) => ({
+                options={bankAccounts.map((a: BankAccount) => ({
                   value: a.id,
                   label: `${a.bankNameAr} - ${a.accountNumber}`,
                 }))}
@@ -516,7 +511,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 setTxCaisseId(val)
                 setTxSubCategoryId('')
               }}
-              options={caisses.map((c) => ({
+              options={caisses.map((c: Caisse) => ({
                 value: c.id,
                 label: c.nameAr,
               }))}
@@ -527,7 +522,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 labelAr="الفئة الفرعية"
                 value={txSubCategoryId}
                 onChange={setTxSubCategoryId}
-                options={subCategories.map((sc) => ({
+                options={subCategories.map((sc: { id: string; name: string; nameAr: string }) => ({
                   value: sc.id,
                   label: sc.nameAr,
                 }))}
@@ -542,7 +537,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 labelAr="المتبرع (اختياري)"
                 value={txDonorId}
                 onChange={setTxDonorId}
-                options={donors.map((d) => ({
+                options={donors.map((d: Donor) => ({
                   value: d.id,
                   label: `${d.firstNameAr} ${d.lastNameAr} (${d.reference || ''})`,
                 }))}
@@ -553,7 +548,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 labelAr="المستفيد (اختياري)"
                 value={txBeneficiaryId}
                 onChange={setTxBeneficiaryId}
-                options={beneficiaries.map((b) => ({
+                options={beneficiaries.map((b: Beneficiary) => ({
                   value: b.id,
                   label: `${b.firstNameAr} ${b.lastNameAr} (${b.reference || ''})`,
                 }))}
@@ -678,8 +673,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               <Select
                 labelAr="الصندوق"
                 value={filterCaisseId}
-                onChange={(e) => setFilterCaisseId(e.target.value)}
-                options={caisses.map((c) => ({ value: c.id, label: c.nameAr }))}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterCaisseId(e.target.value)}
+                options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))}
               />
               <div /> {/* spacer */}
               <Input
@@ -731,7 +726,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         )}
 
         {/* Transaction Table */}
-        {loading ? (
+        {transactionsLoading ? (
           <LoadingSpinner />
         ) : transactions.length === 0 ? (
           <EmptyState message="لا توجد معاملات مسجّلة" icon={<Banknote size={48} />} />
@@ -752,8 +747,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedTransactions.map((tx) => {
-                    const caisse = caisses.find((c) => c.id === tx.caisseId)
+                  {paginatedTransactions.map((tx: Transaction) => {
+                    const caisse = caisses.find((c: Caisse) => c.id === tx.caisseId)
                     return (
                       <tr
                         key={tx.id}

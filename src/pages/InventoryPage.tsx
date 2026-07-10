@@ -1,11 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { useInventoryStore } from '../stores/inventoryStore'
-import { useBeneficiaryStore } from '../stores/beneficiaryStore'
-import { formatDate, generateId } from '../utils/helpers'
+import { formatDate } from '../utils/helpers'
 import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin } from 'lucide-react'
-import type { Article, Loan, LoanItem, ArticleCategory, StorageLocation } from '../types'
-import { db } from '../lib/db'
+import type { Article, Loan, LoanItem, ArticleCategory, StorageLocation, Beneficiary } from '../types'
+import {
+  useArticles,
+  useCreateArticle,
+  useUpdateArticle,
+  useDeleteArticle,
+  useArticleCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+  useStorageLocations,
+  useCreateLocation,
+  useUpdateLocation,
+  useDeleteLocation,
+  useLoans,
+  useCreateLoan,
+  useReturnItems,
+  useAddItemToLoan,
+  useRemoveItemFromLoan,
+  useMarkLoanDefinitive,
+} from '../hooks/useInventory'
+import { useBeneficiaries } from '../hooks/useBeneficiaries'
 
 // ---- Constants ----
 
@@ -56,13 +75,13 @@ const EMPTY_ARTICLE_FORM = {
 
 function getCategoryNameAr(categoryId: string, categories: ArticleCategory[]): string {
   if (!categoryId) return '—'
-  const found = categories.find((c) => c.id === categoryId)
+  const found = categories.find((c: ArticleCategory) => c.id === categoryId)
   return found ? found.nameAr : categoryId
 }
 
 function getStorageNameAr(storageId: string, locations: StorageLocation[]): string {
   if (!storageId) return '—'
-  const found = locations.find((l) => l.id === storageId)
+  const found = locations.find((l: StorageLocation) => l.id === storageId)
   return found ? found.nameAr : storageId
 }
 
@@ -162,9 +181,14 @@ export default function InventoryPage() {
 // ============================================================
 
 function SettingsTab() {
-  const [categories, setCategories] = useState<ArticleCategory[]>([])
-  const [locations, setLocations] = useState<StorageLocation[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: categories = [], isLoading: catsLoading } = useArticleCategories()
+  const { data: locations = [], isLoading: locsLoading } = useStorageLocations()
+  const createCat = useCreateCategory()
+  const updateCat = useUpdateCategory()
+  const deleteCat = useDeleteCategory()
+  const createLoc = useCreateLocation()
+  const updateLoc = useUpdateLocation()
+  const deleteLoc = useDeleteLocation()
 
   // Category form state
   const [newCatNameAr, setNewCatNameAr] = useState('')
@@ -180,41 +204,18 @@ function SettingsTab() {
   const [editLocNameAr, setEditLocNameAr] = useState('')
   const [editLocName, setEditLocName] = useState('')
 
-  const loadData = async () => {
-    setLoading(true)
-    const [cats, locs] = await Promise.all([
-      db.articleCategories.toArray(),
-      db.storageLocations.toArray(),
-    ])
-    setCategories(cats)
-    setLocations(locs)
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    loadData()
-  }, [])
-
   // ---- Category CRUD ----
 
   const handleAddCategory = async () => {
     if (!newCatNameAr.trim()) return
-    const now = new Date()
-    await db.articleCategories.add({
-      id: generateId(),
-      name: newCatName.trim(),
-      nameAr: newCatNameAr.trim(),
-      createdAt: now,
-    })
+    await createCat.mutateAsync({ name: newCatName.trim(), nameAr: newCatNameAr.trim() })
     setNewCatNameAr('')
     setNewCatName('')
-    await loadData()
   }
 
   const handleDeleteCategory = async (id: string) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا التصنيف؟')) return
-    await db.articleCategories.delete(id)
-    await loadData()
+    await deleteCat.mutateAsync(id)
   }
 
   const startEditCategory = (cat: ArticleCategory) => {
@@ -225,14 +226,10 @@ function SettingsTab() {
 
   const handleUpdateCategory = async () => {
     if (!editCatId || !editCatNameAr.trim()) return
-    await db.articleCategories.update(editCatId, {
-      name: editCatName.trim(),
-      nameAr: editCatNameAr.trim(),
-    })
+    await updateCat.mutateAsync({ id: editCatId, data: { name: editCatName.trim(), nameAr: editCatNameAr.trim() } })
     setEditCatId(null)
     setEditCatNameAr('')
     setEditCatName('')
-    await loadData()
   }
 
   const cancelEditCategory = () => {
@@ -245,22 +242,14 @@ function SettingsTab() {
 
   const handleAddLocation = async () => {
     if (!newLocNameAr.trim()) return
-    const now = new Date()
-    await db.storageLocations.add({
-      id: generateId(),
-      name: newLocName.trim(),
-      nameAr: newLocNameAr.trim(),
-      createdAt: now,
-    })
+    await createLoc.mutateAsync({ name: newLocName.trim(), nameAr: newLocNameAr.trim() })
     setNewLocNameAr('')
     setNewLocName('')
-    await loadData()
   }
 
   const handleDeleteLocation = async (id: string) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا الموقع؟')) return
-    await db.storageLocations.delete(id)
-    await loadData()
+    await deleteLoc.mutateAsync(id)
   }
 
   const startEditLocation = (loc: StorageLocation) => {
@@ -271,14 +260,10 @@ function SettingsTab() {
 
   const handleUpdateLocation = async () => {
     if (!editLocId || !editLocNameAr.trim()) return
-    await db.storageLocations.update(editLocId, {
-      name: editLocName.trim(),
-      nameAr: editLocNameAr.trim(),
-    })
+    await updateLoc.mutateAsync({ id: editLocId, data: { name: editLocName.trim(), nameAr: editLocNameAr.trim() } })
     setEditLocId(null)
     setEditLocNameAr('')
     setEditLocName('')
-    await loadData()
   }
 
   const cancelEditLocation = () => {
@@ -287,7 +272,7 @@ function SettingsTab() {
     setEditLocName('')
   }
 
-  if (loading) return <LoadingSpinner />
+  if (catsLoading || locsLoading) return <LoadingSpinner />
 
   return (
     <div className="space-y-8">
@@ -333,7 +318,7 @@ function SettingsTab() {
                 </tr>
               </thead>
               <tbody>
-                {categories.map((cat) => (
+                {categories.map((cat: ArticleCategory) => (
                   <tr key={cat.id} className="border-b border-gray-100 hover:bg-gray-50">
                     {editCatId === cat.id ? (
                       <>
@@ -439,7 +424,7 @@ function SettingsTab() {
                 </tr>
               </thead>
               <tbody>
-                {locations.map((loc) => (
+                {locations.map((loc: StorageLocation) => (
                   <tr key={loc.id} className="border-b border-gray-100 hover:bg-gray-50">
                     {editLocId === loc.id ? (
                       <>
@@ -546,9 +531,12 @@ function SettingsTab() {
 // ============================================================
 
 function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }> }) {
-  const { articles, loading, loadArticles, addArticle, updateArticle, deleteArticle } = useInventoryStore()
-  const [categories, setCategories] = useState<ArticleCategory[]>([])
-  const [locations, setLocations] = useState<StorageLocation[]>([])
+  const { data: articles = [], isLoading: loading } = useArticles()
+  const { data: categories = [] } = useArticleCategories()
+  const { data: locations = [] } = useStorageLocations()
+  const createArticle = useCreateArticle()
+  const updateArticle = useUpdateArticle()
+  const deleteArticle = useDeleteArticle()
 
   // Expose actions to parent header buttons via effect
   useEffect(() => {
@@ -564,22 +552,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
   const [form, setForm] = useState(EMPTY_ARTICLE_FORM)
 
-  useEffect(() => {
-    loadArticles()
-  }, [loadArticles])
-
-  useEffect(() => {
-    ;(async () => {
-      const [cats, locs] = await Promise.all([
-        db.articleCategories.toArray(),
-        db.storageLocations.toArray(),
-      ])
-      setCategories(cats)
-      setLocations(locs)
-    })()
-  }, [])
-
-  const filtered = articles.filter((a) => {
+  const filtered = articles.filter((a: Article) => {
     const catNameAr = getCategoryNameAr(a.category, categories)
 
     const matchesSearch =
@@ -643,9 +616,9 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     }
 
     if (editingArticle) {
-      await updateArticle(editingArticle.id, data)
+      await updateArticle.mutateAsync({ id: editingArticle.id, data })
     } else {
-      await addArticle(data as any)
+      await createArticle.mutateAsync(data)
     }
 
     setShowModal(false)
@@ -655,16 +628,16 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
   const handleDelete = async (id: string) => {
     if (window.confirm('هل أنت متأكد من حذف هذا المقال؟')) {
-      await deleteArticle(id)
+      await deleteArticle.mutateAsync(id)
     }
   }
 
-  const categoryOptions = categories.map((c) => ({
+  const categoryOptions = categories.map((c: ArticleCategory) => ({
     value: c.id,
     label: `${c.nameAr} (${c.name || ''})`,
   }))
 
-  const locationOptions = locations.map((l) => ({
+  const locationOptions = locations.map((l: StorageLocation) => ({
     value: l.id,
     label: `${l.nameAr} (${l.name || ''})`,
   }))
@@ -777,7 +750,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((article) => (
+                {filtered.map((article: Article) => (
                   <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
                       {article.reference || '—'}
@@ -940,8 +913,15 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 // ============================================================
 
 function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }> }) {
-  const { articles, loans, loading, loadArticles, loadLoans, createLoan, returnItems, addItemToLoan, removeItemFromLoan, markLoanDefinitive } = useInventoryStore()
-  const { beneficiaries, loadBeneficiaries } = useBeneficiaryStore()
+  const queryClient = useQueryClient()
+  const { data: loans = [], isLoading: loading } = useLoans()
+  const { data: articles = [] } = useArticles()
+  const { data: beneficiaries = [] } = useBeneficiaries()
+  const createLoan = useCreateLoan()
+  const returnItems = useReturnItems()
+  const addItemToLoan = useAddItemToLoan()
+  const removeItemFromLoan = useRemoveItemFromLoan()
+  const markLoanDefinitive = useMarkLoanDefinitive()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
@@ -974,13 +954,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   const [newItemQuantity, setNewItemQuantity] = useState(1)
   const [newItemCondition, setNewItemCondition] = useState('')
 
-  useEffect(() => {
-    loadLoans()
-    loadArticles()
-    loadBeneficiaries()
-  }, [loadLoans, loadArticles, loadBeneficiaries])
-
-  const filteredLoans = loans.filter((l) => {
+  const filteredLoans = loans.filter((l: Loan) => {
     const matchesSearch =
       !searchTerm ||
       l.beneficiaryNameAr.includes(searchTerm) ||
@@ -996,10 +970,10 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     return matchesSearch && matchesStatus && matchesBeneficiary && matchesDateFrom && matchesDateTo
   })
 
-  const availableArticles = articles.filter((a) => a.availableQuantity > 0 && !a.isPermanent)
+  const availableArticles = articles.filter((a: Article) => a.availableQuantity > 0 && !a.isPermanent)
 
   // Pre-computed beneficiary options for SearchableSelect
-  const beneficiaryOptions = beneficiaries.map((b) => ({
+  const beneficiaryOptions = beneficiaries.map((b: Beneficiary) => ({
     value: b.id,
     label: `${b.firstNameAr} ${b.lastNameAr} (${b.firstName} ${b.lastName})`,
   }))
@@ -1029,13 +1003,13 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   }
 
   const handleCreateLoan = async () => {
-    const beneficiary = beneficiaries.find((b) => b.id === selectedBeneficiaryId)
+    const beneficiary = beneficiaries.find((b: Beneficiary) => b.id === selectedBeneficiaryId)
     if (!beneficiary || loanItems.length === 0) return
 
     const items: LoanItem[] = loanItems
       .filter((li) => li.articleId)
       .map((li) => {
-        const article = articles.find((a) => a.id === li.articleId)
+        const article = articles.find((a: Article) => a.id === li.articleId)
         return {
           articleId: li.articleId,
           articleName: article?.name || '',
@@ -1046,7 +1020,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
         }
       })
 
-    await createLoan({
+    await createLoan.mutateAsync({
       beneficiaryId: beneficiary.id,
       beneficiaryName: `${beneficiary.firstName} ${beneficiary.lastName}`,
       beneficiaryNameAr: `${beneficiary.firstNameAr} ${beneficiary.lastNameAr}`,
@@ -1098,11 +1072,13 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     const validReturns = returnEntries.filter((r) => r.quantity > 0)
     if (validReturns.length === 0) return
 
-    await returnItems(selectedLoan.id, validReturns)
-    // Reload the updated loan
-    await loadLoans()
-    const updatedLoan = useInventoryStore.getState().loans.find((l) => l.id === selectedLoan.id)
-    if (updatedLoan) setSelectedLoan(updatedLoan)
+    await returnItems.mutateAsync({ id: selectedLoan.id, items: validReturns })
+    await queryClient.invalidateQueries({ queryKey: ['loans'] })
+    const loansData = queryClient.getQueryData<Loan[]>(['loans'])
+    if (loansData) {
+      const updated = loansData.find((l) => l.id === selectedLoan.id)
+      if (updated) setSelectedLoan(updated)
+    }
     setShowReturnForm(false)
   }
 
@@ -1118,21 +1094,27 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
   const handleAddItemToLoan = async () => {
     if (!selectedLoan || !newItemArticleId) return
-    const article = articles.find((a) => a.id === newItemArticleId)
+    const article = articles.find((a: Article) => a.id === newItemArticleId)
     if (!article) return
 
-    await addItemToLoan(selectedLoan.id, {
-      articleId: newItemArticleId,
-      articleName: article.name,
-      articleNameAr: article.nameAr,
-      quantity: newItemQuantity,
-      returnedQuantity: 0,
-      conditionOnLoan: newItemCondition,
+    await addItemToLoan.mutateAsync({
+      id: selectedLoan.id,
+      data: {
+        articleId: newItemArticleId,
+        articleName: article.name,
+        articleNameAr: article.nameAr,
+        quantity: newItemQuantity,
+        returnedQuantity: 0,
+        conditionOnLoan: newItemCondition,
+      },
     })
 
-    await loadLoans()
-    const updatedLoan = useInventoryStore.getState().loans.find((l) => l.id === selectedLoan.id)
-    if (updatedLoan) setSelectedLoan(updatedLoan)
+    await queryClient.invalidateQueries({ queryKey: ['loans'] })
+    const loansData = queryClient.getQueryData<Loan[]>(['loans'])
+    if (loansData) {
+      const updated = loansData.find((l) => l.id === selectedLoan.id)
+      if (updated) setSelectedLoan(updated)
+    }
     setShowAddItemForm(false)
   }
 
@@ -1142,10 +1124,13 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     if (!selectedLoan) return
     if (!window.confirm('هل أنت متأكد من إزالة هذا المقال من الإعارة؟')) return
 
-    await removeItemFromLoan(selectedLoan.id, articleId)
-    await loadLoans()
-    const updatedLoan = useInventoryStore.getState().loans.find((l) => l.id === selectedLoan.id)
-    if (updatedLoan) setSelectedLoan(updatedLoan)
+    await removeItemFromLoan.mutateAsync({ id: selectedLoan.id, articleId })
+    await queryClient.invalidateQueries({ queryKey: ['loans'] })
+    const loansData = queryClient.getQueryData<Loan[]>(['loans'])
+    if (loansData) {
+      const updated = loansData.find((l) => l.id === selectedLoan.id)
+      if (updated) setSelectedLoan(updated)
+    }
   }
 
   // ---- Mark Definitive ----
@@ -1154,10 +1139,13 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     if (!selectedLoan) return
     if (!window.confirm('هل أنت متأكد من تحويل هذه الإعارة إلى نهائية؟ لن تُسترجع المقالات.')) return
 
-    await markLoanDefinitive(selectedLoan.id)
-    await loadLoans()
-    const updatedLoan = useInventoryStore.getState().loans.find((l) => l.id === selectedLoan.id)
-    if (updatedLoan) setSelectedLoan(updatedLoan)
+    await markLoanDefinitive.mutateAsync(selectedLoan.id)
+    await queryClient.invalidateQueries({ queryKey: ['loans'] })
+    const loansData = queryClient.getQueryData<Loan[]>(['loans'])
+    if (loansData) {
+      const updated = loansData.find((l) => l.id === selectedLoan.id)
+      if (updated) setSelectedLoan(updated)
+    }
   }
 
   if (loading) return <LoadingSpinner />
@@ -1246,7 +1234,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                 </tr>
               </thead>
               <tbody>
-                {filteredLoans.map((loan) => (
+                {filteredLoans.map((loan: Loan) => (
                   <tr key={loan.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
                       {loan.reference || '—'}
@@ -1296,7 +1284,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             value={selectedBeneficiaryId}
             onChange={(val) => {
               setSelectedBeneficiaryId(val)
-              const b = beneficiaries.find((ben) => ben.id === val)
+              const b = beneficiaries.find((ben: Beneficiary) => ben.id === val)
               if (b) {
               } else {
               }
@@ -1317,13 +1305,13 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             {loanItems.length === 0 && (
               <p className="text-sm text-gray-400">لم يتم إضافة أي مقال بعد</p>
             )}
-            {loanItems.map((item, index) => (
+            {loanItems.map((item: { articleId: string; quantity: number; conditionOnLoan: string }, index: number) => (
               <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-gray-50 rounded-lg">
                 <SearchableSelect
                   labelAr="المقال"
                   value={item.articleId}
                   onChange={(val) => updateLoanItemRow(index, 'articleId', val)}
-                  options={availableArticles.map((a) => ({
+                  options={availableArticles.map((a: Article) => ({
                     value: a.id,
                     label: `${a.nameAr} (متاح: ${a.availableQuantity})`,
                   }))}
@@ -1334,7 +1322,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   min={1}
                   max={
                     item.articleId
-                      ? articles.find((a) => a.id === item.articleId)?.availableQuantity || 1
+                      ? articles.find((a: Article) => a.id === item.articleId)?.availableQuantity || 1
                       : 1
                   }
                   value={item.quantity}
@@ -1494,7 +1482,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             {showReturnForm && (
               <div className="border border-gray-200 rounded-lg p-4 space-y-4">
                 <h4 className="text-sm font-semibold text-gray-700">إرجاع المقالات</h4>
-                {returnEntries.map((entry, index) => {
+                {returnEntries.map((entry: { articleId: string; quantity: number; condition: string }, index: number) => {
                   const loanItem = selectedLoan.items.find((i) => i.articleId === entry.articleId)
                   if (!loanItem) return null
                   const remaining = loanItem.quantity - loanItem.returnedQuantity
@@ -1548,7 +1536,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     labelAr="المقال"
                     value={newItemArticleId}
                     onChange={setNewItemArticleId}
-                    options={availableArticles.map((a) => ({
+                    options={availableArticles.map((a: Article) => ({
                       value: a.id,
                       label: `${a.nameAr} (متاح: ${a.availableQuantity})`,
                     }))}
@@ -1559,7 +1547,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     min={1}
                     max={
                       newItemArticleId
-                        ? articles.find((a) => a.id === newItemArticleId)?.availableQuantity || 1
+                        ? articles.find((a: Article) => a.id === newItemArticleId)?.availableQuantity || 1
                         : 1
                     }
                     value={newItemQuantity}

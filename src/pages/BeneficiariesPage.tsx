@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { useBeneficiaryStore } from '../stores/beneficiaryStore'
-import { useCaisseStore } from '../stores/caisseStore'
-import { calculateAge, formatDate, generateId } from '../utils/helpers'
+import { calculateAge, formatDate } from '../utils/helpers'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings } from 'lucide-react'
-import type { BeneficiaryFilter, Beneficiary, Child, BeneficiaryAttribut } from '../types'
-import { db } from '../lib/db'
+import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
+import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary, useWidowsMostChildren } from '../hooks/useBeneficiaries'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { caissesApi, attributsApi, api } from '../lib/api'
 
 // ---- Constants ----
 
@@ -122,17 +122,22 @@ function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
 // ============================================
 
 export default function BeneficiariesPage() {
-  const {
-    beneficiaries,
-    loading,
-    loadBeneficiaries,
-    addBeneficiary,
-    updateBeneficiary,
-    deleteBeneficiary,
-    findWidowsWithMostChildren,
-  } = useBeneficiaryStore()
+  const queryClient = useQueryClient()
+  const [queryParams, setQueryParams] = useState<Record<string, string> | undefined>(undefined)
+  const { data: beneficiaries = [], isLoading } = useBeneficiaries(queryParams)
+  const { data: caisses = [] } = useQuery({
+    queryKey: ['caisses'],
+    queryFn: () => caissesApi.list().then(r => r.data),
+  })
+  const { data: attributs = [] } = useQuery({
+    queryKey: ['attributs'],
+    queryFn: () => attributsApi.list().then(r => r.data),
+  })
 
-  const { caisses, loadCaisses } = useCaisseStore()
+  const createBeneficiary = useCreateBeneficiary()
+  const updateBeneficiary = useUpdateBeneficiary()
+  const deleteBeneficiary = useDeleteBeneficiary()
+  const widowsMutation = useWidowsMostChildren()
 
   // ---- UI state ----
   const [showFormModal, setShowFormModal] = useState(false)
@@ -144,45 +149,47 @@ export default function BeneficiariesPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   // ---- Attribut management (إدارة التصنيفات) ----
-  const [attributs, setAttributs] = useState<BeneficiaryAttribut[]>([])
   const [newAttrNameAr, setNewAttrNameAr] = useState('')
   const [newAttrName, setNewAttrName] = useState('')
   const [editAttrId, setEditAttrId] = useState<string | null>(null)
   const [editAttrNameAr, setEditAttrNameAr] = useState('')
   const [editAttrName, setEditAttrName] = useState('')
 
-  const loadAttributs = async () => {
-    const attrs = await db.beneficiaryAttributs.toArray()
-    setAttributs(attrs)
-  }
+  const createAttributMutation = useMutation({
+    mutationFn: (data: { name: string; nameAr: string }) => attributsApi.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['attributs'] }),
+  })
+
+  const deleteAttributMutation = useMutation({
+    mutationFn: (name: string) => attributsApi.delete(name),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['attributs'] }),
+  })
 
   const handleAddAttribut = async () => {
     if (!newAttrNameAr.trim()) return
-    await db.beneficiaryAttributs.add({
-      id: generateId(), name: newAttrName.trim(), nameAr: newAttrNameAr.trim(), createdAt: new Date(),
-    })
+    await createAttributMutation.mutateAsync({ name: newAttrName.trim(), nameAr: newAttrNameAr.trim() })
     setNewAttrNameAr('')
     setNewAttrName('')
-    await loadAttributs()
   }
 
   const handleUpdateAttribut = async () => {
     if (!editAttrId || !editAttrNameAr.trim()) return
-    await db.beneficiaryAttributs.update(editAttrId, { name: editAttrName.trim(), nameAr: editAttrNameAr.trim() })
+    await api.put(`/beneficiary-attributs/${encodeURIComponent(editAttrId)}`, {
+      name: editAttrName.trim(),
+      nameAr: editAttrNameAr.trim(),
+    })
     setEditAttrId(null)
     setEditAttrNameAr('')
     setEditAttrName('')
-    await loadAttributs()
+    queryClient.invalidateQueries({ queryKey: ['attributs'] })
   }
 
-  const handleDeleteAttribut = async (id: string) => {
+  const handleDeleteAttribut = async (name: string) => {
     if (!window.confirm('هل أنت متأكد من حذف هذه الصفة؟')) return
-    await db.beneficiaryAttributs.delete(id)
-    await loadAttributs()
+    await deleteAttributMutation.mutateAsync(name)
   }
 
   // ---- Filter state ----
-  const [filter, setFilter] = useState<BeneficiaryFilter>({})
   const [filterSearchTerm, setFilterSearchTerm] = useState('')
   const [filterAttribut, setFilterAttribut] = useState('')
   const [filterCaisseId, setFilterCaisseId] = useState('')
@@ -194,7 +201,6 @@ export default function BeneficiariesPage() {
   const [activeTab, setActiveTab] = useState<'list' | 'settings'>('list')
 
   const handleSettingsTab = () => {
-    loadAttributs()
     setActiveTab('settings')
   }
 
@@ -203,34 +209,31 @@ export default function BeneficiariesPage() {
   const [detailLoans, setDetailLoans] = useState<any[]>([])
   const [detailReferrals, setDetailReferrals] = useState<any[]>([])
 
-  useEffect(() => {
-    loadBeneficiaries()
-    loadCaisses()
-    loadAttributs()
-  }, [loadBeneficiaries, loadCaisses])
-
   // ---- Caisse options ----
-  const caisseOptions = caisses.map((c) => ({
+  const caisseOptions = caisses.map((c: any) => ({
     value: c.id,
     label: c.nameAr || c.name,
   }))
 
-  const attributOptions = attributs.length > 0 ? attributs.map((a) => ({
+  const attributOptions = attributs.length > 0 ? attributs.map((a: BeneficiaryAttribut) => ({
     value: a.name,
     label: a.nameAr,
   })) : Object.entries(ATTRIBUT_LABELS).map(([value, label]) => ({ value, label }))
 
   // ---- Filter application ----
+  const buildParams = () => {
+    const params: Record<string, string> = {}
+    if (filterSearchTerm) params.searchTerm = filterSearchTerm
+    if (filterAttribut) params.attribut = filterAttribut
+    if (filterCaisseId) params.caisseId = filterCaisseId
+    if (filterMinChildren) params.minChildren = filterMinChildren
+    if (filterMaxChildAge) params.maxChildAge = filterMaxChildAge
+    if (filterSituation) params.situation = filterSituation
+    return Object.keys(params).length > 0 ? params : undefined
+  }
+
   const applyFilters = () => {
-    const f: BeneficiaryFilter = {}
-    if (filterSearchTerm) f.searchTerm = filterSearchTerm
-    if (filterAttribut) f.attribut = filterAttribut as any
-    if (filterCaisseId) f.caisseId = filterCaisseId
-    if (filterMinChildren) f.minChildren = parseInt(filterMinChildren, 10)
-    if (filterMaxChildAge) f.maxChildAge = parseInt(filterMaxChildAge, 10)
-    if (filterSituation) f.situation = filterSituation
-    setFilter(f)
-    loadBeneficiaries(f)
+    setQueryParams(buildParams())
   }
 
   const resetFilters = () => {
@@ -240,13 +243,13 @@ export default function BeneficiariesPage() {
     setFilterMinChildren('')
     setFilterMaxChildAge('')
     setFilterSituation('')
-    setFilter({})
-    loadBeneficiaries()
+    setQueryParams(undefined)
   }
 
   const handleFindWidowWithMostChildren = async () => {
     const maxAge = filterMaxChildAge ? parseInt(filterMaxChildAge, 10) : undefined
-    const widows = await findWidowsWithMostChildren(maxAge)
+    const res = await widowsMutation.mutateAsync(maxAge)
+    const widows = res.data
     if (widows.length > 0) {
       openDetail(widows[0])
     }
@@ -328,9 +331,9 @@ export default function BeneficiariesPage() {
     }
 
     if (editingId) {
-      await updateBeneficiary(editingId, data)
+      await updateBeneficiary.mutateAsync({ id: editingId, data })
     } else {
-      await addBeneficiary(data as any)
+      await createBeneficiary.mutateAsync(data as any)
     }
 
     closeFormModal()
@@ -338,7 +341,7 @@ export default function BeneficiariesPage() {
 
   // ---- Delete ----
   const handleDelete = async (id: string) => {
-    await deleteBeneficiary(id)
+    await deleteBeneficiary.mutateAsync(id)
     setDeleteConfirmId(null)
   }
 
@@ -385,14 +388,14 @@ export default function BeneficiariesPage() {
   // ---- Helpers ----
   const getCaisseName = (caisseId?: string) => {
     if (!caisseId) return '—'
-    const c = caisses.find((c) => c.id === caisseId)
+    const c = caisses.find((c: any) => c.id === caisseId)
     return c?.nameAr || c?.name || '—'
   }
 
   const getSubCaisseName = (caisseId?: string, subCatId?: string) => {
     if (!caisseId || !subCatId) return '—'
-    const c = caisses.find((c) => c.id === caisseId)
-    const sc = c?.subCategories.find((s) => s.id === subCatId)
+    const c = caisses.find((c: any) => c.id === caisseId)
+    const sc = c?.subCategories.find((s: any) => s.id === subCatId)
     return sc?.nameAr || sc?.name || '—'
   }
 
@@ -409,8 +412,15 @@ export default function BeneficiariesPage() {
           value={filterSearchTerm}
           onChange={(e) => {
             setFilterSearchTerm(e.target.value)
-            const f: BeneficiaryFilter = { ...filter, searchTerm: e.target.value || undefined }
-            loadBeneficiaries(f)
+            if (e.target.value) {
+              setQueryParams((prev) => ({ ...prev, searchTerm: e.target.value }))
+            } else {
+              setQueryParams((prev) => {
+                const next = { ...prev }
+                delete next.searchTerm
+                return Object.keys(next).length > 0 ? next : undefined
+              })
+            }
           }}
         />
       </div>
@@ -476,7 +486,7 @@ export default function BeneficiariesPage() {
 
       {/* ---- Table ---- */}
       <Card>
-        {loading ? (
+        {isLoading ? (
           <LoadingSpinner />
         ) : beneficiaries.length === 0 ? (
           <EmptyState
@@ -500,7 +510,7 @@ export default function BeneficiariesPage() {
                 </tr>
               </thead>
               <tbody>
-                {beneficiaries.map((b) => {
+                {beneficiaries.map((b: Beneficiary) => {
                   const age = b.dateOfBirth ? calculateAge(b.dateOfBirth) : null
                   return (
                     <tr
@@ -733,13 +743,13 @@ export default function BeneficiariesPage() {
                 }}
               />
               {(() => {
-                const activeCaisse = caisses.find((c) => c.id === form.caisseId)
+                const activeCaisse = caisses.find((c: any) => c.id === form.caisseId)
                 const activeSubCats = activeCaisse?.subCategories || []
                 if (activeSubCats.length === 0) return null
                 return (
                   <SearchableSelect
                     labelAr="الفئة الفرعية"
-                    options={activeSubCats.map((sc) => ({ value: sc.id, label: sc.nameAr }))}
+                    options={activeSubCats.map((sc: any) => ({ value: sc.id, label: sc.nameAr }))}
                     value={form.subCategoryId}
                     onChange={(val) => handleFormChange('subCategoryId', val)}
                   />
@@ -1236,7 +1246,7 @@ export default function BeneficiariesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {attributs.map((a) => (
+                  {attributs.map((a: BeneficiaryAttribut) => (
                     <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
                       {editAttrId === a.id ? (
                         <>
@@ -1258,7 +1268,7 @@ export default function BeneficiariesPage() {
                           <td className="py-3 px-4 text-center">
                             <button onClick={() => { setEditAttrId(a.id); setEditAttrNameAr(a.nameAr); setEditAttrName(a.name); }}
                               className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
-                            <button onClick={() => handleDeleteAttribut(a.id)}
+                            <button onClick={() => handleDeleteAttribut(a.name)}
                               className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                           </td>
                         </>

@@ -1,19 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { useMedicalStore } from '../stores/medicalStore';
-import { useBeneficiaryStore } from '../stores/beneficiaryStore';
-import { useCaisseStore } from '../stores/caisseStore';
 import { formatCurrency, numberToArabicWords } from '../utils/helpers';
 import { printReceipt } from '../lib/receipt';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
-import { db } from '../lib/db';
-import { generateId } from '../utils/helpers';
-import type { MedicalReferral, MedicalAnalysisType, MedicalHospital } from '../types';
+import type { MedicalReferral, Beneficiary, Caisse, MedicalAnalysisType, MedicalHospital, SubCategory } from '../types';
+import { useQuery } from '@tanstack/react-query';
+import { caissesApi } from '../lib/api';
+import { useMedicalReferrals, useCreateMedicalReferral, useDeleteMedicalReferral, useAnalysisTypes, useCreateAnalysisType, useUpdateAnalysisType, useDeleteAnalysisType, useHospitals, useCreateHospital, useUpdateHospital, useDeleteHospital } from '../hooks/useMedical';
+import { useBeneficiaries } from '../hooks/useBeneficiaries';
 
 export default function MedicalPage() {
-  const { referrals, loadReferrals, addReferral, deleteReferral } = useMedicalStore();
-  const { beneficiaries, loadBeneficiaries } = useBeneficiaryStore();
-  const { caisses, loadCaisses } = useCaisseStore();
+  const { data: referrals = [] } = useMedicalReferrals();
+  const { data: beneficiaries = [] } = useBeneficiaries();
+  const { data: caisses = [] } = useQuery({
+    queryKey: ['caisses'],
+    queryFn: () => caissesApi.list().then(r => r.data),
+  });
+  const { data: analysisTypes = [], isLoading: analysisTypesLoading } = useAnalysisTypes();
+  const { data: hospitals = [], isLoading: hospitalsLoading } = useHospitals();
+  const settingsLoading = analysisTypesLoading || hospitalsLoading;
+
+  const createMedicalReferral = useCreateMedicalReferral();
+  const deleteMedicalReferral = useDeleteMedicalReferral();
+  const createAnalysisMutation = useCreateAnalysisType();
+  const updateAnalysisMutation = useUpdateAnalysisType();
+  const deleteAnalysisMutation = useDeleteAnalysisType();
+  const createHospitalMutation = useCreateHospital();
+  const updateHospitalMutation = useUpdateHospital();
+  const deleteHospitalMutation = useDeleteHospital();
 
   const [activeTab, setActiveTab] = useState<'list' | 'settings'>('list');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -29,9 +43,6 @@ export default function MedicalPage() {
   const [filterAnalysis, setFilterAnalysis] = useState('');
 
   // Settings tab state
-  const [analysisTypes, setAnalysisTypes] = useState<MedicalAnalysisType[]>([])
-  const [hospitals, setHospitals] = useState<MedicalHospital[]>([])
-  const [settingsLoading, setSettingsLoading] = useState(true)
   const [newAnalysisAr, setNewAnalysisAr] = useState('')
   const [newAnalysisFr, setNewAnalysisFr] = useState('')
   const [editAnalysisId, setEditAnalysisId] = useState<string | null>(null)
@@ -57,51 +68,33 @@ export default function MedicalPage() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
 
-  useEffect(() => {
-    loadReferrals();
-    loadBeneficiaries();
-    loadCaisses();
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    setSettingsLoading(true)
-    const [types, hosps] = await Promise.all([
-      db.medicalAnalysisTypes.toArray(),
-      db.medicalHospitals.toArray(),
-    ])
-    setAnalysisTypes(types)
-    setHospitals(hosps)
-    setSettingsLoading(false)
-  }
-
   const handleAddAnalysis = async () => {
     if (!newAnalysisAr.trim()) return
-    await db.medicalAnalysisTypes.add({ id: generateId(), name: newAnalysisFr.trim(), nameAr: newAnalysisAr.trim(), createdAt: new Date() })
-    setNewAnalysisAr(''); setNewAnalysisFr(''); await loadSettings()
+    await createAnalysisMutation.mutateAsync({ name: newAnalysisFr.trim(), nameAr: newAnalysisAr.trim() })
+    setNewAnalysisAr(''); setNewAnalysisFr('')
   }
   const handleUpdateAnalysis = async () => {
     if (!editAnalysisId || !editAnalysisAr.trim()) return
-    await db.medicalAnalysisTypes.update(editAnalysisId, { name: editAnalysisFr.trim(), nameAr: editAnalysisAr.trim() })
-    setEditAnalysisId(null); setEditAnalysisAr(''); setEditAnalysisFr(''); await loadSettings()
+    await updateAnalysisMutation.mutateAsync({ id: editAnalysisId, data: { name: editAnalysisFr.trim(), nameAr: editAnalysisAr.trim() } })
+    setEditAnalysisId(null); setEditAnalysisAr(''); setEditAnalysisFr('')
   }
   const handleDeleteAnalysis = async (id: string) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا التحليل؟')) return
-    await db.medicalAnalysisTypes.delete(id); await loadSettings()
+    await deleteAnalysisMutation.mutateAsync(id)
   }
   const handleAddHospital = async () => {
     if (!newHospAr.trim()) return
-    await db.medicalHospitals.add({ id: generateId(), name: newHospFr.trim(), nameAr: newHospAr.trim(), createdAt: new Date() })
-    setNewHospAr(''); setNewHospFr(''); await loadSettings()
+    await createHospitalMutation.mutateAsync({ name: newHospFr.trim(), nameAr: newHospAr.trim() })
+    setNewHospAr(''); setNewHospFr('')
   }
   const handleUpdateHospital = async () => {
     if (!editHospId || !editHospAr.trim()) return
-    await db.medicalHospitals.update(editHospId, { name: editHospFr.trim(), nameAr: editHospAr.trim() })
-    setEditHospId(null); setEditHospAr(''); setEditHospFr(''); await loadSettings()
+    await updateHospitalMutation.mutateAsync({ id: editHospId, data: { name: editHospFr.trim(), nameAr: editHospAr.trim() } })
+    setEditHospId(null); setEditHospAr(''); setEditHospFr('')
   }
   const handleDeleteHospital = async (id: string) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا المستشفى؟')) return
-    await db.medicalHospitals.delete(id); await loadSettings()
+    await deleteHospitalMutation.mutateAsync(id)
   }
 
   const resetForm = () => {
@@ -122,10 +115,10 @@ export default function MedicalPage() {
   const handleAddReferral = async () => {
     if (!beneficiaryId || !caisseId || !doctorNameAr) return;
 
-    const beneficiary = beneficiaries.find((b) => b.id === beneficiaryId);
+    const beneficiary = beneficiaries.find((b: Beneficiary) => b.id === beneficiaryId);
     if (!beneficiary) return;
 
-    await addReferral({
+    await createMedicalReferral.mutateAsync({
       beneficiaryId,
       beneficiaryName: `${beneficiary.firstName} ${beneficiary.lastName}`,
       beneficiaryNameAr: `${beneficiary.firstNameAr} ${beneficiary.lastNameAr}`,
@@ -148,13 +141,13 @@ export default function MedicalPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا التوجيه الطبي؟')) {
-      await deleteReferral(id);
+      await deleteMedicalReferral.mutateAsync(id);
     }
   };
 
   const handlePrint = (referral: MedicalReferral) => {
-    const caisse = caisses.find((c) => c.id === referral.caisseId)
-    const subCat = caisse?.subCategories.find((s) => s.id === referral.subCategoryId)
+    const caisse = caisses.find((c: Caisse) => c.id === referral.caisseId)
+    const subCat = caisse?.subCategories.find((s: SubCategory) => s.id === referral.subCategoryId)
     const caisseRow = caisse ? `<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse.nameAr}</span></div>` : ''
     const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
 
@@ -174,7 +167,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
     );
   };
 
-  const filteredReferrals = referrals.filter((r) => {
+  const filteredReferrals = referrals.filter((r: MedicalReferral) => {
     const term = filterSearchTerm.toLowerCase();
     if (term && !(
       r.beneficiaryNameAr.includes(term) ||
@@ -221,7 +214,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 labelAr="الصندوق"
                 value={filterCaisseId}
                 onChange={setFilterCaisseId}
-                options={caisses.map((c) => ({
+                options={caisses.map((c: Caisse) => ({
                   value: c.id,
                   label: c.nameAr,
                 }))}
@@ -301,7 +294,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 </tr>
               </thead>
               <tbody>
-                {filteredReferrals.map((referral) => (
+                {filteredReferrals.map((referral: MedicalReferral) => (
                   <tr key={referral.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">{referral.reference || '—'}</td>
                     <td className="py-3 px-4 font-medium">{referral.beneficiaryNameAr}</td>
@@ -329,26 +322,26 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SearchableSelect labelAr="المستفيد" value={beneficiaryId} onChange={setBeneficiaryId}
-              options={beneficiaries.map((b) => ({ value: b.id, label: `${b.firstNameAr} ${b.lastNameAr} (${b.reference || ''})` }))} />
+              options={beneficiaries.map((b: Beneficiary) => ({ value: b.id, label: `${b.firstNameAr} ${b.lastNameAr} (${b.reference || ''})` }))} />
             <SearchableSelect labelAr="الصندوق" value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
-              options={caisses.map((c) => ({ value: c.id, label: c.nameAr }))} />
+              options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))} />
           </div>
           {(() => {
-            const sc = caisses.find((c) => c.id === caisseId)
+            const sc = caisses.find((c: Caisse) => c.id === caisseId)
             const subs = sc?.subCategories || []
             if (subs.length === 0) return null
             return <SearchableSelect labelAr="الفئة الفرعية" value={subCategoryId} onChange={setSubCategoryId}
-              options={subs.map((s) => ({ value: s.id, label: s.nameAr }))} />
+              options={subs.map((s: SubCategory) => ({ value: s.id, label: s.nameAr }))} />
           })()}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input labelAr="اسم الطبيب بالعربية" value={doctorNameAr} onChange={(e) => setDoctorNameAr(e.target.value)} placeholder="د. محمد ..." />
             <Input labelAr="اسم الطبيب بالفرنسية (اختياري)" value={doctorName} onChange={(e) => setDoctorName(e.target.value)} dir="ltr" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableSelect labelAr="نوع التحليل / الفحص" value={analysisTypeAr} onChange={(val) => { const a = analysisTypes.find(x => x.nameAr === val); setAnalysisTypeAr(val); setAnalysisType(a?.name || val); }}
-              options={analysisTypes.map((a) => ({ value: a.nameAr, label: a.nameAr }))} placeholder="اختر تحليلاً..." />
-            <SearchableSelect labelAr="المستشفى / العيادة" value={hospitalAr} onChange={(val) => { const h = hospitals.find(x => x.nameAr === val); setHospitalAr(val); setHospital(h?.name || val); }}
-              options={hospitals.map((h) => ({ value: h.nameAr, label: h.nameAr }))} placeholder="اختر مستشفى..." />
+            <SearchableSelect labelAr="نوع التحليل / الفحص" value={analysisTypeAr} onChange={(val) => { const a = analysisTypes.find((x: MedicalAnalysisType) => x.nameAr === val); setAnalysisTypeAr(val); setAnalysisType(a?.name || val); }}
+              options={analysisTypes.map((a: MedicalAnalysisType) => ({ value: a.nameAr, label: a.nameAr }))} placeholder="اختر تحليلاً..." />
+            <SearchableSelect labelAr="المستشفى / العيادة" value={hospitalAr} onChange={(val) => { const h = hospitals.find((x: MedicalHospital) => x.nameAr === val); setHospitalAr(val); setHospital(h?.name || val); }}
+              options={hospitals.map((h: MedicalHospital) => ({ value: h.nameAr, label: h.nameAr }))} placeholder="اختر مستشفى..." />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -420,7 +413,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                     <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                   </tr>
                 </thead>
-                <tbody>{analysisTypes.map((a) => (
+                <tbody>{analysisTypes.map((a: MedicalAnalysisType) => (
                   <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
                     {editAnalysisId === a.id ? (
                       <>
@@ -470,7 +463,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                     <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                   </tr>
                 </thead>
-                <tbody>{hospitals.map((h) => (
+                <tbody>{hospitals.map((h: MedicalHospital) => (
                   <tr key={h.id} className="border-b border-gray-100 hover:bg-gray-50">
                     {editHospId === h.id ? (
                       <>
