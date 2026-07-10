@@ -113,7 +113,7 @@ router.delete('/:attribut', async (req: AuthRequest, res: Response): Promise<voi
 
     if (count > 0) {
       res.status(400).json({
-        error: `Cannot delete attribut "${attribut}" because it is used by ${count} beneficiary(ies)`,
+        error: `لا يمكن حذف "${attribut}" لأنه مستخدم من قبل ${count} مستفيد`,
         inUse: count,
       });
       return;

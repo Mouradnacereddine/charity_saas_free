@@ -256,11 +256,11 @@ model Article {
   nameAr            String
   description       String?
   descriptionAr     String?
-  categoryId        String
+  categoryId        String?
   quantity          Int
   availableQuantity Int
   status            ArticleStatus @default(disponible)
-  storageLocationId String
+  storageLocationId String?
   condition         String
   conditionAr       String
   isPermanent       Boolean       @default(false)
@@ -269,8 +269,8 @@ model Article {
   updatedAt         DateTime      @updatedAt
 
   association     Association     @relation(fields: [associationId], references: [id], onDelete: Cascade)
-  category        ArticleCategory @relation(fields: [categoryId], references: [id])
-  storageLocation StorageLocation @relation(fields: [storageLocationId], references: [id])
+  category        ArticleCategory? @relation(fields: [categoryId], references: [id])
+  storageLocation StorageLocation? @relation(fields: [storageLocationId], references: [id])
 
   @@index([associationId])
   @@index([categoryId])

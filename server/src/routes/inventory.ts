@@ -269,6 +269,11 @@ router.delete('/article-categories/:id', async (req: AuthRequest, res: Response)
       return;
     }
 
+    // Unset this category on all articles that reference it
+    await prisma.article.updateMany({
+      where: { categoryId: id, associationId },
+      data: { categoryId: null },
+    });
     await prisma.articleCategory.delete({ where: { id } });
     res.json({ message: 'Article category deleted successfully' });
   } catch (error) {
@@ -367,6 +372,11 @@ router.delete('/storage-locations/:id', async (req: AuthRequest, res: Response):
       return;
     }
 
+    // Unset this location on all articles that reference it
+    await prisma.article.updateMany({
+      where: { storageLocationId: id, associationId },
+      data: { storageLocationId: null },
+    });
     await prisma.storageLocation.delete({ where: { id } });
     res.json({ message: 'Storage location deleted successfully' });
   } catch (error) {

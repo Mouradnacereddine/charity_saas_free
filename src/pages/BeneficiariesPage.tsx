@@ -186,7 +186,12 @@ export default function BeneficiariesPage() {
 
   const handleDeleteAttribut = async (name: string) => {
     if (!window.confirm('هل أنت متأكد من حذف هذه الصفة؟')) return
-    await deleteAttributMutation.mutateAsync(name)
+    try {
+      await deleteAttributMutation.mutateAsync(name)
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || 'لا يمكن حذف الصفة لأنها مستخدمة من قبل مستفيدين'
+      window.alert(msg)
+    }
   }
 
   // ---- Filter state ----
