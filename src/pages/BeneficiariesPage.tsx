@@ -1253,7 +1253,7 @@ export default function BeneficiariesPage() {
                 <tbody>
                   {attributs.map((a: BeneficiaryAttribut) => (
                     <tr key={a.name} className="border-b border-gray-100 hover:bg-gray-50">
-                      {editAttrId === a.id ? (
+                      {editAttrId === a.name ? (
                         <>
                           <td className="py-2 px-4">
                             <input value={editAttrNameAr} onChange={(e) => setEditAttrNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" />

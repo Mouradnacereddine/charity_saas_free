@@ -7,16 +7,16 @@ const router = Router();
 // All routes require authentication
 router.use(requireAuth);
 
-// GET /api/beneficiaries — list with optional search
+// GET /api/beneficiaries — list with filters (searchTerm, attribut, caisseId, situation, minChildren, maxChildAge)
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { search, firstName, lastName, nationalCardNumber, phone, attribut, caisseId } = req.query;
+    const { searchTerm, attribut, caisseId, situation, minChildren, maxChildAge } = req.query;
     const associationId = req.user!.associationId;
 
     const where: any = { associationId };
 
-    if (search) {
-      const term = String(search);
+    if (searchTerm) {
+      const term = String(searchTerm);
       where.OR = [
         { firstName: { contains: term, mode: 'insensitive' } },
         { lastName: { contains: term, mode: 'insensitive' } },
@@ -26,20 +26,28 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         { nationalCardNumber: { contains: term, mode: 'insensitive' } },
         { phone: { contains: term, mode: 'insensitive' } },
       ];
-    } else {
-      if (firstName) where.firstName = { contains: String(firstName), mode: 'insensitive' };
-      if (lastName) where.lastName = { contains: String(lastName), mode: 'insensitive' };
-      if (nationalCardNumber) where.nationalCardNumber = { contains: String(nationalCardNumber), mode: 'insensitive' };
-      if (phone) where.phone = { contains: String(phone), mode: 'insensitive' };
-      if (attribut) where.attribut = String(attribut);
-      if (caisseId) where.caisseId = String(caisseId);
+    }
+    if (attribut) where.attribut = String(attribut);
+    if (caisseId) where.caisseId = String(caisseId);
+    if (situation) {
+      where.OR = where.OR || [];
+      where.OR.push(
+        { situation: { contains: String(situation), mode: 'insensitive' } },
+        { situationAr: { contains: String(situation), mode: 'insensitive' } },
+      );
     }
 
-    const beneficiaries = await prisma.beneficiary.findMany({
+    // Fetch all and apply children filters in-memory (JSON field)
+    let beneficiaries = await prisma.beneficiary.findMany({
       where,
       include: { caisse: true },
       orderBy: { createdAt: 'desc' },
     });
+
+    if (minChildren) {
+      const min = parseInt(String(minChildren), 10);
+      if (!isNaN(min)) beneficiaries = beneficiaries.filter((b: any) => (b.children || []).length >= min);
+    }
 
     res.json(beneficiaries);
   } catch (error) {
