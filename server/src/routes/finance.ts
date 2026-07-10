@@ -72,7 +72,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
       receiptNumber, date,
     } = req.body;
 
-    if (!type || !amount || !amountInWords || !amountInWordsAr || !fundSource || !caisseId || !description || !descriptionAr) {
+    if (!type || amount === undefined || amount === null || !fundSource || !caisseId) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
@@ -86,6 +86,13 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
       res.status(400).json({ error: 'Invalid fund source' });
       return;
     }
+
+    // Auto-generate amountInWords if not provided
+    const words = amountInWords || `${amount} DZD`;
+    const wordsAr = amountInWordsAr || `${amount} دينار`;
+
+    // Auto-generate receipt number for credits
+    const ref = receiptNumber || (type === 'credit' ? `BON-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}` : undefined);
 
     // Verify caisse belongs to association
     const caisse = await prisma.caisse.findFirst({
@@ -126,8 +133,8 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
           associationId,
           type,
           amount,
-          amountInWords,
-          amountInWordsAr,
+          amountInWords: words,
+          amountInWordsAr: wordsAr,
           fundSource,
           caisseId,
           subCategoryId,
@@ -136,7 +143,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
           beneficiaryId,
           description,
           descriptionAr,
-          receiptNumber,
+          receiptNumber: ref,
           date: date ? new Date(date) : new Date(),
         },
       });

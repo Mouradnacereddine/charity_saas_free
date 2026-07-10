@@ -73,16 +73,19 @@ const EMPTY_ARTICLE_FORM = {
 
 // ---- Helpers ----
 
-function getCategoryNameAr(categoryId: string, categories: ArticleCategory[]): string {
-  if (!categoryId) return '—'
-  const found = categories.find((c: ArticleCategory) => c.id === categoryId)
-  return found ? found.nameAr : categoryId
+function getCategoryNameAr(category: any, categories: ArticleCategory[]): string {
+  if (!category) return '—'
+  // API may return an object (with include) or a string ID
+  if (typeof category === 'object') return category.nameAr || category.name || '—'
+  const found = categories.find((c: ArticleCategory) => c.id === category)
+  return found ? found.nameAr : category
 }
 
-function getStorageNameAr(storageId: string, locations: StorageLocation[]): string {
-  if (!storageId) return '—'
-  const found = locations.find((l: StorageLocation) => l.id === storageId)
-  return found ? found.nameAr : storageId
+function getStorageNameAr(storageLocation: any, locations: StorageLocation[]): string {
+  if (!storageLocation) return '—'
+  if (typeof storageLocation === 'object') return storageLocation.nameAr || storageLocation.name || '—'
+  const found = locations.find((l: StorageLocation) => l.id === storageLocation)
+  return found ? found.nameAr : storageLocation
 }
 
 // ---- Component ----
