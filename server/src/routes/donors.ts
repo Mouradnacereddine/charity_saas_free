@@ -48,11 +48,13 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
-      reference, firstName, lastName, firstNameAr, lastNameAr,
+      reference: refInput, firstName, lastName, firstNameAr, lastNameAr,
       phone, email, address, totalDonated, notes,
     } = req.body;
 
-    if (!reference || !firstName || !lastName || !firstNameAr || !lastNameAr || !phone) {
+    const reference = refInput || `DON-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+
+    if (!firstName || !lastName || !firstNameAr || !lastNameAr || !phone) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }

@@ -18,14 +18,15 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 
     const beneficiaries = await prisma.beneficiary.findMany({
       where: { associationId },
-      select: { attribut: true },
+      select: { attribut: true, firstNameAr: true },
       distinct: ['attribut'],
     });
 
+    const seen = new Set<string>();
     const attributs = beneficiaries
-      .map((b) => b.attribut)
-      .filter(Boolean)
-      .sort();
+      .filter((b) => b.attribut && !seen.has(b.attribut) && seen.add(b.attribut))
+      .map((b) => ({ name: b.attribut!, nameAr: b.firstNameAr || b.attribut! }))
+      .sort((a, b) => a.nameAr.localeCompare(b.nameAr, 'ar'));
 
     res.json(attributs);
   } catch (error) {
@@ -35,32 +36,44 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // POST /api/beneficiary-attributs — add a new attribut value
-// This is a metadata operation; the attribut is stored on the Beneficiary model
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { attribut } = req.body;
+    const { name, nameAr, attribut } = req.body;
+    const key = attribut || name;
 
-    if (!attribut) {
-      res.status(400).json({ error: 'Missing required field: attribut' });
+    if (!key) {
+      res.status(400).json({ error: 'Missing required field: name' });
       return;
     }
 
-    // Check if the attribut value already exists in this association
+    // Check if the attribut value already exists
     const existing = await prisma.beneficiary.findFirst({
-      where: { associationId, attribut },
+      where: { associationId, attribut: key },
     });
 
-    if (existing) {
-      res.status(409).json({ error: 'Attribut already exists' });
-      return;
+    if (!existing) {
+      // Create a dummy beneficiary to register the attribut
+      await prisma.beneficiary.create({
+        data: {
+          associationId,
+          reference: `ATTRIBUT-${Date.now()}`,
+          attribut: key,
+          firstName: key,
+          lastName: '',
+          firstNameAr: nameAr || key,
+          lastNameAr: '',
+          address: '',
+          addressAr: '',
+          phone: '0000000000',
+          nationalCardNumber: `ATTRIBUT-${Date.now()}`,
+          dateOfBirth: new Date('2000-01-01'),
+          children: [],
+        },
+      });
     }
 
-    // Since attributs are just string values on the Beneficiary model,
-    // we create a dummy beneficiary to register the attribut, then return success.
-    // The frontend should use POST /api/beneficiaries to create actual beneficiaries.
-    // This endpoint is for managing the list of valid attribut values.
-    res.status(201).json({ attribut, message: 'Attribut value registered' });
+    res.status(201).json({ name: key, nameAr: nameAr || key, message: 'Attribut value registered' });
   } catch (error) {
     console.error('Error creating beneficiary attribut:', error);
     res.status(500).json({ error: 'Internal server error' });

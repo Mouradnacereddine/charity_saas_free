@@ -37,13 +37,17 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
   try {
     const associationId = req.user!.associationId;
     const {
-      reference, beneficiaryId, caisseId, subCategoryId,
+      reference: refInput, beneficiaryId, caisseId, subCategoryId,
       doctorName, doctorNameAr, analysisType, analysisTypeAr,
       hospital, hospitalAr, amount, amountInWords, amountInWordsAr,
       date, notes,
     } = req.body;
 
-    if (!reference || !beneficiaryId || !caisseId || !doctorName || !doctorNameAr || !amount || !amountInWords || !amountInWordsAr || !date) {
+    const reference = refInput || `MED-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+    const words = amountInWords || `${amount} DZD`;
+    const wordsAr = amountInWordsAr || `${amount} دينار`;
+
+    if (!beneficiaryId || !caisseId || !doctorName || !doctorNameAr || !amount || !date) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
@@ -96,8 +100,8 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
           hospital,
           hospitalAr,
           amount: numericAmount,
-          amountInWords,
-          amountInWordsAr,
+          amountInWords: words,
+          amountInWordsAr: wordsAr,
           date: new Date(date),
           notes,
         },
