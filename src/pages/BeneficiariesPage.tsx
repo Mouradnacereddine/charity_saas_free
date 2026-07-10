@@ -3,7 +3,7 @@ import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptySta
 import { calculateAge, formatDate } from '../utils/helpers'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
-import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary, useWidowsMostChildren } from '../hooks/useBeneficiaries'
+import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary } from '../hooks/useBeneficiaries'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { caissesApi, attributsApi, api } from '../lib/api'
 
@@ -137,7 +137,6 @@ export default function BeneficiariesPage() {
   const createBeneficiary = useCreateBeneficiary()
   const updateBeneficiary = useUpdateBeneficiary()
   const deleteBeneficiary = useDeleteBeneficiary()
-  const widowsMutation = useWidowsMostChildren()
 
   // ---- UI state ----
   const [showFormModal, setShowFormModal] = useState(false)
@@ -201,6 +200,7 @@ export default function BeneficiariesPage() {
   const [filterMinChildren, setFilterMinChildren] = useState('')
   const [filterMaxChildAge, setFilterMaxChildAge] = useState('')
   const [filterSituation, setFilterSituation] = useState('')
+  const [widowFilterActive, setWidowFilterActive] = useState(false)
 
   // ---- Tab state ----
   const [activeTab, setActiveTab] = useState<'list' | 'settings'>('list')
@@ -225,6 +225,18 @@ export default function BeneficiariesPage() {
     label: a.nameAr,
   })) : Object.entries(ATTRIBUT_LABELS).map(([value, label]) => ({ value, label }))
 
+  // Compute display list (apply widow filter if active)
+  const displayBeneficiaries = (() => {
+    if (widowFilterActive && beneficiaries.length > 0) {
+      const widows = beneficiaries.filter((b: any) => b.attribut === 'veuve')
+      if (widows.length > 0) {
+        const maxChildren = Math.max(...widows.map((w: any) => (w.children || []).length))
+        return widows.filter((w: any) => (w.children || []).length === maxChildren)
+      }
+    }
+    return beneficiaries
+  })()
+
   // ---- Filter application ----
   const buildParams = () => {
     const params: Record<string, string> = {}
@@ -248,16 +260,15 @@ export default function BeneficiariesPage() {
     setFilterMinChildren('')
     setFilterMaxChildAge('')
     setFilterSituation('')
+    setWidowFilterActive(false)
     setQueryParams(undefined)
   }
 
   const handleFindWidowWithMostChildren = async () => {
-    const maxAge = filterMaxChildAge ? parseInt(filterMaxChildAge, 10) : undefined
-    const res = await widowsMutation.mutateAsync(maxAge)
-    const widows = res.data
-    if (widows.length > 0) {
-      openDetail(widows[0])
-    }
+    setWidowFilterActive(false)
+    setFilterAttribut('veuve')
+    applyFilters()
+    setWidowFilterActive(true)
   }
 
   // ---- Form handlers ----
@@ -493,7 +504,7 @@ export default function BeneficiariesPage() {
       <Card>
         {isLoading ? (
           <LoadingSpinner />
-        ) : beneficiaries.length === 0 ? (
+        ) : displayBeneficiaries.length === 0 ? (
           <EmptyState
             message="لا يوجد مستفيدون حالياً. أضف مستفيداً جديداً للبدء."
             icon={<Users className="w-12 h-12" />}
@@ -515,7 +526,7 @@ export default function BeneficiariesPage() {
                 </tr>
               </thead>
               <tbody>
-                {beneficiaries.map((b: Beneficiary) => {
+                {displayBeneficiaries.map((b: Beneficiary) => {
                   const age = b.dateOfBirth ? calculateAge(b.dateOfBirth) : null
                   return (
                     <tr
@@ -1294,7 +1305,7 @@ export default function BeneficiariesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">المستفيدون</h1>
           <p className="text-sm text-gray-500 mt-1">
-            إدارة المستفيدين وبياناتهم — إجمالي: {beneficiaries.length}
+            إدارة المستفيدين وبياناتهم — إجمالي: {displayBeneficiaries.length}{widowFilterActive ? ' (الأرامل الأكثر أطفالاً)' : ''}
           </p>
         </div>
         {activeTab === 'list' && (
