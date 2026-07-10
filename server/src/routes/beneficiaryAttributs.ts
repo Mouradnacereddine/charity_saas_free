@@ -76,26 +76,30 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   }
 });
 
-// PUT /:attribut — update display name of an attribut
+// PUT /:attribut — update an attribut (key + display name)
 router.put('/:attribut', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { attribut } = req.params;
-    const { nameAr } = req.body;
+    const { name, nameAr } = req.body;
     const associationId = req.user!.associationId;
+    const newKey = name || attribut;
+    const newNameAr = nameAr || attribut;
 
-    // Update the dummy beneficiary's firstNameAr
-    const dummy = await prisma.beneficiary.findFirst({
-      where: { associationId, attribut, phone: DUMMY_PHONE },
-    });
-
-    if (dummy) {
-      await prisma.beneficiary.update({
-        where: { id: dummy.id },
-        data: { firstNameAr: nameAr || attribut },
+    // If key changed, update all real beneficiaries + dummy
+    if (newKey !== attribut) {
+      await prisma.beneficiary.updateMany({
+        where: { associationId, attribut },
+        data: { attribut: newKey, firstNameAr: newNameAr },
+      });
+    } else {
+      // Just update the dummy's display name
+      await prisma.beneficiary.updateMany({
+        where: { associationId, attribut, phone: DUMMY_PHONE },
+        data: { firstNameAr: newNameAr },
       });
     }
 
-    res.json({ name: attribut, nameAr: nameAr || attribut, message: 'Attribut updated' });
+    res.json({ name: newKey, nameAr: newNameAr, message: 'Attribut mis à jour' });
   } catch (error) {
     console.error('Error updating beneficiary attribut:', error);
     res.status(500).json({ error: 'Internal server error' });
