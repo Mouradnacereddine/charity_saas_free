@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatCurrency, formatDate } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
@@ -36,8 +36,7 @@ export default function DonorsPage() {
   const deleteDonor = useDeleteDonor()
 
   // ---- Local state ----
-  const [filter, setFilter] = useState<DonorFilter>({})
-  const [searchTerm, setSearchTerm] = useState('')
+  const [_filter, _setFilter] = useState<DonorFilter>({})
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showReceiptModal, setShowReceiptModal] = useState(false)
@@ -55,35 +54,32 @@ export default function DonorsPage() {
 
   // ---- Filter state ----
   const [showFilters, setShowFilters] = useState(false)
+  const [filterSearchTerm, setFilterSearchTerm] = useState('')
+  const [filterCaisseId, setFilterCaisseId] = useState('')
+  const [filterMinDonation, setFilterMinDonation] = useState('')
+  const [filterMaxDonation, setFilterMaxDonation] = useState('')
   const [filterGender, setFilterGender] = useState('')
-  const [minDonationInput, setMinDonationInput] = useState('')
-  const [maxDonationInput, setMaxDonationInput] = useState('')
-
-  // ---- Auto-search: build params and trigger query ----
-  const triggerSearch = (params: Record<string, string>) => {
-    setQueryParams(Object.keys(params).length > 0 ? params : undefined)
-  }
 
   // ---- Handlers ----
 
-  function handleResetFilters() {
-    setSearchTerm('')
-    setFilter({})
-    setMinDonationInput('')
-    setMaxDonationInput('')
-    setQueryParams(undefined)
+  function handleApplyFilters() {
+    const params: Record<string, string> = {}
+    if (filterSearchTerm) params.searchTerm = filterSearchTerm
+    if (filterCaisseId) params.caisseId = filterCaisseId
+    if (filterMinDonation) params.minDonation = filterMinDonation
+    if (filterMaxDonation) params.maxDonation = filterMaxDonation
+    if (filterGender) params.gender = filterGender
+    setQueryParams(Object.keys(params).length > 0 ? params : undefined)
   }
 
-  // Build params whenever searchTerm or filter changes
-  useEffect(() => {
-    const params: Record<string, string> = {}
-    if (searchTerm) params.searchTerm = searchTerm
-    if (filter.caisseId) params.caisseId = filter.caisseId
-    if (minDonationInput) params.minDonation = minDonationInput
-    if (maxDonationInput) params.maxDonation = maxDonationInput
-    if (filterGender) params.gender = filterGender
-    triggerSearch(params)
-  }, [searchTerm, filter.caisseId, minDonationInput, maxDonationInput, filterGender])
+  function handleResetFilters() {
+    setFilterSearchTerm('')
+    setFilterCaisseId('')
+    setFilterMinDonation('')
+    setFilterMaxDonation('')
+    setFilterGender('')
+    setQueryParams(undefined)
+  }
 
   function openAddModal() {
     setFormData(emptyDonorForm)
@@ -223,8 +219,8 @@ export default function DonorsPage() {
           type="text"
           placeholder="بحث بالاسم أو الهاتف..."
           className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={filterSearchTerm}
+          onChange={(e) => setFilterSearchTerm(e.target.value)}
         />
       </div>
 
@@ -235,24 +231,24 @@ export default function DonorsPage() {
             <SearchableSelect
               labelAr="الصندوق"
               options={caisseOptions}
-              value={filter.caisseId ?? ''}
-              onChange={(val) => setFilter((prev) => ({ ...prev, caisseId: val || undefined }))}
+              value={filterCaisseId}
+              onChange={(val) => setFilterCaisseId(val)}
             />
             <Input
               labelAr="الحد الأدنى للتبرعات"
               type="number"
               min="0"
               placeholder="0"
-              value={minDonationInput}
-              onChange={(e) => setMinDonationInput(e.target.value)}
+              value={filterMinDonation}
+              onChange={(e) => setFilterMinDonation(e.target.value)}
             />
             <Input
               labelAr="الحد الأقصى للتبرعات"
               type="number"
               min="0"
               placeholder="0"
-              value={maxDonationInput}
-              onChange={(e) => setMaxDonationInput(e.target.value)}
+              value={filterMaxDonation}
+              onChange={(e) => setFilterMaxDonation(e.target.value)}
             />
             <SearchableSelect
               labelAr="الجنس"
@@ -262,7 +258,7 @@ export default function DonorsPage() {
             />
           </div>
           <div className="flex gap-2 mt-4">
-            <Button size="sm" onClick={() => setShowFilters(false)}>
+            <Button size="sm" onClick={handleApplyFilters}>
               <Search className="w-4 h-4" /> بحث
             </Button>
             <Button variant="secondary" size="sm" onClick={handleResetFilters}>
