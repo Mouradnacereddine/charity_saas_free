@@ -35,8 +35,6 @@ export default function DonorsPage() {
   const updateDonor = useUpdateDonor()
   const deleteDonor = useDeleteDonor()
 
-  // ---- Local state ----
-  const [_filter, _setFilter] = useState<DonorFilter>({})
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showReceiptModal, setShowReceiptModal] = useState(false)
@@ -66,8 +64,8 @@ export default function DonorsPage() {
     const params: Record<string, string> = {}
     if (filterSearchTerm) params.searchTerm = filterSearchTerm
     if (filterCaisseId) params.caisseId = filterCaisseId
-    if (filterMinDonation) params.minDonation = filterMinDonation
-    if (filterMaxDonation) params.maxDonation = filterMaxDonation
+    if (filterMinDonation !== '') params.minDonation = filterMinDonation
+    if (filterMaxDonation !== '') params.maxDonation = filterMaxDonation
     if (filterGender) params.gender = filterGender
     setQueryParams(Object.keys(params).length > 0 ? params : undefined)
   }
@@ -221,6 +219,7 @@ export default function DonorsPage() {
           className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           value={filterSearchTerm}
           onChange={(e) => setFilterSearchTerm(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilters(); }}
         />
       </div>
 

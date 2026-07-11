@@ -110,6 +110,10 @@ export const inventoryApi = {
   createSchoolGrade: (data: any) => api.post('/inventory/school-grades', data),
   updateSchoolGrade: (id: string, data: any) => api.put(`/inventory/school-grades/${id}`, data),
   deleteSchoolGrade: (id: string) => api.delete(`/inventory/school-grades/${id}`),
+  statuses: () => api.get('/inventory/article-statuses'),
+  createStatus: (data: any) => api.post('/inventory/article-statuses', data),
+  updateStatus: (id: string, data: any) => api.put(`/inventory/article-statuses/${id}`, data),
+  deleteStatus: (id: string) => api.delete(`/inventory/article-statuses/${id}`),
 };
 
 export const loansApi = {

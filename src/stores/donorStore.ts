@@ -33,12 +33,6 @@ export const useDonorStore = create<DonorStore>((set, get) => ({
         const donorIds = new Set(txs.filter((t) => t.donorId).map((t) => t.donorId!));
         results = results.filter((d) => donorIds.has(d.id));
       }
-      if (filter.minDonation !== undefined) {
-        results = results.filter((d) => d.totalDonated >= filter.minDonation!);
-      }
-      if (filter.maxDonation !== undefined) {
-        results = results.filter((d) => d.totalDonated <= filter.maxDonation!);
-      }
       if (filter.searchTerm) {
         const term = filter.searchTerm.toLowerCase();
         results = results.filter(
@@ -52,7 +46,28 @@ export const useDonorStore = create<DonorStore>((set, get) => ({
       }
     }
 
-    set({ donors: results, loading: false });
+    // Compute receiptCount for all results (needed for min/max donation filter)
+    const allReceipts = await db.donationReceipts.toArray();
+    const countMap = new Map<string, number>();
+    for (const r of allReceipts) {
+      if (r.donorId) countMap.set(r.donorId, (countMap.get(r.donorId) || 0) + 1);
+    }
+    const donorsWithCount = results.map((d) => ({ ...d, receiptCount: countMap.get(d.id) || 0 }));
+
+    if (filter) {
+      // Apply min/max donation filter on receiptCount (number of donations)
+      const minCnt = filter.minDonation;
+      const maxCnt = filter.maxDonation;
+      if (minCnt !== undefined || maxCnt !== undefined) {
+        let filtered = donorsWithCount;
+        if (minCnt !== undefined) filtered = filtered.filter((d) => d.receiptCount >= minCnt!);
+        if (maxCnt !== undefined) filtered = filtered.filter((d) => d.receiptCount <= maxCnt!);
+        set({ donors: filtered, loading: false });
+        return;
+      }
+    }
+
+    set({ donors: donorsWithCount, loading: false });
   },
 
   addDonor: async (data) => {

@@ -488,4 +488,109 @@ router.delete('/school-grades/:id', async (req: AuthRequest, res: Response): Pro
   }
 });
 
+// ========================================================================
+// ARTICLE STATUSES
+// ========================================================================
+
+// GET /api/inventory/article-statuses
+router.get('/article-statuses', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const associationId = req.user!.associationId;
+
+    const statuses = await prisma.articleStatusType.findMany({
+      where: { associationId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    res.json(statuses);
+  } catch (error) {
+    console.error('Error listing article statuses:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/inventory/article-statuses
+router.post('/article-statuses', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const associationId = req.user!.associationId;
+    const { name, nameAr, description, descriptionAr } = req.body;
+
+    if (!name || !nameAr) {
+      res.status(400).json({ error: 'Missing required fields: name, nameAr' });
+      return;
+    }
+
+    const status = await prisma.articleStatusType.create({
+      data: { associationId, name, nameAr, description, descriptionAr },
+    });
+
+    res.status(201).json(status);
+  } catch (error) {
+    console.error('Error creating article status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/inventory/article-statuses/:id
+router.put('/article-statuses/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const existing = await prisma.articleStatusType.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Article status not found' });
+      return;
+    }
+
+    const { name, nameAr, description, descriptionAr } = req.body;
+    const data: any = {};
+    if (name !== undefined) data.name = name;
+    if (nameAr !== undefined) data.nameAr = nameAr;
+    if (description !== undefined) data.description = description;
+    if (descriptionAr !== undefined) data.descriptionAr = descriptionAr;
+
+    const status = await prisma.articleStatusType.update({
+      where: { id },
+      data,
+    });
+
+    res.json(status);
+  } catch (error) {
+    console.error('Error updating article status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/inventory/article-statuses/:id
+router.delete('/article-statuses/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const existing = await prisma.articleStatusType.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Article status not found' });
+      return;
+    }
+
+    // Unset this status on all articles that reference it
+    await prisma.article.updateMany({
+      where: { statusId: id, associationId },
+      data: { statusId: null, status: 'disponible' },
+    });
+    await prisma.articleStatusType.delete({ where: { id } });
+    res.json({ message: 'Article status deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting article status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

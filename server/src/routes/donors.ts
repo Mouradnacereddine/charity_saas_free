@@ -36,11 +36,6 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       });
       where.id = { in: txDonorIds.map((t: any) => t.donorId).filter(Boolean) };
     }
-    if (minDonation || maxDonation) {
-      where.totalDonated = {};
-      if (minDonation) where.totalDonated.gte = parseFloat(String(minDonation));
-      if (maxDonation) where.totalDonated.lte = parseFloat(String(maxDonation));
-    }
     if (gender) where.gender = String(gender);
 
     const donors = await prisma.donor.findMany({
@@ -58,7 +53,18 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     for (const r of receipts) {
       countMap.set(r.donorId, (countMap.get(r.donorId) || 0) + 1);
     }
-    const result = donors.map((d: any) => ({ ...d, receiptCount: countMap.get(d.id) || 0 }));
+    let result = donors.map((d: any) => ({ ...d, receiptCount: countMap.get(d.id) || 0 }));
+
+    // Apply min/max donation filter on receiptCount (number of donations)
+    const minCnt = minDonation !== undefined ? parseInt(String(minDonation), 10) : undefined;
+    const maxCnt = maxDonation !== undefined ? parseInt(String(maxDonation), 10) : undefined;
+    if (minCnt !== undefined || maxCnt !== undefined) {
+      result = result.filter((d: any) => {
+        if (minCnt !== undefined && d.receiptCount < minCnt) return false;
+        if (maxCnt !== undefined && d.receiptCount > maxCnt) return false;
+        return true;
+      });
+    }
 
     res.json(result);
   } catch (error) {

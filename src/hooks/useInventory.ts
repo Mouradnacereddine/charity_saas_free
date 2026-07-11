@@ -71,6 +71,41 @@ export function useDeleteCategory() {
   });
 }
 
+// ---- Article Statuses ----
+export function useArticleStatuses() {
+  return useQuery({
+    queryKey: ['article-statuses'],
+    queryFn: async () => {
+      const res = await inventoryApi.statuses();
+      return res.data;
+    },
+  });
+}
+
+export function useCreateStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inventoryApi.createStatus,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['article-statuses'] }),
+  });
+}
+
+export function useUpdateStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => inventoryApi.updateStatus(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['article-statuses'] }),
+  });
+}
+
+export function useDeleteStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inventoryApi.deleteStatus,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['article-statuses'] }),
+  });
+}
+
 // ---- Storage Locations ----
 export function useStorageLocations() {
   return useQuery({

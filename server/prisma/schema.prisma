@@ -68,6 +68,7 @@ model Association {
   medicalAnalysisTypes MedicalAnalysisType[]
   medicalHospitals   MedicalHospital[]
   schoolGrades       SchoolGrade[]
+  articleStatuses    ArticleStatusType[]
   medicalReferrals   MedicalReferral[]
   donationReceipts   DonationReceipt[]
   notifications      Notification[]
@@ -263,6 +264,7 @@ model Article {
   quantity          Int
   availableQuantity Int
   status            ArticleStatus @default(disponible)
+  statusId          String?
   storageLocationId String?
   condition         String
   conditionAr       String
@@ -273,12 +275,14 @@ model Article {
 
   association     Association     @relation(fields: [associationId], references: [id], onDelete: Cascade)
   category        ArticleCategory? @relation(fields: [categoryId], references: [id])
+  statusModel     ArticleStatusType?  @relation(fields: [statusId], references: [id])
   storageLocation StorageLocation? @relation(fields: [storageLocationId], references: [id])
 
   @@index([associationId])
   @@index([categoryId])
-  @@index([storageLocationId])
+  @@index([statusId])
   @@index([status])
+  @@index([storageLocationId])
 }
 
 model Loan {
@@ -323,6 +327,21 @@ model SchoolGrade {
   createdAt     DateTime @default(now())
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId])
+}
+
+model ArticleStatusType {
+  id            String         @id @default(uuid())
+  associationId String
+  name          String
+  nameAr        String
+  description   String?
+  descriptionAr String?
+  createdAt     DateTime       @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  articles    Article[]
 
   @@index([associationId])
 }

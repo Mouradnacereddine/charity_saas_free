@@ -8,6 +8,7 @@ export function useDonors(params?: Record<string, string>) {
       const res = await donorsApi.list(params);
       return res.data;
     },
+    staleTime: 0,
   });
 }
 

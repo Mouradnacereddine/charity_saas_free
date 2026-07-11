@@ -449,17 +449,8 @@ export default function BeneficiariesPage() {
           placeholder="البحث بالاسم، رقم البطاقة، أو الهاتف..."
           className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           value={filterSearchTerm}
-          onChange={(e) => {
-            setFilterSearchTerm(e.target.value)
-            if (e.target.value) {
-              setQueryParams((prev) => ({ ...prev, searchTerm: e.target.value }))
-            } else {
-              setQueryParams((prev) => {
-                const { searchTerm, ...rest } = prev || {}
-                return Object.keys(rest).length > 0 ? rest : undefined
-              })
-            }
-          }}
+          onChange={(e) => setFilterSearchTerm(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }}
         />
       </div>
 

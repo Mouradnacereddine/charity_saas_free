@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatDate } from '../utils/helpers'
 import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin } from 'lucide-react'
-import type { Article, Loan, LoanItem, ArticleCategory, StorageLocation, Beneficiary } from '../types'
+import type { Article, Loan, LoanItem, ArticleCategory, ArticleStatus, StorageLocation, Beneficiary } from '../types'
 import {
   useArticles,
   useCreateArticle,
@@ -23,6 +23,10 @@ import {
   useAddItemToLoan,
   useRemoveItemFromLoan,
   useMarkLoanDefinitive,
+  useArticleStatuses,
+  useCreateStatus,
+  useUpdateStatus,
+  useDeleteStatus,
 } from '../hooks/useInventory'
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
 
@@ -186,12 +190,16 @@ export default function InventoryPage() {
 function SettingsTab() {
   const { data: categories = [], isLoading: catsLoading } = useArticleCategories()
   const { data: locations = [], isLoading: locsLoading } = useStorageLocations()
+  const { data: statuses = [], isLoading: stsLoading } = useArticleStatuses()
   const createCat = useCreateCategory()
   const updateCat = useUpdateCategory()
   const deleteCat = useDeleteCategory()
   const createLoc = useCreateLocation()
   const updateLoc = useUpdateLocation()
   const deleteLoc = useDeleteLocation()
+  const createSts = useCreateStatus()
+  const updateSts = useUpdateStatus()
+  const deleteSts = useDeleteStatus()
   // Category form state
   const [newCatNameAr, setNewCatNameAr] = useState('')
   const [newCatName, setNewCatName] = useState('')
@@ -205,6 +213,17 @@ function SettingsTab() {
   const [editLocId, setEditLocId] = useState<string | null>(null)
   const [editLocNameAr, setEditLocNameAr] = useState('')
   const [editLocName, setEditLocName] = useState('')
+
+  // Status form state
+  const [newStsNameAr, setNewStsNameAr] = useState('')
+  const [newStsName, setNewStsName] = useState('')
+  const [newStsDescAr, setNewStsDescAr] = useState('')
+  const [newStsDesc, setNewStsDesc] = useState('')
+  const [editStsId, setEditStsId] = useState<string | null>(null)
+  const [editStsNameAr, setEditStsNameAr] = useState('')
+  const [editStsName, setEditStsName] = useState('')
+  const [editStsDescAr, setEditStsDescAr] = useState('')
+  const [editStsDesc, setEditStsDesc] = useState('')
 
   // School grade form state
 
@@ -276,7 +295,49 @@ function SettingsTab() {
     setEditLocName('')
   }
 
-  if (catsLoading || locsLoading) return <LoadingSpinner />
+  // ---- Status CRUD ----
+
+  const handleAddStatus = async () => {
+    if (!newStsNameAr.trim()) return
+    await createSts.mutateAsync({ name: newStsName.trim(), nameAr: newStsNameAr.trim(), description: newStsDesc.trim() || undefined, descriptionAr: newStsDescAr.trim() || undefined })
+    setNewStsNameAr('')
+    setNewStsName('')
+    setNewStsDescAr('')
+    setNewStsDesc('')
+  }
+
+  const handleDeleteStatus = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذه الحالة؟')) return
+    await deleteSts.mutateAsync(id)
+  }
+
+  const startEditStatus = (sts: ArticleStatus) => {
+    setEditStsId(sts.id)
+    setEditStsNameAr(sts.nameAr)
+    setEditStsName(sts.name)
+    setEditStsDescAr(sts.descriptionAr || '')
+    setEditStsDesc(sts.description || '')
+  }
+
+  const handleUpdateStatus = async () => {
+    if (!editStsId || !editStsNameAr.trim()) return
+    await updateSts.mutateAsync({ id: editStsId, data: { name: editStsName.trim(), nameAr: editStsNameAr.trim(), description: editStsDesc.trim() || undefined, descriptionAr: editStsDescAr.trim() || undefined } })
+    setEditStsId(null)
+    setEditStsNameAr('')
+    setEditStsName('')
+    setEditStsDescAr('')
+    setEditStsDesc('')
+  }
+
+  const cancelEditStatus = () => {
+    setEditStsId(null)
+    setEditStsNameAr('')
+    setEditStsName('')
+    setEditStsDescAr('')
+    setEditStsDesc('')
+  }
+
+  if (catsLoading || locsLoading || stsLoading) return <LoadingSpinner />
 
   return (
     <div className="space-y-8">
@@ -493,12 +554,53 @@ function SettingsTab() {
       </Card>
 
       {/* ========== Article Statuses Section ========== */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-primary-600" />
-          الحالات
-        </h3>
-        <Card>
+      <Card titleAr="الحالات">
+        {/* Add form */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="flex-1">
+            <Input
+              labelAr="الاسم بالعربية"
+              value={newStsNameAr}
+              onChange={(e) => setNewStsNameAr(e.target.value)}
+              placeholder="مثال: متاح"
+            />
+          </div>
+          <div className="flex-1">
+            <Input
+              labelAr="الاسم بالفرنسية"
+              value={newStsName}
+              onChange={(e) => setNewStsName(e.target.value)}
+              placeholder="مثال: Disponible"
+            />
+          </div>
+          <div className="flex-1">
+            <Input
+              labelAr="الوصف"
+              value={newStsDescAr}
+              onChange={(e) => setNewStsDescAr(e.target.value)}
+              placeholder="مثال: متاح للإعارة والاستخدام"
+            />
+          </div>
+          <div className="flex-1">
+            <Input
+              labelAr="Description (FR)"
+              value={newStsDesc}
+              onChange={(e) => setNewStsDesc(e.target.value)}
+              placeholder="Ex: Disponible pour prêt"
+            />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleAddStatus} disabled={!newStsNameAr.trim()}>
+              <Plus className="w-4 h-4" />
+              إضافة
+            </Button>
+          </div>
+        </div>
+
+        {/* Table */}
+        {statuses.length === 0 ? (
+          <EmptyState message="لا توجد حالات بعد" icon={<CheckCircle className="w-12 h-12" />} />
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -506,26 +608,83 @@ function SettingsTab() {
                   <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الوصف</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { ar: 'متاح', fr: 'Disponible', desc: 'متاح للإعارة والاستخدام' },
-                  { ar: 'مُعار', fr: 'Prêté', desc: 'تم إعارته حالياً' },
-                  { ar: 'تالف', fr: 'Endommagé', desc: 'مادة بحاجة للصيانة' },
-                  { ar: 'خارج الخدمة', fr: 'Hors service', desc: 'لا يمكن استخدامها' },
-                ].map((s, i) => (
-                  <tr key={i} className="border-b border-gray-100">
-                    <td className="py-3 px-4 font-medium text-gray-900">{s.ar}</td>
-                    <td className="py-3 px-4 text-gray-600">{s.fr}</td>
-                    <td className="py-3 px-4 text-gray-500 text-xs">{s.desc}</td>
+                {statuses.map((sts: ArticleStatus) => (
+                  <tr key={sts.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    {editStsId === sts.id ? (
+                      <>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={editStsNameAr}
+                            onChange={(e) => setEditStsNameAr(e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            autoFocus
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={editStsName}
+                            onChange={(e) => setEditStsName(e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={editStsDescAr}
+                            onChange={(e) => setEditStsDescAr(e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            placeholder="الوصف بالعربية"
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" onClick={handleUpdateStatus} disabled={!editStsNameAr.trim()}>
+                              حفظ
+                            </Button>
+                            <Button size="sm" variant="secondary" onClick={cancelEditStatus}>
+                              إلغاء
+                            </Button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-3 px-4 font-medium text-gray-900">{sts.nameAr}</td>
+                        <td className="py-3 px-4 text-gray-600">{sts.name || '—'}</td>
+                        <td className="py-3 px-4 text-gray-500 text-xs">{sts.descriptionAr || sts.description || '—'}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => startEditStatus(sts)}
+                              className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                              title="تعديل"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteStatus(sts.id)}
+                              className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
+                              title="حذف"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </Card>
-      </div>
+        )}
+      </Card>
 
     </div>
   )
@@ -539,6 +698,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   const { data: articles = [], isLoading: loading } = useArticles()
   const { data: categories = [] } = useArticleCategories()
   const { data: locations = [] } = useStorageLocations()
+  const { data: statuses = [] } = useArticleStatuses()
   const createArticle = useCreateArticle()
   const updateArticle = useUpdateArticle()
   const deleteArticle = useDeleteArticle()
@@ -549,6 +709,9 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   })
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterSearchTerm, setFilterSearchTerm] = useState('')
+  const [committedFilters, setCommittedFilters] = useState<{
+    searchTerm: string; category: string; status: string; storage: string; type: string;
+  }>({ searchTerm: '', category: '', status: '', storage: '', type: '' })
   const [filterCategory, setFilterCategory] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterStorage, setFilterStorage] = useState('')
@@ -557,23 +720,38 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
   const [form, setForm] = useState(EMPTY_ARTICLE_FORM)
 
+  const applyStockFilters = () => {
+    setCommittedFilters({ searchTerm: filterSearchTerm, category: filterCategory, status: filterStatus, storage: filterStorage, type: filterType })
+  }
+
+  const resetStockFilters = () => {
+    setFilterSearchTerm('')
+    setFilterCategory('')
+    setFilterStatus('')
+    setFilterStorage('')
+    setFilterType('')
+    setCommittedFilters({ searchTerm: '', category: '', status: '', storage: '', type: '' })
+  }
+
   const filtered = articles.filter((a: Article) => {
     const catNameAr = getCategoryNameAr(a.category, categories)
+    const st = committedFilters.searchTerm
 
     const matchesSearch =
-      !filterSearchTerm ||
-      a.nameAr.includes(filterSearchTerm) ||
-      a.name.toLowerCase().includes(filterSearchTerm.toLowerCase()) ||
-      catNameAr.includes(filterSearchTerm) ||
-      a.category.toLowerCase().includes(filterSearchTerm.toLowerCase())
+      !st ||
+      a.nameAr.includes(st) ||
+      a.name.toLowerCase().includes(st.toLowerCase()) ||
+      catNameAr.includes(st) ||
+      (a.reference || '').toLowerCase().includes(st.toLowerCase()) ||
+      (typeof a.category === 'object' ? a.category.nameAr?.includes(st) : a.category?.toLowerCase().includes(st.toLowerCase()))
     const matchesCategory =
-      !filterCategory || a.category === filterCategory
-    const matchesStatus = !filterStatus || a.status === filterStatus
+      !committedFilters.category || (typeof a.category === 'object' ? a.category.id === committedFilters.category : a.category === committedFilters.category)
+    const matchesStatus = !committedFilters.status || a.status === committedFilters.status
     const matchesStorage =
-      !filterStorage || a.storageLocation === filterStorage
+      !committedFilters.storage || a.storageLocation === committedFilters.storage
     const matchesType =
-      !filterType ||
-      (filterType === 'permanent' ? a.isPermanent : !a.isPermanent)
+      !committedFilters.type ||
+      (committedFilters.type === 'permanent' ? a.isPermanent : !a.isPermanent)
     return matchesSearch && matchesCategory && matchesStatus && matchesStorage && matchesType
   })
 
@@ -649,11 +827,17 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
   const statusOptions = [
     { value: '', label: 'الكل' },
-    { value: 'disponible', label: 'متاح' },
-    { value: 'prete', label: 'مُعار' },
-    { value: 'endommage', label: 'تالف' },
-    { value: 'hors_service', label: 'خارج الخدمة' },
+    ...statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.nameAr })),
   ]
+  if (statusOptions.length <= 1) {
+    // Fallback to hardcoded values when no API statuses exist
+    statusOptions.push(
+      { value: 'disponible', label: 'متاح' },
+      { value: 'prete', label: 'مُعار' },
+      { value: 'endommage', label: 'تالف' },
+      { value: 'hors_service', label: 'خارج الخدمة' },
+    )
+  }
 
   const typeOptions = [
     { value: '', label: 'الكل' },
@@ -673,13 +857,14 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           placeholder="بحث عن مقال..."
           value={filterSearchTerm}
           onChange={(e) => setFilterSearchTerm(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') applyStockFilters(); }}
           className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
 
       {/* Filters */}
       {filterOpen && (
-        <Card>
+        <Card titleAr="بحث متقدم">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <SearchableSelect
               labelAr="الفئة"
@@ -715,20 +900,14 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
               options={typeOptions}
               placeholder="الكل"
             />
-            <div className="flex items-end md:col-span-4">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setFilterCategory('')
-                  setFilterStatus('')
-                  setFilterStorage('')
-                  setFilterType('')
-                  setFilterSearchTerm('')
-                }}
-              >
-                إعادة تعيين
-              </Button>
-            </div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button size="sm" onClick={applyStockFilters}>
+              <Search className="w-4 h-4" /> بحث
+            </Button>
+            <Button variant="secondary" size="sm" onClick={resetStockFilters}>
+              إعادة تعيين
+            </Button>
           </div>
         </Card>
       )}
@@ -756,7 +935,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
               </thead>
               <tbody>
                 {filtered.map((article: Article) => (
-                  <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => openEdit(article)}>
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
                       {article.reference || '—'}
                     </td>
@@ -861,13 +1040,17 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           <SearchableSelect
             labelAr="الحالة"
             value={form.status}
-            onChange={(val) => setForm({ ...form, status: val as Article['status'] })}
-            options={[
-              { value: 'disponible', label: 'متاح' },
-              { value: 'prete', label: 'مُعار' },
-              { value: 'endommage', label: 'تالف' },
-              { value: 'hors_service', label: 'خارج الخدمة' },
-            ]}
+            onChange={(val) => setForm({ ...form, status: val })}
+            options={
+              statuses.length > 0
+                ? statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.nameAr }))
+                : [
+                    { value: 'disponible', label: 'متاح' },
+                    { value: 'prete', label: 'مُعار' },
+                    { value: 'endommage', label: 'تالف' },
+                    { value: 'hors_service', label: 'خارج الخدمة' },
+                  ]
+            }
           />
           <Input
             labelAr="الوضع بالعربية"
@@ -929,11 +1112,25 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   const markLoanDefinitive = useMarkLoanDefinitive()
 
   const [searchTerm, setSearchTerm] = useState('')
+  const [committedLoanFilters, setCommittedLoanFilters] = useState({ searchTerm: '', status: '', beneficiary: '', dateFrom: '', dateTo: '' })
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterStatus, setFilterStatus] = useState('')
   const [filterBeneficiary, setFilterBeneficiary] = useState('')
   const [filterDateFrom, setFilterDateFrom] = useState('')
   const [filterDateTo, setFilterDateTo] = useState('')
+
+  const applyLoanFilters = () => {
+    setCommittedLoanFilters({ searchTerm, status: filterStatus, beneficiary: filterBeneficiary, dateFrom: filterDateFrom, dateTo: filterDateTo })
+  }
+
+  const resetLoanFilters = () => {
+    setSearchTerm('')
+    setFilterStatus('')
+    setFilterBeneficiary('')
+    setFilterDateFrom('')
+    setFilterDateTo('')
+    setCommittedLoanFilters({ searchTerm: '', status: '', beneficiary: '', dateFrom: '', dateTo: '' })
+  }
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
@@ -960,18 +1157,19 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   const [newItemCondition, setNewItemCondition] = useState('')
 
   const filteredLoans = loans.filter((l: Loan) => {
+    const st = committedLoanFilters.searchTerm
     const matchesSearch =
-      !searchTerm ||
-      l.beneficiaryNameAr.includes(searchTerm) ||
-      l.beneficiaryName.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = !filterStatus || l.status === filterStatus
+      !st ||
+      (l.beneficiaryNameAr || '').includes(st) ||
+      (l.beneficiaryName || '').toLowerCase().includes(st.toLowerCase())
+    const matchesStatus = !committedLoanFilters.status || l.status === committedLoanFilters.status
     const matchesBeneficiary =
-      !filterBeneficiary ||
-      l.beneficiaryId === filterBeneficiary ||
-      l.beneficiaryNameAr.includes(filterBeneficiary) ||
-      l.beneficiaryName.toLowerCase().includes(filterBeneficiary.toLowerCase())
-    const matchesDateFrom = !filterDateFrom || l.loanDate >= filterDateFrom
-    const matchesDateTo = !filterDateTo || l.loanDate <= filterDateTo
+      !committedLoanFilters.beneficiary ||
+      l.beneficiaryId === committedLoanFilters.beneficiary ||
+      (l.beneficiaryNameAr || '').includes(committedLoanFilters.beneficiary) ||
+      (l.beneficiaryName || '').toLowerCase().includes(committedLoanFilters.beneficiary.toLowerCase())
+    const matchesDateFrom = !committedLoanFilters.dateFrom || l.loanDate >= committedLoanFilters.dateFrom
+    const matchesDateTo = !committedLoanFilters.dateTo || l.loanDate <= committedLoanFilters.dateTo
     return matchesSearch && matchesStatus && matchesBeneficiary && matchesDateFrom && matchesDateTo
   })
 
@@ -1165,13 +1363,14 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           placeholder="بحث عن إعارة..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') applyLoanFilters(); }}
           className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
 
       {/* Filters */}
       {filterOpen && (
-        <Card>
+        <Card titleAr="بحث متقدم">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <SearchableSelect
               labelAr="الحالة"
@@ -1202,19 +1401,14 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
               value={filterDateTo}
               onChange={(e) => setFilterDateTo(e.target.value)}
             />
-            <div className="flex items-end md:col-span-4">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setFilterStatus('')
-                  setFilterBeneficiary('')
-                  setFilterDateFrom('')
-                  setFilterDateTo('')
-                }}
-              >
-                إعادة تعيين
-              </Button>
-            </div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button size="sm" onClick={applyLoanFilters}>
+              <Search className="w-4 h-4" /> بحث
+            </Button>
+            <Button variant="secondary" size="sm" onClick={resetLoanFilters}>
+              إعادة تعيين
+            </Button>
           </div>
         </Card>
       )}
@@ -1240,7 +1434,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
               </thead>
               <tbody>
                 {filteredLoans.map((loan: Loan) => (
-                  <tr key={loan.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={loan.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => openLoanDetail(loan)}>
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
                       {loan.reference || '—'}
                     </td>

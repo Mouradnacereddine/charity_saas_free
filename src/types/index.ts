@@ -7,7 +7,7 @@
 export type AttributType = 'veuve' | 'orphelin' | 'personne_agee' | 'handicape' | 'famille_demunie' | 'autre';
 export type TransactionType = 'credit' | 'debit';
 export type FundSource = 'banque' | 'caisse_physique';
-export type ArticleStatusEnum = 'disponible' | 'prete' | 'endommage' | 'hors_service';
+export type ArticleStatusEnum = string;
 export type LoanStatus = 'en_cours' | 'partiellement_retourne' | 'retourne' | 'definitif';
 export type ChildHealthStatus = 'bonne_sante' | 'malade' | 'handicape' | 'autre';
 
@@ -56,6 +56,8 @@ export interface ArticleStatus {
   id: string;
   name: string;
   nameAr: string;
+  description?: string;
+  descriptionAr?: string;
   createdAt: Date;
 }
 

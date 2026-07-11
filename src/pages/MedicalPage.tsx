@@ -34,6 +34,7 @@ export default function MedicalPage() {
   const [showDetailModal, setShowDetailModal] = useState<MedicalReferral | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterSearchTerm, setFilterSearchTerm] = useState('');
+  const [committedSearchTerm, setCommittedSearchTerm] = useState('');
   const [filterCaisseId, setFilterCaisseId] = useState('');
   const [filterMinAmount, setFilterMinAmount] = useState('');
   const [filterMaxAmount, setFilterMaxAmount] = useState('');
@@ -41,6 +42,22 @@ export default function MedicalPage() {
   const [filterDateTo, setFilterDateTo] = useState('');
   const [filterDoctor, setFilterDoctor] = useState('');
   const [filterAnalysis, setFilterAnalysis] = useState('');
+
+  const applyFilters = () => {
+    setCommittedSearchTerm(filterSearchTerm);
+  };
+
+  const resetFilters = () => {
+    setFilterSearchTerm('');
+    setCommittedSearchTerm('');
+    setFilterCaisseId('');
+    setFilterMinAmount('');
+    setFilterMaxAmount('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setFilterDoctor('');
+    setFilterAnalysis('');
+  };
 
   // Settings tab state
   const [newAnalysisAr, setNewAnalysisAr] = useState('')
@@ -167,15 +184,16 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
     );
   };
 
+  const appliedTerm = committedSearchTerm.toLowerCase();
   const filteredReferrals = referrals.filter((r: MedicalReferral) => {
-    const term = filterSearchTerm.toLowerCase();
-    if (term && !(
-      r.beneficiaryNameAr.includes(term) ||
-      r.beneficiaryName?.toLowerCase().includes(term) ||
-      r.doctorNameAr.includes(term) ||
-      r.doctorName?.toLowerCase().includes(term) ||
-      r.analysisTypeAr?.includes(term) ||
-      r.hospitalAr?.includes(term)
+    if (appliedTerm && !(
+      (r.beneficiaryNameAr || '').includes(appliedTerm) ||
+      (r.beneficiaryName || '').toLowerCase().includes(appliedTerm) ||
+      (r.doctorNameAr || '').includes(appliedTerm) ||
+      (r.doctorName || '').toLowerCase().includes(appliedTerm) ||
+      (r.analysisTypeAr || '').includes(appliedTerm) ||
+      (r.hospitalAr || '').includes(appliedTerm) ||
+      (r.reference || '').toLowerCase().includes(appliedTerm)
     )) return false;
 
     if (filterCaisseId && r.caisseId !== filterCaisseId) return false;
@@ -203,6 +221,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
           className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           value={filterSearchTerm}
           onChange={(e) => setFilterSearchTerm(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }}
         />
       </div>
 
@@ -264,10 +283,10 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 />
               </div>
               <div className="flex items-end gap-2">
-                <Button size="sm" onClick={() => {
-                  setFilterCaisseId(''); setFilterMinAmount(''); setFilterMaxAmount('');
-                  setFilterDateFrom(''); setFilterDateTo(''); setFilterDoctor(''); setFilterAnalysis('');
-                }}>
+                <Button size="sm" onClick={applyFilters}>
+                  <Search className="w-4 h-4" /> بحث
+                </Button>
+                <Button size="sm" variant="secondary" onClick={resetFilters}>
                   إعادة تعيين
                 </Button>
               </div>
@@ -295,7 +314,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
               </thead>
               <tbody>
                 {filteredReferrals.map((referral: MedicalReferral) => (
-                  <tr key={referral.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={referral.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setShowDetailModal(referral)}>
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">{referral.reference || '—'}</td>
                     <td className="py-3 px-4 font-medium">{referral.beneficiaryNameAr}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr}</td>
