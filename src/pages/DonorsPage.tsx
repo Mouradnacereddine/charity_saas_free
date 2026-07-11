@@ -491,6 +491,12 @@ export default function DonorsPage() {
                 </p>
               </div>
               <div>
+                <p className="text-xs text-gray-500">الجنس</p>
+                <p className="font-semibold text-gray-900">
+                  {selectedDonor.gender === 'female' ? 'أنثى' : 'ذكر'}
+                </p>
+              </div>
+              <div>
                 <p className="text-xs text-gray-500">إجمالي التبرعات</p>
                 <p className="font-bold text-lg text-green-600">
                   {formatCurrency(selectedDonor.totalDonated)}

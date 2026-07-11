@@ -50,12 +50,14 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 
     // Add receipt count for each donor
     const donorIds = donors.map((d: any) => d.id);
-    const receiptCounts = await prisma.donationReceipt.groupBy({
-      by: ['donorId'],
+    const receipts = await prisma.donationReceipt.findMany({
       where: { donorId: { in: donorIds } },
-      _count: { id: true },
+      select: { donorId: true },
     });
-    const countMap = new Map(receiptCounts.map((r: any) => [r.donorId, r._count.id]));
+    const countMap = new Map<string, number>();
+    for (const r of receipts) {
+      countMap.set(r.donorId, (countMap.get(r.donorId) || 0) + 1);
+    }
     const result = donors.map((d: any) => ({ ...d, receiptCount: countMap.get(d.id) || 0 }));
 
     res.json(result);
