@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
+import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { calculateAge, formatDate } from '../utils/helpers'
-import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings } from 'lucide-react'
+import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
 import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary } from '../hooks/useBeneficiaries'
-import { useSchoolGrades, useCreateSchoolGrade, useUpdateSchoolGrade, useDeleteSchoolGrade } from '../hooks/useInventory'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { caissesApi, attributsApi, inventoryApi, api } from '../lib/api'
 
@@ -65,8 +64,8 @@ type BeneficiaryFormData = {
   phone: string
   nationalCardNumber: string
   dateOfBirth: string
-  gender: string
   attribut: string
+  gender: string
   onBehalfOf: string
   situation: string
   situationAr: string
@@ -87,8 +86,8 @@ function emptyForm(): BeneficiaryFormData {
     phone: '',
     nationalCardNumber: '',
     dateOfBirth: '',
-    gender: '',
     attribut: '',
+    gender: 'male',
     onBehalfOf: '',
     situation: '',
     situationAr: '',
@@ -110,14 +109,14 @@ function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
     phone: b.phone,
     nationalCardNumber: b.nationalCardNumber,
     dateOfBirth: b.dateOfBirth,
-    gender: b.gender ?? '',
     attribut: b.attribut,
+    gender: b.gender ?? 'male',
     onBehalfOf: b.onBehalfOfName ?? '',
     situation: b.situation ?? '',
     situationAr: b.situationAr ?? '',
     caisseId: b.caisseId ?? '',
     subCategoryId: b.subCategoryId ?? '',
-    children: b.children.map((c) => ({ ...c, schoolGradeId: c.schoolGradeId ?? '' })),
+    children: b.children.map((c: any) => ({ ...c, schoolGradeId: c.schoolGradeId ?? '' })),
     notes: b.notes ?? '',
   }
 }
@@ -154,7 +153,6 @@ export default function BeneficiariesPage() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null)
   const [showFilters, setShowFilters] = useState(false)
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   // ---- Attribut management (إدارة التصنيفات) ----
   const [newAttrNameAr, setNewAttrNameAr] = useState('')
@@ -162,6 +160,13 @@ export default function BeneficiariesPage() {
   const [editAttrId, setEditAttrId] = useState<string | null>(null)
   const [editAttrNameAr, setEditAttrNameAr] = useState('')
   const [editAttrName, setEditAttrName] = useState('')
+
+  // School grade management state
+  const [newGradeNameAr, setNewGradeNameAr] = useState('')
+  const [newGradeName, setNewGradeName] = useState('')
+  const [editGradeId, setEditGradeId] = useState<string | null>(null)
+  const [editGradeNameAr, setEditGradeNameAr] = useState('')
+  const [editGradeName, setEditGradeName] = useState('')
 
   const createAttributMutation = useMutation({
     mutationFn: (data: { name: string; nameAr: string }) => attributsApi.create(data),
@@ -171,6 +176,15 @@ export default function BeneficiariesPage() {
   const deleteAttributMutation = useMutation({
     mutationFn: (name: string) => attributsApi.delete(name),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['attributs'] }),
+  })
+
+  const createGradeMutation = useMutation({
+    mutationFn: (data: { name: string; nameAr: string }) => inventoryApi.createSchoolGrade(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['school-grades'] }),
+  })
+  const deleteGradeMutation = useMutation({
+    mutationFn: (id: string) => inventoryApi.deleteSchoolGrade(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['school-grades'] }),
   })
 
   const handleAddAttribut = async () => {
@@ -202,6 +216,25 @@ export default function BeneficiariesPage() {
     }
   }
 
+  const handleAddGrade = async () => {
+    if (!newGradeNameAr.trim()) return
+    await createGradeMutation.mutateAsync({ name: newGradeName.trim(), nameAr: newGradeNameAr.trim() })
+    setNewGradeNameAr('')
+    setNewGradeName('')
+  }
+
+  const handleUpdateGrade = async () => {
+    if (!editGradeId || !editGradeNameAr.trim()) return
+    await inventoryApi.updateSchoolGrade(editGradeId, { name: editGradeName.trim(), nameAr: editGradeNameAr.trim() })
+    setEditGradeId(null); setEditGradeNameAr(''); setEditGradeName('')
+    queryClient.invalidateQueries({ queryKey: ['school-grades'] })
+  }
+
+  const handleDeleteGrade = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا المستوى؟')) return
+    await deleteGradeMutation.mutateAsync(id)
+  }
+
   // ---- Filter state ----
   const [filterSearchTerm, setFilterSearchTerm] = useState('')
   const [filterAttribut, setFilterAttribut] = useState('')
@@ -212,7 +245,6 @@ export default function BeneficiariesPage() {
   const [filterGender, setFilterGender] = useState('')
   const [filterMinAge, setFilterMinAge] = useState('')
   const [filterMaxAge, setFilterMaxAge] = useState('')
-  const [widowFilterActive, setWidowFilterActive] = useState(false)
 
   // ---- Tab state ----
   const [activeTab, setActiveTab] = useState<'list' | 'settings'>('list')
@@ -220,11 +252,6 @@ export default function BeneficiariesPage() {
   const handleSettingsTab = () => {
     setActiveTab('settings')
   }
-
-  // ---- Detail view related data ----
-  const [detailTransactions, setDetailTransactions] = useState<any[]>([])
-  const [detailLoans, setDetailLoans] = useState<any[]>([])
-  const [detailReferrals, setDetailReferrals] = useState<any[]>([])
 
   // ---- Caisse options ----
   const caisseOptions = caisses.map((c: any) => ({
@@ -237,7 +264,11 @@ export default function BeneficiariesPage() {
     label: a.nameAr,
   })) : Object.entries(ATTRIBUT_LABELS).map(([value, label]) => ({ value, label }))
 
+  const gradeOptions = schoolGrades.map((g: any) => ({ value: g.id, label: g.nameAr }))
+
   // Compute display list (show only beneficiaries with the most children)
+  const [widowFilterActive, setWidowFilterActive] = useState(false)
+
   const displayBeneficiaries = (() => {
     if (widowFilterActive && beneficiaries.length > 0) {
       const childrenCounts = beneficiaries.map((b: any) => (b.children || []).length)
@@ -281,7 +312,6 @@ export default function BeneficiariesPage() {
   }
 
   const handleFindWidowWithMostChildren = async () => {
-    // Apply current filters, then add the "most children" condition on top
     applyFilters()
     setWidowFilterActive(true)
   }
@@ -331,8 +361,8 @@ export default function BeneficiariesPage() {
     })
   }
 
-  const handleSubmit = async () => {
-    const data = {
+  const handleSave = async () => {
+    const data: any = {
       firstNameAr: form.firstNameAr,
       lastNameAr: form.lastNameAr,
       firstName: form.firstName,
@@ -342,8 +372,8 @@ export default function BeneficiariesPage() {
       phone: form.phone,
       nationalCardNumber: form.nationalCardNumber,
       dateOfBirth: form.dateOfBirth,
-      gender: form.gender || undefined,
       attribut: form.attribut as Beneficiary['attribut'],
+      gender: form.gender || 'male',
       onBehalfOfName: form.onBehalfOf || undefined,
       situation: form.situation || undefined,
       situationAr: form.situationAr || undefined,
@@ -366,56 +396,26 @@ export default function BeneficiariesPage() {
     if (editingId) {
       await updateBeneficiary.mutateAsync({ id: editingId, data })
     } else {
-      await createBeneficiary.mutateAsync(data as any)
+      await createBeneficiary.mutateAsync(data)
     }
-
     closeFormModal()
   }
 
   // ---- Delete ----
   const handleDelete = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا المستفيد؟')) return
     await deleteBeneficiary.mutateAsync(id)
-    setDeleteConfirmId(null)
   }
 
   // ---- Detail view ----
   const openDetail = async (b: Beneficiary) => {
     setSelectedBeneficiary(b)
     setShowDetailModal(true)
-
-    // Load related data
-    try {
-      const { db } = await import('../lib/db')
-      const transactions = await db.transactions
-        .where('beneficiaryId')
-        .equals(b.id)
-        .toArray()
-      setDetailTransactions(transactions)
-
-      const loans = await db.loans
-        .where('beneficiaryId')
-        .equals(b.id)
-        .toArray()
-      setDetailLoans(loans)
-
-      const referrals = await db.medicalReferrals
-        .where('beneficiaryId')
-        .equals(b.id)
-        .toArray()
-      setDetailReferrals(referrals)
-    } catch {
-      setDetailTransactions([])
-      setDetailLoans([])
-      setDetailReferrals([])
-    }
   }
 
   const closeDetail = () => {
     setShowDetailModal(false)
     setSelectedBeneficiary(null)
-    setDetailTransactions([])
-    setDetailLoans([])
-    setDetailReferrals([])
   }
 
   // ---- Helpers ----
@@ -430,6 +430,12 @@ export default function BeneficiariesPage() {
     const c = caisses.find((c: any) => c.id === caisseId)
     const sc = c?.subCategories.find((s: any) => s.id === subCatId)
     return sc?.nameAr || sc?.name || '—'
+  }
+
+  const getGradeName = (gradeId?: string) => {
+    if (!gradeId) return '—'
+    const g = schoolGrades.find((g: any) => g.id === gradeId)
+    return g?.nameAr || '—'
   }
 
   // ---- Render helpers ----
@@ -449,9 +455,8 @@ export default function BeneficiariesPage() {
               setQueryParams((prev) => ({ ...prev, searchTerm: e.target.value }))
             } else {
               setQueryParams((prev) => {
-                const next = { ...prev }
-                delete next.searchTerm
-                return Object.keys(next).length > 0 ? next : undefined
+                const { searchTerm, ...rest } = prev || {}
+                return Object.keys(rest).length > 0 ? rest : undefined
               })
             }
           }}
@@ -500,13 +505,6 @@ export default function BeneficiariesPage() {
               min="0"
               value={filterMaxAge}
               onChange={(e) => setFilterMaxAge(e.target.value)}
-            />
-            <Input
-              labelAr="الحد الأقصى لعمر الطفل"
-              type="number"
-              min="0"
-              value={filterMaxChildAge}
-              onChange={(e) => setFilterMaxChildAge(e.target.value)}
             />
           </div>
           <div className="flex gap-2 mt-4">
@@ -598,34 +596,16 @@ export default function BeneficiariesPage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-center gap-1">
-                          <button
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                            title="عرض التفاصيل"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              openDetail(b)
-                            }}
-                          >
+                          <button className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors" title="عرض التفاصيل"
+                            onClick={(e) => { e.stopPropagation(); openDetail(b) }}>
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="تعديل"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              openEditForm(b)
-                            }}
-                          >
+                          <button className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="تعديل"
+                            onClick={(e) => { e.stopPropagation(); openEditForm(b) }}>
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="حذف"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setDeleteConfirmId(b.id)
-                            }}
-                          >
+                          <button className="p-1.5 rounded-lg text-gray-400 hover:text-danger-500 hover:bg-red-50 transition-colors" title="حذف"
+                            onClick={(e) => { e.stopPropagation(); handleDelete(b.id) }}>
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -639,27 +619,6 @@ export default function BeneficiariesPage() {
         )}
       </Card>
 
-      {/* ---- Delete Confirmation Modal ---- */}
-      <Modal
-        isOpen={deleteConfirmId !== null}
-        onClose={() => setDeleteConfirmId(null)}
-        title="تأكيد الحذف"
-        size="sm"
-      >
-        <p className="text-sm text-gray-600 mb-6">
-          هل أنت متأكد من حذف هذا المستفيد؟ لا يمكن التراجع عن هذا الإجراء.
-        </p>
-        <div className="flex gap-2 justify-end">
-          <Button variant="secondary" size="sm" onClick={() => setDeleteConfirmId(null)}>
-            إلغاء
-          </Button>
-          <Button variant="danger" size="sm" onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}>
-            <Trash2 className="w-4 h-4" />
-            حذف
-          </Button>
-        </div>
-      </Modal>
-
       {/* ---- Add / Edit Form Modal ---- */}
       <Modal
         isOpen={showFormModal}
@@ -667,42 +626,15 @@ export default function BeneficiariesPage() {
         title={editingId ? 'تعديل مستفيد' : 'إضافة مستفيد جديد'}
         size="xl"
       >
-        <div className="space-y-6" dir="rtl">
-          {/* Arabic names */}
+        <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
+          {/* Names */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">الاسم بالعربية</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">الاسم</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                labelAr="الاسم الأول بالعربية"
-                value={form.firstNameAr}
-                onChange={(e) => handleFormChange('firstNameAr', e.target.value)}
-                required
-              />
-              <Input
-                labelAr="اللقب بالعربية"
-                value={form.lastNameAr}
-                onChange={(e) => handleFormChange('lastNameAr', e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Latin names */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">الاسم باللاتينية</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                labelAr="الاسم الأول باللاتينية"
-                value={form.firstName}
-                onChange={(e) => handleFormChange('firstName', e.target.value)}
-                dir="ltr"
-              />
-              <Input
-                labelAr="اللقب باللاتينية"
-                value={form.lastName}
-                onChange={(e) => handleFormChange('lastName', e.target.value)}
-                dir="ltr"
-              />
+              <Input labelAr="الاسم بالعربية" value={form.firstNameAr} onChange={(e) => handleFormChange('firstNameAr', e.target.value)} required />
+              <Input labelAr="اللقب بالعربية" value={form.lastNameAr} onChange={(e) => handleFormChange('lastNameAr', e.target.value)} required />
+              <Input labelAr="الاسم باللاتينية" value={form.firstName} onChange={(e) => handleFormChange('firstName', e.target.value)} dir="ltr" required />
+              <Input labelAr="اللقب باللاتينية" value={form.lastName} onChange={(e) => handleFormChange('lastName', e.target.value)} dir="ltr" required />
             </div>
           </div>
 
@@ -710,17 +642,8 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">العنوان</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                labelAr="العنوان بالعربية"
-                value={form.addressAr}
-                onChange={(e) => handleFormChange('addressAr', e.target.value)}
-              />
-              <Input
-                labelAr="العنوان باللاتينية"
-                value={form.address}
-                onChange={(e) => handleFormChange('address', e.target.value)}
-                dir="ltr"
-              />
+              <Input labelAr="العنوان بالعربية" value={form.addressAr} onChange={(e) => handleFormChange('addressAr', e.target.value)} />
+              <Input labelAr="العنوان باللاتينية" value={form.address} onChange={(e) => handleFormChange('address', e.target.value)} dir="ltr" />
             </div>
           </div>
 
@@ -728,36 +651,18 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">المعلومات الشخصية</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                labelAr="رقم البطاقة الوطنية"
-                value={form.nationalCardNumber}
-                onChange={(e) => handleFormChange('nationalCardNumber', e.target.value)}
-                required
-              />
-              <Input
-                labelAr="رقم الهاتف"
-                value={form.phone}
-                onChange={(e) => handleFormChange('phone', e.target.value)}
-                dir="ltr"
-              />
+              <Input labelAr="رقم البطاقة الوطنية" value={form.nationalCardNumber} onChange={(e) => handleFormChange('nationalCardNumber', e.target.value)} required />
+              <Input labelAr="رقم الهاتف" value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value)} dir="ltr" />
               <div className="space-y-1">
-                <Input
-                  labelAr="تاريخ الميلاد"
-                  type="date"
-                  value={form.dateOfBirth}
-                  onChange={(e) => handleFormChange('dateOfBirth', e.target.value)}
-                  dir="ltr"
-                />
+                <Input labelAr="تاريخ الميلاد" type="date" value={form.dateOfBirth} onChange={(e) => handleFormChange('dateOfBirth', e.target.value)} />
                 {form.dateOfBirth && (
-                  <p className="text-xs text-primary-600 font-medium">
-                    العمر: {calculateAge(form.dateOfBirth).displayAr}
-                  </p>
+                  <p className="text-xs text-gray-500">العمر: {calculateAge(form.dateOfBirth).displayAr}</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Attribut & On behalf */}
+          {/* Classification */}
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">التصنيف</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -775,15 +680,8 @@ export default function BeneficiariesPage() {
                 onChange={(val) => handleFormChange('gender', val)}
               />
               <div className="space-y-1">
-                <Input
-                  labelAr="باسم من"
-                  placeholder="مثال: باسم الأرملة فاطمة"
-                  value={form.onBehalfOf}
-                  onChange={(e) => handleFormChange('onBehalfOf', e.target.value)}
-                />
-                <p className="text-xs text-gray-400">
-                  عندما يأتي طفل نيابة عن أرملة أو مستفيد آخر
-                </p>
+                <Input labelAr="باسم من" placeholder="مثال: باسم الأرملة فاطمة" value={form.onBehalfOf} onChange={(e) => handleFormChange('onBehalfOf', e.target.value)} />
+                <p className="text-xs text-gray-400">عندما يأتي طفل نيابة عن أرملة أو مستفيد آخر</p>
               </div>
               <SearchableSelect
                 labelAr="الصندوق"
@@ -814,104 +712,45 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">الحالة</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                labelAr="الحالة بالعربية (مرض أو غيره)"
-                placeholder="مثال: مرض السكري"
-                value={form.situationAr}
-                onChange={(e) => handleFormChange('situationAr', e.target.value)}
-              />
-              <Input
-                labelAr="الحالة باللاتينية"
-                placeholder="Ex: Diabète"
-                value={form.situation}
-                onChange={(e) => handleFormChange('situation', e.target.value)}
-                dir="ltr"
-              />
+              <Input labelAr="الحالة بالعربية (مرض أو غيره)" placeholder="مثال: مرض السكري" value={form.situationAr} onChange={(e) => handleFormChange('situationAr', e.target.value)} />
+              <Input labelAr="الحالة باللاتينية" placeholder="Ex: Diabète" value={form.situation} onChange={(e) => handleFormChange('situation', e.target.value)} dir="ltr" />
             </div>
           </div>
 
           {/* Children */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Baby className="w-4 h-4" />
-                الأطفال ({form.children.length})
-              </h4>
-              <Button variant="secondary" size="sm" onClick={addChild}>
-                <Plus className="w-3.5 h-3.5" />
-                إضافة طفل
+              <h4 className="text-sm font-semibold text-gray-700">الأطفال</h4>
+              <Button size="sm" variant="secondary" onClick={addChild}>
+                <Plus className="w-4 h-4" /> إضافة طفل
               </Button>
             </div>
-
-            {form.children.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-4 border border-dashed border-gray-200 rounded-lg">
-                لا يوجد أطفال. اضغط "إضافة طفل" لإضافة طفل.
-              </p>
-            ) : (
+            {form.children.length > 0 && (
               <div className="space-y-4">
                 {form.children.map((child, index) => (
-                  <div
-                    key={index}
-                    className="border border-gray-200 rounded-lg p-4 bg-gray-50 relative"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => removeChild(index)}
-                      className="absolute top-2 left-2 p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      title="إزالة الطفل"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                    <p className="text-xs text-gray-500 mb-3 font-medium">
-                      الطفل {index + 1}
-                    </p>
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-sm font-medium text-gray-700">الطفل {index + 1}</span>
+                      <button onClick={() => removeChild(index)} className="text-xs text-red-500 hover:text-red-700">✕ إزالة</button>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Input
-                        labelAr="الاسم الأول بالعربية"
-                        value={child.firstNameAr}
-                        onChange={(e) => updateChild(index, 'firstNameAr', e.target.value)}
-                      />
-                      <Input
-                        labelAr="اللقب بالعربية"
-                        value={child.lastNameAr}
-                        onChange={(e) => updateChild(index, 'lastNameAr', e.target.value)}
-                      />
-                      <div className="space-y-1">
-                        <Input
-                          labelAr="تاريخ الميلاد"
-                          type="date"
-                          value={child.dateOfBirth}
-                          onChange={(e) => updateChild(index, 'dateOfBirth', e.target.value)}
-                          dir="ltr"
-                        />
-                        {child.dateOfBirth && (
-                          <p className="text-xs text-primary-600 font-medium">
-                            العمر: {calculateAge(child.dateOfBirth).displayAr}
-                          </p>
-                        )}
-                      </div>
+                      <Input labelAr="الاسم بالعربية" value={child.firstNameAr} onChange={(e) => updateChild(index, 'firstNameAr', e.target.value)} />
+                      <Input labelAr="اللقب بالعربية" value={child.lastNameAr} onChange={(e) => updateChild(index, 'lastNameAr', e.target.value)} />
+                      <Input labelAr="تاريخ الميلاد" type="date" value={child.dateOfBirth} onChange={(e) => updateChild(index, 'dateOfBirth', e.target.value)} />
                       <SearchableSelect
                         labelAr="الحالة الصحية"
                         options={HEALTH_STATUS_OPTIONS}
                         value={child.healthStatus}
                         onChange={(val) => updateChild(index, 'healthStatus', val)}
                       />
-                      <Input
-                        labelAr="تفاصيل الحالة الصحية"
-                        placeholder="تفاصيل إضافية..."
-                        value={child.healthDetails || ''}
-                        onChange={(e) => updateChild(index, 'healthDetails', e.target.value)}
-                        className="md:col-span-2"
-                      />
-                      {schoolGrades.length > 0 && (
-                        <div className="md:col-span-2">
-                          <Select
-                            labelAr="المستوى الدراسي"
-                            value={child.schoolGradeId || ''}
-                            onChange={(e) => updateChild(index, 'schoolGradeId', e.target.value)}
-                            options={schoolGrades.map((g: any) => ({ value: g.id, label: g.nameAr }))}
-                          />
-                        </div>
+                      <Input labelAr="تفاصيل الحالة الصحية" placeholder="تفاصيل إضافية..." value={child.healthDetails || ''} onChange={(e) => updateChild(index, 'healthDetails', e.target.value)} />
+                      {gradeOptions.length > 0 && (
+                        <SearchableSelect
+                          labelAr="المستوى الدراسي"
+                          options={gradeOptions}
+                          value={child.schoolGradeId || ''}
+                          onChange={(val) => updateChild(index, 'schoolGradeId', val)}
+                        />
                       )}
                     </div>
                   </div>
@@ -921,356 +760,71 @@ export default function BeneficiariesPage() {
           </div>
 
           {/* Notes */}
-          <TextArea
-            labelAr="ملاحظات"
-            value={form.notes}
-            onChange={(e) => handleFormChange('notes', e.target.value)}
-            placeholder="ملاحظات إضافية..."
-          />
+          <TextArea labelAr="ملاحظات" value={form.notes} onChange={(e) => handleFormChange('notes', e.target.value)} />
 
-          {/* Submit */}
-          <div className="flex gap-2 justify-end border-t border-gray-100 pt-4">
-            <Button variant="secondary" onClick={closeFormModal}>
-              إلغاء
-            </Button>
-            <Button onClick={handleSubmit}>
-              {editingId ? 'حفظ التعديلات' : 'إضافة المستفيد'}
-            </Button>
+          <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+            <Button variant="secondary" onClick={closeFormModal}>إلغاء</Button>
+            <Button onClick={handleSave}>{editingId ? 'تحديث' : 'إضافة'}</Button>
           </div>
         </div>
       </Modal>
 
       {/* ---- Detail View Modal ---- */}
       {selectedBeneficiary && (
-        <Modal
-          isOpen={showDetailModal}
-          onClose={closeDetail}
-          title={`${selectedBeneficiary.lastNameAr} ${selectedBeneficiary.firstNameAr}`}
-          size="xl"
-        >
+        <Modal isOpen={showDetailModal} onClose={closeDetail} title={`${selectedBeneficiary.lastNameAr} ${selectedBeneficiary.firstNameAr}`} size="xl">
           <div className="space-y-6" dir="rtl">
-            {/* Personal Info */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">
-                المعلومات الشخصية
-              </h4>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">المعلومات الشخصية</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">الرمز المرجعي:</span>
-                  <span className="font-semibold text-primary-700" dir="ltr">
-                    {selectedBeneficiary.reference || '—'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">الاسم بالعربية:</span>
-                  <span className="font-medium text-gray-900">
-                    {selectedBeneficiary.lastNameAr} {selectedBeneficiary.firstNameAr}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">الاسم باللاتينية:</span>
-                  <span className="font-medium text-gray-900" dir="ltr">
-                    {selectedBeneficiary.firstName} {selectedBeneficiary.lastName}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">رقم البطاقة الوطنية:</span>
-                  <span className="font-medium text-gray-900">
-                    {selectedBeneficiary.nationalCardNumber}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">الهاتف:</span>
-                  <span className="font-medium text-gray-900" dir="ltr">
-                    {selectedBeneficiary.phone}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">تاريخ الميلاد:</span>
-                  <span className="font-medium text-gray-900">
-                    {selectedBeneficiary.dateOfBirth
-                      ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${calculateAge(selectedBeneficiary.dateOfBirth).displayAr})`
-                      : '—'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">الصفة:</span>
-                  <Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>
-                    {ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">العنوان بالعربية:</span>
-                  <span className="font-medium text-gray-900">
-                    {selectedBeneficiary.addressAr || '—'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">العنوان باللاتينية:</span>
-                  <span className="font-medium text-gray-900" dir="ltr">
-                    {selectedBeneficiary.address || '—'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">الصندوق:</span>
-                  <span className="font-medium text-gray-900">
-                    {getCaisseName(selectedBeneficiary.caisseId)}
-                    {selectedBeneficiary.subCategoryId && (
-                      <span className="text-gray-500 mr-2">
-                        ({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})
-                      </span>
-                    )}
-                  </span>
-                </div>
-                {selectedBeneficiary.onBehalfOfName && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">باسم من:</span>
-                    <span className="font-medium text-gray-900">
-                      {selectedBeneficiary.onBehalfOfName}
-                    </span>
-                  </div>
-                )}
-                {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && (
-                  <div className="flex justify-between md:col-span-2">
-                    <span className="text-gray-500">الحالة:</span>
-                    <span className="font-medium text-gray-900">
-                      {selectedBeneficiary.situationAr}
-                      {selectedBeneficiary.situation && (
-                        <span className="text-gray-400 mr-2" dir="ltr">
-                          ({selectedBeneficiary.situation})
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                )}
-                {selectedBeneficiary.notes && (
-                  <div className="flex justify-between md:col-span-2">
-                    <span className="text-gray-500">ملاحظات:</span>
-                    <span className="font-medium text-gray-900">{selectedBeneficiary.notes}</span>
-                  </div>
-                )}
+                <div className="flex justify-between"><span className="text-gray-500">الرمز المرجعي</span><span className="font-semibold text-primary-700" dir="ltr">{selectedBeneficiary.reference || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">الاسم بالعربية</span><span className="font-medium text-gray-900">{selectedBeneficiary.lastNameAr} {selectedBeneficiary.firstNameAr}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">الاسم باللاتينية</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.firstName} {selectedBeneficiary.lastName}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">رقم البطاقة الوطنية</span><span className="font-medium text-gray-900">{selectedBeneficiary.nationalCardNumber}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">الهاتف</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.phone}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">تاريخ الميلاد</span><span className="font-medium text-gray-900">{selectedBeneficiary.dateOfBirth ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${calculateAge(selectedBeneficiary.dateOfBirth).displayAr})` : '—'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">الصفة</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
+                <div className="flex justify-between"><span className="text-gray-500">الجنس</span><span className="font-medium text-gray-900">{selectedBeneficiary.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">العنوان بالعربية</span><span className="font-medium text-gray-900">{selectedBeneficiary.addressAr || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">العنوان باللاتينية</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.address || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">الصندوق</span><span className="font-medium text-gray-900">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-gray-500 mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
+                {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between"><span className="text-gray-500">باسم من</span><span className="font-medium text-gray-900">{selectedBeneficiary.onBehalfOfName}</span></div>}
+                {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">الحالة</span><span className="font-medium text-gray-900">{selectedBeneficiary.situationAr}{selectedBeneficiary.situation && <span className="text-gray-400 mr-2" dir="ltr">({selectedBeneficiary.situation})</span>}</span></div>}
+                {selectedBeneficiary.notes && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">ملاحظات</span><span className="font-medium text-gray-900">{selectedBeneficiary.notes}</span></div>}
               </div>
             </div>
 
-            {/* Children */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2 flex items-center gap-2">
-                <Baby className="w-4 h-4" />
-                الأطفال ({selectedBeneficiary.children.length})
-              </h4>
-              {selectedBeneficiary.children.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-3">لا يوجد أطفال مسجلون</p>
-              ) : (
+            {selectedBeneficiary.children.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">الأطفال ({selectedBeneficiary.children.length})</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-200 text-gray-500">
+                      <tr className="border-b border-gray-200">
                         <th className="py-2 px-3 text-right font-medium">الاسم</th>
-                        <th className="py-2 px-3 text-right font-medium">تاريخ الميلاد</th>
                         <th className="py-2 px-3 text-right font-medium">العمر</th>
                         <th className="py-2 px-3 text-right font-medium">الحالة الصحية</th>
-                        <th className="py-2 px-3 text-right font-medium">التفاصيل</th>
+                        <th className="py-2 px-3 text-right font-medium">المستوى الدراسي</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedBeneficiary.children.map((child) => {
-                        const childAge = child.dateOfBirth ? calculateAge(child.dateOfBirth) : null
-                        return (
-                          <tr key={child.id} className="border-b border-gray-100">
-                            <td className="py-2 px-3 font-medium text-gray-900">
-                              {child.lastNameAr} {child.firstNameAr}
-                            </td>
-                            <td className="py-2 px-3 text-gray-600">
-                              {child.dateOfBirth ? formatDate(child.dateOfBirth) : '—'}
-                            </td>
-                            <td className="py-2 px-3 text-gray-600">
-                              {childAge ? childAge.displayAr : '—'}
-                            </td>
-                            <td className="py-2 px-3">
-                              <Badge
-                                variant={
-                                  child.healthStatus === 'bonne_sante'
-                                    ? 'success'
-                                    : child.healthStatus === 'malade'
-                                      ? 'danger'
-                                      : child.healthStatus === 'handicape'
-                                        ? 'warning'
-                                        : 'default'
-                                }
-                              >
-                                {HEALTH_STATUS_LABELS[child.healthStatus] ?? child.healthStatus}
-                              </Badge>
-                            </td>
-                            <td className="py-2 px-3 text-gray-600">
-                              {child.healthDetails || '—'}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* Associated Transactions */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">
-                المعاملات المالية ({detailTransactions.length})
-              </h4>
-              {detailTransactions.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-3">لا توجد معاملات مالية</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-gray-500">
-                        <th className="py-2 px-3 text-right font-medium">التاريخ</th>
-                        <th className="py-2 px-3 text-right font-medium">النوع</th>
-                        <th className="py-2 px-3 text-right font-medium">المبلغ</th>
-                        <th className="py-2 px-3 text-right font-medium">الوصف</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detailTransactions.map((t: any) => (
-                        <tr key={t.id} className="border-b border-gray-100">
-                          <td className="py-2 px-3 text-gray-600">{formatDate(t.date)}</td>
-                          <td className="py-2 px-3">
-                            <Badge variant={t.type === 'credit' ? 'success' : 'danger'}>
-                              {t.type === 'credit' ? 'إيراد' : 'مصروف'}
-                            </Badge>
-                          </td>
-                          <td className="py-2 px-3 font-medium text-gray-900">
-                            {t.amount?.toLocaleString('ar-DZ')} د.ج
-                          </td>
-                          <td className="py-2 px-3 text-gray-600">
-                            {t.descriptionAr || t.description}
-                          </td>
+                      {selectedBeneficiary.children.map((child: any) => (
+                        <tr key={child.id} className="border-b border-gray-100">
+                          <td className="py-2 px-3">{child.firstNameAr} {child.lastNameAr}</td>
+                          <td className="py-2 px-3">{calculateAge(child.dateOfBirth).displayAr}</td>
+                          <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
+                          <td className="py-2 px-3">{getGradeName(child.schoolGradeId)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Associated Loans */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">
-                الإعارات ({detailLoans.length})
-              </h4>
-              {detailLoans.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-3">لا توجد إعارات</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-gray-500">
-                        <th className="py-2 px-3 text-right font-medium">تاريخ الإعارة</th>
-                        <th className="py-2 px-3 text-right font-medium">الحالة</th>
-                        <th className="py-2 px-3 text-right font-medium">المواد</th>
-                        <th className="py-2 px-3 text-right font-medium">ملاحظات</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detailLoans.map((loan: any) => (
-                        <tr key={loan.id} className="border-b border-gray-100">
-                          <td className="py-2 px-3 text-gray-600">
-                            {formatDate(loan.loanDate)}
-                          </td>
-                          <td className="py-2 px-3">
-                            <Badge
-                              variant={
-                                loan.status === 'retourne'
-                                  ? 'success'
-                                  : loan.status === 'en_cours'
-                                    ? 'warning'
-                                    : loan.status === 'definitif'
-                                      ? 'info'
-                                      : 'default'
-                              }
-                            >
-                              {loan.status === 'en_cours'
-                                ? 'جارية'
-                                : loan.status === 'retourne'
-                                  ? 'مرتجعة'
-                                  : loan.status === 'partiellement_retourne'
-                                    ? 'مرتجعة جزئياً'
-                                    : loan.status === 'definitif'
-                                      ? 'نهائية'
-                                      : loan.status}
-                            </Badge>
-                          </td>
-                          <td className="py-2 px-3 text-gray-600">
-                            {loan.items?.map((i: any) => i.articleNameAr || i.articleName).join('، ') || '—'}
-                          </td>
-                          <td className="py-2 px-3 text-gray-600">
-                            {loan.notes || '—'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* Associated Medical Referrals */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">
-                التحويلات الطبية ({detailReferrals.length})
-              </h4>
-              {detailReferrals.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-3">لا توجد تحويلات طبية</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-gray-500">
-                        <th className="py-2 px-3 text-right font-medium">التاريخ</th>
-                        <th className="py-2 px-3 text-right font-medium">الطبيب</th>
-                        <th className="py-2 px-3 text-right font-medium">نوع التحليل</th>
-                        <th className="py-2 px-3 text-right font-medium">المستشفى</th>
-                        <th className="py-2 px-3 text-right font-medium">المبلغ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detailReferrals.map((r: any) => (
-                        <tr key={r.id} className="border-b border-gray-100">
-                          <td className="py-2 px-3 text-gray-600">{formatDate(r.date)}</td>
-                          <td className="py-2 px-3 text-gray-900">
-                            {r.doctorNameAr || r.doctorName}
-                          </td>
-                          <td className="py-2 px-3 text-gray-600">
-                            {r.analysisTypeAr || r.analysisType || '—'}
-                          </td>
-                          <td className="py-2 px-3 text-gray-600">
-                            {r.hospitalAr || r.hospital || '—'}
-                          </td>
-                          <td className="py-2 px-3 font-medium text-gray-900">
-                            {r.amount?.toLocaleString('ar-DZ')} د.ج
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* Actions in detail view */}
-            <div className="flex gap-2 justify-end border-t border-gray-100 pt-4">
-              <Button variant="secondary" onClick={closeDetail}>
-                إغلاق
-              </Button>
-              <Button
-                onClick={() => {
-                  closeDetail()
-                  openEditForm(selectedBeneficiary)
-                }}
-              >
-                <Edit className="w-4 h-4" />
-                تعديل
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={closeDetail}>إغلاق</Button>
+              <Button size="sm" onClick={() => { closeDetail(); openEditForm(selectedBeneficiary) }}>
+                <Edit className="w-4 h-4" /> تعديل
               </Button>
             </div>
           </div>
@@ -1278,71 +832,6 @@ export default function BeneficiariesPage() {
       )}
     </div>
   )
-
-  const renderSettingsTab = () => (
-    <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-primary-600" />
-              إدارة التصنيفات — الصفات
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">إضافة وتعديل وحذف الصفات (الخصائص) للمستفيدين</p>
-          </div>
-
-          {/* Add form */}
-          <div className="flex flex-col sm:flex-row gap-3 items-end">
-            <Input labelAr="الاسم بالعربية" value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder="مثال: يتيم" />
-            <Input labelAr="الاسم بالفرنسية" value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder="Ex: orphelin" dir="ltr" />
-            <Button onClick={handleAddAttribut} disabled={!newAttrNameAr.trim()}>إضافة</Button>
-          </div>
-
-          {/* Attributs list */}
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attributs.map((a: BeneficiaryAttribut) => (
-                    <tr key={a.name} className="border-b border-gray-100 hover:bg-gray-50">
-                      {editAttrId === a.name ? (
-                        <>
-                          <td className="py-2 px-4">
-                            <input value={editAttrNameAr} onChange={(e) => setEditAttrNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" />
-                          </td>
-                          <td className="py-2 px-4">
-                            <input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" />
-                          </td>
-                          <td className="py-2 px-4 text-center flex gap-1 justify-center">
-                            <Button size="sm" onClick={handleUpdateAttribut}>حفظ</Button>
-                            <Button size="sm" variant="ghost" onClick={() => setEditAttrId(null)}>إلغاء</Button>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="py-3 px-4 font-medium text-gray-900">{a.nameAr}</td>
-                          <td className="py-3 px-4 text-gray-600">{a.name}</td>
-                          <td className="py-3 px-4 text-center">
-                            <button onClick={() => { setEditAttrId(a.name); setEditAttrNameAr(a.nameAr); setEditAttrName(a.name); }}
-                              className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
-                            <button onClick={() => handleDeleteAttribut(a.name)}
-                              className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-      )
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -1369,32 +858,127 @@ export default function BeneficiariesPage() {
       {/* ---- Tabs ---- */}
       <div className="border-b border-gray-200">
         <nav className="flex gap-2 sm:gap-4">
-          <button
-            onClick={() => setActiveTab('list')}
-            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
-              activeTab === 'list'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Users className="inline-block w-4 h-4 ml-2" />
-            المستفيدون
+          <button onClick={() => setActiveTab('list')}
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${activeTab === 'list' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+            <Users className="inline-block w-4 h-4 ml-2" /> المستفيدون
           </button>
-          <button
-            onClick={handleSettingsTab}
-            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
-              activeTab === 'settings'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Settings className="inline-block w-4 h-4 ml-2" />
-            إدارة التصنيفات
+          <button onClick={handleSettingsTab}
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${activeTab === 'settings' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+            <Settings className="inline-block w-4 h-4 ml-2" /> إدارة التصنيفات
           </button>
         </nav>
       </div>
 
-      {activeTab === 'list' ? renderListTab() : renderSettingsTab()}
+      {activeTab === 'list' ? renderListTab() : (
+        <div className="space-y-8">
+          {/* ---- Attributs Section ---- */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-primary-600" />
+              الصفات
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">إضافة وتعديل وحذف الصفات (الخصائص) للمستفيدين</p>
+            <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+              <Input labelAr="الاسم بالعربية" value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder="مثال: يتيم" />
+              <Input labelAr="الاسم بالفرنسية" value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder="Ex: orphelin" dir="ltr" />
+              <Button onClick={handleAddAttribut} disabled={!newAttrNameAr.trim()}>إضافة</Button>
+            </div>
+            <Card>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attributs.map((a: BeneficiaryAttribut) => (
+                      <tr key={a.name} className="border-b border-gray-100 hover:bg-gray-50">
+                        {editAttrId === a.name ? (
+                          <>
+                            <td className="py-2 px-4"><input value={editAttrNameAr} onChange={(e) => setEditAttrNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
+                            <td className="py-2 px-4"><input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                            <td className="py-2 px-4 text-center flex gap-1 justify-center">
+                              <Button size="sm" onClick={handleUpdateAttribut}>حفظ</Button>
+                              <Button size="sm" variant="ghost" onClick={() => setEditAttrId(null)}>إلغاء</Button>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="py-3 px-4 font-medium text-gray-900">{a.nameAr}</td>
+                            <td className="py-3 px-4 text-gray-600">{a.name}</td>
+                            <td className="py-3 px-4 text-center">
+                              <button onClick={() => { setEditAttrId(a.name); setEditAttrNameAr(a.nameAr); setEditAttrName(a.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteAttribut(a.name)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+
+          {/* ---- School Grades Section ---- */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <FolderTree className="w-5 h-5 text-primary-600" />
+              المستوى الدراسي
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">إدارة المستويات الدراسية للأطفال</p>
+            <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+              <Input labelAr="الاسم بالعربية" value={newGradeNameAr} onChange={(e) => setNewGradeNameAr(e.target.value)} placeholder="مثال: السنة الأولى" />
+              <Input labelAr="الاسم بالفرنسية" value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder="Ex: CP1" dir="ltr" />
+              <Button onClick={handleAddGrade} disabled={!newGradeNameAr.trim()}>إضافة</Button>
+            </div>
+            <Card>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {schoolGrades.map((g: any) => (
+                      <tr key={g.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        {editGradeId === g.id ? (
+                          <>
+                            <td className="py-2 px-4"><input value={editGradeNameAr} onChange={(e) => setEditGradeNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
+                            <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                            <td className="py-2 px-4 text-center flex gap-1 justify-center">
+                              <Button size="sm" onClick={handleUpdateGrade}>حفظ</Button>
+                              <Button size="sm" variant="ghost" onClick={() => setEditGradeId(null)}>إلغاء</Button>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="py-3 px-4 font-medium text-gray-900">{g.nameAr}</td>
+                            <td className="py-3 px-4 text-gray-600">{g.name}</td>
+                            <td className="py-3 px-4 text-center">
+                              <button onClick={() => { setEditGradeId(g.id); setEditGradeNameAr(g.nameAr); setEditGradeName(g.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteGrade(g.id)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                    {schoolGrades.length === 0 && (
+                      <tr><td colSpan={3} className="py-8 text-center text-gray-400">لا توجد مستويات دراسية بعد. أضف مستوى جديداً.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
