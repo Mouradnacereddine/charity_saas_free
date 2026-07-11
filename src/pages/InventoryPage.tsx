@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { formatDate } from '../utils/helpers'
-import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin } from 'lucide-react'
+import { formatDate, formatCurrency, generateLoanReference } from '../utils/helpers'
+import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin, Printer } from 'lucide-react'
+import { printReceipt } from '../lib/receipt'
 import type { Article, Loan, LoanItem, ArticleCategory, ArticleStatus, StorageLocation, Beneficiary } from '../types'
 import {
   useArticles,
@@ -1178,7 +1179,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   // Pre-computed beneficiary options for SearchableSelect
   const beneficiaryOptions = beneficiaries.map((b: Beneficiary) => ({
     value: b.id,
-    label: `${b.firstNameAr} ${b.lastNameAr} (${b.firstName} ${b.lastName})`,
+    label: `${b.lastNameAr} ${b.firstNameAr} (${b.firstName} ${b.lastName})`,
   }))
 
   const loanStatusOptions = [
@@ -1224,9 +1225,11 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       })
 
     await createLoan.mutateAsync({
+      reference: generateLoanReference(),
       beneficiaryId: beneficiary.id,
       beneficiaryName: `${beneficiary.firstName} ${beneficiary.lastName}`,
-      beneficiaryNameAr: `${beneficiary.firstNameAr} ${beneficiary.lastNameAr}`,
+      beneficiaryNameAr: `${beneficiary.lastNameAr} ${beneficiary.firstNameAr}`,
+      beneficiaryReference: beneficiary.reference,
       items,
       status: 'en_cours',
       loanDate: new Date().toISOString().split('T')[0],
@@ -1351,6 +1354,39 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     }
   }
 
+  // ---- Print Loan ----
+
+  const handlePrintLoan = (loan: Loan) => {
+    const itemsHtml = loan.items.map((item: any) =>
+      `<div class="row"><span class="lbl">المقال</span><span class="val">${item.articleNameAr} <i>×${item.quantity}</i></span></div>`
+    ).join('')
+
+    const statusLabel = LOAN_STATUS_LABELS[loan.status] || loan.status
+
+    printReceipt(
+      'تفاصيل الإعارة',
+      'Détail du Prêt',
+      `<div class="col">
+        <div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${loan.reference || '—'}</span></div>
+        <div class="row"><span class="lbl">المستفيد</span><span class="val">${loan.beneficiaryNameAr}</span></div>
+        <div class="row"><span class="lbl">رمز المستفيد</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
+        <div class="row"><span class="lbl">الحالة</span><span class="val">${statusLabel}</span></div>
+        <div class="row"><span class="lbl">تاريخ الإعارة</span><span class="val">${formatDate(loan.loanDate)}</span></div>
+        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl">تاريخ الإرجاع المتوقع</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
+        ${loan.actualReturnDate ? `<div class="row"><span class="lbl">تاريخ الإرجاع الفعلي</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
+       </div>
+       <div class="col">
+        ${itemsHtml}
+       </div>`,
+      loan.status === 'definitif' ? 'color:#dc2626' : loan.status === 'retourne' ? 'color:#16a34a' : 'color:#2563eb',
+      loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0).toString(),
+      `المجموع: ${loan.items.length} مقال — ${loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)} قطعة — ${statusLabel}`,
+      '',
+      'توقيع المستفيد',
+      'ختم الجمعية'
+    )
+  }
+
   if (loading) return <LoadingSpinner />
 
   return (
@@ -1422,8 +1458,9 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الرمز المرجعي</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">رمز المرجعي</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">المستفيد</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden lg:table-cell">رمز المستفيد</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">عدد المقالات</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">تاريخ الإعارة</th>
@@ -1439,6 +1476,9 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                       {loan.reference || '—'}
                     </td>
                     <td className="py-3 px-4 font-medium text-gray-900">{loan.beneficiaryNameAr}</td>
+                    <td className="py-3 px-4 text-gray-600 hidden lg:table-cell" dir="ltr">
+                      {loan.beneficiaryReference || '—'}
+                    </td>
                     <td className="py-3 px-4 text-gray-600">{loan.items.length}</td>
                     <td className="py-3 px-4">
                       <Badge variant={LOAN_STATUS_VARIANTS[loan.status] || 'default'}>
@@ -1586,10 +1626,16 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700">معلومات المستفيد</h4>
                   <p className="text-sm text-gray-900">{selectedLoan.beneficiaryNameAr}</p>
+                  <p className="text-xs text-gray-500" dir="ltr">رمز المستفيد: {selectedLoan.beneficiaryReference || '—'}</p>
                 </div>
                 <div className="text-left">
                   <span className="text-xs text-gray-500">الرمز المرجعي للإعارة</span>
                   <p className="text-sm font-bold text-primary-700" dir="ltr">{selectedLoan.reference || '—'}</p>
+                  <div className="mt-1">
+                    <Badge variant={LOAN_STATUS_VARIANTS[selectedLoan.status] || 'default'}>
+                      {LOAN_STATUS_LABELS[selectedLoan.status] || selectedLoan.status}
+                    </Badge>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -1601,9 +1647,6 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   <span>الإرجاع الفعلي: {formatDate(selectedLoan.actualReturnDate)}</span>
                 )}
               </div>
-              <Badge variant={LOAN_STATUS_VARIANTS[selectedLoan.status] || 'default'}>
-                {LOAN_STATUS_LABELS[selectedLoan.status] || selectedLoan.status}
-              </Badge>
             </div>
 
             {/* Items list */}
@@ -1777,6 +1820,13 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                 <p className="text-sm text-gray-600">{selectedLoan.notes}</p>
               </div>
             )}
+
+            {/* Print button */}
+            <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
+              <Button size="sm" variant="secondary" onClick={() => handlePrintLoan(selectedLoan)}>
+                <Printer className="w-4 h-4" /> طباعة تفاصيل الإعارة
+              </Button>
+            </div>
           </div>
         )}
       </Modal>

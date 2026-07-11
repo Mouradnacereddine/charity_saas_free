@@ -199,7 +199,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
               receiptNumber,
               donorId,
               donorName: `${donor.firstName} ${donor.lastName}`,
-              donorNameAr: `${donor.firstNameAr} ${donor.lastNameAr}`,
+              donorNameAr: `${donor.lastNameAr} ${donor.firstNameAr}`,
               transactionId: transaction.id,
               amount: amountNum,
               amountInWords,

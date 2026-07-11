@@ -23,7 +23,14 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(loans);
+    const result = loans.map((l: any) => ({
+      ...l,
+      beneficiaryName: l.beneficiary ? `${l.beneficiary.firstName} ${l.beneficiary.lastName}` : '',
+      beneficiaryNameAr: l.beneficiary ? `${l.beneficiary.lastNameAr} ${l.beneficiary.firstNameAr}` : '',
+      beneficiaryReference: l.beneficiary?.reference || '',
+    }));
+
+    res.json(result);
   } catch (error) {
     console.error('Error listing loans:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -119,7 +126,14 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    res.json(loan);
+    const result = {
+      ...loan,
+      beneficiaryName: loan.beneficiary ? `${(loan.beneficiary as any).firstName} ${(loan.beneficiary as any).lastName}` : '',
+      beneficiaryNameAr: loan.beneficiary ? `${(loan.beneficiary as any).lastNameAr} ${(loan.beneficiary as any).firstNameAr}` : '',
+      beneficiaryReference: (loan.beneficiary as any)?.reference || '',
+    };
+
+    res.json(result);
   } catch (error) {
     console.error('Error getting loan:', error);
     res.status(500).json({ error: 'Internal server error' });

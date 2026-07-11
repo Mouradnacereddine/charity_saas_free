@@ -205,7 +205,7 @@ export function generateLoanReference(): string {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-  return `PRT-${year}${month}-${random}`;
+  return `LOAN-${year}${month}-${random}`;
 }
 
 /**
@@ -240,6 +240,7 @@ export function generateMedicalReferralReference(): string {
   const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
   return `MED-${year}${month}-${random}`;
 }
+
 
 /**
  * Generate unique ID

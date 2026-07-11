@@ -240,7 +240,7 @@ export default function FinancePage() {
         'وصل تبرع', 'Reçu de Don',
         `<div class="col"><div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
 <div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
-<div class="row"><span class="lbl">المتبرع</span><span class="val">${donor ? `${donor.firstNameAr} ${donor.lastNameAr}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div></div>
+<div class="row"><span class="lbl">المتبرع</span><span class="val">${donor ? `${donor.lastNameAr} ${donor.firstNameAr}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div></div>
 <div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
 ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
         'color:#16a34a',
@@ -253,7 +253,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         'وصل صرف', 'Bon de Sortie',
         `<div class="col"><div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
 <div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
-<div class="row"><span class="lbl">المستفيد</span><span class="val">${benef ? `${benef.firstNameAr} ${benef.lastNameAr}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div></div>
+<div class="row"><span class="lbl">المستفيد</span><span class="val">${benef ? `${benef.lastNameAr} ${benef.firstNameAr}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div></div>
 <div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
 <div class="row"><span class="lbl">المصدر</span><span class="val">${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</span></div>
 ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
@@ -539,7 +539,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 onChange={setTxDonorId}
                 options={donors.map((d: Donor) => ({
                   value: d.id,
-                  label: `${d.firstNameAr} ${d.lastNameAr} (${d.reference || ''})`,
+                  label: `${d.lastNameAr} ${d.firstNameAr} (${d.reference || ''})`,
                 }))}
               />
             )}
@@ -550,7 +550,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 onChange={setTxBeneficiaryId}
                 options={beneficiaries.map((b: Beneficiary) => ({
                   value: b.id,
-                  label: `${b.firstNameAr} ${b.lastNameAr} (${b.reference || ''})`,
+                  label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})`,
                 }))}
               />
             )}

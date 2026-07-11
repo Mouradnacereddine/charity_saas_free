@@ -231,6 +231,7 @@ export interface Loan {
   beneficiaryId: string;
   beneficiaryName: string;
   beneficiaryNameAr: string;
+  beneficiaryReference?: string;
   items: LoanItem[];
   status: LoanStatus;
   loanDate: string; // ISO date string
@@ -249,6 +250,7 @@ export interface MedicalReferral {
   beneficiaryId: string;
   beneficiaryName: string;
   beneficiaryNameAr: string;
+  beneficiaryReference?: string;
   caisseId: string;
   subCategoryId?: string;
   doctorName: string;

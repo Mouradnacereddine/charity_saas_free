@@ -138,7 +138,7 @@ export default function MedicalPage() {
     await createMedicalReferral.mutateAsync({
       beneficiaryId,
       beneficiaryName: `${beneficiary.firstName} ${beneficiary.lastName}`,
-      beneficiaryNameAr: `${beneficiary.firstNameAr} ${beneficiary.lastNameAr}`,
+      beneficiaryNameAr: `${beneficiary.lastNameAr} ${beneficiary.firstNameAr}`,
       caisseId,
       subCategoryId: subCategoryId || undefined,
       doctorName: doctorName || doctorNameAr,
@@ -172,6 +172,7 @@ export default function MedicalPage() {
       'توجيه طبي', 'Orientation Médicale',
       `<div class="col"><div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
 <div class="row"><span class="lbl">المستفيد</span><span class="val">${referral.beneficiaryNameAr}</span></div>
+<div class="row"><span class="lbl">رمز المستفيد</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
 <div class="row"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr}</span></div>
 ${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}</div>
 <div class="col">${caisseRow}${subCatRow}
@@ -305,6 +306,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 <tr className="border-b border-gray-200">
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">الرمز المرجعي</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">المستفيد</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">رمز المستفيد</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">الطبيب</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">نوع التحليل</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">المبلغ</th>
@@ -317,6 +319,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                   <tr key={referral.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setShowDetailModal(referral)}>
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">{referral.reference || '—'}</td>
                     <td className="py-3 px-4 font-medium">{referral.beneficiaryNameAr}</td>
+                    <td className="py-3 px-4 hidden lg:table-cell" dir="ltr">{referral.beneficiaryReference || '—'}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr}</td>
                     <td className="py-3 px-4 hidden md:table-cell">{referral.analysisTypeAr || '—'}</td>
                     <td className="py-3 px-4 font-medium text-primary-600">{formatCurrency(referral.amount)}</td>
@@ -341,7 +344,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SearchableSelect labelAr="المستفيد" value={beneficiaryId} onChange={setBeneficiaryId}
-              options={beneficiaries.map((b: Beneficiary) => ({ value: b.id, label: `${b.firstNameAr} ${b.lastNameAr} (${b.reference || ''})` }))} />
+              options={beneficiaries.map((b: Beneficiary) => ({ value: b.id, label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})` }))} />
             <SearchableSelect labelAr="الصندوق" value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
               options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))} />
           </div>
@@ -383,7 +386,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div><p className="text-xs text-gray-500">الرمز المرجعي</p><p className="font-semibold text-primary-700" dir="ltr">{showDetailModal.reference || '—'}</p></div>
-              <div><p className="text-xs text-gray-500">المستفيد</p><p className="font-medium">{showDetailModal.beneficiaryNameAr}</p></div>
+              <div><p className="text-xs text-gray-500">المستفيد</p><p className="font-medium">{showDetailModal.beneficiaryNameAr}</p><p className="text-xs text-gray-400" dir="ltr">{showDetailModal.beneficiaryReference || ''}</p></div>
               <div><p className="text-xs text-gray-500">الطبيب</p><p className="font-medium">{showDetailModal.doctorNameAr}</p></div>
               {showDetailModal.analysisTypeAr && <div><p className="text-xs text-gray-500">نوع التحليل</p><p className="font-medium">{showDetailModal.analysisTypeAr}</p></div>}
               {showDetailModal.hospitalAr && <div><p className="text-xs text-gray-500">المستشفى</p><p className="font-medium">{showDetailModal.hospitalAr}</p></div>}

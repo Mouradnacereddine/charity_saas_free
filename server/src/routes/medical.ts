@@ -25,7 +25,14 @@ router.get('/referrals', async (req: AuthRequest, res: Response): Promise<void> 
       orderBy: { date: 'desc' },
     });
 
-    res.json(referrals);
+    const result = referrals.map((r: any) => ({
+      ...r,
+      beneficiaryName: r.beneficiary ? `${r.beneficiary.firstName} ${r.beneficiary.lastName}` : '',
+      beneficiaryNameAr: r.beneficiary ? `${r.beneficiary.lastNameAr} ${r.beneficiary.firstNameAr}` : '',
+      beneficiaryReference: r.beneficiary?.reference || '',
+    }));
+
+    res.json(result);
   } catch (error) {
     console.error('Error listing medical referrals:', error);
     res.status(500).json({ error: 'Internal server error' });

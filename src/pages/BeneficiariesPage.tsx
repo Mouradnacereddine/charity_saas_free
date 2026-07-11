@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { calculateAge, formatDate } from '../utils/helpers'
-import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree } from 'lucide-react'
+import { calculateAge, formatDate, formatCurrency } from '../utils/helpers'
+import { printReceipt } from '../lib/receipt'
+import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
 import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary } from '../hooks/useBeneficiaries'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -418,6 +419,43 @@ export default function BeneficiariesPage() {
     setSelectedBeneficiary(null)
   }
 
+  // ---- Print ----
+  const handlePrintBeneficiary = (b: Beneficiary) => {
+    const childrenRows = (b.children || []).length > 0
+      ? b.children.map((ch: any) =>
+          `<div class="row"><span class="lbl">الطفل</span><span class="val">${ch.lastNameAr} ${ch.firstNameAr} — ${calculateAge(ch.dateOfBirth).displayAr}</span></div>`
+        ).join('')
+      : '<div class="row"><span class="lbl">الأطفال</span><span class="val">لا يوجد</span></div>'
+
+    const caisse = caisses.find((c: any) => c.id === b.caisseId)
+
+    printReceipt(
+      'بطاقة مستفيد',
+      'Carte Bénéficiaire',
+      `<div class="col">
+        <div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${b.reference || '—'}</span></div>
+        <div class="row"><span class="lbl">الاسم بالعربية</span><span class="val">${b.lastNameAr} ${b.firstNameAr}</span></div>
+        <div class="row"><span class="lbl">الاسم باللاتينية</span><span class="val">${b.firstName} ${b.lastName}</span></div>
+        <div class="row"><span class="lbl">رقم البطاقة</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
+        <div class="row"><span class="lbl">الهاتف</span><span class="val">${b.phone}</span></div>
+       </div>
+       <div class="col">
+        <div class="row"><span class="lbl">تاريخ الميلاد</span><span class="val">${b.dateOfBirth ? formatDate(b.dateOfBirth) : '—'}</span></div>
+        <div class="row"><span class="lbl">العمر</span><span class="val">${b.dateOfBirth ? calculateAge(b.dateOfBirth).displayAr : '—'}</span></div>
+        <div class="row"><span class="lbl">الصفة</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
+        <div class="row"><span class="lbl">الجنس</span><span class="val">${b.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
+        <div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>
+        ${b.situationAr ? `<div class="row"><span class="lbl">الحالة</span><span class="val">${b.situationAr}</span></div>` : ''}
+       </div>`,
+      'color:#2563eb',
+      formatCurrency((b.children || []).length),
+      `عدد الأطفال: ${(b.children || []).length}`,
+      '',
+      'توقيع المستفيد',
+      'ختم الجمعية'
+    )
+  }
+
   // ---- Helpers ----
   const getCaisseName = (caisseId?: string) => {
     if (!caisseId) return '—'
@@ -800,7 +838,7 @@ export default function BeneficiariesPage() {
                     <tbody>
                       {selectedBeneficiary.children.map((child: any) => (
                         <tr key={child.id} className="border-b border-gray-100">
-                          <td className="py-2 px-3">{child.firstNameAr} {child.lastNameAr}</td>
+                          <td className="py-2 px-3">{child.lastNameAr} {child.firstNameAr}</td>
                           <td className="py-2 px-3">{calculateAge(child.dateOfBirth).displayAr}</td>
                           <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
                           <td className="py-2 px-3">{getGradeName(child.schoolGradeId)}</td>
@@ -813,6 +851,9 @@ export default function BeneficiariesPage() {
             )}
 
             <div className="flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => handlePrintBeneficiary(selectedBeneficiary)}>
+                <Printer className="w-4 h-4" /> طباعة
+              </Button>
               <Button size="sm" variant="secondary" onClick={closeDetail}>إغلاق</Button>
               <Button size="sm" onClick={() => { closeDetail(); openEditForm(selectedBeneficiary) }}>
                 <Edit className="w-4 h-4" /> تعديل
