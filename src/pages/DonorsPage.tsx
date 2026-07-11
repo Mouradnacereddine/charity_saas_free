@@ -262,6 +262,9 @@ export default function DonorsPage() {
             />
           </div>
           <div className="flex gap-2 mt-4">
+            <Button size="sm" onClick={() => setShowFilters(false)}>
+              <Search className="w-4 h-4" /> بحث
+            </Button>
             <Button variant="secondary" size="sm" onClick={handleResetFilters}>
               إعادة تعيين
             </Button>
