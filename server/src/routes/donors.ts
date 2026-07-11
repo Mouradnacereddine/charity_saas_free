@@ -9,7 +9,7 @@ router.use(requireAuth);
 // GET /api/donors — list with optional search
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { searchTerm, search, caisseId, minDonation, maxDonation } = req.query;
+    const { searchTerm, search, caisseId, minDonation, maxDonation, gender } = req.query;
     const associationId = req.user!.associationId;
 
     const where: any = { associationId };
@@ -41,13 +41,24 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       if (minDonation) where.totalDonated.gte = parseFloat(String(minDonation));
       if (maxDonation) where.totalDonated.lte = parseFloat(String(maxDonation));
     }
+    if (gender) where.gender = String(gender);
 
     const donors = await prisma.donor.findMany({
       where,
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(donors);
+    // Add receipt count for each donor
+    const donorIds = donors.map((d: any) => d.id);
+    const receiptCounts = await prisma.donationReceipt.groupBy({
+      by: ['donorId'],
+      where: { donorId: { in: donorIds } },
+      _count: { id: true },
+    });
+    const countMap = new Map(receiptCounts.map((r: any) => [r.donorId, r._count.id]));
+    const result = donors.map((d: any) => ({ ...d, receiptCount: countMap.get(d.id) || 0 }));
+
+    res.json(result);
   } catch (error) {
     console.error('Error listing donors:', error);
     res.status(500).json({ error: 'Internal server error' });

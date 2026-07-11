@@ -55,6 +55,7 @@ export default function DonorsPage() {
 
   // ---- Filter state ----
   const [showFilters, setShowFilters] = useState(false)
+  const [filterGender, setFilterGender] = useState('')
   const [minDonationInput, setMinDonationInput] = useState('')
   const [maxDonationInput, setMaxDonationInput] = useState('')
 
@@ -80,8 +81,9 @@ export default function DonorsPage() {
     if (filter.caisseId) params.caisseId = filter.caisseId
     if (minDonationInput) params.minDonation = minDonationInput
     if (maxDonationInput) params.maxDonation = maxDonationInput
+    if (filterGender) params.gender = filterGender
     triggerSearch(params)
-  }, [searchTerm, filter.caisseId, minDonationInput, maxDonationInput])
+  }, [searchTerm, filter.caisseId, minDonationInput, maxDonationInput, filterGender])
 
   function openAddModal() {
     setFormData(emptyDonorForm)
@@ -252,6 +254,12 @@ export default function DonorsPage() {
               value={maxDonationInput}
               onChange={(e) => setMaxDonationInput(e.target.value)}
             />
+            <SearchableSelect
+              labelAr="الجنس"
+              options={[{ value: '', label: 'الكل' }, { value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
+              value={filterGender}
+              onChange={(val) => setFilterGender(val)}
+            />
           </div>
           <div className="flex gap-2 mt-4">
             <Button variant="secondary" size="sm" onClick={handleResetFilters}>
@@ -309,8 +317,7 @@ export default function DonorsPage() {
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-gray-700 hidden sm:table-cell">
-                      {/* Number of donations is tracked via receipts; show totalDonated as proxy or badge */}
-                      <Badge variant="info">--</Badge>
+                      <Badge variant="info">{(donor as any).receiptCount ?? 0}</Badge>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-1">

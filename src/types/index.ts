@@ -156,6 +156,7 @@ export interface Donor {
   phone: string;
   email?: string;
   address?: string;
+  gender?: string;
   totalDonated: number;
   notes?: string;
   createdAt: Date;
