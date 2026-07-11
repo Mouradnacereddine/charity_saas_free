@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatCurrency, formatDate } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
-import { Plus, Search, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt } from 'lucide-react'
+import { Plus, Search, Filter, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt } from 'lucide-react'
 import type { DonorFilter, Donor, DonationReceipt } from '../types'
 import { useDonors, useCreateDonor, useUpdateDonor, useDeleteDonor, useDonorReceipts } from '../hooks/useDonors'
 import { useQuery } from '@tanstack/react-query'
@@ -53,40 +53,35 @@ export default function DonorsPage() {
   // Load receipts when a donor is selected for detail view
   const { data: receipts = [] } = useDonorReceipts(detailDonorId || '')
 
-  // ---- Handlers ----
+  // ---- Filter state ----
+  const [showFilters, setShowFilters] = useState(false)
+  const [minDonationInput, setMinDonationInput] = useState('')
+  const [maxDonationInput, setMaxDonationInput] = useState('')
 
-  function handleSearch() {
-    const params: Record<string, string> = {}
-    if (searchTerm) params.searchTerm = searchTerm
-    if (filter.caisseId) params.caisseId = filter.caisseId
-    if (filter.minDonation !== undefined) params.minDonation = String(filter.minDonation)
-    if (filter.maxDonation !== undefined) params.maxDonation = String(filter.maxDonation)
+  // ---- Auto-search: build params and trigger query ----
+  const triggerSearch = (params: Record<string, string>) => {
     setQueryParams(Object.keys(params).length > 0 ? params : undefined)
   }
 
-  function handleSearchKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') handleSearch()
-  }
-
-  function handleFilterChange(key: keyof DonorFilter, value: string) {
-    setFilter((prev) => {
-      const next = { ...prev }
-      if (key === 'caisseId') {
-        next.caisseId = value || undefined
-      } else if (key === 'minDonation') {
-        next.minDonation = value ? Number(value) : undefined
-      } else if (key === 'maxDonation') {
-        next.maxDonation = value ? Number(value) : undefined
-      }
-      return next
-    })
-  }
+  // ---- Handlers ----
 
   function handleResetFilters() {
     setSearchTerm('')
     setFilter({})
+    setMinDonationInput('')
+    setMaxDonationInput('')
     setQueryParams(undefined)
   }
+
+  // Build params whenever searchTerm or filter changes
+  useEffect(() => {
+    const params: Record<string, string> = {}
+    if (searchTerm) params.searchTerm = searchTerm
+    if (filter.caisseId) params.caisseId = filter.caisseId
+    if (minDonationInput) params.minDonation = minDonationInput
+    if (maxDonationInput) params.maxDonation = maxDonationInput
+    triggerSearch(params)
+  }, [searchTerm, filter.caisseId, minDonationInput, maxDonationInput])
 
   function openAddModal() {
     setFormData(emptyDonorForm)
@@ -208,68 +203,63 @@ export default function DonorsPage() {
             </p>
           </div>
         </div>
-        <Button onClick={openAddModal}>
-          <Plus size={18} />
-          إضافة متبرع
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setShowFilters(!showFilters)}>
+            <Filter className="w-4 h-4" /> بحث متقدم
+          </Button>
+          <Button onClick={openAddModal}>
+            <Plus size={18} />
+            إضافة متبرع
+          </Button>
+        </div>
       </div>
 
-      {/* ---- Search & Filters ---- */}
-      <Card>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Search */}
-          <div className="flex gap-2 flex-col sm:flex-row">
-            <Input
-              labelAr="بحث بالاسم أو الهاتف"
-              placeholder="ابحث..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value)
-                setQueryParams(e.target.value ? { searchTerm: e.target.value } : undefined)
-              }}
-              onKeyDown={handleSearchKeyDown}
+      {/* ---- Quick Search ---- */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="بحث بالاسم أو الهاتف..."
+          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {/* ---- Advanced Filters (collapsible) ---- */}
+      {showFilters && (
+        <Card titleAr="بحث متقدم">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <SearchableSelect
+              labelAr="الصندوق"
+              options={caisseOptions}
+              value={filter.caisseId ?? ''}
+              onChange={(val) => setFilter((prev) => ({ ...prev, caisseId: val || undefined }))}
             />
-            <Button variant="secondary" className="sm:mt-6 shrink-0" onClick={handleSearch}>
-              <Search size={16} />
+            <Input
+              labelAr="الحد الأدنى للتبرعات"
+              type="number"
+              min="0"
+              placeholder="0"
+              value={minDonationInput}
+              onChange={(e) => setMinDonationInput(e.target.value)}
+            />
+            <Input
+              labelAr="الحد الأقصى للتبرعات"
+              type="number"
+              min="0"
+              placeholder="0"
+              value={maxDonationInput}
+              onChange={(e) => setMaxDonationInput(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button variant="secondary" size="sm" onClick={handleResetFilters}>
+              إعادة تعيين
             </Button>
           </div>
-
-          {/* Filter by caisse */}
-          <SearchableSelect
-            labelAr="تصفية حسب الصندوق"
-            options={caisseOptions}
-            value={filter.caisseId ?? ''}
-            onChange={(val) => handleFilterChange('caisseId', val)}
-          />
-
-          {/* Min donation */}
-          <Input
-            labelAr="الحد الأدنى للتبرعات"
-            type="number"
-            placeholder="0"
-            value={filter.minDonation ?? ''}
-            onChange={(e) => handleFilterChange('minDonation', e.target.value)}
-          />
-
-          {/* Max donation */}
-          <Input
-            labelAr="الحد الأقصى للتبرعات"
-            type="number"
-            placeholder="0"
-            value={filter.maxDonation ?? ''}
-            onChange={(e) => handleFilterChange('maxDonation', e.target.value)}
-          />
-        </div>
-
-        {/* Reset filters */}
-        {(filter.searchTerm || filter.caisseId || filter.minDonation !== undefined || filter.maxDonation !== undefined) && (
-          <div className="mt-4 flex justify-end">
-            <Button variant="ghost" size="sm" onClick={handleResetFilters}>
-              إعادة تعيين الفلاتر
-            </Button>
-          </div>
-        )}
-      </Card>
+        </Card>
+      )}
 
       {/* ---- Donors Table ---- */}
       <Card>

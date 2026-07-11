@@ -9,7 +9,7 @@ router.use(requireAuth);
 // GET /api/donors — list with optional search
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { searchTerm, search, firstName, lastName, phone } = req.query;
+    const { searchTerm, search, caisseId, minDonation, maxDonation } = req.query;
     const associationId = req.user!.associationId;
 
     const where: any = { associationId };
@@ -26,19 +26,20 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         { phone: { contains: t, mode: 'insensitive' } },
         { email: { contains: t, mode: 'insensitive' } },
       ];
-    } else {
-        { firstName: { contains: term, mode: 'insensitive' } },
-        { lastName: { contains: term, mode: 'insensitive' } },
-        { firstNameAr: { contains: term, mode: 'insensitive' } },
-        { lastNameAr: { contains: term, mode: 'insensitive' } },
-        { reference: { contains: term, mode: 'insensitive' } },
-        { phone: { contains: term, mode: 'insensitive' } },
-        { email: { contains: term, mode: 'insensitive' } },
-      ];
-    } else {
-      if (firstName) where.firstName = { contains: String(firstName), mode: 'insensitive' };
-      if (lastName) where.lastName = { contains: String(lastName), mode: 'insensitive' };
-      if (phone) where.phone = { contains: String(phone), mode: 'insensitive' };
+    }
+    if (caisseId) {
+      // Find donors who have transactions with this caisse
+      const txDonorIds = await prisma.transaction.findMany({
+        where: { associationId, caisseId: String(caisseId) },
+        select: { donorId: true },
+        distinct: ['donorId'],
+      });
+      where.id = { in: txDonorIds.map((t: any) => t.donorId).filter(Boolean) };
+    }
+    if (minDonation || maxDonation) {
+      where.totalDonated = {};
+      if (minDonation) where.totalDonated.gte = parseFloat(String(minDonation));
+      if (maxDonation) where.totalDonated.lte = parseFloat(String(maxDonation));
     }
 
     const donors = await prisma.donor.findMany({
