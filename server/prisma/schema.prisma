@@ -176,6 +176,7 @@ model Donor {
   phone         String
   email         String?
   address       String?
+  gender        String? @default("male")
   totalDonated  Float    @default(0)
   notes         String?
   createdAt     DateTime @default(now())

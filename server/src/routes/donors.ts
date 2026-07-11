@@ -49,7 +49,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
     const associationId = req.user!.associationId;
     const {
       reference: refInput, firstName, lastName, firstNameAr, lastNameAr,
-      phone, email, address, totalDonated, notes,
+      phone, email, address, gender, totalDonated, notes,
     } = req.body;
 
     const reference = refInput || `DON-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
@@ -70,6 +70,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
         phone,
         email,
         address,
+        gender: gender || 'male',
         totalDonated: totalDonated || 0,
         notes,
       },

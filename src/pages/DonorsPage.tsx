@@ -45,6 +45,7 @@ export default function DonorsPage() {
   const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null)
   const [selectedReceipt, setSelectedReceipt] = useState<DonationReceipt | null>(null)
   const [donorToDelete, setDonorToDelete] = useState<Donor | null>(null)
+  const [gender, setGender] = useState('male')
   const [formData, setFormData] = useState<DonorFormData>(emptyDonorForm)
   const [isEditing, setIsEditing] = useState(false)
   const [detailDonorId, setDetailDonorId] = useState<string | null>(null)
@@ -140,7 +141,8 @@ export default function DonorsPage() {
           phone: formData.phone,
           email: formData.email || undefined,
           address: formData.address || undefined,
-          notes: formData.notes || undefined,
+          gender: gender || 'male',
+        notes: formData.notes || undefined,
         },
       })
     } else {
@@ -152,6 +154,7 @@ export default function DonorsPage() {
         phone: formData.phone,
         email: formData.email || undefined,
         address: formData.address || undefined,
+        gender: gender || 'male',
         notes: formData.notes || undefined,
       })
     }
@@ -220,7 +223,10 @@ export default function DonorsPage() {
               labelAr="بحث بالاسم أو الهاتف"
               placeholder="ابحث..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setQueryParams(e.target.value ? { searchTerm: e.target.value } : undefined)
+              }}
               onKeyDown={handleSearchKeyDown}
             />
             <Button variant="secondary" className="sm:mt-6 shrink-0" onClick={handleSearch}>
@@ -403,6 +409,14 @@ export default function DonorsPage() {
               dir="ltr"
             />
           </div>
+
+          {/* Gender */}
+          <SearchableSelect
+            labelAr="الجنس"
+            options={[{ value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
+            value={gender}
+            onChange={(val) => setGender(val)}
+          />
 
           {/* Address */}
           <Input
