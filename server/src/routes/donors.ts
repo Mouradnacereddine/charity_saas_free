@@ -9,14 +9,24 @@ router.use(requireAuth);
 // GET /api/donors — list with optional search
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { search, firstName, lastName, phone } = req.query;
+    const { searchTerm, search, firstName, lastName, phone } = req.query;
     const associationId = req.user!.associationId;
 
     const where: any = { associationId };
 
-    if (search) {
-      const term = String(search);
+    const term = searchTerm || search;
+    if (term) {
+      const t = String(term);
       where.OR = [
+        { firstName: { contains: t, mode: 'insensitive' } },
+        { lastName: { contains: t, mode: 'insensitive' } },
+        { firstNameAr: { contains: t, mode: 'insensitive' } },
+        { lastNameAr: { contains: t, mode: 'insensitive' } },
+        { reference: { contains: t, mode: 'insensitive' } },
+        { phone: { contains: t, mode: 'insensitive' } },
+        { email: { contains: t, mode: 'insensitive' } },
+      ];
+    } else {
         { firstName: { contains: term, mode: 'insensitive' } },
         { lastName: { contains: term, mode: 'insensitive' } },
         { firstNameAr: { contains: term, mode: 'insensitive' } },

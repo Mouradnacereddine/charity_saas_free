@@ -295,7 +295,8 @@ export default function DonorsPage() {
               </thead>
               <tbody>
                 {donors.map((donor: Donor) => (
-                  <tr key={donor.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <tr key={donor.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => openDetailModal(donor)}>
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
                       {donor.reference || '—'}
                     </td>
