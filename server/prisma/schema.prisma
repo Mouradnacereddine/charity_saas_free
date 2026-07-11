@@ -67,6 +67,7 @@ model Association {
   loans              Loan[]
   medicalAnalysisTypes MedicalAnalysisType[]
   medicalHospitals   MedicalHospital[]
+  schoolGrades       SchoolGrade[]
   medicalReferrals   MedicalReferral[]
   donationReceipts   DonationReceipt[]
   notifications      Notification[]
@@ -143,6 +144,7 @@ model Beneficiary {
   nationalCardNumber String
   dateOfBirth        DateTime
   attribut           String
+  gender             String? @default("male")
   onBehalfOfName     String?
   situation          String?
   situationAr        String?
@@ -301,6 +303,18 @@ model Loan {
 }
 
 model MedicalAnalysisType {
+  id            String   @id @default(uuid())
+  associationId String
+  name          String
+  nameAr        String
+  createdAt     DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId])
+}
+
+model SchoolGrade {
   id            String   @id @default(uuid())
   associationId String
   name          String

@@ -7,10 +7,10 @@ const router = Router();
 // All routes require authentication
 router.use(requireAuth);
 
-// GET /api/beneficiaries — list with filters (searchTerm, attribut, caisseId, situation, minChildren, maxChildAge)
+// GET /api/beneficiaries — list with filters (searchTerm, attribut, caisseId, situation, minChildren, maxChildAge, gender, minAge, maxAge)
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { searchTerm, attribut, caisseId, situation, minChildren, maxChildAge } = req.query;
+    const { searchTerm, attribut, caisseId, situation, minChildren, maxChildAge, gender, minAge, maxAge } = req.query;
     const associationId = req.user!.associationId;
 
     const where: any = { associationId };
@@ -29,6 +29,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     }
     if (attribut) where.attribut = String(attribut);
     if (caisseId) where.caisseId = String(caisseId);
+    if (gender) where.gender = String(gender);
     if (situation) {
       where.OR = where.OR || [];
       where.OR.push(
@@ -37,7 +38,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       );
     }
 
-    // Fetch all and apply children filters in-memory (JSON field)
+    // Fetch all and apply children/age filters in-memory (JSON/date fields)
     let beneficiaries = await prisma.beneficiary.findMany({
       where,
       include: { caisse: true },
@@ -47,6 +48,19 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     if (minChildren) {
       const min = parseInt(String(minChildren), 10);
       if (!isNaN(min)) beneficiaries = beneficiaries.filter((b: any) => (b.children || []).length >= min);
+    }
+
+    if (minAge || maxAge) {
+      const now = new Date();
+      beneficiaries = beneficiaries.filter((b: any) => {
+        if (!b.dateOfBirth) return true;
+        const age = now.getFullYear() - new Date(b.dateOfBirth).getFullYear();
+        const monthDiff = now.getMonth() - new Date(b.dateOfBirth).getMonth();
+        const adjustedAge = monthDiff < 0 ? age - 1 : age;
+        if (minAge && adjustedAge < parseInt(String(minAge), 10)) return false;
+        if (maxAge && adjustedAge > parseInt(String(maxAge), 10)) return false;
+        return true;
+      });
     }
 
     res.json(beneficiaries);
@@ -113,7 +127,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
     const {
       reference: refInput, firstName, lastName, firstNameAr, lastNameAr,
       address, addressAr, phone, nationalCardNumber, dateOfBirth,
-      attribut, onBehalfOfName, situation, situationAr,
+      attribut, gender, onBehalfOfName, situation, situationAr,
       children, caisseId, subCategoryId,
     } = req.body;
 
@@ -138,6 +152,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
         nationalCardNumber,
         dateOfBirth: new Date(dateOfBirth),
         attribut,
+        gender: gender || 'male',
         onBehalfOfName,
         situation,
         situationAr,

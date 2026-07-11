@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
+import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { calculateAge, formatDate } from '../utils/helpers'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
 import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary } from '../hooks/useBeneficiaries'
+import { useSchoolGrades, useCreateSchoolGrade, useUpdateSchoolGrade, useDeleteSchoolGrade } from '../hooks/useInventory'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { caissesApi, attributsApi, api } from '../lib/api'
+import { caissesApi, attributsApi, inventoryApi, api } from '../lib/api'
 
 // ---- Constants ----
 
@@ -50,6 +51,7 @@ function emptyChild(): Omit<Child, 'id'> & { id?: string } {
     dateOfBirth: '',
     healthStatus: 'bonne_sante',
     healthDetails: '',
+    schoolGradeId: '',
   }
 }
 
@@ -63,6 +65,7 @@ type BeneficiaryFormData = {
   phone: string
   nationalCardNumber: string
   dateOfBirth: string
+  gender: string
   attribut: string
   onBehalfOf: string
   situation: string
@@ -84,6 +87,7 @@ function emptyForm(): BeneficiaryFormData {
     phone: '',
     nationalCardNumber: '',
     dateOfBirth: '',
+    gender: '',
     attribut: '',
     onBehalfOf: '',
     situation: '',
@@ -106,13 +110,14 @@ function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
     phone: b.phone,
     nationalCardNumber: b.nationalCardNumber,
     dateOfBirth: b.dateOfBirth,
+    gender: b.gender ?? '',
     attribut: b.attribut,
     onBehalfOf: b.onBehalfOfName ?? '',
     situation: b.situation ?? '',
     situationAr: b.situationAr ?? '',
     caisseId: b.caisseId ?? '',
     subCategoryId: b.subCategoryId ?? '',
-    children: b.children.map((c) => ({ ...c })),
+    children: b.children.map((c) => ({ ...c, schoolGradeId: c.schoolGradeId ?? '' })),
     notes: b.notes ?? '',
   }
 }
@@ -132,6 +137,10 @@ export default function BeneficiariesPage() {
   const { data: attributs = [] } = useQuery({
     queryKey: ['attributs'],
     queryFn: () => attributsApi.list().then(r => r.data),
+  })
+  const { data: schoolGrades = [] } = useQuery({
+    queryKey: ['school-grades'],
+    queryFn: () => inventoryApi.schoolGrades().then(r => r.data),
   })
 
   const createBeneficiary = useCreateBeneficiary()
@@ -200,6 +209,9 @@ export default function BeneficiariesPage() {
   const [filterMinChildren, setFilterMinChildren] = useState('')
   const [filterMaxChildAge, setFilterMaxChildAge] = useState('')
   const [filterSituation, setFilterSituation] = useState('')
+  const [filterGender, setFilterGender] = useState('')
+  const [filterMinAge, setFilterMinAge] = useState('')
+  const [filterMaxAge, setFilterMaxAge] = useState('')
   const [widowFilterActive, setWidowFilterActive] = useState(false)
 
   // ---- Tab state ----
@@ -244,6 +256,9 @@ export default function BeneficiariesPage() {
     if (filterMinChildren) params.minChildren = filterMinChildren
     if (filterMaxChildAge) params.maxChildAge = filterMaxChildAge
     if (filterSituation) params.situation = filterSituation
+    if (filterGender) params.gender = filterGender
+    if (filterMinAge) params.minAge = filterMinAge
+    if (filterMaxAge) params.maxAge = filterMaxAge
     return Object.keys(params).length > 0 ? params : undefined
   }
 
@@ -258,6 +273,9 @@ export default function BeneficiariesPage() {
     setFilterMinChildren('')
     setFilterMaxChildAge('')
     setFilterSituation('')
+    setFilterGender('')
+    setFilterMinAge('')
+    setFilterMaxAge('')
     setWidowFilterActive(false)
     setQueryParams(undefined)
   }
@@ -324,6 +342,7 @@ export default function BeneficiariesPage() {
       phone: form.phone,
       nationalCardNumber: form.nationalCardNumber,
       dateOfBirth: form.dateOfBirth,
+      gender: form.gender || undefined,
       attribut: form.attribut as Beneficiary['attribut'],
       onBehalfOfName: form.onBehalfOf || undefined,
       situation: form.situation || undefined,
@@ -339,6 +358,7 @@ export default function BeneficiariesPage() {
         dateOfBirth: c.dateOfBirth,
         healthStatus: c.healthStatus as Child['healthStatus'],
         healthDetails: c.healthDetails || undefined,
+        schoolGradeId: c.schoolGradeId || undefined,
       })),
       notes: form.notes || undefined,
     }
@@ -455,6 +475,12 @@ export default function BeneficiariesPage() {
               value={filterCaisseId}
               onChange={(val) => setFilterCaisseId(val)}
             />
+            <SearchableSelect
+              labelAr="الجنس"
+              options={[{ value: '', label: 'الكل' }, { value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
+              value={filterGender}
+              onChange={(val) => setFilterGender(val)}
+            />
             <Input
               labelAr="الحالة (المرض أو غيره)"
               placeholder="مثال: مرض السكري"
@@ -467,6 +493,13 @@ export default function BeneficiariesPage() {
               min="0"
               value={filterMinChildren}
               onChange={(e) => setFilterMinChildren(e.target.value)}
+            />
+            <Input
+              labelAr="العمر الأقصى"
+              type="number"
+              min="0"
+              value={filterMaxAge}
+              onChange={(e) => setFilterMaxAge(e.target.value)}
             />
             <Input
               labelAr="الحد الأقصى لعمر الطفل"
@@ -735,6 +768,12 @@ export default function BeneficiariesPage() {
                 onChange={(val) => handleFormChange('attribut', val)}
                 required
               />
+              <SearchableSelect
+                labelAr="الجنس"
+                options={[{ value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
+                value={form.gender || 'male'}
+                onChange={(val) => handleFormChange('gender', val)}
+              />
               <div className="space-y-1">
                 <Input
                   labelAr="باسم من"
@@ -864,6 +903,16 @@ export default function BeneficiariesPage() {
                         onChange={(e) => updateChild(index, 'healthDetails', e.target.value)}
                         className="md:col-span-2"
                       />
+                      {schoolGrades.length > 0 && (
+                        <div className="md:col-span-2">
+                          <Select
+                            labelAr="المستوى الدراسي"
+                            value={child.schoolGradeId || ''}
+                            onChange={(e) => updateChild(index, 'schoolGradeId', e.target.value)}
+                            options={schoolGrades.map((g: any) => ({ value: g.id, label: g.nameAr }))}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

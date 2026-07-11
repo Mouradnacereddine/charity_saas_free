@@ -45,6 +45,13 @@ export interface MedicalHospital {
   createdAt: Date;
 }
 
+export interface SchoolGrade {
+  id: string;
+  name: string;
+  nameAr: string;
+  createdAt: Date;
+}
+
 export interface ArticleStatus {
   id: string;
   name: string;
@@ -106,6 +113,7 @@ export interface Child {
   dateOfBirth: string; // ISO date string
   healthStatus: ChildHealthStatus;
   healthDetails?: string;
+  schoolGradeId?: string;
 }
 
 // ---- Beneficiary ----
@@ -123,6 +131,7 @@ export interface Beneficiary {
   nationalCardNumber: string;
   dateOfBirth: string; // ISO date string
   attribut: AttributType;
+  gender?: string;
   onBehalfOf?: string; // ID of another beneficiary (e.g., child presenting on behalf of widow)
   onBehalfOfName?: string;
   situation?: string;
@@ -295,6 +304,9 @@ export interface BeneficiaryFilter {
   maxChildAge?: number;
   situation?: string;
   searchTerm?: string;
+  gender?: string;
+  minAge?: number;
+  maxAge?: number;
 }
 
 export interface DonorFilter {

@@ -23,6 +23,10 @@ import {
   useAddItemToLoan,
   useRemoveItemFromLoan,
   useMarkLoanDefinitive,
+  useSchoolGrades,
+  useCreateSchoolGrade,
+  useUpdateSchoolGrade,
+  useDeleteSchoolGrade,
 } from '../hooks/useInventory'
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
 
@@ -186,12 +190,16 @@ export default function InventoryPage() {
 function SettingsTab() {
   const { data: categories = [], isLoading: catsLoading } = useArticleCategories()
   const { data: locations = [], isLoading: locsLoading } = useStorageLocations()
+  const { data: grades = [], isLoading: gradesLoading } = useSchoolGrades()
   const createCat = useCreateCategory()
   const updateCat = useUpdateCategory()
   const deleteCat = useDeleteCategory()
   const createLoc = useCreateLocation()
   const updateLoc = useUpdateLocation()
   const deleteLoc = useDeleteLocation()
+  const createGrade = useCreateSchoolGrade()
+  const updateGrade = useUpdateSchoolGrade()
+  const deleteGrade = useDeleteSchoolGrade()
 
   // Category form state
   const [newCatNameAr, setNewCatNameAr] = useState('')
@@ -206,6 +214,13 @@ function SettingsTab() {
   const [editLocId, setEditLocId] = useState<string | null>(null)
   const [editLocNameAr, setEditLocNameAr] = useState('')
   const [editLocName, setEditLocName] = useState('')
+
+  // School grade form state
+  const [newGradeNameAr, setNewGradeNameAr] = useState('')
+  const [newGradeName, setNewGradeName] = useState('')
+  const [editGradeId, setEditGradeId] = useState<string | null>(null)
+  const [editGradeNameAr, setEditGradeNameAr] = useState('')
+  const [editGradeName, setEditGradeName] = useState('')
 
   // ---- Category CRUD ----
 
@@ -275,7 +290,23 @@ function SettingsTab() {
     setEditLocName('')
   }
 
-  if (catsLoading || locsLoading) return <LoadingSpinner />
+  // ---- School Grade CRUD ----
+  const handleAddGrade = async () => {
+    if (!newGradeNameAr.trim()) return
+    await createGrade.mutateAsync({ name: newGradeName.trim(), nameAr: newGradeNameAr.trim() })
+    setNewGradeNameAr(''); setNewGradeName('')
+  }
+  const handleUpdateGrade = async () => {
+    if (!editGradeId || !editGradeNameAr.trim()) return
+    await updateGrade.mutateAsync({ id: editGradeId, data: { name: editGradeName.trim(), nameAr: editGradeNameAr.trim() } })
+    setEditGradeId(null); setEditGradeNameAr(''); setEditGradeName('')
+  }
+  const handleDeleteGrade = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا المستوى؟')) return
+    await deleteGrade.mutateAsync(id)
+  }
+
+  if (catsLoading || locsLoading || gradesLoading) return <LoadingSpinner />
 
   return (
     <div className="space-y-8">
@@ -518,6 +549,58 @@ function SettingsTab() {
                     <td className="py-3 px-4 font-medium text-gray-900">{s.ar}</td>
                     <td className="py-3 px-4 text-gray-600">{s.fr}</td>
                     <td className="py-3 px-4 text-gray-500 text-xs">{s.desc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      {/* ========== School Grades Section ========== */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <FolderTree className="w-5 h-5 text-primary-600" />
+          المستوى الدراسي
+        </h3>
+        <p className="text-sm text-gray-500 mb-4">إدارة المستويات الدراسية للأطفال</p>
+        <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+          <Input labelAr="الاسم بالعربية" value={newGradeNameAr} onChange={(e) => setNewGradeNameAr(e.target.value)} placeholder="مثال: السنة الأولى" />
+          <Input labelAr="الاسم بالفرنسية" value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder="Ex: CP1" dir="ltr" />
+          <Button onClick={handleAddGrade} disabled={!newGradeNameAr.trim()}>إضافة</Button>
+        </div>
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grades.map((g: any) => (
+                  <tr key={g.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    {editGradeId === g.id ? (
+                      <>
+                        <td className="py-2 px-4"><input value={editGradeNameAr} onChange={(e) => setEditGradeNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
+                        <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                        <td className="py-2 px-4 text-center flex gap-1 justify-center">
+                          <Button size="sm" onClick={handleUpdateGrade}>حفظ</Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditGradeId(null)}>إلغاء</Button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-3 px-4 font-medium text-gray-900">{g.nameAr}</td>
+                        <td className="py-3 px-4 text-gray-600">{g.name}</td>
+                        <td className="py-3 px-4 text-center">
+                          <button onClick={() => { setEditGradeId(g.id); setEditGradeNameAr(g.nameAr); setEditGradeName(g.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteGrade(g.id)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>

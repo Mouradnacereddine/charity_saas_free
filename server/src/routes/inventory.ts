@@ -385,4 +385,107 @@ router.delete('/storage-locations/:id', async (req: AuthRequest, res: Response):
   }
 });
 
+// ========================================================================
+// SCHOOL GRADES
+// ========================================================================
+
+// GET /api/inventory/school-grades
+router.get('/school-grades', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const associationId = req.user!.associationId;
+
+    const grades = await prisma.schoolGrade.findMany({
+      where: { associationId },
+      orderBy: { nameAr: 'asc' },
+    });
+
+    res.json(grades);
+  } catch (error) {
+    console.error('Error listing school grades:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/inventory/school-grades
+router.post('/school-grades', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const associationId = req.user!.associationId;
+    const { name, nameAr } = req.body;
+
+    if (!nameAr) {
+      res.status(400).json({ error: 'nameAr is required' });
+      return;
+    }
+
+    const grade = await prisma.schoolGrade.create({
+      data: {
+        associationId,
+        name: name || nameAr,
+        nameAr,
+        createdAt: new Date(),
+      },
+    });
+
+    res.status(201).json(grade);
+  } catch (error) {
+    console.error('Error creating school grade:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/inventory/school-grades/:id
+router.put('/school-grades/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const existing = await prisma.schoolGrade.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'School grade not found' });
+      return;
+    }
+
+    const { name, nameAr } = req.body;
+    const data: any = {};
+    if (name !== undefined) data.name = name;
+    if (nameAr !== undefined) data.nameAr = nameAr;
+
+    const grade = await prisma.schoolGrade.update({
+      where: { id },
+      data,
+    });
+
+    res.json(grade);
+  } catch (error) {
+    console.error('Error updating school grade:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/inventory/school-grades/:id
+router.delete('/school-grades/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const existing = await prisma.schoolGrade.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'School grade not found' });
+      return;
+    }
+
+    await prisma.schoolGrade.delete({ where: { id } });
+    res.json({ message: 'School grade deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting school grade:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

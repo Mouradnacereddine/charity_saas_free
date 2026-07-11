@@ -106,6 +106,10 @@ export const inventoryApi = {
   createLocation: (data: any) => api.post('/inventory/storage-locations', data),
   updateLocation: (id: string, data: any) => api.put(`/inventory/storage-locations/${id}`, data),
   deleteLocation: (id: string) => api.delete(`/inventory/storage-locations/${id}`),
+  schoolGrades: () => api.get('/inventory/school-grades'),
+  createSchoolGrade: (data: any) => api.post('/inventory/school-grades', data),
+  updateSchoolGrade: (id: string, data: any) => api.put(`/inventory/school-grades/${id}`, data),
+  deleteSchoolGrade: (id: string) => api.delete(`/inventory/school-grades/${id}`),
 };
 
 export const loansApi = {

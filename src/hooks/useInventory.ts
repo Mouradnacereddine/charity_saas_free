@@ -168,3 +168,38 @@ export function useMarkLoanDefinitive() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['loans'] }),
   });
 }
+
+// ---- School Grades ----
+export function useSchoolGrades() {
+  return useQuery({
+    queryKey: ['school-grades'],
+    queryFn: async () => {
+      const res = await inventoryApi.schoolGrades();
+      return res.data;
+    },
+  });
+}
+
+export function useCreateSchoolGrade() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inventoryApi.createSchoolGrade,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['school-grades'] }),
+  });
+}
+
+export function useUpdateSchoolGrade() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => inventoryApi.updateSchoolGrade(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['school-grades'] }),
+  });
+}
+
+export function useDeleteSchoolGrade() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inventoryApi.deleteSchoolGrade,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['school-grades'] }),
+  });
+}
