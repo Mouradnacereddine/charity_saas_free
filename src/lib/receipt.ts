@@ -34,6 +34,7 @@ export function printReceipt(
   rows: string,
   amountClass: string, amount: string, wordsAr: string, wordsFr: string,
   signLeft: string, signRight: string,
+  assocNameAr?: string,
 ) {
   const w = window.open('', '_blank')
   if (!w) return
@@ -41,7 +42,7 @@ export function printReceipt(
 <!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${title}</title><style>${RECEIPT_CSS}</style></head>
 <body>
 <div class="page"><div class="receipt">
-  <div class="hdr"><h1>🕌 الجمعية الخيرية</h1><span class="sub">${subtitle}</span></div>
+  <div class="hdr"><h1>🕌 ${assocNameAr || 'الجمعية الخيرية'}</h1><span class="sub">${subtitle}</span></div>
   <div class="info">${rows}</div>
   <div class="amt" style="${amountClass}"><div class="num">${amount}</div><div class="words">${wordsAr}<span class="fr">${wordsFr}</span></div></div>
   <div class="sign"><div><span class="label">${signLeft}</span><div class="line"></div></div><div><span class="label">${signRight}</span><div class="line"></div></div></div>

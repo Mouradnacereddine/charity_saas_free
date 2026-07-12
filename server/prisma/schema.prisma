@@ -76,15 +76,22 @@ model Association {
   @@index([email])
 }
 
+enum UserStatus {
+  pending
+  approved
+  rejected
+}
+
 model User {
-  id            String   @id @default(uuid())
+  id            String     @id @default(uuid())
   associationId String
-  email         String   @unique
+  email         String     @unique
   password      String
   name          String
   nameAr        String
-  role          Role     @default(user)
-  createdAt     DateTime @default(now())
+  role          Role       @default(user)
+  status        UserStatus @default(approved)
+  createdAt     DateTime   @default(now())
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
 

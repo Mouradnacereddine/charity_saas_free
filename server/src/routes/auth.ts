@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { generateAccessToken, generateRefreshToken } from '../lib/jwt';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth';
 import { config } from '../config';
 
 const router = Router();
@@ -92,6 +92,12 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    // Check if the user account is approved
+    if (user.status !== 'approved') {
+      res.status(403).json({ error: user.status === 'pending' ? 'حسابك قيد المراجعة، يرجى الانتظار حتى يتم الموافقة عليه' : 'تم رفض حسابك' });
       return;
     }
 
@@ -185,6 +191,7 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
         name: true,
         nameAr: true,
         role: true,
+        status: true,
         associationId: true,
         createdAt: true,
       },
@@ -218,6 +225,105 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
 router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   // Optionally accept refreshToken in body for client-side cleanup
   res.json({ message: 'Logged out successfully' });
+});
+
+// ========================================================================
+// USER MANAGEMENT (admin only)
+// ========================================================================
+
+// GET /api/auth/users — list all users for this association
+router.get('/users', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const associationId = req.user!.associationId;
+
+    const users = await prisma.user.findMany({
+      where: { associationId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        nameAr: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(users);
+  } catch (error) {
+    console.error('Error listing users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/auth/users/:id — update user (status, role)
+router.put('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const existing = await prisma.user.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const { status, role } = req.body;
+    const data: any = {};
+    if (status !== undefined) data.status = status;
+    if (role !== undefined) data.role = role;
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        nameAr: true,
+        role: true,
+        status: true,
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/auth/users/:id — remove a user
+router.delete('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const existing = await prisma.user.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Prevent deleting yourself
+    if (id === req.user!.userId) {
+      res.status(400).json({ error: 'لا يمكنك حذف حسابك الخاص' });
+      return;
+    }
+
+    await prisma.user.delete({ where: { id } });
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 export default router;

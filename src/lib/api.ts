@@ -53,6 +53,9 @@ export const authApi = {
     api.post('/auth/refresh', { refreshToken }),
   me: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
+  users: () => api.get('/auth/users'),
+  updateUser: (id: string, data: { status?: string; role?: string }) => api.put(`/auth/users/${id}`, data),
+  deleteUser: (id: string) => api.delete(`/auth/users/${id}`),
 };
 
 // Resource APIs

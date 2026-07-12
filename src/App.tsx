@@ -9,6 +9,7 @@ import BeneficiariesPage from './pages/BeneficiariesPage';
 import DonorsPage from './pages/DonorsPage';
 import InventoryPage from './pages/InventoryPage';
 import MedicalPage from './pages/MedicalPage';
+import UsersPage from './pages/UsersPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import './index.css';
@@ -33,6 +34,7 @@ const PAGE_NAMES: Record<string, string> = {
   donors: 'المتبرعون',
   inventory: 'المخزون والإعارات',
   medical: 'التوجيه الطبي',
+  users: 'إدارة المستخدمين',
 };
 
 function AppContent() {
@@ -40,7 +42,7 @@ function AppContent() {
     const hash = window.location.hash.replace('#', '');
     return hash && PAGE_NAMES[hash] ? hash : (localStorage.getItem('accessToken') ? 'dashboard' : 'login');
   });
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, association, isAuthenticated, isAdmin, isLoading, logout } = useAuth();
 
   const navigate = (page: string) => {
     setActivePage(page);
@@ -94,12 +96,22 @@ function AppContent() {
       case 'donors': return <DonorsPage />;
       case 'inventory': return <InventoryPage />;
       case 'medical': return <MedicalPage />;
+      case 'users': return isAdmin ? <UsersPage /> : <DashboardPage />;
       default: return <DashboardPage />;
     }
   };
 
   return (
-    <Layout activePage={activePage} onNavigate={navigate} breadcrumbs={breadcrumbs}>
+    <Layout
+      activePage={activePage}
+      onNavigate={navigate}
+      breadcrumbs={breadcrumbs}
+      associationNameAr={association?.nameAr}
+      userNameAr={user?.nameAr}
+      userRole={user?.role}
+      isAdmin={isAdmin}
+      onLogout={logout}
+    >
       {renderPage()}
     </Layout>
   );

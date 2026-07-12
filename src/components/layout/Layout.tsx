@@ -10,6 +10,9 @@ import {
   Menu,
   X,
   ChevronLeft,
+  LogOut,
+  UserCog,
+  ChevronDown,
 } from 'lucide-react';
 
 const navItems = [
@@ -27,13 +30,24 @@ export function Layout({
   activePage,
   onNavigate,
   breadcrumbs,
+  associationNameAr,
+  userNameAr,
+  userRole,
+  isAdmin,
+  onLogout,
 }: {
   children: ReactNode;
   activePage: string;
   onNavigate: (page: string) => void;
   breadcrumbs?: { label: string; page: string }[];
+  associationNameAr?: string;
+  userNameAr?: string;
+  userRole?: string;
+  isAdmin?: boolean;
+  onLogout?: () => void;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     if (sidebarOpen) {
@@ -45,6 +59,14 @@ export function Layout({
       document.body.style.overflow = '';
     };
   }, [sidebarOpen]);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const close = () => setUserMenuOpen(false);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [userMenuOpen]);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -66,7 +88,7 @@ export function Layout({
         `}
       >
         <div className="flex items-center justify-between p-5 border-b border-primary-700">
-          <h1 className="text-lg font-bold">🕌 جمعية خيرية</h1>
+          <h1 className="text-lg font-bold">🕌 {associationNameAr || 'جمعية خيرية'}</h1>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-1 text-primary-300 hover:text-white"
@@ -124,13 +146,61 @@ export function Layout({
               </nav>
             )}
           </div>
-          <div className="text-xs sm:text-sm text-gray-500">
-            {new Date().toLocaleDateString('ar-DZ', {
-              weekday: 'short',
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            })}
+          <div className="flex items-center gap-3">
+            {/* User menu */}
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-sm"
+              >
+                <div className="w-7 h-7 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold text-xs">
+                  {userNameAr?.charAt(0) || '?'}
+                </div>
+                <div className="hidden sm:block text-right">
+                  <p className="text-gray-900 font-medium leading-tight">{userNameAr || 'مستخدم'}</p>
+                  <p className="text-xs text-gray-400">{userRole === 'admin' ? 'مدير' : 'متطوع'}</p>
+                </div>
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                  <div className="p-3 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900">{userNameAr || 'مستخدم'}</p>
+                    <p className="text-xs text-gray-500">
+                      {userRole === 'admin' ? 'مدير النظام' : 'متطوع'}
+                      {userRole === 'admin' && isAdmin !== undefined && ' ⭐'}
+                    </p>
+                  </div>
+                  <div className="p-1">
+                    {isAdmin && (
+                      <button
+                        onClick={() => { onNavigate('users'); setUserMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <UserCog className="w-4 h-4" />
+                        إدارة المستخدمين
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { onLogout?.(); setUserMenuOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      تسجيل الخروج
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="text-xs sm:text-sm text-gray-500 hidden sm:block">
+              {new Date().toLocaleDateString('ar-DZ', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+              })}
+            </div>
           </div>
         </header>
 

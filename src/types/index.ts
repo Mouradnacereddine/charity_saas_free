@@ -10,6 +10,7 @@ export type FundSource = 'banque' | 'caisse_physique';
 export type ArticleStatusEnum = string;
 export type LoanStatus = 'en_cours' | 'partiellement_retourne' | 'retourne' | 'definitif';
 export type ChildHealthStatus = 'bonne_sante' | 'malade' | 'handicape' | 'autre';
+export type UserStatus = 'pending' | 'approved' | 'rejected';
 
 // ---- Beneficiary Attribut (الصفة) ----
 
