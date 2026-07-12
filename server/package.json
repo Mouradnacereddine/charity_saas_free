@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
-    "db:seed": "ts-node src/seed.ts"
+    "db:seed": "ts-node src/seed-data.ts"
   },
   "keywords": [],
   "author": "",

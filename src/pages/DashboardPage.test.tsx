@@ -43,6 +43,31 @@ vi.mock('../stores/inventoryStore', () => ({
   }),
 }))
 
+// Mock dashboard hooks
+vi.mock('../hooks/useDashboard', () => ({
+  useDashboardStats: () => ({
+    data: {
+      totalBankBalance: 0,
+      totalCashBalance: 0,
+      totalBeneficiaries: 0,
+      totalDonors: 0,
+      totalArticles: 0,
+      activeLoans: 0,
+      caissesBalances: [],
+      recentTransactions: [],
+    },
+    isLoading: false,
+  }),
+}))
+
+vi.mock('../hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'admin-id', role: 'admin' },
+    isAdmin: true,
+    isLoading: false,
+  }),
+}))
+
 // Mock helpers so formatCurrency/formatDate don't depend on Intl internals
 vi.mock('../utils/helpers', () => ({
   formatCurrency: (v: number) => `${v} DA`,
