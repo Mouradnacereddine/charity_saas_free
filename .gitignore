@@ -12,6 +12,22 @@ dist
 dist-ssr
 *.local
 
+# Environment variables (NE PAS les pousser sur GitHub)
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+server/.env
+server/.env.local
+
+# Vercel
+.vercel
+
+# Test outputs
+coverage
+.nyc_output
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
