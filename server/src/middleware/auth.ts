@@ -3,6 +3,9 @@ import { verifyToken, AccessTokenPayload } from '../lib/jwt';
 
 export interface AuthRequest extends Request {
   user?: AccessTokenPayload;
+  query: Record<string, any>;
+  body: any;
+  params: Record<string, string>;
 }
 
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
