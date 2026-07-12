@@ -1,5 +1,9 @@
 import dotenv from 'dotenv';
-dotenv.config();
+
+// Only load .env locally — Vercel uses its own env vars (VERCEL env is set automatically)
+if (!process.env.VERCEL) {
+  dotenv.config();
+}
 
 import { PrismaClient } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
