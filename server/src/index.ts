@@ -56,8 +56,11 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/beneficiary-attributs', attributsRoutes);
 
-app.listen(config.port, () => {
-  console.log(`Server running on port ${config.port}`);
-});
+// Only start the server when run directly (not as a Vercel serverless function)
+if (!process.env.VERCEL) {
+  app.listen(config.port, () => {
+    console.log(`Server running on port ${config.port}`);
+  });
+}
 
 export default app;
