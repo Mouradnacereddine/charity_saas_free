@@ -3,7 +3,7 @@ import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptySta
 import { formatCurrency, formatDate } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt } from 'lucide-react'
-import type { DonorFilter, Donor, DonationReceipt } from '../types'
+import type { Donor, DonationReceipt } from '../types'
 import { useDonors, useCreateDonor, useUpdateDonor, useDeleteDonor, useDonorReceipts } from '../hooks/useDonors'
 import { useQuery } from '@tanstack/react-query'
 import { caissesApi } from '../lib/api'

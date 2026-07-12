@@ -421,7 +421,7 @@ export default function BeneficiariesPage() {
 
   // ---- Print ----
   const handlePrintBeneficiary = (b: Beneficiary) => {
-    const childrenRows = (b.children || []).length > 0
+    const childrenHtml = (b.children || []).length > 0
       ? b.children.map((ch: any) =>
           `<div class="row"><span class="lbl">الطفل</span><span class="val">${ch.lastNameAr} ${ch.firstNameAr} — ${calculateAge(ch.dateOfBirth).displayAr}</span></div>`
         ).join('')
@@ -446,6 +446,9 @@ export default function BeneficiariesPage() {
         <div class="row"><span class="lbl">الجنس</span><span class="val">${b.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
         <div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>
         ${b.situationAr ? `<div class="row"><span class="lbl">الحالة</span><span class="val">${b.situationAr}</span></div>` : ''}
+       </div>
+       <div class="col">
+        ${childrenHtml}
        </div>`,
       'color:#2563eb',
       formatCurrency((b.children || []).length),

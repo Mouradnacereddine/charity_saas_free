@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { formatDate, formatCurrency, generateLoanReference } from '../utils/helpers'
+import { formatDate, generateLoanReference } from '../utils/helpers'
 import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin, Printer } from 'lucide-react'
 import { printReceipt } from '../lib/receipt'
 import type { Article, Loan, LoanItem, ArticleCategory, ArticleStatus, StorageLocation, Beneficiary } from '../types'
@@ -735,7 +735,8 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   }
 
   const filtered = articles.filter((a: Article) => {
-    const catNameAr = getCategoryNameAr(a.category, categories)
+    const acat = a as any
+    const catNameAr = getCategoryNameAr(acat.category, categories)
     const st = committedFilters.searchTerm
 
     const matchesSearch =
@@ -744,9 +745,9 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       a.name.toLowerCase().includes(st.toLowerCase()) ||
       catNameAr.includes(st) ||
       (a.reference || '').toLowerCase().includes(st.toLowerCase()) ||
-      (typeof a.category === 'object' ? a.category.nameAr?.includes(st) : a.category?.toLowerCase().includes(st.toLowerCase()))
+      (typeof acat.category === 'object' ? acat.category.nameAr?.includes(st) : (acat.category || '').toLowerCase().includes(st.toLowerCase()))
     const matchesCategory =
-      !committedFilters.category || (typeof a.category === 'object' ? a.category.id === committedFilters.category : a.category === committedFilters.category)
+      !committedFilters.category || (typeof acat.category === 'object' ? acat.category.id === committedFilters.category : acat.category === committedFilters.category)
     const matchesStatus = !committedFilters.status || a.status === committedFilters.status
     const matchesStorage =
       !committedFilters.storage || a.storageLocation === committedFilters.storage
