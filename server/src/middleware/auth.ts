@@ -3,6 +3,7 @@ import { verifyToken, AccessTokenPayload } from '../lib/jwt';
 
 export interface AuthRequest extends Request {
   user?: AccessTokenPayload;
+  headers: Record<string, string | string[] | undefined>;
   query: Record<string, any>;
   body: any;
   params: Record<string, string>;
