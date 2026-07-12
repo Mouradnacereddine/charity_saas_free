@@ -19,7 +19,20 @@ import attributsRoutes from './routes/beneficiaryAttributs';
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: config.frontendUrl, credentials: true }));
+const allowedOrigins = [
+  config.frontendUrl,
+  ...(process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean),
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o) || o.startsWith(origin))) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 
