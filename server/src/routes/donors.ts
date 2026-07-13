@@ -47,7 +47,6 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     const donorIds = donors.map((d: any) => d.id);
     const receipts = await prisma.donationReceipt.findMany({
       where: { donorId: { in: donorIds } },
-      select: { donorId: true, caisseId: true, caisseNameAr: true, subCategoryId: true, subCategoryNameAr: true, subCategoryName: true, amount: true },
     });
     const countMap = new Map<string, number>();
     const distributionMap = new Map<string, { caisses: { id: string; nameAr: string; subCategories: { id: string; nameAr: string; name?: string; total: number }[]; total: number }[]; totalAmount: number }>();
@@ -63,20 +62,21 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       const dist = distributionMap.get(r.donorId)!;
       dist.totalAmount += r.amount;
 
-      let caisse = dist.caisses.find((c) => c.id === r.caisseId);
+        const rAny = r as any;
+      let caisse = dist.caisses.find((c) => c.id === rAny.caisseId);
       if (!caisse) {
-        caisse = { id: r.caisseId, nameAr: r.caisseNameAr || '', subCategories: [], total: 0 };
+        caisse = { id: rAny.caisseId, nameAr: rAny.caisseNameAr || '', subCategories: [], total: 0 };
         dist.caisses.push(caisse);
       }
-      caisse.total += r.amount;
+      caisse.total += rAny.amount;
 
-      if (r.subCategoryId) {
-        let sub = caisse.subCategories.find((s) => s.id === r.subCategoryId);
+      if (rAny.subCategoryId) {
+        let sub = caisse.subCategories.find((s) => s.id === rAny.subCategoryId);
         if (!sub) {
-          sub = { id: r.subCategoryId, nameAr: r.subCategoryNameAr || r.subCategoryName || '', name: r.subCategoryName || undefined, total: 0 };
+          sub = { id: rAny.subCategoryId, nameAr: rAny.subCategoryNameAr || rAny.subCategoryName || '', name: rAny.subCategoryName || undefined, total: 0 };
           caisse.subCategories.push(sub);
         }
-        sub.total += r.amount;
+        sub.total += rAny.amount;
       }
     }
 
