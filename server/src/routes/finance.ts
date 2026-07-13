@@ -187,7 +187,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
 
       // Auto-create donation receipt if donorId is present and type is credit
       let receipt = null;
-      if (donorId && type === 'credit' && receiptNumber) {
+      if (donorId && type === 'credit' && ref) {
         const donor = await tx.donor.findUnique({
           where: { id: donorId },
         });
