@@ -1,4 +1,5 @@
-import { StatCard, Card, Badge, LoadingSpinner } from '../components/common/UI'
+import { useState } from 'react'
+import { StatCard, Card, Modal, Badge, Button, LoadingSpinner } from '../components/common/UI'
 import { useDashboardStats } from '../hooks/useDashboard'
 import { useAuth } from '../hooks/useAuth'
 import { formatCurrency, formatDate } from '../utils/helpers'
@@ -7,6 +8,7 @@ import { Wallet, Banknote, Users, HeartHandshake, Package, ArrowUpCircle, ArrowD
 export default function DashboardPage() {
   const { data: stats, isLoading } = useDashboardStats()
   const { isAdmin } = useAuth()
+  const [detailTx, setDetailTx] = useState<any>(null)
 
   if (isLoading) {
     return <LoadingSpinner />
@@ -109,7 +111,7 @@ export default function DashboardPage() {
                 </thead>
                 <tbody>
                   {stats.recentTransactions.map((tx: any) => (
-                    <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setDetailTx(tx)}>
                       <td className="py-3 px-4">
                         {tx.type === 'credit' ? (
                           <ArrowUpCircle className="w-5 h-5 text-green-500" />
@@ -137,6 +139,26 @@ export default function DashboardPage() {
           )}
         </Card>
       )}
+
+      {/* Transaction Detail Modal */}
+      <Modal isOpen={!!detailTx} onClose={() => setDetailTx(null)} title="تفاصيل المعاملة" size="lg">
+        {detailTx && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
+              <div><p className="text-xs text-gray-500">النوع</p><p className="font-medium">{detailTx.type === 'credit' ? 'إيداع' : 'سحب'}</p></div>
+              <div><p className="text-xs text-gray-500">المبلغ</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(detailTx.amount)}</p></div>
+              <div><p className="text-xs text-gray-500">الصندوق</p><p className="font-medium text-gray-900">{detailTx.caisse?.nameAr || detailTx.caisseId || '—'}</p></div>
+              <div><p className="text-xs text-gray-500">مصدر التمويل</p><p className="font-medium">{detailTx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</p></div>
+              {detailTx.descriptionAr && <div className="sm:col-span-2"><p className="text-xs text-gray-500">الوصف</p><p className="font-medium text-gray-900">{detailTx.descriptionAr}</p></div>}
+              {detailTx.receiptNumber && <div><p className="text-xs text-gray-500">رقم الوصل</p><p className="font-mono text-gray-900" dir="ltr">{detailTx.receiptNumber}</p></div>}
+              <div><p className="text-xs text-gray-500">التاريخ</p><p className="font-medium text-gray-900">{formatDate(detailTx.date)}</p></div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setDetailTx(null)}>إغلاق</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
