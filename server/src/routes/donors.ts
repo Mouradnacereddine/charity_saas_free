@@ -80,11 +80,15 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       }
     }
 
-    let result = donors.map((d: any) => ({
-      ...d,
-      receiptCount: countMap.get(d.id) || 0,
-      distribution: distributionMap.get(d.id) || { caisses: [], totalAmount: 0 },
-    }));
+    let result = donors.map((d: any) => {
+      const dist = distributionMap.get(d.id) || { caisses: [], totalAmount: 0 };
+      return {
+        ...d,
+        totalDonated: dist.totalAmount || d.totalDonated || 0,
+        receiptCount: countMap.get(d.id) || 0,
+        distribution: dist,
+      };
+    });
 
     // Apply min/max donation filter on receiptCount (number of donations)
     const minCnt = minDonation !== undefined ? parseInt(String(minDonation), 10) : undefined;
@@ -152,7 +156,6 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 
     const donor = await prisma.donor.findFirst({
       where: { id, associationId },
-      include: { donationReceipts: true },
     });
 
     if (!donor) {
@@ -160,7 +163,16 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    res.json(donor);
+    // Calculate dynamic total from receipts
+    const receipts = await prisma.donationReceipt.findMany({
+      where: { donorId: id, associationId },
+      include: { transaction: true, caisse: true },
+      orderBy: { date: 'desc' },
+    });
+
+    const dynamicTotal = receipts.reduce((sum: number, r: any) => sum + r.amount, 0);
+
+    res.json({ ...donor, totalDonated: dynamicTotal || donor.totalDonated, donationReceipts: receipts });
   } catch (error) {
     console.error('Error getting donor:', error);
     res.status(500).json({ error: 'Internal server error' });
