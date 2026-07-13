@@ -384,13 +384,13 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
       <Modal isOpen={!!showDetailModal} onClose={() => setShowDetailModal(null)} title="تفاصيل التوجيه الطبي" size="lg">
         {showDetailModal && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div><p className="text-xs text-gray-500">الرمز المرجعي</p><p className="font-semibold text-primary-700" dir="ltr">{showDetailModal.reference || '—'}</p></div>
-              <div><p className="text-xs text-gray-500">المستفيد</p><p className="font-medium">{showDetailModal.beneficiaryNameAr}</p><p className="text-xs text-gray-400" dir="ltr">{showDetailModal.beneficiaryReference || ''}</p></div>
-              <div><p className="text-xs text-gray-500">الطبيب</p><p className="font-medium">{showDetailModal.doctorNameAr}</p></div>
-              {showDetailModal.analysisTypeAr && <div><p className="text-xs text-gray-500">نوع التحليل</p><p className="font-medium">{showDetailModal.analysisTypeAr}</p></div>}
-              {showDetailModal.hospitalAr && <div><p className="text-xs text-gray-500">المستشفى</p><p className="font-medium">{showDetailModal.hospitalAr}</p></div>}
-              <div><p className="text-xs text-gray-500">التاريخ</p><p className="font-medium">{showDetailModal.date}</p></div>
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الرمز المرجعي</span><span className="font-semibold text-primary-700" dir="ltr">{showDetailModal.reference || '—'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستفيد</span><span className="font-medium text-gray-900">{showDetailModal.beneficiaryNameAr} <span dir="ltr" className="text-xs text-gray-400">({showDetailModal.beneficiaryReference || ''})</span></span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الطبيب</span><span className="font-medium text-gray-900">{showDetailModal.doctorNameAr}</span></div>
+              {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">نوع التحليل</span><span className="font-medium text-gray-900">{showDetailModal.analysisTypeAr}</span></div>}
+              {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستشفى</span><span className="font-medium text-gray-900">{showDetailModal.hospitalAr}</span></div>}
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">التاريخ</span><span className="font-medium text-gray-900">{showDetailModal.date}</span></div>
             </div>
             <div className="bg-primary-50 rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-primary-700">{formatCurrency(showDetailModal.amount)}</p>

@@ -457,51 +457,15 @@ export default function DonorsPage() {
         {selectedDonor && (
           <div className="space-y-6">
             {/* Donor info grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
-              <div>
-                <p className="text-xs text-gray-500">الرمز المرجعي</p>
-                <p className="font-semibold text-primary-700" dir="ltr">
-                  {selectedDonor.reference || '—'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">الاسم الكامل بالعربية</p>
-                <p className="font-semibold text-gray-900">
-                  {selectedDonor.lastNameAr} {selectedDonor.firstNameAr}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">الاسم الكامل باللاتينية</p>
-                <p className="font-semibold text-gray-900" dir="ltr">
-                  {selectedDonor.lastName} {selectedDonor.firstName}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">الهاتف</p>
-                <p className="font-semibold text-gray-900" dir="ltr">{selectedDonor.phone}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">البريد الإلكتروني</p>
-                <p className="font-semibold text-gray-900" dir="ltr">
-                  {selectedDonor.email || '---'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">العنوان</p>
-                <p className="font-semibold text-gray-900">
-                  {selectedDonor.address || '---'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">الجنس</p>
-                <p className="font-semibold text-gray-900">
-                  {selectedDonor.gender === 'female' ? 'أنثى' : 'ذكر'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">إجمالي التبرعات</p>
-                <p className="font-bold text-lg text-green-600">
-                  {formatCurrency(selectedDonor.totalDonated)}
+            <div className="space-y-3 bg-gray-50 rounded-lg p-4">
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الرمز المرجعي</span><span className="font-semibold text-primary-700" dir="ltr">{selectedDonor.reference || '—'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الاسم الكامل بالعربية</span><span className="font-semibold text-gray-900">{selectedDonor.lastNameAr} {selectedDonor.firstNameAr}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الاسم الكامل باللاتينية</span><span className="font-semibold text-gray-900" dir="ltr">{selectedDonor.lastName} {selectedDonor.firstName}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الهاتف</span><span className="font-semibold text-gray-900" dir="ltr">{selectedDonor.phone}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">البريد الإلكتروني</span><span className="font-semibold text-gray-900" dir="ltr">{selectedDonor.email || '---'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">العنوان</span><span className="font-semibold text-gray-900">{selectedDonor.address || '---'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الجنس</span><span className="font-semibold text-gray-900">{selectedDonor.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">إجمالي التبرعات</span><span className="font-bold text-lg text-green-600">{formatCurrency(selectedDonor.totalDonated)}</span></div>
                 </p>
               </div>
               {selectedDonor.notes && (
