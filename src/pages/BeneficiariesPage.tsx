@@ -451,8 +451,8 @@ export default function BeneficiariesPage() {
         ${childrenHtml}
        </div>`,
       'color:#2563eb',
-      formatCurrency((b.children || []).length),
-      `عدد الأطفال: ${(b.children || []).length}`,
+      `${(b.children || []).length}`,
+      `عدد الأطفال`,
       '',
       'توقيع المستفيد',
       'ختم الجمعية'
