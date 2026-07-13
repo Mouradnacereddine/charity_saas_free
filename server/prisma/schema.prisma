@@ -71,6 +71,7 @@ model Association {
   articleStatuses    ArticleStatusType[]
   medicalReferrals   MedicalReferral[]
   donationReceipts   DonationReceipt[]
+  donationAllocations DonationAllocation[]
   notifications      Notification[]
 
   @@index([email])
@@ -167,6 +168,7 @@ model Beneficiary {
   transactions     Transaction[]
   loans            Loan[]
   medicalReferrals MedicalReferral[]
+  debitAllocations   DonationAllocation[]
 
   @@index([associationId])
   @@index([caisseId])
@@ -194,6 +196,7 @@ model Donor {
   transactions     Transaction[]
   donationReceipts DonationReceipt[]
 
+  creditAllocations  DonationAllocation[]
   @@index([associationId])
 }
 
@@ -223,6 +226,8 @@ model Transaction {
   donor            Donor?            @relation(fields: [donorId], references: [id], onDelete: SetNull)
   beneficiary      Beneficiary?      @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
   donationReceipts DonationReceipt[]
+  creditAllocations DonationAllocation[] @relation("CreditAllocation")
+  debitAllocations  DonationAllocation[] @relation("DebitAllocation")
 
   @@index([associationId])
   @@index([caisseId])
@@ -442,4 +447,28 @@ model Notification {
 
   @@index([associationId])
   @@index([read])
+}
+
+model DonationAllocation {
+  id                 String   @id @default(uuid())
+  associationId      String
+  donorId            String
+  beneficiaryId      String
+  creditTransactionId String
+  debitTransactionId String?
+  amount             Float
+  remainingAmount    Float
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  association        Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  donor              Donor       @relation(fields: [donorId], references: [id])
+  beneficiary        Beneficiary @relation(fields: [beneficiaryId], references: [id])
+  creditTransaction  Transaction @relation("CreditAllocation", fields: [creditTransactionId], references: [id])
+  debitTransaction   Transaction? @relation("DebitAllocation", fields: [debitTransactionId], references: [id])
+
+  @@index([associationId])
+  @@index([donorId])
+  @@index([beneficiaryId])
 }
