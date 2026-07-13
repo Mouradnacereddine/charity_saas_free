@@ -68,7 +68,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
     const {
       type, amount, amountInWords, amountInWordsAr,
       fundSource, caisseId, subCategoryId, bankAccountId,
-      donorId, beneficiaryId, allocatedBeneficiaryId, description, descriptionAr,
+      donorId, beneficiaryId, allocatedBeneficiaryId, allocationId, description, descriptionAr,
       receiptNumber, date,
     } = req.body;
 
@@ -244,6 +244,20 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
               },
             });
           }
+        }
+      }
+
+      // If a debit is linked to an allocation, update the remaining amount
+      if (allocationId && type === 'debit') {
+        const alloc = await tx.donationAllocation.findUnique({
+          where: { id: allocationId },
+        });
+        if (alloc && alloc.associationId === associationId) {
+          const newRemaining = Math.max(0, alloc.remainingAmount - amountNum);
+          await tx.donationAllocation.update({
+            where: { id: allocationId },
+            data: { remainingAmount: newRemaining, debitTransactionId: transaction.id },
+          });
         }
       }
 

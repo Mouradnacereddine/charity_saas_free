@@ -147,6 +147,7 @@ export default function FinancePage() {
   const [txDonorId, setTxDonorId] = useState('')
   const [txBeneficiaryId, setTxBeneficiaryId] = useState('')
   const [txAllocatedBeneficiaryId, setTxAllocatedBeneficiaryId] = useState('')
+  const [txAllocationId, setTxAllocationId] = useState('')
   const [txAmount, setTxAmount] = useState('')
   const [txDescription, setTxDescription] = useState('')
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0])
@@ -164,9 +165,24 @@ export default function FinancePage() {
   const [allocFilterOpen, setAllocFilterOpen] = useState(false)
   const [allocBeneficiaryName, setAllocBeneficiaryName] = useState('')
   const [allocDonorName, setAllocDonorName] = useState('')
+  const [committedAllocSearch, setCommittedAllocSearch] = useState({ donor: '', beneficiary: '' })
+  const [selectedAlloc, setSelectedAlloc] = useState<DonationAllocation | null>(null)
+
+  const applyAllocFilters = () => {
+    setCommittedAllocSearch({ donor: allocDonorName, beneficiary: allocBeneficiaryName })
+  }
+
+  const resetAllocFilters = () => {
+    setAllocDonorName('')
+    setAllocBeneficiaryName('')
+    setCommittedAllocSearch({ donor: '', beneficiary: '' })
+  }
+
   const filteredAllocations = allocations.filter((a: DonationAllocation) => {
-    if (allocBeneficiaryName && !(a.beneficiary.lastNameAr.includes(allocBeneficiaryName) || a.beneficiary.firstNameAr.includes(allocBeneficiaryName))) return false
-    if (allocDonorName && !(a.donor.lastNameAr.includes(allocDonorName) || a.donor.firstNameAr.includes(allocDonorName))) return false
+    const donor = committedAllocSearch.donor
+    const beneficiary = committedAllocSearch.beneficiary
+    if (donor && !(a.donor.lastNameAr.includes(donor) || a.donor.firstNameAr.includes(donor))) return false
+    if (beneficiary && !(a.beneficiary.lastNameAr.includes(beneficiary) || a.beneficiary.firstNameAr.includes(beneficiary))) return false
     return true
   })
 
@@ -307,6 +323,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         donorId: txType === 'credit' ? txDonorId || undefined : undefined,
         beneficiaryId: txType === 'debit' ? txBeneficiaryId || undefined : undefined,
         allocatedBeneficiaryId: txType === 'credit' ? txAllocatedBeneficiaryId || undefined : undefined,
+        allocationId: txType === 'debit' ? txAllocationId || undefined : undefined,
         description: txDescription,
         descriptionAr: txDescription,
         date: txDate,
@@ -318,6 +335,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
       setTxDonorId('')
       setTxBeneficiaryId('')
       setTxSubCategoryId('')
+      setTxAllocatedBeneficiaryId('')
+      setTxAllocationId('')
     } catch (err: any) {
       setTxError(err?.response?.data?.error || err?.message || 'فشل في إضافة المعاملة')
     } finally {
@@ -458,8 +477,12 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         {allocFilterOpen && (
           <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input labelAr="البحث باسم المتبرع" value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} placeholder="..." />
-              <Input labelAr="البحث باسم المستفيد" value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} placeholder="..." />
+              <Input labelAr="البحث باسم المتبرع" value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') applyAllocFilters(); }} placeholder="..." />
+              <Input labelAr="البحث باسم المستفيد" value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') applyAllocFilters(); }} placeholder="..." />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={applyAllocFilters}><Search className="w-4 h-4" /> بحث</Button>
+              <Button size="sm" variant="secondary" onClick={resetAllocFilters}>إعادة تعيين</Button>
             </div>
           </div>
         )}
@@ -474,16 +497,18 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المستفيد</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المبلغ</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المتبقي</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">الحالة</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">التاريخ</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAllocations.map((a: DonationAllocation) => (
-                  <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelectedAlloc(a)}>
                     <td className="py-3 px-4 font-medium">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
                     <td className="py-3 px-4 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
                     <td className="py-3 px-4"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
-                    <td className="py-3 px-4">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">مصرف</Badge>}</td>
+                    <td className="py-3 px-4">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
+                    <td className="py-3 px-4">{a.remainingAmount <= 0 ? <Badge variant="success">مصرف</Badge> : <Badge variant="warning">متبقي {formatCurrency(a.remainingAmount)}</Badge>}</td>
                     <td className="py-3 px-4 text-gray-600">{formatDate(a.createdAt)}</td>
                   </tr>
                 ))}
@@ -492,6 +517,25 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
           </div>
         )}
       </Card>
+
+      {/* Allocation Detail Modal */}
+      <Modal isOpen={!!selectedAlloc} onClose={() => setSelectedAlloc(null)} title="تفاصيل التوزيع" size="md">
+        {selectedAlloc && (
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المتبرع</span><span className="font-medium text-gray-900">{selectedAlloc.donor.lastNameAr} {selectedAlloc.donor.firstNameAr}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستفيد</span><span className="font-medium text-gray-900">{selectedAlloc.beneficiary.lastNameAr} {selectedAlloc.beneficiary.firstNameAr}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المبلغ</span><span className="font-bold text-green-600">{formatCurrency(selectedAlloc.amount)}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المبلغ المتبقي</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : 'مصرف بالكامل'}</span></div>
+              {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">ملاحظات</span><span className="font-medium text-gray-900">{selectedAlloc.notes}</span></div>}
+              {selectedAlloc.debitTransactionId && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">تم الصرف</span><span className="font-medium text-green-600">نعم</span></div>}
+            </div>
+            <div className="flex justify-end">
+              <Button size="sm" variant="secondary" onClick={() => setSelectedAlloc(null)}>إغلاق</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Transaction Form */}
       <Card titleAr="إضافة معاملة جديدة">
@@ -642,6 +686,19 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   value: b.id,
                   label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})`,
                 }))}
+              />
+            )}
+            {txType === 'debit' && txBeneficiaryId && (
+              <SearchableSelect
+                labelAr="التبرع المخصص (اختياري)"
+                value={txAllocationId}
+                onChange={setTxAllocationId}
+                options={allocations
+                  .filter((a: DonationAllocation) => a.beneficiaryId === txBeneficiaryId && a.remainingAmount > 0)
+                  .map((a: DonationAllocation) => ({
+                    value: a.id,
+                    label: `من ${a.donor.lastNameAr} ${a.donor.firstNameAr} — ${formatCurrency(a.remainingAmount)}`,
+                  }))}
               />
             )}
           </div>
