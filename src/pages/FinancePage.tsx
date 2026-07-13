@@ -146,6 +146,7 @@ export default function FinancePage() {
   const [txSubCategoryId, setTxSubCategoryId] = useState('')
   const [txDonorId, setTxDonorId] = useState('')
   const [txBeneficiaryId, setTxBeneficiaryId] = useState('')
+  const [txAllocatedBeneficiaryId, setTxAllocatedBeneficiaryId] = useState('')
   const [txAmount, setTxAmount] = useState('')
   const [txDescription, setTxDescription] = useState('')
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0])
@@ -288,6 +289,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         bankAccountId: txFundSource === 'banque' ? txBankAccountId || undefined : undefined,
         donorId: txType === 'credit' ? txDonorId || undefined : undefined,
         beneficiaryId: txType === 'debit' ? txBeneficiaryId || undefined : undefined,
+        allocatedBeneficiaryId: txType === 'credit' ? txAllocatedBeneficiaryId || undefined : undefined,
         description: txDescription,
         descriptionAr: txDescription,
         date: txDate,
@@ -548,6 +550,17 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 options={donors.map((d: Donor) => ({
                   value: d.id,
                   label: `${d.lastNameAr} ${d.firstNameAr} (${d.reference || ''})`,
+                }))}
+              />
+            )}
+            {txType === 'credit' && (
+              <SearchableSelect
+                labelAr="المستفيد المخصص (اختياري)"
+                value={txAllocatedBeneficiaryId}
+                onChange={setTxAllocatedBeneficiaryId}
+                options={beneficiaries.map((b: Beneficiary) => ({
+                  value: b.id,
+                  label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})`,
                 }))}
               />
             )}

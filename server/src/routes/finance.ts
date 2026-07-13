@@ -68,7 +68,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
     const {
       type, amount, amountInWords, amountInWordsAr,
       fundSource, caisseId, subCategoryId, bankAccountId,
-      donorId, beneficiaryId, description, descriptionAr,
+      donorId, beneficiaryId, allocatedBeneficiaryId, description, descriptionAr,
       receiptNumber, date,
     } = req.body;
 
@@ -187,6 +187,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
 
       // Auto-create donation receipt if donorId is present and type is credit
       let receipt = null;
+      let allocation = null;
       if (donorId && type === 'credit' && ref) {
         const donor = await tx.donor.findUnique({
           where: { id: donorId },
@@ -224,9 +225,29 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
             },
           });
         }
+
+        // If a beneficiary is designated for this donation, create an allocation
+        if (allocatedBeneficiaryId) {
+          const beneficiary = await tx.beneficiary.findUnique({
+            where: { id: allocatedBeneficiaryId },
+          });
+          if (beneficiary) {
+            allocation = await tx.donationAllocation.create({
+              data: {
+                associationId,
+                donorId,
+                beneficiaryId: allocatedBeneficiaryId,
+                creditTransactionId: transaction.id,
+                amount: amountNum,
+                remainingAmount: amountNum,
+                notes: `تبرع مخصص من ${(donor as any).lastNameAr} ${(donor as any).firstNameAr} إلى ${(beneficiary as any).lastNameAr} ${(beneficiary as any).firstNameAr}`,
+              },
+            });
+          }
+        }
       }
 
-      return { transaction, receipt };
+      return { transaction, receipt, allocation };
     });
 
     res.status(201).json(result);
@@ -398,6 +419,72 @@ router.get('/stats', async (req: AuthRequest, res: Response): Promise<void> => {
     });
   } catch (error) {
     console.error('Error getting finance stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========================================================================
+// DONATION ALLOCATIONS (tracabilite donateur → beneficiaire)
+// ========================================================================
+
+// GET /api/finance/allocations — list allocations with optional filters
+router.get('/allocations', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const associationId = req.user!.associationId;
+    const { donorId, beneficiaryId, status } = req.query;
+
+    const where: any = { associationId };
+    if (donorId) where.donorId = String(donorId);
+    if (beneficiaryId) where.beneficiaryId = String(beneficiaryId);
+
+    const allocations = await prisma.donationAllocation.findMany({
+      where,
+      include: {
+        donor: { select: { id: true, firstName: true, lastName: true, firstNameAr: true, lastNameAr: true, reference: true } },
+        beneficiary: { select: { id: true, firstName: true, lastName: true, firstNameAr: true, lastNameAr: true, reference: true } },
+        creditTransaction: { select: { id: true, date: true, receiptNumber: true, caisseId: true } },
+        debitTransaction: { select: { id: true, date: true, receiptNumber: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(allocations);
+  } catch (error) {
+    console.error('Error listing allocations:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/finance/allocations/:id/distribute — link a debit transaction to an allocation
+router.put('/allocations/:id/distribute', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+    const { debitTransactionId, amount } = req.body;
+
+    const allocation = await prisma.donationAllocation.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!allocation) {
+      res.status(404).json({ error: 'Allocation not found' });
+      return;
+    }
+
+    const distributeAmount = amount || allocation.remainingAmount;
+    const newRemaining = allocation.remainingAmount - distributeAmount;
+
+    const updated = await prisma.donationAllocation.update({
+      where: { id },
+      data: {
+        debitTransactionId: debitTransactionId || undefined,
+        remainingAmount: Math.max(0, newRemaining),
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error distributing allocation:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
