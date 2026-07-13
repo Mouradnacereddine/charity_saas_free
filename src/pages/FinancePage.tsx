@@ -628,7 +628,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             onClick={() => setFilterOpen(!filterOpen)}
           >
             <Filter size={16} />
-            {filterOpen ? 'إخفاء الفلتر' : 'فلترة'}
+            {filterOpen ? 'إخفاء' : 'بحث متقدم'}
           </Button>
         }
       >
@@ -713,13 +713,13 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               />
             </div>
 
-            <div className="flex gap-3 justify-end pt-2">
-              <Button size="sm" variant="secondary" onClick={handleResetFilter}>
-                إعادة تعيين
-              </Button>
+            <div className="flex gap-3 pt-2">
               <Button size="sm" onClick={handleApplyFilter}>
                 <Search size={14} />
-                تطبيق الفلتر
+                بحث
+              </Button>
+              <Button size="sm" variant="secondary" onClick={handleResetFilter}>
+                إعادة تعيين
               </Button>
             </div>
           </div>
