@@ -291,6 +291,23 @@ export interface DonationReceipt {
   createdAt: Date;
 }
 
+export interface DonationAllocation {
+  id: string;
+  donorId: string;
+  beneficiaryId: string;
+  creditTransactionId: string;
+  debitTransactionId?: string;
+  amount: number;
+  remainingAmount: number;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  donor: { id: string; firstName: string; lastName: string; firstNameAr: string; lastNameAr: string; reference: string };
+  beneficiary: { id: string; firstName: string; lastName: string; firstNameAr: string; lastNameAr: string; reference: string };
+  creditTransaction: { id: string; date: string; receiptNumber?: string; caisseId: string };
+  debitTransaction?: { id: string; date: string; receiptNumber?: string };
+}
+
 // ---- Dashboard Stats ----
 
 export interface DashboardStats {

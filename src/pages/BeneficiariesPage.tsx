@@ -6,7 +6,8 @@ import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderT
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
 import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary } from '../hooks/useBeneficiaries'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { caissesApi, attributsApi, inventoryApi, api } from '../lib/api'
+import { caissesApi, attributsApi, inventoryApi, api, financeApi } from '../lib/api'
+import type { DonationAllocation } from '../types'
 
 // ---- Constants ----
 
@@ -278,6 +279,16 @@ export default function BeneficiariesPage() {
     }
     return beneficiaries
   })()
+
+  // ---- Allocations for detail ----
+  const { data: beneficiaryAllocations = [] } = useQuery({
+    queryKey: ['beneficiary-allocations', selectedBeneficiary?.id],
+    queryFn: async () => {
+      const res = await financeApi.allocations({ beneficiaryId: selectedBeneficiary!.id });
+      return res.data;
+    },
+    enabled: !!selectedBeneficiary?.id,
+  })
 
   // ---- Filter application ----
   const buildParams = () => {
@@ -845,6 +856,36 @@ export default function BeneficiariesPage() {
                           <td className="py-2 px-3">{calculateAge(child.dateOfBirth).displayAr}</td>
                           <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
                           <td className="py-2 px-3">{getGradeName(child.schoolGradeId)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {beneficiaryAllocations.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">التبرعات الواردة ({beneficiaryAllocations.length})</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="py-2 px-3 text-right font-medium">المتبرع</th>
+                        <th className="py-2 px-3 text-right font-medium">المبلغ</th>
+                        <th className="py-2 px-3 text-right font-medium">المبلغ المتبقي</th>
+                        <th className="py-2 px-3 text-right font-medium">التاريخ</th>
+                        <th className="py-2 px-3 text-right font-medium">ملاحظات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {beneficiaryAllocations.map((a: DonationAllocation) => (
+                        <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-2 px-3 font-medium text-gray-900">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
+                          <td className="py-2 px-3"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
+                          <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">مصرف</Badge>}</td>
+                          <td className="py-2 px-3 text-gray-700">{formatDate(a.createdAt)}</td>
+                          <td className="py-2 px-3 text-gray-500 text-xs">{a.notes || '—'}</td>
                         </tr>
                       ))}
                     </tbody>

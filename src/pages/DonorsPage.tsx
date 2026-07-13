@@ -6,7 +6,7 @@ import { Plus, Search, Filter, Eye, Edit, Trash2, Printer, HeartHandshake, Recei
 import type { Donor, DonationReceipt } from '../types'
 import { useDonors, useCreateDonor, useUpdateDonor, useDeleteDonor, useDonorReceipts } from '../hooks/useDonors'
 import { useQuery } from '@tanstack/react-query'
-import { caissesApi } from '../lib/api'
+import { caissesApi, financeApi } from '../lib/api'
 
 // ---- Initial form state ----
 const emptyDonorForm = {
@@ -49,6 +49,14 @@ export default function DonorsPage() {
 
   // Load receipts when a donor is selected for detail view
   const { data: receipts = [] } = useDonorReceipts(detailDonorId || '')
+  const { data: allocations = [] } = useQuery({
+    queryKey: ['donor-allocations', detailDonorId],
+    queryFn: async () => {
+      const res = await financeApi.allocations({ donorId: detailDonorId! });
+      return res.data;
+    },
+    enabled: !!detailDonorId,
+  })
 
   // ---- Filter state ----
   const [showFilters, setShowFilters] = useState(false)
@@ -473,6 +481,42 @@ export default function DonorsPage() {
                 <p className="text-gray-700">{selectedDonor.notes}</p>
               </div>
             )}
+
+            {/* Donation allocations */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <HeartHandshake size={18} />
+                توزيع التبرعات على المستفيدين
+              </h4>
+              {allocations.length === 0 ? (
+                <EmptyState message="لا توجد توزيعات لهذا المتبرع" icon={<HeartHandshake size={36} />} />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-right py-2 px-3 font-semibold text-gray-600">المستفيد</th>
+                        <th className="text-right py-2 px-3 font-semibold text-gray-600">المبلغ</th>
+                        <th className="text-right py-2 px-3 font-semibold text-gray-600">المبلغ المتبقي</th>
+                        <th className="text-right py-2 px-3 font-semibold text-gray-600">التاريخ</th>
+                        <th className="text-right py-2 px-3 font-semibold text-gray-600">ملاحظات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allocations.map((a: DonationAllocation) => (
+                        <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-2 px-3 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
+                          <td className="py-2 px-3"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
+                          <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">مصرف</Badge>}</td>
+                          <td className="py-2 px-3 text-gray-700">{formatDate(a.createdAt)}</td>
+                          <td className="py-2 px-3 text-gray-500 text-xs">{a.notes || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
 
             {/* Donation receipts (bons) */}
             <div>

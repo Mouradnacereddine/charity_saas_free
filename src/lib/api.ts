@@ -94,6 +94,8 @@ export const financeApi = {
   updateBankAccount: (id: string, data: any) => api.put(`/finance/bank-accounts/${id}`, data),
   deleteBankAccount: (id: string) => api.delete(`/finance/bank-accounts/${id}`),
   stats: () => api.get('/finance/stats'),
+  allocations: (params?: Record<string, string>) => api.get('/finance/allocations', { params }),
+  distributeAllocation: (id: string, data: { debitTransactionId?: string; amount?: number }) => api.put(`/finance/allocations/${id}/distribute`, data),
 };
 
 export const inventoryApi = {
