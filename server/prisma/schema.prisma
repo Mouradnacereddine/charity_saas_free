@@ -410,6 +410,9 @@ model DonationReceipt {
   caisseId        String
   caisseName      String
   caisseNameAr    String
+  subCategoryId   String?
+  subCategoryName String?
+  subCategoryNameAr String?
   date            DateTime
   createdAt       DateTime @default(now())
 

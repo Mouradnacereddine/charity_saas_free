@@ -528,6 +528,7 @@ export default function DonorsPage() {
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">رقم الوصل</th>
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">المبلغ</th>
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">الصندوق</th>
+                        <th className="text-right py-2 px-3 font-semibold text-gray-600">الفئة الفرعية</th>
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">التاريخ</th>
                         <th className="text-center py-2 px-3 font-semibold text-gray-600">طباعة</th>
                       </tr>
@@ -539,7 +540,8 @@ export default function DonorsPage() {
                           <td className="py-2 px-3">
                             <Badge variant="success">{formatCurrency(r.amount)}</Badge>
                           </td>
-                          <td className="py-2 px-3 text-gray-700">{r.caisseNameAr}</td>
+                          <td className="py-2 px-3 text-gray-700">{r.caisseNameAr || '—'}</td>
+                          <td className="py-2 px-3 text-gray-700">{r.subCategoryNameAr || r.subCategoryName || '—'}</td>
                           <td className="py-2 px-3 text-gray-700">{formatDate(r.date)}</td>
                           <td className="py-2 px-3 text-center">
                             <Button variant="ghost" size="sm" onClick={() => openReceiptView(r)}>

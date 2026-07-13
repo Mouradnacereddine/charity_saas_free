@@ -192,6 +192,16 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
           where: { id: donorId },
         });
 
+        // Look up sub-category if provided
+        let subCat: any = null;
+        if (subCategoryId) {
+          const cais = await tx.caisse.findUnique({ where: { id: caisseId } });
+          if (cais && cais.subCategories) {
+            const subs = cais.subCategories as any[];
+            subCat = subs.find((s) => s.id === subCategoryId);
+          }
+        }
+
         if (donor) {
           receipt = await tx.donationReceipt.create({
             data: {
@@ -207,6 +217,9 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
               caisseId,
               caisseName: caisse.name,
               caisseNameAr: caisse.nameAr,
+              subCategoryId: subCat?.id,
+              subCategoryName: subCat?.name,
+              subCategoryNameAr: subCat?.nameAr,
               date: date ? new Date(date) : new Date(),
             },
           });

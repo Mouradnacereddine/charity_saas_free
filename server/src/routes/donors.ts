@@ -43,17 +43,48 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Add receipt count for each donor
+    // Add receipt count and distribution info for each donor
     const donorIds = donors.map((d: any) => d.id);
     const receipts = await prisma.donationReceipt.findMany({
       where: { donorId: { in: donorIds } },
-      select: { donorId: true },
+      select: { donorId: true, caisseId: true, caisseNameAr: true, subCategoryId: true, subCategoryNameAr: true, subCategoryName: true, amount: true },
     });
     const countMap = new Map<string, number>();
+    const distributionMap = new Map<string, { caisses: { id: string; nameAr: string; subCategories: { id: string; nameAr: string; name?: string; total: number }[]; total: number }[]; totalAmount: number }>();
+
     for (const r of receipts) {
+      // Increment count
       countMap.set(r.donorId, (countMap.get(r.donorId) || 0) + 1);
+
+      // Track distribution by caisse & sub-category
+      if (!distributionMap.has(r.donorId)) {
+        distributionMap.set(r.donorId, { caisses: [], totalAmount: 0 });
+      }
+      const dist = distributionMap.get(r.donorId)!;
+      dist.totalAmount += r.amount;
+
+      let caisse = dist.caisses.find((c) => c.id === r.caisseId);
+      if (!caisse) {
+        caisse = { id: r.caisseId, nameAr: r.caisseNameAr || '', subCategories: [], total: 0 };
+        dist.caisses.push(caisse);
+      }
+      caisse.total += r.amount;
+
+      if (r.subCategoryId) {
+        let sub = caisse.subCategories.find((s) => s.id === r.subCategoryId);
+        if (!sub) {
+          sub = { id: r.subCategoryId, nameAr: r.subCategoryNameAr || r.subCategoryName || '', name: r.subCategoryName || undefined, total: 0 };
+          caisse.subCategories.push(sub);
+        }
+        sub.total += r.amount;
+      }
     }
-    let result = donors.map((d: any) => ({ ...d, receiptCount: countMap.get(d.id) || 0 }));
+
+    let result = donors.map((d: any) => ({
+      ...d,
+      receiptCount: countMap.get(d.id) || 0,
+      distribution: distributionMap.get(d.id) || { caisses: [], totalAmount: 0 },
+    }));
 
     // Apply min/max donation filter on receiptCount (number of donations)
     const minCnt = minDonation !== undefined ? parseInt(String(minDonation), 10) : undefined;

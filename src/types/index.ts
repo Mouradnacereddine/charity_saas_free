@@ -284,6 +284,9 @@ export interface DonationReceipt {
   caisseId: string;
   caisseName: string;
   caisseNameAr: string;
+  subCategoryId?: string;
+  subCategoryName?: string;
+  subCategoryNameAr?: string;
   date: string;
   createdAt: Date;
 }
