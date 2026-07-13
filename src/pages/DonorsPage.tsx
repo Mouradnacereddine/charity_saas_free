@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { formatCurrency, formatDate } from '../utils/helpers'
+import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt } from 'lucide-react'
 import type { Donor, DonationReceipt } from '../types'
@@ -160,6 +160,9 @@ export default function DonorsPage() {
 
   function handlePrintReceipt() {
     if (!selectedReceipt) return
+    const amount = selectedReceipt.amount || 0
+    const wordsAr = selectedReceipt.amountInWordsAr && !selectedReceipt.amountInWordsAr.match(/^\d/) ? selectedReceipt.amountInWordsAr : numberToArabicWords(amount)
+    const wordsFr = selectedReceipt.amountInWords && !selectedReceipt.amountInWords.match(/^\d/) ? selectedReceipt.amountInWords : numberToFrenchWords(amount)
     printReceipt(
       'وصل تبرع', 'Reçu de Don',
       `<div class="col"><div class="row"><span class="lbl">رقم الوصل</span><span class="val">${selectedReceipt.receiptNumber}</span></div>
@@ -167,7 +170,7 @@ export default function DonorsPage() {
 <div class="row"><span class="lbl">المتبرع</span><span class="val">${selectedReceipt.donorNameAr} <i>${selectedReceipt.donorName}</i></span></div></div>
 <div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${selectedReceipt.caisseNameAr}</span></div></div>`,
       'color:#16a34a',
-      formatCurrency(selectedReceipt.amount), selectedReceipt.amountInWordsAr, selectedReceipt.amountInWords,
+      formatCurrency(amount), wordsAr, wordsFr,
       'توقيع المتبرع', 'ختم الجمعية')
   }
 
