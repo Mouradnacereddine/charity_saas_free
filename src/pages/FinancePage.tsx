@@ -236,6 +236,11 @@ export default function FinancePage() {
     const subCat = caisse?.subCategories.find((s: { id: string; name: string; nameAr: string }) => s.id === tx.subCategoryId)
     const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
 
+    // Generate proper amount in words at print time (handles old data with numeric-only strings)
+    const amount = typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)
+    const wordsAr = tx.amountInWordsAr && !tx.amountInWordsAr.match(/^\d/) ? tx.amountInWordsAr : numberToArabicWords(amount)
+    const wordsFr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToFrenchWords(amount)
+
     if (tx.type === 'credit') {
       const donor = donors.find((d: Donor) => d.id === tx.donorId)
       printReceipt(
@@ -246,7 +251,7 @@ export default function FinancePage() {
 <div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
 ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
         'color:#16a34a',
-        formatCurrency(tx.amount), tx.amountInWordsAr, tx.amountInWords,
+        formatCurrency(amount), wordsAr, wordsFr,
         'توقيع المتبرع', 'ختم الجمعية'
       )
     } else {
@@ -260,7 +265,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 <div class="row"><span class="lbl">المصدر</span><span class="val">${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</span></div>
 ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
         'background:#fff0f0;color:#dc2626',
-        `- ${formatCurrency(tx.amount)}`, tx.amountInWordsAr, tx.amountInWords,
+        `- ${formatCurrency(amount)}`, wordsAr, wordsFr,
         'إمضاء المستفيد', 'ختم الجمعية'
       )
     }
