@@ -206,7 +206,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
           receipt = await tx.donationReceipt.create({
             data: {
               associationId,
-              receiptNumber,
+              receiptNumber: ref,
               donorId,
               donorName: `${donor.firstName} ${donor.lastName}`,
               donorNameAr: `${donor.lastNameAr} ${donor.firstNameAr}`,
