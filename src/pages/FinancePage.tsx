@@ -135,6 +135,8 @@ export default function FinancePage() {
   const [bankModalOpen, setBankModalOpen] = useState(false)
   const [editingBankId, setEditingBankId] = useState<string | null>(null)
   const [bankFormData, setBankFormData] = useState<BankAccountFormData>(emptyBankForm)
+  const [detailBankAccount, setDetailBankAccount] = useState<BankAccount | null>(null)
+  const [detailTx, setDetailTx] = useState<Transaction | null>(null)
 
   // ---- Transaction Form State ----
   const [txType, setTxType] = useState<'credit' | 'debit'>('credit')
@@ -388,7 +390,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 {bankAccounts.map((account: BankAccount) => (
                   <tr
                     key={account.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => setDetailBankAccount(account)}
                   >
                     <td className="py-3 px-4 font-medium text-gray-900">{account.bankNameAr}</td>
                     <td className="py-3 px-4 text-gray-600" dir="ltr">{account.accountNumber}</td>
@@ -752,7 +755,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     return (
                       <tr
                         key={tx.id}
-                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => setDetailTx(tx)}
                       >
                         <td className="py-3 px-3 text-gray-600 whitespace-nowrap">
                           {formatDate(tx.date)}
@@ -877,6 +881,62 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         initialData={bankFormData}
         onSave={handleSaveBank}
       />
+
+      {/* Bank Account Detail Modal */}
+      <Modal isOpen={!!detailBankAccount} onClose={() => setDetailBankAccount(null)} title="تفاصيل الحساب البنكي" size="md">
+        {detailBankAccount && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 bg-gray-50 rounded-lg p-4">
+              <div><p className="text-xs text-gray-500">اسم البنك</p><p className="font-semibold text-gray-900">{detailBankAccount.bankNameAr}</p></div>
+              <div><p className="text-xs text-gray-500">رقم الحساب</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.accountNumber}</p></div>
+              <div><p className="text-xs text-gray-500">RIB</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.rib}</p></div>
+              <div><p className="text-xs text-gray-500">IBAN</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.iban}</p></div>
+              <div><p className="text-xs text-gray-500">SWIFT</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.swift}</p></div>
+              <div><p className="text-xs text-gray-500">الرصيد</p><p className="font-bold text-lg text-green-600">{formatCurrency(detailBankAccount.balance)}</p></div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => { handleOpenEditBank(detailBankAccount.id); setDetailBankAccount(null); }}>
+                <Printer size={14} /> تعديل
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => setDetailBankAccount(null)}>إغلاق</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Transaction Detail Modal */}
+      <Modal isOpen={!!detailTx} onClose={() => setDetailTx(null)} title="تفاصيل المعاملة" size="lg">
+        {detailTx && (() => {
+          const caisse = caisses.find((c: Caisse) => c.id === detailTx.caisseId)
+          const bankAcc = bankAccounts.find((b: BankAccount) => b.id === detailTx.bankAccountId)
+          const donor = donors.find((d: Donor) => d.id === detailTx.donorId)
+          const benef = beneficiaries.find((b: Beneficiary) => b.id === detailTx.beneficiaryId)
+          return (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
+                <div><p className="text-xs text-gray-500">النوع</p><p className="font-medium">{detailTx.type === 'credit' ? 'إيداع' : 'سحب'}</p></div>
+                <div><p className="text-xs text-gray-500">المبلغ</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(detailTx.amount)}</p></div>
+                <div><p className="text-xs text-gray-500">الصندوق</p><p className="font-medium text-gray-900">{caisse?.nameAr || '—'}</p></div>
+                <div><p className="text-xs text-gray-500">مصدر التمويل</p><p className="font-medium">{detailTx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</p></div>
+                {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-gray-500">الحساب البنكي</p><p className="font-medium">{bankAcc.bankNameAr}</p></div>}
+                {donor && <div><p className="text-xs text-gray-500">المتبرع</p><p className="font-medium">{donor.lastNameAr} {donor.firstNameAr}</p></div>}
+                {benef && <div><p className="text-xs text-gray-500">المستفيد</p><p className="font-medium">{benef.lastNameAr} {benef.firstNameAr}</p></div>}
+                {detailTx.descriptionAr && <div className="sm:col-span-2"><p className="text-xs text-gray-500">الوصف</p><p className="font-medium text-gray-900">{detailTx.descriptionAr || detailTx.description}</p></div>}
+                <div><p className="text-xs text-gray-500">رقم الوصل</p><p className="font-mono text-gray-900" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
+                <div><p className="text-xs text-gray-500">التاريخ</p><p className="font-medium text-gray-900">{formatDate(detailTx.date)}</p></div>
+              </div>
+              <div className="flex justify-end gap-2">
+                {detailTx.type === 'credit' && (
+                  <Button size="sm" variant="success" onClick={() => { handlePrintReceipt(detailTx); setDetailTx(null); }}>
+                    <Printer size={14} /> طباعة الوصل
+                  </Button>
+                )}
+                <Button size="sm" variant="secondary" onClick={() => setDetailTx(null)}>إغلاق</Button>
+              </div>
+            </div>
+          )
+        })()}
+      </Modal>
     </div>
   )
 }
