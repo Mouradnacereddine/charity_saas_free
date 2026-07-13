@@ -604,8 +604,8 @@ export default function DonorsPage() {
               <div className="bg-blue-50 border border-blue-100 rounded px-3 py-2 text-center mb-3">
                 <div className="text-xl font-bold text-green-600">{formatCurrency(selectedReceipt.amount)}</div>
                 <div className="text-[9px] text-gray-600 leading-relaxed mt-0.5">
-                  {selectedReceipt.amountInWordsAr}<br />
-                  <span dir="ltr" className="italic">{selectedReceipt.amountInWords}</span>
+                  {(selectedReceipt.amountInWordsAr && !selectedReceipt.amountInWordsAr.match(/^\d/)) ? selectedReceipt.amountInWordsAr : numberToArabicWords(selectedReceipt.amount || 0)}<br />
+                  <span dir="ltr" className="italic">{(selectedReceipt.amountInWords && !selectedReceipt.amountInWords.match(/^\d/)) ? selectedReceipt.amountInWords : numberToFrenchWords(selectedReceipt.amount || 0)}</span>
                 </div>
               </div>
 
