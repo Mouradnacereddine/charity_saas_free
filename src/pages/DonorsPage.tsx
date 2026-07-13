@@ -466,15 +466,13 @@ export default function DonorsPage() {
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">العنوان</span><span className="font-semibold text-gray-900">{selectedDonor.address || '---'}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الجنس</span><span className="font-semibold text-gray-900">{selectedDonor.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">إجمالي التبرعات</span><span className="font-bold text-lg text-green-600">{formatCurrency(selectedDonor.totalDonated)}</span></div>
-                </p>
-              </div>
-              {selectedDonor.notes && (
-                <div className="md:col-span-2">
-                  <p className="text-xs text-gray-500">ملاحظات</p>
-                  <p className="text-gray-700">{selectedDonor.notes}</p>
-                </div>
-              )}
             </div>
+            {selectedDonor.notes && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-xs text-gray-500">ملاحظات</p>
+                <p className="text-gray-700">{selectedDonor.notes}</p>
+              </div>
+            )}
 
             {/* Donation receipts (bons) */}
             <div>
