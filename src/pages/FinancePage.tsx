@@ -7,8 +7,8 @@ import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAc
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
 import { useDonors } from '../hooks/useDonors'
 import { useQuery } from '@tanstack/react-query'
-import { caissesApi } from '../lib/api'
-import type { Transaction, BankAccount, Caisse, Beneficiary, Donor } from '../types'
+import { caissesApi, financeApi } from '../lib/api'
+import type { Transaction, BankAccount, Caisse, Beneficiary, Donor, DonationAllocation } from '../types'
 
 // ---- Bank Account Modal ----
 
@@ -152,6 +152,23 @@ export default function FinancePage() {
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0])
   const [txSubmitting, setTxSubmitting] = useState(false)
   const [txError, setTxError] = useState('')
+
+  // ---- Allocations Data ----
+  const { data: allocations = [] } = useQuery({
+    queryKey: ['finance-allocations'],
+    queryFn: async () => {
+      const res = await financeApi.allocations();
+      return res.data;
+    },
+  })
+  const [allocFilterOpen, setAllocFilterOpen] = useState(false)
+  const [allocBeneficiaryName, setAllocBeneficiaryName] = useState('')
+  const [allocDonorName, setAllocDonorName] = useState('')
+  const filteredAllocations = allocations.filter((a: DonationAllocation) => {
+    if (allocBeneficiaryName && !(a.beneficiary.lastNameAr.includes(allocBeneficiaryName) || a.beneficiary.firstNameAr.includes(allocBeneficiaryName))) return false
+    if (allocDonorName && !(a.donor.lastNameAr.includes(allocDonorName) || a.donor.firstNameAr.includes(allocDonorName))) return false
+    return true
+  })
 
   // ---- Filter State ----
   const [filterOpen, setFilterOpen] = useState(false)
@@ -416,6 +433,58 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                         تعديل
                       </Button>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {/* Allocations Section */}
+      <Card
+        titleAr="توزيع التبرعات"
+        action={
+          <Button
+            size="sm"
+            variant={allocFilterOpen ? 'primary' : 'secondary'}
+            onClick={() => setAllocFilterOpen(!allocFilterOpen)}
+          >
+            <Filter size={16} />
+            {allocFilterOpen ? 'إخفاء' : 'بحث متقدم'}
+          </Button>
+        }
+      >
+        {allocFilterOpen && (
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input labelAr="البحث باسم المتبرع" value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} placeholder="..." />
+              <Input labelAr="البحث باسم المستفيد" value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} placeholder="..." />
+            </div>
+          </div>
+        )}
+        {filteredAllocations.length === 0 ? (
+          <EmptyState message="لا توجد توزيعات" icon={<HeartHandshake size={48} />} />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">المتبرع</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">المستفيد</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">المبلغ</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">المتبقي</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">التاريخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAllocations.map((a: DonationAllocation) => (
+                  <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="py-3 px-4 font-medium">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
+                    <td className="py-3 px-4 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
+                    <td className="py-3 px-4"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
+                    <td className="py-3 px-4">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">مصرف</Badge>}</td>
+                    <td className="py-3 px-4 text-gray-600">{formatDate(a.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
