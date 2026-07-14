@@ -266,9 +266,10 @@ export interface MedicalReferral {
   amount: number;
   amountInWords: string;
   amountInWordsAr: string;
+  status?: string;
   date: string;
   notes?: string;
-  children?: { id: string; nameAr: string; name: string; age: string }[];
+  children?: { id: string; nameAr: string; name: string; age: string; gender?: string }[];
   createdAt: Date;
   updatedAt: Date;
 }

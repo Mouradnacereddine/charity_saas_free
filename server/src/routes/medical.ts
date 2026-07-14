@@ -47,14 +47,15 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
       reference: refInput, beneficiaryId, caisseId, subCategoryId,
       doctorName, doctorNameAr, analysisType, analysisTypeAr,
       hospital, hospitalAr, amount, amountInWords, amountInWordsAr,
-      date, notes, children,
+      date, notes, children, status,
     } = req.body;
 
     const reference = refInput || `MED-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
-    const words = amountInWords || `${amount} DZD`;
-    const wordsAr = amountInWordsAr || `${amount} دينار`;
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+    const words = amountInWords || `${numericAmount} DZD`;
+    const wordsAr = amountInWordsAr || `${numericAmount} دينار`;
 
-    if (!beneficiaryId || !caisseId || !doctorName || !doctorNameAr || !amount || !date) {
+    if (!beneficiaryId || !caisseId || !doctorName || !doctorNameAr || !date) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
@@ -78,47 +79,46 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    // Check balance for debit
-    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    if (caisse.balance < numericAmount) {
-      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
-      return;
-    }
+    // Only update balance if amount > 0 (status is pending when unpaid)
+    const txStatus = status || 'pending';
 
-    const result = await prisma.$transaction(async (tx) => {
+    if (numericAmount > 0) {
+      if (caisse.balance < numericAmount) {
+        res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+        return;
+      }
       // Deduct from caisse
-      await tx.caisse.update({
+      await prisma.caisse.update({
         where: { id: caisseId },
         data: { balance: { decrement: numericAmount } },
       });
+    }
 
-      // Create the referral
-      const referral = await tx.medicalReferral.create({
-        data: {
-          associationId,
-          reference,
-          beneficiaryId,
-          caisseId,
-          subCategoryId,
-          doctorName,
-          doctorNameAr,
-          analysisType,
-          analysisTypeAr,
-          hospital,
-          hospitalAr,
-          amount: numericAmount,
-          amountInWords: words,
-          amountInWordsAr: wordsAr,
-          date: new Date(date),
-          notes,
-          children: children || [],
-        },
-      });
-
-      return referral;
+    // Create the referral
+    const referral = await prisma.medicalReferral.create({
+      data: {
+        associationId,
+        reference,
+        beneficiaryId,
+        caisseId,
+        subCategoryId,
+        doctorName,
+        doctorNameAr,
+        analysisType,
+        analysisTypeAr,
+        hospital,
+        hospitalAr,
+        amount: numericAmount,
+        amountInWords: words,
+        amountInWordsAr: wordsAr,
+        status: txStatus,
+        date: new Date(date),
+        notes,
+        children: children || [],
+      },
     });
 
-    res.status(201).json(result);
+    res.status(201).json(referral);
   } catch (error) {
     console.error('Error creating medical referral:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -144,6 +144,93 @@ router.get('/referrals/:id', async (req: AuthRequest, res: Response): Promise<vo
     res.json(referral);
   } catch (error) {
     console.error('Error getting medical referral:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/medical/referrals/:id/confirm — complete a referral with doctor's amount
+router.put('/referrals/:id/confirm', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const existing = await prisma.medicalReferral.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Medical referral not found' });
+      return;
+    }
+
+    if (existing.status !== 'pending') {
+      res.status(400).json({ error: 'Seules les orientations en attente peuvent être confirmées' });
+      return;
+    }
+
+    const { amount, amountInWords, amountInWordsAr } = req.body;
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+
+    if (numericAmount > 0) {
+      // Deduct from caisse
+      const caisse = await prisma.caisse.findFirst({
+        where: { id: existing.caisseId, associationId },
+      });
+      if (!caisse || caisse.balance < numericAmount) {
+        res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+        return;
+      }
+      await prisma.caisse.update({
+        where: { id: existing.caisseId },
+        data: { balance: { decrement: numericAmount } },
+      });
+    }
+
+    const referral = await prisma.medicalReferral.update({
+      where: { id },
+      data: {
+        amount: numericAmount,
+        amountInWords: amountInWords || `${numericAmount} DZD`,
+        amountInWordsAr: amountInWordsAr || `${numericAmount} دينار`,
+        status: 'completed',
+      },
+    });
+
+    res.json(referral);
+  } catch (error) {
+    console.error('Error confirming medical referral:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/medical/referrals/:id/cancel
+router.put('/referrals/:id/cancel', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const existing = await prisma.medicalReferral.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Medical referral not found' });
+      return;
+    }
+
+    if (existing.status !== 'pending') {
+      res.status(400).json({ error: 'Seules les orientations en attente peuvent être annulées' });
+      return;
+    }
+
+    const referral = await prisma.medicalReferral.update({
+      where: { id },
+      data: { status: 'cancelled' },
+    });
+
+    res.json(referral);
+  } catch (error) {
+    console.error('Error cancelling medical referral:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -186,6 +273,7 @@ router.put('/referrals/:id', async (req: AuthRequest, res: Response): Promise<vo
     if (amountInWordsAr !== undefined) data.amountInWordsAr = amountInWordsAr;
     if (date !== undefined) data.date = new Date(date);
     if (notes !== undefined) data.notes = notes;
+    if (req.body.status !== undefined) data.status = req.body.status;
 
     const referral = await prisma.medicalReferral.update({
       where: { id },

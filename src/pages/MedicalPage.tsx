@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { caissesApi } from '../lib/api';
 import { useMedicalReferrals, useCreateMedicalReferral, useDeleteMedicalReferral, useAnalysisTypes, useCreateAnalysisType, useUpdateAnalysisType, useDeleteAnalysisType, useHospitals, useCreateHospital, useUpdateHospital, useDeleteHospital } from '../hooks/useMedical';
 import { useBeneficiaries } from '../hooks/useBeneficiaries';
+import { api, financeApi } from '../lib/api';
 
 export default function MedicalPage() {
   const { data: referrals = [] } = useMedicalReferrals();
@@ -85,6 +86,9 @@ export default function MedicalPage() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
+  const [txStatus, setTxStatus] = useState('pending');
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [confirmAmount, setConfirmAmount] = useState('');
 
   const selectedBeneficiary = beneficiaries.find((b: Beneficiary) => b.id === beneficiaryId);
 
@@ -136,6 +140,7 @@ export default function MedicalPage() {
     setDate(new Date().toISOString().split('T')[0]);
     setNotes('');
     setSelectedChildren([]);
+    setTxStatus('pending');
   };
 
   const handleAddReferral = async () => {
@@ -167,7 +172,8 @@ export default function MedicalPage() {
       analysisTypeAr: analysisTypeAr || undefined,
       hospital: hospital || undefined,
       hospitalAr: hospitalAr || undefined,
-      amount,
+      amount: amount || 0,
+      status: txStatus,
       date,
       notes: notes || undefined,
       children: childrenData.length > 0 ? childrenData : undefined,
@@ -375,9 +381,10 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
               options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))} />
           </div>
           {selectedBeneficiary && (
-            <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs flex gap-3">
+            <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs flex gap-3 flex-wrap">
               <span><span className="text-blue-600 font-medium">الصفة: </span><span className="text-gray-700">{ATTRIBUT_LABELS[selectedBeneficiary.attribut] || selectedBeneficiary.attribut}</span></span>
               {selectedBeneficiary.gender && <span><span className="text-blue-600 font-medium">| الجنس: </span><span className="text-gray-700">{selectedBeneficiary.gender === 'female' ? 'أنثى' : 'ذكر'}</span></span>}
+              {selectedBeneficiary.nationalCardNumber && <span><span className="text-blue-600 font-medium">| رقم البطاقة: </span><span className="text-gray-700" dir="ltr">{selectedBeneficiary.nationalCardNumber}</span></span>}
             </div>
           )}
           {/* Children selection */}
@@ -420,10 +427,22 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Input labelAr="المبلغ (دج)" type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
+              <Input labelAr="المبلغ (دج) — اختياري" type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
               {amount > 0 && <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(amount)}</p>}
             </div>
             <Input labelAr="التاريخ" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <input
+              type="checkbox"
+              id="pendingStatus"
+              checked={txStatus === 'pending'}
+              onChange={(e) => setTxStatus(e.target.checked ? 'pending' : 'completed')}
+              className="w-4 h-4 text-amber-500 rounded"
+            />
+            <label htmlFor="pendingStatus" className="text-sm text-amber-800 cursor-pointer">
+              توجيه طبي بدون دفع (سيتم تحديد المبلغ لاحقاً من قبل الطبيب)
+            </label>
           </div>
           <TextArea labelAr="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
           <div className="flex gap-3 justify-end pt-4">
@@ -465,16 +484,61 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 </div>
               )}
             </div>
+            <div className="flex justify-between items-center">
+              <div className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
+                (showDetailModal.status || 'pending') === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                (showDetailModal.status || 'pending') === 'completed' ? 'bg-green-50 text-green-700 border border-green-200' :
+                'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {(showDetailModal.status || 'pending') === 'pending' ? '🟡 قيد الانتظار' :
+                 (showDetailModal.status || 'pending') === 'completed' ? '🟢 مكتمل' : '🔴 ملغي'}
+              </div>
+            </div>
             <div className="bg-primary-50 rounded-lg p-4 text-center">
-              <p className="text-2xl font-bold text-primary-700">{formatCurrency(showDetailModal.amount)}</p>
-              <p className="text-sm text-primary-600 mt-1">{showDetailModal.amountInWordsAr}</p>
+              <p className="text-2xl font-bold text-primary-700">{showDetailModal.amount > 0 ? formatCurrency(showDetailModal.amount) : '—'}</p>
+              <p className="text-sm text-primary-600 mt-1">{showDetailModal.amount > 0 ? showDetailModal.amountInWordsAr : 'لم يحدد المبلغ بعد'}</p>
             </div>
             {showDetailModal.notes && (
               <div><p className="text-xs text-gray-500">ملاحظات</p><p className="text-sm bg-gray-50 rounded-lg p-3">{showDetailModal.notes}</p></div>
             )}
-            <div className="flex justify-end">
-              <Button onClick={() => handlePrint(showDetailModal)} variant="success"><Printer className="w-4 h-4" /> طباعة التوجيه</Button>
+            <div className="flex justify-end gap-2">
+              {(showDetailModal.status || 'pending') === 'pending' && (
+                <>
+                  <Button size="sm" variant="primary" onClick={() => { setConfirmingId(showDetailModal.id); setConfirmAmount(''); }}>
+                    تأكيد التوجيه
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={async () => {
+                    if (confirm('هل أنت متأكد من إلغاء هذا التوجيه الطبي؟')) {
+                      await financeApi.cancelTransaction(showDetailModal.id).catch(() => {});
+                      setShowDetailModal(null);
+                    }
+                  }}>
+                    إلغاء
+                  </Button>
+                </>
+              )}
+              <Button size="sm" onClick={() => handlePrint(showDetailModal)} variant="success"><Printer className="w-4 h-4" /> طباعة التوجيه</Button>
             </div>
+            {/* Confirm modal for entering doctor's amount */}
+            <Modal isOpen={confirmingId === showDetailModal.id} onClose={() => setConfirmingId(null)} title="تأكيد التوجيه الطبي" size="sm">
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">أدخل المبلغ الذي سجله الطبيب على الوصل:</p>
+                <Input labelAr="المبلغ (دج)" type="number" value={confirmAmount} onChange={(e) => setConfirmAmount(e.target.value)} min={0} />
+                {Number(confirmAmount) > 0 && <p className="text-xs text-gray-500">{numberToArabicWords(Number(confirmAmount))}</p>}
+                <div className="flex gap-2 justify-end">
+                  <Button variant="secondary" onClick={() => setConfirmingId(null)}>إلغاء</Button>
+                  <Button onClick={async () => {
+                    try {
+                      await api.put(`/medical/referrals/${showDetailModal.id}/confirm`, { amount: Number(confirmAmount) || 0 });
+                      setConfirmingId(null);
+                      setShowDetailModal(null);
+                    } catch (err: any) {
+                      alert(err?.response?.data?.error || 'فشل في تأكيد التوجيه');
+                    }
+                  }}>تأكيد</Button>
+                </div>
+              </div>
+            </Modal>
           </div>
         )}
       </Modal>

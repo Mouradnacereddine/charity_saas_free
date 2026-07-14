@@ -390,9 +390,10 @@ model MedicalReferral {
   analysisTypeAr  String?
   hospital        String?
   hospitalAr      String?
-  amount          Float
-  amountInWords   String
-  amountInWordsAr String
+  amount          Float    @default(0)
+  amountInWords   String   @default("")
+  amountInWordsAr String   @default("")
+  status          String   @default("pending")
   date            DateTime
   notes           String?
   children        Json     @default("[]")
