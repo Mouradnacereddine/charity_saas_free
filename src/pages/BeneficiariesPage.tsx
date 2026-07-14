@@ -588,9 +588,11 @@ export default function BeneficiariesPage() {
     const fullHtml = `
       <!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
       <style>
-        @page { size: A4; margin: 18mm 22mm; }
+        @page { size: A4; margin: 0; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; font-size: 11.5px; color: #1a1a1a; padding: 0; line-height: 1.6; }
+        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; font-size: 11.5px; color: #1a1a1a; padding: 0; line-height: 1.6; background: #fff; }
+        .page-wrap { width: 100%; min-height: 100vh; padding: 25mm 25mm 20mm 25mm; }
+        @media print { body { background: #fff; } .page-wrap { padding: 25mm 25mm 20mm 25mm; } }
         .header { text-align: center; margin-bottom: 22px; padding-bottom: 12px; border-bottom: 3px double #2563eb; }
         .header h1 { font-size: 22px; color: #1e40af; margin: 0 0 4px; }
         .header .sub { font-size: 11px; color: #6b7280; }
@@ -610,6 +612,7 @@ export default function BeneficiariesPage() {
         .no-print { display: block; width: 200px; margin: 20px auto; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-align: center; }
         @media print { body { padding: 0; } .no-print { display: none; } }
       </style></head><body>
+        <div class="page-wrap">
         <div class="header">
           <h1>ملف المستفيد</h1>
           <div class="sub">${b.reference || ''}</div>
@@ -636,6 +639,7 @@ export default function BeneficiariesPage() {
         ${refsHtml}
         <button class="no-print" onclick="window.print()">طباعة الملف</button>
         <div class="footer">تم إنشاؤه بواسطة نظام الجمعية — ${new Date().toLocaleDateString('ar-DZ')}</div>
+      </div>
       </body></html>`
 
     const win = window.open('', '_blank')
