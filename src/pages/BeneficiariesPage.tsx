@@ -1292,7 +1292,10 @@ export default function BeneficiariesPage() {
                   </table>
                 </div>
                 <div className="mt-2 p-3 bg-red-50 rounded-lg text-sm">
-                  <span>إجمالي المبالغ المصروفة: <strong className="text-red-600">{formatCurrency(beneficiaryDebits.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0))}</strong></span>
+                  <span>إجمالي المبالغ المصروفة: <strong className="text-red-600">{formatCurrency(beneficiaryDebits
+                    .filter((tx: any) => (tx.status || 'completed') !== 'cancelled')
+                    .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+                  )}</strong> <span className="text-gray-400 text-xs mr-2">({beneficiaryDebits.filter((tx: any) => (tx.status || 'completed') === 'cancelled').length} ملغية غير محتسبة)</span></span>
                 </div>
               </div>
             )}
