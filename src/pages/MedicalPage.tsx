@@ -151,7 +151,8 @@ export default function MedicalPage() {
         nameAr: `${child.lastNameAr || ''} ${child.firstNameAr || ''}`.trim(),
         name: `${child.firstName || ''} ${child.lastName || ''}`.trim(),
         age: calculateAge(child.dateOfBirth).displayAr,
-      } : { id: childId, nameAr: childId, name: '', age: '' };
+        gender: child.gender || 'male',
+      } : { id: childId, nameAr: childId, name: '', age: '', gender: 'male' };
     });
 
     await createMedicalReferral.mutateAsync({
@@ -447,6 +448,20 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-500">الأطفال المستفيدون</span>
                   <span className="font-medium text-gray-900 text-left">{showDetailModal.children.map((c: any) => c.nameAr || c.name || c.id).join('، ')}</span>
+                </div>
+              )}
+              {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
+                <div className="border-t border-gray-200 pt-2 mt-1">
+                  <p className="text-xs text-gray-500 mb-2">تفاصيل الأطفال المستفيدين:</p>
+                  <div className="space-y-1">
+                    {showDetailModal.children.map((c: any, i: number) => (
+                      <div key={i} className="flex items-center gap-3 text-sm bg-white rounded-lg px-3 py-2 border border-gray-100">
+                        <span className="font-medium text-gray-900">{c.nameAr || c.name || c.id}</span>
+                        {c.age && <span className="text-xs text-gray-400">العمر: {c.age}</span>}
+                        <span className="text-xs text-gray-400">| {c.gender === 'female' ? 'أنثى' : c.gender === 'male' ? 'ذكر' : ''}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
