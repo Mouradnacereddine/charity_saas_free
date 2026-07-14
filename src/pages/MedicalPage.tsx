@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Input, SearchableSelect, Modal, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI';
+import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { formatCurrency, numberToArabicWords, calculateAge } from '../utils/helpers';
 import { printReceipt } from '../lib/receipt';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
