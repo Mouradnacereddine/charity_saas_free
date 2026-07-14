@@ -6,7 +6,7 @@ import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderT
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
 import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary } from '../hooks/useBeneficiaries'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { caissesApi, attributsApi, inventoryApi, api, financeApi } from '../lib/api'
+import { caissesApi, attributsApi, inventoryApi, api, financeApi, medicalApi } from '../lib/api'
 import type { DonationAllocation } from '../types'
 
 // ---- Constants ----
@@ -50,6 +50,7 @@ function emptyChild(): Omit<Child, 'id'> & { id?: string } {
     firstName: '',
     lastName: '',
     dateOfBirth: '',
+    gender: 'male',
     healthStatus: 'bonne_sante',
     healthDetails: '',
     schoolGradeId: '',
@@ -245,6 +246,7 @@ export default function BeneficiariesPage() {
   const [filterMaxChildAge, setFilterMaxChildAge] = useState('')
   const [filterSituation, setFilterSituation] = useState('')
   const [filterGender, setFilterGender] = useState('')
+  const [filterChildGender, setFilterChildGender] = useState('')
   const [filterMinAge, setFilterMinAge] = useState('')
   const [filterMaxAge, setFilterMaxAge] = useState('')
 
@@ -290,6 +292,26 @@ export default function BeneficiariesPage() {
     enabled: !!selectedBeneficiary?.id,
   })
 
+  // ---- Medical referrals for detail ----
+  const { data: beneficiaryReferrals = [] } = useQuery({
+    queryKey: ['beneficiary-referrals', selectedBeneficiary?.id],
+    queryFn: async () => {
+      const res = await medicalApi.referrals({ beneficiaryId: selectedBeneficiary!.id });
+      return res.data;
+    },
+    enabled: !!selectedBeneficiary?.id,
+  })
+
+  // ---- Debit transactions (disbursements) for detail ----
+  const { data: beneficiaryDebits = [] } = useQuery({
+    queryKey: ['beneficiary-debits', selectedBeneficiary?.id],
+    queryFn: async () => {
+      const res = await financeApi.transactions({ beneficiaryId: selectedBeneficiary!.id, type: 'debit' });
+      return res.data;
+    },
+    enabled: !!selectedBeneficiary?.id,
+  })
+
   // ---- Filter application ----
   const buildParams = () => {
     const params: Record<string, string> = {}
@@ -300,6 +322,7 @@ export default function BeneficiariesPage() {
     if (filterMaxChildAge) params.maxChildAge = filterMaxChildAge
     if (filterSituation) params.situation = filterSituation
     if (filterGender) params.gender = filterGender
+    if (filterChildGender) params.childGender = filterChildGender
     if (filterMinAge) params.minAge = filterMinAge
     if (filterMaxAge) params.maxAge = filterMaxAge
     return Object.keys(params).length > 0 ? params : undefined
@@ -317,6 +340,7 @@ export default function BeneficiariesPage() {
     setFilterMaxChildAge('')
     setFilterSituation('')
     setFilterGender('')
+    setFilterChildGender('')
     setFilterMinAge('')
     setFilterMaxAge('')
     setWidowFilterActive(false)
@@ -398,6 +422,7 @@ export default function BeneficiariesPage() {
         firstName: c.firstName ?? '',
         lastName: c.lastName ?? '',
         dateOfBirth: c.dateOfBirth,
+        gender: c.gender || 'male',
         healthStatus: c.healthStatus as Child['healthStatus'],
         healthDetails: c.healthDetails || undefined,
         schoolGradeId: c.schoolGradeId || undefined,
@@ -528,6 +553,12 @@ export default function BeneficiariesPage() {
               options={[{ value: '', label: 'الكل' }, { value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
               value={filterGender}
               onChange={(val) => setFilterGender(val)}
+            />
+            <SearchableSelect
+              labelAr="جنس الطفل"
+              options={[{ value: '', label: 'الكل' }, { value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
+              value={filterChildGender}
+              onChange={(val) => setFilterChildGender(val)}
             />
             <Input
               labelAr="الحالة (المرض أو غيره)"
@@ -781,6 +812,12 @@ export default function BeneficiariesPage() {
                       <Input labelAr="اللقب بالعربية" value={child.lastNameAr} onChange={(e) => updateChild(index, 'lastNameAr', e.target.value)} />
                       <Input labelAr="تاريخ الميلاد" type="date" value={child.dateOfBirth} onChange={(e) => updateChild(index, 'dateOfBirth', e.target.value)} />
                       <SearchableSelect
+                        labelAr="جنس الطفل"
+                        options={[{ value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
+                        value={child.gender || 'male'}
+                        onChange={(val) => updateChild(index, 'gender', val)}
+                      />
+                      <SearchableSelect
                         labelAr="الحالة الصحية"
                         options={HEALTH_STATUS_OPTIONS}
                         value={child.healthStatus}
@@ -844,6 +881,7 @@ export default function BeneficiariesPage() {
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="py-2 px-3 text-right font-medium">الاسم</th>
+                        <th className="py-2 px-3 text-right font-medium">الجنس</th>
                         <th className="py-2 px-3 text-right font-medium">العمر</th>
                         <th className="py-2 px-3 text-right font-medium">الحالة الصحية</th>
                         <th className="py-2 px-3 text-right font-medium">المستوى الدراسي</th>
@@ -853,6 +891,7 @@ export default function BeneficiariesPage() {
                       {selectedBeneficiary.children.map((child: any) => (
                         <tr key={child.id} className="border-b border-gray-100">
                           <td className="py-2 px-3">{child.lastNameAr} {child.firstNameAr}</td>
+                          <td className="py-2 px-3">{child.gender === 'female' ? 'أنثى' : 'ذكر'}</td>
                           <td className="py-2 px-3">{calculateAge(child.dateOfBirth).displayAr}</td>
                           <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
                           <td className="py-2 px-3">{getGradeName(child.schoolGradeId)}</td>
@@ -873,30 +912,151 @@ export default function BeneficiariesPage() {
                       <tr className="border-b border-gray-200">
                         <th className="py-2 px-3 text-right font-medium">المتبرع</th>
                         <th className="py-2 px-3 text-right font-medium">المبلغ</th>
-                        <th className="py-2 px-3 text-right font-medium">المبلغ المتبقي</th>
+                        <th className="py-2 px-3 text-right font-medium">المصرف</th>
+                        <th className="py-2 px-3 text-right font-medium">المتبقي</th>
+                        <th className="py-2 px-3 text-right font-medium">الحالة</th>
                         <th className="py-2 px-3 text-right font-medium">التاريخ</th>
-                        <th className="py-2 px-3 text-right font-medium">ملاحظات</th>
+                        <th className="py-2 px-3 text-right font-medium">رقم الوصل</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {beneficiaryAllocations.map((a: DonationAllocation) => (
+                      {beneficiaryAllocations.map((a: DonationAllocation) => {
+                        const spent = a.amount - a.remainingAmount;
+                        return (
                         <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-2 px-3 font-medium text-gray-900">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
                           <td className="py-2 px-3"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
-                          <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">مصرف</Badge>}</td>
+                          <td className="py-2 px-3">{spent > 0 ? formatCurrency(spent) : '—'}</td>
+                          <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
+                          <td className="py-2 px-3">
+                            {(() => {
+                              const s = a.creditTransaction?.status;
+                              if (s === 'pending') return <Badge variant="warning">مرتبط بوعد</Badge>;
+                              if (s === 'cancelled') return <Badge variant="danger">ملغي</Badge>;
+                              if (a.remainingAmount <= 0) return <Badge variant="success">مصرف بالكامل</Badge>;
+                              if (a.debitTransactionId) return <Badge variant="info">مصرف جزئياً</Badge>;
+                              return <Badge variant="info">نشط</Badge>;
+                            })()}
+                          </td>
                           <td className="py-2 px-3 text-gray-700">{formatDate(a.createdAt)}</td>
-                          <td className="py-2 px-3 text-gray-500 text-xs">{a.notes || '—'}</td>
+                          <td className="py-2 px-3 text-gray-400 text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
+                </div>
+                {/* Total allocations summary */}
+                <div className="mt-2 p-3 bg-gray-50 rounded-lg flex gap-6 text-sm">
+                  <span>إجمالي التبرعات: <strong className="text-green-600">{formatCurrency(beneficiaryAllocations.reduce((sum: number, a: DonationAllocation) => sum + a.amount, 0))}</strong></span>
+                  <span>إجمالي المصروف: <strong className="text-blue-600">{formatCurrency(beneficiaryAllocations.reduce((sum: number, a: DonationAllocation) => sum + (a.amount - a.remainingAmount), 0))}</strong></span>
+                  <span>المتبقي: <strong className="text-amber-600">{formatCurrency(beneficiaryAllocations.reduce((sum: number, a: DonationAllocation) => sum + a.remainingAmount, 0))}</strong></span>
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end gap-2">
+            {/* Debit transactions (money actually disbursed) */}
+            {beneficiaryDebits.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">المبالغ المصروفة للمستفيد ({beneficiaryDebits.length})</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="py-2 px-3 text-right font-medium">التاريخ</th>
+                        <th className="py-2 px-3 text-right font-medium">المبلغ</th>
+                        <th className="py-2 px-3 text-right font-medium">مصدر التمويل</th>
+                        <th className="py-2 px-3 text-right font-medium">الصندوق</th>
+                        <th className="py-2 px-3 text-right font-medium">الحالة</th>
+                        <th className="py-2 px-3 text-right font-medium">الوصف</th>
+                        <th className="py-2 px-3 text-right font-medium">الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {beneficiaryDebits.map((tx: any) => {
+                        const caisse = caisses.find((c: any) => c.id === tx.caisseId);
+                        return (
+                        <tr key={tx.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-2 px-3 text-gray-700">{formatDate(tx.date)}</td>
+                          <td className="py-2 px-3 font-semibold text-red-600">-{formatCurrency(tx.amount)}</td>
+                          <td className="py-2 px-3 text-gray-600">{tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</td>
+                          <td className="py-2 px-3 text-gray-600">{caisse?.nameAr || '—'}</td>
+                          <td className="py-2 px-3">
+                            {(tx.status || 'completed') === 'pending' ? <Badge variant="warning">معلق</Badge> :
+                             (tx.status || 'completed') === 'cancelled' ? <Badge variant="danger">ملغي</Badge> :
+                             <Badge variant="success">مكتمل</Badge>}
+                          </td>
+                          <td className="py-2 px-3 text-gray-500 text-xs max-w-[150px] truncate">{tx.descriptionAr || '—'}</td>
+                          <td className="py-2 px-3">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handlePrintBeneficiary(tx); }}
+                              className="p-1 text-gray-400 hover:text-primary-600"
+                              title="طباعة"
+                            >
+                              <Printer size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      )})}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-2 p-3 bg-red-50 rounded-lg text-sm">
+                  <span>إجمالي المبالغ المصروفة: <strong className="text-red-600">{formatCurrency(beneficiaryDebits.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0))}</strong></span>
+                </div>
+              </div>
+            )}
+
+            {/* Medical referrals (التوجيه الطبي) */}
+            {beneficiaryReferrals.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">التوجيه الطبي ({beneficiaryReferrals.length})</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="py-2 px-3 text-right font-medium">التاريخ</th>
+                        <th className="py-2 px-3 text-right font-medium">الطبيب</th>
+                        <th className="py-2 px-3 text-right font-medium">المبلغ</th>
+                        <th className="py-2 px-3 text-right font-medium">الصندوق</th>
+                        <th className="py-2 px-3 text-right font-medium">التحليل</th>
+                        <th className="py-2 px-3 text-right font-medium">المستشفى</th>
+                        <th className="py-2 px-3 text-right font-medium">الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {beneficiaryReferrals.map((ref: any) => {
+                        const caisse = caisses.find((c: any) => c.id === ref.caisseId);
+                        return (
+                        <tr key={ref.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-2 px-3 text-gray-700">{formatDate(ref.date)}</td>
+                          <td className="py-2 px-3 font-medium text-gray-900">{ref.doctorNameAr}</td>
+                          <td className="py-2 px-3"><Badge variant="warning">{formatCurrency(ref.amount)}</Badge></td>
+                          <td className="py-2 px-3 text-gray-600">{caisse?.nameAr || '—'}</td>
+                          <td className="py-2 px-3 text-gray-600">{ref.analysisTypeAr || '—'}</td>
+                          <td className="py-2 px-3 text-gray-600">{ref.hospitalAr || '—'}</td>
+                          <td className="py-2 px-3">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handlePrintBeneficiary(ref); }}
+                              className="p-1 text-gray-400 hover:text-primary-600"
+                              title="طباعة"
+                            >
+                              <Printer size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      )})}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-2 p-3 bg-orange-50 rounded-lg text-sm">
+                  <span>إجمالي التوجيه الطبي: <strong className="text-orange-600">{formatCurrency(beneficiaryReferrals.reduce((sum: number, ref: any) => sum + (ref.amount || 0), 0))}</strong></span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
               <Button size="sm" variant="secondary" onClick={() => handlePrintBeneficiary(selectedBeneficiary)}>
-                <Printer className="w-4 h-4" /> طباعة
+                <Printer className="w-4 h-4" /> طباعة الملف
               </Button>
               <Button size="sm" variant="secondary" onClick={closeDetail}>إغلاق</Button>
               <Button size="sm" onClick={() => { closeDetail(); openEditForm(selectedBeneficiary) }}>

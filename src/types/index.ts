@@ -115,6 +115,7 @@ export interface Child {
   firstNameAr: string;
   lastNameAr: string;
   dateOfBirth: string; // ISO date string
+  gender?: string;
   healthStatus: ChildHealthStatus;
   healthDetails?: string;
   schoolGradeId?: string;

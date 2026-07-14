@@ -13,6 +13,7 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
     const {
       type, fundSource, caisseId, bankAccountId,
       dateFrom, dateTo, minAmount, maxAmount, searchTerm,
+      donorId, beneficiaryId,
     } = req.query;
 
     const where: any = { associationId };
@@ -21,6 +22,8 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
     if (fundSource) where.fundSource = String(fundSource);
     if (caisseId) where.caisseId = String(caisseId);
     if (bankAccountId) where.bankAccountId = String(bankAccountId);
+    if (donorId) where.donorId = String(donorId);
+    if (beneficiaryId) where.beneficiaryId = String(beneficiaryId);
 
     if (dateFrom || dateTo) {
       where.date = {};

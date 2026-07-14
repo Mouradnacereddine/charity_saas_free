@@ -153,6 +153,7 @@ export default function FinancePage() {
   const [txAmount, setTxAmount] = useState('')
   const [txDescription, setTxDescription] = useState('')
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0])
+  const [txAllocSearch, setTxAllocSearch] = useState('')
   const [txPending, setTxPending] = useState(false)
   const [txSubmitting, setTxSubmitting] = useState(false)
   const [txError, setTxError] = useState('')
@@ -730,6 +731,12 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   a.remainingAmount > 0 &&
                   a.creditTransaction?.status === 'completed'
               );
+              const filteredAllocs = allocsForBenef.filter((a: DonationAllocation) => {
+                if (!txAllocSearch) return true;
+                const q = txAllocSearch.toLowerCase();
+                const name = `${a.donor.lastNameAr} ${a.donor.firstNameAr}`.toLowerCase();
+                return name.includes(q);
+              });
               const selectedAlloc = allocsForBenef.find((a: DonationAllocation) => a.id === txAllocationId);
               return (
                 <div className="space-y-3">
@@ -737,8 +744,20 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   {allocsForBenef.length === 0 ? (
                     <p className="text-xs text-gray-400">لا توجد تبرعات مخصصة متاحة لهذا المستفيد</p>
                   ) : (
-                    <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2">
-                      {allocsForBenef.map((a: DonationAllocation) => {
+                    <>
+                      <div className="relative">
+                        <Search size={14} className="absolute top-1/2 -translate-y-1/2 right-3 text-gray-400" />
+                        <input
+                          type="text"
+                          value={txAllocSearch}
+                          onChange={(e) => setTxAllocSearch(e.target.value)}
+                          placeholder="بحث باسم المتبرع..."
+                          className="w-full pr-9 pl-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          dir="rtl"
+                        />
+                      </div>
+                      <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2">
+                      {filteredAllocs.map((a: DonationAllocation) => {
                         const spent = a.amount - a.remainingAmount;
                         return (
                           <label
@@ -770,7 +789,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                         );
                       })}
                     </div>
-                  )}
+                      </>
+                    )}
                   {selectedAlloc && (
                     <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center justify-between gap-2">
@@ -1001,15 +1021,17 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     <th className="text-right py-3 px-3 font-medium text-gray-500">الحالة</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المصدر</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المبلغ</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">المتبرع/المستفيد</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">الصندوق</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden md:table-cell">الوصف</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden md:table-cell">رقم الوصل</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden lg:table-cell">الوصف</th>
                     <th className="text-center py-3 px-3 font-medium text-gray-500">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedTransactions.map((tx: Transaction) => {
                     const caisse = caisses.find((c: Caisse) => c.id === tx.caisseId)
+                    const txDonor = donors.find((d: Donor) => d.id === tx.donorId)
+                    const txBenef = beneficiaries.find((b: Beneficiary) => b.id === tx.beneficiaryId)
                     return (
                       <tr
                         key={tx.id}
@@ -1056,12 +1078,15 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                           {tx.type === 'credit' ? '+' : '-'}
                           {formatCurrency(tx.amount)}
                         </td>
-                        <td className="py-3 px-3 text-gray-600 hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
-                        <td className="py-3 px-3 text-gray-600 max-w-[200px] truncate hidden md:table-cell">
-                          {tx.descriptionAr || tx.description || '-'}
+                        <td className="py-3 px-3 text-gray-700 hidden sm:table-cell">
+                          {tx.type === 'credit'
+                            ? (txDonor ? `${txDonor.lastNameAr} ${txDonor.firstNameAr}` : '—')
+                            : (txBenef ? `${txBenef.lastNameAr} ${txBenef.firstNameAr}` : '—')
+                          }
                         </td>
-                        <td className="py-3 px-3 text-gray-400 text-xs hidden md:table-cell" dir="ltr">
-                          {tx.receiptNumber || '-'}
+                        <td className="py-3 px-3 text-gray-600 hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
+                        <td className="py-3 px-3 text-gray-600 max-w-[160px] truncate hidden lg:table-cell">
+                          {tx.descriptionAr || tx.description || '-'}
                         </td>
                         <td className="py-3 px-3 text-center">
                           <button
