@@ -256,8 +256,13 @@ export default function BeneficiariesPage() {
   const [filterSituation, setFilterSituation] = useState('')
   const [filterGender, setFilterGender] = useState('')
   const [filterChildGender, setFilterChildGender] = useState('')
+  const [filterChildHealthStatus, setFilterChildHealthStatus] = useState('')
+  const [filterChildSchoolGradeId, setFilterChildSchoolGradeId] = useState('')
+  const [filterMinChildAge, setFilterMinChildAge] = useState('')
+  const [filterMaxChildAge2, setFilterMaxChildAge2] = useState('')
   const [filterMinAge, setFilterMinAge] = useState('')
   const [filterMaxAge, setFilterMaxAge] = useState('')
+  const [filterTab, setFilterTab] = useState<'beneficiary' | 'children'>('beneficiary')
 
   // ---- Tab state ----
   const [activeTab, setActiveTab] = useState<'list' | 'settings'>('list')
@@ -332,6 +337,10 @@ export default function BeneficiariesPage() {
     if (filterSituation) params.situation = filterSituation
     if (filterGender) params.gender = filterGender
     if (filterChildGender) params.childGender = filterChildGender
+    if (filterChildHealthStatus) params.childHealthStatus = filterChildHealthStatus
+    if (filterChildSchoolGradeId) params.childSchoolGradeId = filterChildSchoolGradeId
+    if (filterMinChildAge) params.minChildAge = filterMinChildAge
+    if (filterMaxChildAge2) params.maxChildAge = filterMaxChildAge2
     if (filterMinAge) params.minAge = filterMinAge
     if (filterMaxAge) params.maxAge = filterMaxAge
     return Object.keys(params).length > 0 ? params : undefined
@@ -350,6 +359,10 @@ export default function BeneficiariesPage() {
     setFilterSituation('')
     setFilterGender('')
     setFilterChildGender('')
+    setFilterChildHealthStatus('')
+    setFilterChildSchoolGradeId('')
+    setFilterMinChildAge('')
+    setFilterMaxChildAge2('')
     setFilterMinAge('')
     setFilterMaxAge('')
     setWidowFilterActive(false)
@@ -697,53 +710,124 @@ export default function BeneficiariesPage() {
       {/* ---- Advanced Filters (collapsible) ---- */}
       {showFilters && (
         <Card titleAr="بحث متقدم">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <SearchableSelect
-              labelAr="الصفة"
-              options={attributOptions}
-              value={filterAttribut}
-              onChange={(val) => setFilterAttribut(val)}
-              required={false}
-            />
-            <SearchableSelect
-              labelAr="الصندوق"
-              options={caisseOptions}
-              value={filterCaisseId}
-              onChange={(val) => setFilterCaisseId(val)}
-            />
-            <SearchableSelect
-              labelAr="الجنس"
-              options={[{ value: '', label: 'الكل' }, { value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
-              value={filterGender}
-              onChange={(val) => setFilterGender(val)}
-            />
-            <SearchableSelect
-              labelAr="جنس الطفل"
-              options={[{ value: '', label: 'الكل' }, { value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
-              value={filterChildGender}
-              onChange={(val) => setFilterChildGender(val)}
-            />
-            <Input
-              labelAr="الحالة (المرض أو غيره)"
-              placeholder="مثال: مرض السكري"
-              value={filterSituation}
-              onChange={(e) => setFilterSituation(e.target.value)}
-            />
-            <Input
-              labelAr="الحد الأدنى لعدد الأطفال"
-              type="number"
-              min="0"
-              value={filterMinChildren}
-              onChange={(e) => setFilterMinChildren(e.target.value)}
-            />
-            <Input
-              labelAr="العمر الأقصى"
-              type="number"
-              min="0"
-              value={filterMaxAge}
-              onChange={(e) => setFilterMaxAge(e.target.value)}
-            />
+          {/* Filter tabs */}
+          <div className="flex gap-1 mb-4 border-b border-gray-200">
+            <button
+              onClick={() => setFilterTab('beneficiary')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                filterTab === 'beneficiary'
+                  ? 'border-primary-600 text-primary-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Users className="w-4 h-4 inline ml-1" />
+              معلومات المستفيد
+            </button>
+            <button
+              onClick={() => setFilterTab('children')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                filterTab === 'children'
+                  ? 'border-primary-600 text-primary-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Baby className="w-4 h-4 inline ml-1" />
+              الأطفال
+            </button>
           </div>
+
+          {/* Beneficiary filters */}
+          {filterTab === 'beneficiary' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <SearchableSelect
+                labelAr="الصفة"
+                options={attributOptions}
+                value={filterAttribut}
+                onChange={(val) => setFilterAttribut(val)}
+                required={false}
+              />
+              <SearchableSelect
+                labelAr="الصندوق"
+                options={caisseOptions}
+                value={filterCaisseId}
+                onChange={(val) => setFilterCaisseId(val)}
+              />
+              <SearchableSelect
+                labelAr="الجنس"
+                options={[{ value: '', label: 'الكل' }, { value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
+                value={filterGender}
+                onChange={(val) => setFilterGender(val)}
+              />
+              <Input
+                labelAr="الحالة (المرض أو غيره)"
+                placeholder="مثال: مرض السكري"
+                value={filterSituation}
+                onChange={(e) => setFilterSituation(e.target.value)}
+              />
+              <Input
+                labelAr="الحد الأدنى لعدد الأطفال"
+                type="number"
+                min="0"
+                value={filterMinChildren}
+                onChange={(e) => setFilterMinChildren(e.target.value)}
+              />
+              <Input
+                labelAr="العمر الأقصى للمستفيد"
+                type="number"
+                min="0"
+                value={filterMaxAge}
+                onChange={(e) => setFilterMaxAge(e.target.value)}
+              />
+            </div>
+          )}
+
+          {/* Children filters */}
+          {filterTab === 'children' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <SearchableSelect
+                labelAr="جنس الطفل"
+                options={[{ value: '', label: 'الكل' }, { value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
+                value={filterChildGender}
+                onChange={(val) => setFilterChildGender(val)}
+              />
+              <SearchableSelect
+                labelAr="الحالة الصحية للطفل"
+                options={[
+                  { value: '', label: 'الكل' },
+                  { value: 'bonne_sante', label: 'بصحة جيدة' },
+                  { value: 'malade', label: 'مريض' },
+                  { value: 'handicape', label: 'معاق' },
+                  { value: 'autre', label: 'أخرى' },
+                ]}
+                value={filterChildHealthStatus}
+                onChange={(val) => setFilterChildHealthStatus(val)}
+              />
+              <SearchableSelect
+                labelAr="المستوى الدراسي للطفل"
+                options={[
+                  { value: '', label: 'الكل' },
+                  ...gradeOptions,
+                ]}
+                value={filterChildSchoolGradeId}
+                onChange={(val) => setFilterChildSchoolGradeId(val)}
+              />
+              <Input
+                labelAr="الحد الأدنى لعمر الطفل"
+                type="number"
+                min="0"
+                value={filterMinChildAge}
+                onChange={(e) => setFilterMinChildAge(e.target.value)}
+              />
+              <Input
+                labelAr="الحد الأقصى لعمر الطفل"
+                type="number"
+                min="0"
+                value={filterMaxChildAge2}
+                onChange={(e) => setFilterMaxChildAge2(e.target.value)}
+              />
+            </div>
+          )}
+
           <div className="flex gap-2 mt-4">
             <Button size="sm" onClick={applyFilters}>
               <Search className="w-4 h-4" />
