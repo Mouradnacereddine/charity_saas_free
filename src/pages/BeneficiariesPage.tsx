@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { calculateAge, formatDate, formatCurrency } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
-import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer } from 'lucide-react'
+import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
 import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary } from '../hooks/useBeneficiaries'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -155,7 +155,16 @@ export default function BeneficiariesPage() {
   const [form, setForm] = useState<BeneficiaryFormData>(emptyForm())
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [showFilters, setShowFilters] = useState(false)
+
+  const toggleExpand = (id: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
 
   // ---- Attribut management (إدارة التصنيفات) ----
   const [newAttrNameAr, setNewAttrNameAr] = useState('')
@@ -770,6 +779,7 @@ export default function BeneficiariesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-gray-500">
+                  <th className="py-3 px-4 text-right font-medium w-8"></th>
                   <th className="py-3 px-4 text-right font-medium">الرمز المرجعي</th>
                   <th className="py-3 px-4 text-right font-medium">الاسم</th>
                   <th className="py-3 px-4 text-right font-medium hidden md:table-cell">رقم البطاقة الوطنية</th>
@@ -784,61 +794,104 @@ export default function BeneficiariesPage() {
               <tbody>
                 {displayBeneficiaries.map((b: Beneficiary) => {
                   const age = b.dateOfBirth ? calculateAge(b.dateOfBirth) : null
+                  const isExpanded = expandedRows.has(b.id)
                   return (
-                    <tr
-                      key={b.id}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => openDetail(b)}
-                    >
-                      <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
-                        {b.reference || '—'}
-                      </td>
-                      <td className="py-3 px-4 font-medium text-gray-900">
-                        {b.lastNameAr} {b.firstNameAr}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 hidden md:table-cell">{b.nationalCardNumber}</td>
-                      <td className="py-3 px-4 text-gray-600 hidden lg:table-cell" dir="ltr">
-                        {b.phone}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant={ATTRIBUT_BADGE_VARIANT[b.attribut] ?? 'default'}>
-                          {ATTRIBUT_LABELS[b.attribut] ?? b.attribut}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 hidden sm:table-cell">
-                        {age ? age.displayAr : '—'}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        <span className="inline-flex items-center gap-1">
-                          <Baby className="w-3.5 h-3.5" />
-                          {b.children.length}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 hidden lg:table-cell">
-                        {getCaisseName(b.caisseId)}
-                        {b.subCategoryId && (
-                          <span className="text-gray-400 text-xs block mt-0.5">
-                            ({getSubCaisseName(b.caisseId, b.subCategoryId)})
+                    <Fragment key={b.id}>
+                      <tr
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => openDetail(b)}
+                      >
+                        <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
+                          {(b.children || []).length > 0 && (
+                            <button
+                              onClick={() => toggleExpand(b.id)}
+                              className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                              title={isExpanded ? 'إخفاء الأطفال' : 'عرض الأطفال'}
+                            >
+                              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 font-semibold text-primary-700" dir="ltr">
+                          {b.reference || '—'}
+                        </td>
+                        <td className="py-3 px-3 font-medium text-gray-900">
+                          {b.lastNameAr} {b.firstNameAr}
+                        </td>
+                        <td className="py-3 px-3 text-gray-600 hidden md:table-cell">{b.nationalCardNumber}</td>
+                        <td className="py-3 px-3 text-gray-600 hidden lg:table-cell" dir="ltr">
+                          {b.phone}
+                        </td>
+                        <td className="py-3 px-3">
+                          <Badge variant={ATTRIBUT_BADGE_VARIANT[b.attribut] ?? 'default'}>
+                            {ATTRIBUT_LABELS[b.attribut] ?? b.attribut}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-3 text-gray-600 hidden sm:table-cell">
+                          {age ? age.displayAr : '—'}
+                        </td>
+                        <td className="py-3 px-3 text-gray-600">
+                          <span className="inline-flex items-center gap-1">
+                            <Baby className="w-3.5 h-3.5" />
+                            {b.children.length}
                           </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center justify-center gap-1">
-                          <button className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors" title="عرض التفاصيل"
-                            onClick={(e) => { e.stopPropagation(); openDetail(b) }}>
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="تعديل"
-                            onClick={(e) => { e.stopPropagation(); openEditForm(b) }}>
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="p-1.5 rounded-lg text-gray-400 hover:text-danger-500 hover:bg-red-50 transition-colors" title="حذف"
-                            onClick={(e) => { e.stopPropagation(); handleDelete(b.id) }}>
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="py-3 px-3 text-gray-600 hidden lg:table-cell">
+                          {getCaisseName(b.caisseId)}
+                          {b.subCategoryId && (
+                            <span className="text-gray-400 text-xs block mt-0.5">
+                              ({getSubCaisseName(b.caisseId, b.subCategoryId)})
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors" title="عرض التفاصيل"
+                              onClick={(e) => { e.stopPropagation(); openDetail(b) }}>
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="تعديل"
+                              onClick={(e) => { e.stopPropagation(); openEditForm(b) }}>
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button className="p-1.5 rounded-lg text-gray-400 hover:text-danger-500 hover:bg-red-50 transition-colors" title="حذف"
+                              onClick={(e) => { e.stopPropagation(); handleDelete(b.id) }}>
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {isExpanded && b.children && b.children.length > 0 && (
+                        <tr key={`${b.id}-children`}>
+                          <td colSpan={10} className="px-4 pb-4 pt-1 bg-gray-50">
+                            <div className="rounded-lg border border-gray-200 overflow-hidden">
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="bg-gray-100 text-gray-600">
+                                    <th className="py-2 px-3 text-right font-medium">الاسم</th>
+                                    <th className="py-2 px-3 text-right font-medium">الجنس</th>
+                                    <th className="py-2 px-3 text-right font-medium">العمر</th>
+                                    <th className="py-2 px-3 text-right font-medium">الحالة الصحية</th>
+                                    <th className="py-2 px-3 text-right font-medium">المستوى الدراسي</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {b.children.map((child: any, ci: number) => (
+                                    <tr key={ci} className="border-t border-gray-100 hover:bg-white">
+                                      <td className="py-2 px-3 font-medium text-gray-900">{child.lastNameAr} {child.firstNameAr}</td>
+                                      <td className="py-2 px-3 text-gray-600">{child.gender === 'female' ? 'أنثى' : 'ذكر'}</td>
+                                      <td className="py-2 px-3 text-gray-600">{calculateAge(child.dateOfBirth).displayAr}</td>
+                                      <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
+                                      <td className="py-2 px-3 text-gray-600">{getGradeName(child.schoolGradeId)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   )
                 })}
               </tbody>
