@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { formatCurrency, numberToArabicWords } from '../utils/helpers';
+import { formatCurrency, numberToArabicWords, calculateAge } from '../utils/helpers';
 import { printReceipt } from '../lib/receipt';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import type { MedicalReferral, Beneficiary, Caisse, MedicalAnalysisType, MedicalHospital, SubCategory } from '../types';
@@ -84,6 +84,14 @@ export default function MedicalPage() {
   const [amount, setAmount] = useState(0);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
+  const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
+
+  const selectedBeneficiary = beneficiaries.find((b: Beneficiary) => b.id === beneficiaryId);
+
+  const ATTRIBUT_LABELS: Record<string, string> = {
+    veuve: 'أرملة', orphelin: 'يتيم', personne_agee: 'شخص مسن',
+    handicape: 'معاق', famille_demunie: 'عائلة معوزة', autre: 'أخرى',
+  };
 
   const handleAddAnalysis = async () => {
     if (!newAnalysisAr.trim()) return
@@ -127,6 +135,7 @@ export default function MedicalPage() {
     setAmount(0);
     setDate(new Date().toISOString().split('T')[0]);
     setNotes('');
+    setSelectedChildren([]);
   };
 
   const handleAddReferral = async () => {
@@ -134,6 +143,16 @@ export default function MedicalPage() {
 
     const beneficiary = beneficiaries.find((b: Beneficiary) => b.id === beneficiaryId);
     if (!beneficiary) return;
+
+    const childrenData = selectedChildren.map((childId: string) => {
+      const child = (beneficiary.children || []).find((c: any) => c.id === childId || `${c.firstNameAr} ${c.lastNameAr}` === childId);
+      return child ? {
+        id: child.id || childId,
+        nameAr: `${child.lastNameAr || ''} ${child.firstNameAr || ''}`.trim(),
+        name: `${child.firstName || ''} ${child.lastName || ''}`.trim(),
+        age: calculateAge(child.dateOfBirth).displayAr,
+      } : { id: childId, nameAr: childId, name: '', age: '' };
+    });
 
     await createMedicalReferral.mutateAsync({
       beneficiaryId,
@@ -150,6 +169,7 @@ export default function MedicalPage() {
       amount,
       date,
       notes: notes || undefined,
+      children: childrenData.length > 0 ? childrenData : undefined,
     });
 
     resetForm();
@@ -168,6 +188,10 @@ export default function MedicalPage() {
     const caisseRow = caisse ? `<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse.nameAr}</span></div>` : ''
     const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
 
+    const childrenHtml = referral.children && Array.isArray(referral.children) && referral.children.length > 0
+      ? `<div class="row"><span class="lbl">الأطفال المستفيدون</span><span class="val">${referral.children.map((c: any) => c.nameAr || c.name).join(', ')}</span></div>`
+      : '';
+
     printReceipt(
       'توجيه طبي', 'Orientation Médicale',
       `<div class="col"><div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
@@ -178,6 +202,7 @@ ${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</
 <div class="col">${caisseRow}${subCatRow}
 <div class="row"><span class="lbl">التاريخ</span><span class="val">${referral.date}</span></div>
 ${referral.hospitalAr ? `<div class="row"><span class="lbl">المستشفى</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
+${childrenHtml}
 ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${referral.notes}</span></div>` : ''}</div>`,
       'color:#2563eb',
       formatCurrency(referral.amount), referral.amountInWordsAr, '',
@@ -348,6 +373,33 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
             <SearchableSelect labelAr="الصندوق" value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
               options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))} />
           </div>
+          {selectedBeneficiary && (
+            <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs flex gap-3">
+              <span><span className="text-blue-600 font-medium">الصفة: </span><span className="text-gray-700">{ATTRIBUT_LABELS[selectedBeneficiary.attribut] || selectedBeneficiary.attribut}</span></span>
+              {selectedBeneficiary.gender && <span><span className="text-blue-600 font-medium">| الجنس: </span><span className="text-gray-700">{selectedBeneficiary.gender === 'female' ? 'أنثى' : 'ذكر'}</span></span>}
+            </div>
+          )}
+          {/* Children selection */}
+          {selectedBeneficiary && (selectedBeneficiary.children || []).length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">الأطفال المستفيدون (اختياري)</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
+                {selectedBeneficiary.children.map((child: any, idx: number) => {
+                  const childKey = child.id || `${child.firstNameAr} ${child.lastNameAr}_${idx}`;
+                  return (
+                    <label key={idx} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white cursor-pointer transition-colors">
+                      <input type="checkbox" checked={selectedChildren.includes(childKey)}
+                        onChange={() => setSelectedChildren(prev => prev.includes(childKey) ? prev.filter(id => id !== childKey) : [...prev, childKey])}
+                        className="w-4 h-4 text-primary-600 rounded" />
+                      <span className="text-sm text-gray-800">{child.lastNameAr} {child.firstNameAr}</span>
+                      {child.dateOfBirth && <span className="text-xs text-gray-400">({calculateAge(child.dateOfBirth).displayAr})</span>}
+                      <span className="text-xs text-gray-400">{child.gender === 'female' ? 'أنثى' : 'ذكر'}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {(() => {
             const sc = caisses.find((c: Caisse) => c.id === caisseId)
             const subs = sc?.subCategories || []
@@ -391,6 +443,12 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
               {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">نوع التحليل</span><span className="font-medium text-gray-900">{showDetailModal.analysisTypeAr}</span></div>}
               {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستشفى</span><span className="font-medium text-gray-900">{showDetailModal.hospitalAr}</span></div>}
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">التاريخ</span><span className="font-medium text-gray-900">{showDetailModal.date}</span></div>
+              {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">الأطفال المستفيدون</span>
+                  <span className="font-medium text-gray-900 text-left">{showDetailModal.children.map((c: any) => c.nameAr || c.name || c.id).join('، ')}</span>
+                </div>
+              )}
             </div>
             <div className="bg-primary-50 rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-primary-700">{formatCurrency(showDetailModal.amount)}</p>

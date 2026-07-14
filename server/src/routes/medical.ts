@@ -47,7 +47,7 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
       reference: refInput, beneficiaryId, caisseId, subCategoryId,
       doctorName, doctorNameAr, analysisType, analysisTypeAr,
       hospital, hospitalAr, amount, amountInWords, amountInWordsAr,
-      date, notes,
+      date, notes, children,
     } = req.body;
 
     const reference = refInput || `MED-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
@@ -111,6 +111,7 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
           amountInWordsAr: wordsAr,
           date: new Date(date),
           notes,
+          children: children || [],
         },
       });
 

@@ -395,6 +395,7 @@ model MedicalReferral {
   amountInWordsAr String
   date            DateTime
   notes           String?
+  children        Json     @default("[]")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

@@ -268,6 +268,7 @@ export interface MedicalReferral {
   amountInWordsAr: string;
   date: string;
   notes?: string;
+  children?: { id: string; nameAr: string; name: string; age: string }[];
   createdAt: Date;
   updatedAt: Date;
 }
