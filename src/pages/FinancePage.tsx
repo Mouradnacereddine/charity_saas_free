@@ -3,7 +3,7 @@ import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, 
 import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake } from 'lucide-react'
-import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount } from '../hooks/useFinance'
+import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useConfirmTransaction, useCancelTransaction } from '../hooks/useFinance'
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
 import { useDonors } from '../hooks/useDonors'
 import { useQuery } from '@tanstack/react-query'
@@ -130,6 +130,8 @@ export default function FinancePage() {
   const createTransaction = useCreateTransaction()
   const createBankAccount = useCreateBankAccount()
   const updateBankAccount = useUpdateBankAccount()
+  const confirmTransaction = useConfirmTransaction()
+  const cancelTransaction = useCancelTransaction()
 
   // ---- Bank Account Modal State ----
   const [bankModalOpen, setBankModalOpen] = useState(false)
@@ -151,8 +153,11 @@ export default function FinancePage() {
   const [txAmount, setTxAmount] = useState('')
   const [txDescription, setTxDescription] = useState('')
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0])
+  const [txPending, setTxPending] = useState(false)
   const [txSubmitting, setTxSubmitting] = useState(false)
   const [txError, setTxError] = useState('')
+  const [confirmingTxId, setConfirmingTxId] = useState<string | null>(null)
+  const [cancellingTxId, setCancellingTxId] = useState<string | null>(null)
 
   // ---- Allocations Data ----
   const { data: allocations = [] } = useQuery({
@@ -327,6 +332,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         description: txDescription,
         descriptionAr: txDescription,
         date: txDate,
+        status: txPending ? 'pending' : 'completed',
       })
 
       // Reset form
@@ -334,9 +340,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
       setTxDescription('')
       setTxDonorId('')
       setTxBeneficiaryId('')
-      setTxSubCategoryId('')
       setTxAllocatedBeneficiaryId('')
       setTxAllocationId('')
+      setTxSubCategoryId('')
+      setTxPending(false)
     } catch (err: any) {
       setTxError(err?.response?.data?.error || err?.message || 'فشل في إضافة المعاملة')
     } finally {
@@ -370,6 +377,26 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
     setFilterSearchTerm('')
     setCurrentPage(1)
     setTxFilters(undefined)
+  }
+
+  const handleConfirmTransaction = async (id: string) => {
+    try {
+      await confirmTransaction.mutateAsync(id)
+      setConfirmingTxId(null)
+      setDetailTx(null)
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || 'فشل في تأكيد المعاملة')
+    }
+  }
+
+  const handleCancelTransaction = async (id: string) => {
+    try {
+      await cancelTransaction.mutateAsync(id)
+      setCancellingTxId(null)
+      setDetailTx(null)
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || 'فشل في إلغاء المعاملة')
+    }
   }
 
   // ---- Render ----
@@ -508,7 +535,14 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     <td className="py-3 px-4 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
                     <td className="py-3 px-4"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
                     <td className="py-3 px-4">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
-                    <td className="py-3 px-4">{a.remainingAmount <= 0 ? <Badge variant="success">مصرف</Badge> : <Badge variant="warning">متبقي {formatCurrency(a.remainingAmount)}</Badge>}</td>
+                    <td className="py-3 px-4">{(() => {
+                      const txStatus = a.creditTransaction?.status;
+                      if (txStatus === 'pending') return <Badge variant="warning">مرتبط بوعد</Badge>;
+                      if (txStatus === 'cancelled') return <Badge variant="danger">ملغي</Badge>;
+                      if (a.remainingAmount <= 0) return <Badge variant="success">مصرف بالكامل</Badge>;
+                      if (a.debitTransactionId) return <Badge variant="info">مصرف جزئياً</Badge>;
+                      return <Badge variant="info">نشط</Badge>;
+                    })()}</td>
                     <td className="py-3 px-4 text-gray-600">{formatDate(a.createdAt)}</td>
                   </tr>
                 ))}
@@ -528,6 +562,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المبلغ</span><span className="font-bold text-green-600">{formatCurrency(selectedAlloc.amount)}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المبلغ المتبقي</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : 'مصرف بالكامل'}</span></div>
               {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">ملاحظات</span><span className="font-medium text-gray-900">{selectedAlloc.notes}</span></div>}
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">حالة التبرع الأصلي</span><span className="font-medium">{selectedAlloc.creditTransaction?.status === 'pending' ? <Badge variant="warning">معلق</Badge> : selectedAlloc.creditTransaction?.status === 'cancelled' ? <Badge variant="danger">ملغي</Badge> : <Badge variant="success">مكتمل</Badge>}</span></div>
               {selectedAlloc.debitTransactionId && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">تم الصرف</span><span className="font-medium text-green-600">نعم</span></div>}
             </div>
             <div className="flex justify-end">
@@ -688,19 +723,88 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 }))}
               />
             )}
-            {txType === 'debit' && txBeneficiaryId && (
-              <SearchableSelect
-                labelAr="التبرع المخصص (اختياري)"
-                value={txAllocationId}
-                onChange={setTxAllocationId}
-                options={allocations
-                  .filter((a: DonationAllocation) => a.beneficiaryId === txBeneficiaryId && a.remainingAmount > 0)
-                  .map((a: DonationAllocation) => ({
-                    value: a.id,
-                    label: `من ${a.donor.lastNameAr} ${a.donor.firstNameAr} — ${formatCurrency(a.remainingAmount)}`,
-                  }))}
-              />
-            )}
+            {txType === 'debit' && txBeneficiaryId && (() => {
+              const allocsForBenef = allocations.filter(
+                (a: DonationAllocation) =>
+                  a.beneficiaryId === txBeneficiaryId &&
+                  a.remainingAmount > 0 &&
+                  a.creditTransaction?.status === 'completed'
+              );
+              const selectedAlloc = allocsForBenef.find((a: DonationAllocation) => a.id === txAllocationId);
+              return (
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">صرف من تبرع مخصص (اختياري)</label>
+                  {allocsForBenef.length === 0 ? (
+                    <p className="text-xs text-gray-400">لا توجد تبرعات مخصصة متاحة لهذا المستفيد</p>
+                  ) : (
+                    <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2">
+                      {allocsForBenef.map((a: DonationAllocation) => {
+                        const spent = a.amount - a.remainingAmount;
+                        return (
+                          <label
+                            key={a.id}
+                            className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
+                              txAllocationId === a.id
+                                ? 'border-primary-500 bg-primary-50'
+                                : 'border-gray-100 hover:bg-gray-50'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="allocSelection"
+                              checked={txAllocationId === a.id}
+                              onChange={() => setTxAllocationId(a.id)}
+                              className="mt-1 w-4 h-4 text-primary-600"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-sm text-gray-900">{a.donor.lastNameAr} {a.donor.firstNameAr}</span>
+                                <span className="text-xs text-gray-400">{formatCurrency(a.amount)}</span>
+                              </div>
+                              <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                                <span>صرف: <span className="text-gray-700">{formatCurrency(spent)}</span></span>
+                                <span>متبقي: <span className="text-green-600 font-semibold">{formatCurrency(a.remainingAmount)}</span></span>
+                              </div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {selectedAlloc && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs text-blue-600 font-medium">التبرع المحدد: {selectedAlloc.donor.lastNameAr} {selectedAlloc.donor.firstNameAr}</p>
+                          <p className="text-xs text-blue-500">المتبقي للصرف: <span className="font-bold">{formatCurrency(selectedAlloc.remainingAmount)}</span></p>
+                          {amountNum > 0 && (
+                            <p className={`text-xs mt-1 ${
+                              amountNum > selectedAlloc.remainingAmount ? 'text-red-500' :
+                              amountNum === selectedAlloc.remainingAmount ? 'text-green-600' :
+                              'text-blue-500'
+                            }`}>
+                              {amountNum > selectedAlloc.remainingAmount
+                                ? '⚠️ المبلغ يتجاوز المتبقي من هذا التبرع'
+                                : amountNum === selectedAlloc.remainingAmount
+                                ? '✓ سيتم صرف التبرع بالكامل'
+                                : `ℹ️ سيتبقى ${formatCurrency(selectedAlloc.remainingAmount - amountNum)} من هذا التبرع`}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setTxAmount(String(selectedAlloc.remainingAmount))}
+                        >
+                          أخذ المبلغ المتبقي
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Row 4: Amount & Date */}
@@ -757,7 +861,16 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               <button onClick={() => setTxError('')} className="mr-auto text-red-500 hover:text-red-700">✕</button>
             </div>
           )}
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={txPending}
+                onChange={(e) => setTxPending(e.target.checked)}
+                className="w-4 h-4 text-amber-500 focus:ring-amber-500 rounded"
+              />
+              <span className="text-sm text-gray-600">معاملة معلقة (لن تؤثر على الرصيد)</span>
+            </label>
             <Button type="submit" disabled={txSubmitting || amountNum <= 0 || !txCaisseId}>
               {txSubmitting ? 'جاري الحفظ...' : 'حفظ المعاملة'}
             </Button>
@@ -885,6 +998,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   <tr className="border-b border-gray-200">
                     <th className="text-right py-3 px-3 font-medium text-gray-500">التاريخ</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">النوع</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">الحالة</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المصدر</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المبلغ</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">الصندوق</th>
@@ -910,6 +1024,15 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                             <Badge variant="success">إيداع</Badge>
                           ) : (
                             <Badge variant="danger">سحب</Badge>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          {(tx.status || 'completed') === 'pending' ? (
+                            <Badge variant="warning">معلق</Badge>
+                          ) : (tx.status || 'completed') === 'cancelled' ? (
+                            <Badge variant="danger">ملغي</Badge>
+                          ) : (
+                            <Badge variant="success">مكتمل</Badge>
                           )}
                         </td>
                         <td className="py-3 px-3 text-gray-600">
@@ -1060,6 +1183,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
                 <div><p className="text-xs text-gray-500">النوع</p><p className="font-medium">{detailTx.type === 'credit' ? 'إيداع' : 'سحب'}</p></div>
                 <div><p className="text-xs text-gray-500">المبلغ</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(detailTx.amount)}</p></div>
+                <div><p className="text-xs text-gray-500">الحالة</p><p className="font-medium">{(detailTx.status || 'completed') === 'pending' ? <Badge variant="warning">معلق</Badge> : (detailTx.status || 'completed') === 'cancelled' ? <Badge variant="danger">ملغي</Badge> : <Badge variant="success">مكتمل</Badge>}</p></div>
                 <div><p className="text-xs text-gray-500">الصندوق</p><p className="font-medium text-gray-900">{caisse?.nameAr || '—'}</p></div>
                 <div><p className="text-xs text-gray-500">مصدر التمويل</p><p className="font-medium">{detailTx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</p></div>
                 {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-gray-500">الحساب البنكي</p><p className="font-medium">{bankAcc.bankNameAr}</p></div>}
@@ -1070,10 +1194,20 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 <div><p className="text-xs text-gray-500">التاريخ</p><p className="font-medium text-gray-900">{formatDate(detailTx.date)}</p></div>
               </div>
               <div className="flex justify-end gap-2">
-                {detailTx.type === 'credit' && (
+                {detailTx.type === 'credit' && (detailTx.status === 'completed' || !detailTx.status) && (
                   <Button size="sm" variant="success" onClick={() => { handlePrintReceipt(detailTx); setDetailTx(null); }}>
                     <Printer size={14} /> طباعة الوصل
                   </Button>
+                )}
+                {(detailTx.status || 'completed') === 'pending' && (
+                  <>
+                    <Button size="sm" variant="primary" onClick={() => handleConfirmTransaction(detailTx.id)}>
+                      تأكيد المعاملة
+                    </Button>
+                    <Button size="sm" variant="danger" onClick={() => handleCancelTransaction(detailTx.id)}>
+                      إلغاء المعاملة
+                    </Button>
+                  </>
                 )}
                 <Button size="sm" variant="secondary" onClick={() => setDetailTx(null)}>إغلاق</Button>
               </div>

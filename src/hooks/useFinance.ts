@@ -17,6 +17,7 @@ export function useCreateTransaction() {
     mutationFn: financeApi.createTransaction,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['finance-allocations'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['caisses'] });
     },
@@ -49,7 +50,31 @@ export function useUpdateBankAccount() {
   });
 }
 
-export function useFinanceStats() {
+export function useConfirmTransaction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => financeApi.confirmTransaction(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['finance-allocations'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['caisses'] });
+    },
+  });
+}
+
+export function useCancelTransaction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => financeApi.cancelTransaction(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['finance-allocations'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['caisses'] });
+    },
+  });
+}
   return useQuery({
     queryKey: ['finance-stats'],
     queryFn: async () => {

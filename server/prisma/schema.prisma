@@ -29,6 +29,12 @@ enum FundSource {
   caisse_physique
 }
 
+enum TransactionStatus {
+  pending
+  completed
+  cancelled
+}
+
 enum ArticleStatus {
   disponible
   prete
@@ -216,6 +222,7 @@ model Transaction {
   description     String
   descriptionAr   String
   receiptNumber   String?
+  status          TransactionStatus @default(completed)
   date            DateTime
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt

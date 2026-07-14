@@ -105,6 +105,7 @@ export default function DashboardPage() {
                     <th className="text-right py-3 px-4 font-semibold text-gray-600">النوع</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600">المبلغ</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">الوصف</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">الحالة</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600">التاريخ</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">المصدر</th>
                   </tr>
@@ -125,6 +126,15 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-gray-700 hidden sm:table-cell">{tx.descriptionAr}</td>
+                      <td className="py-3 px-4 hidden sm:table-cell">
+                        {(tx.status || 'completed') === 'pending' ? (
+                          <Badge variant="warning">معلق</Badge>
+                        ) : (tx.status || 'completed') === 'cancelled' ? (
+                          <Badge variant="danger">ملغي</Badge>
+                        ) : (
+                          <Badge variant="success">مكتمل</Badge>
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-gray-500">{formatDate(tx.date)}</td>
                       <td className="py-3 px-4 hidden sm:table-cell">
                         <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>

@@ -11,6 +11,7 @@ export type ArticleStatusEnum = string;
 export type LoanStatus = 'en_cours' | 'partiellement_retourne' | 'retourne' | 'definitif';
 export type ChildHealthStatus = 'bonne_sante' | 'malade' | 'handicape' | 'autre';
 export type UserStatus = 'pending' | 'approved' | 'rejected';
+export type TransactionStatus = 'pending' | 'completed' | 'cancelled';
 
 // ---- Beneficiary Attribut (الصفة) ----
 
@@ -171,6 +172,7 @@ export interface Donor {
 export interface Transaction {
   id: string;
   type: TransactionType;
+  status: TransactionStatus;
   amount: number;
   amountInWords: string;
   amountInWordsAr: string;
@@ -304,7 +306,7 @@ export interface DonationAllocation {
   updatedAt: Date;
   donor: { id: string; firstName: string; lastName: string; firstNameAr: string; lastNameAr: string; reference: string };
   beneficiary: { id: string; firstName: string; lastName: string; firstNameAr: string; lastNameAr: string; reference: string };
-  creditTransaction: { id: string; date: string; receiptNumber?: string; caisseId: string };
+  creditTransaction: { id: string; date: string; receiptNumber?: string; caisseId: string; status: TransactionStatus };
   debitTransaction?: { id: string; date: string; receiptNumber?: string };
 }
 

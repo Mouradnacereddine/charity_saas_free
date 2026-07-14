@@ -497,7 +497,8 @@ export default function DonorsPage() {
                       <tr className="border-b border-gray-200">
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">المستفيد</th>
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">المبلغ</th>
-                        <th className="text-right py-2 px-3 font-semibold text-gray-600">المبلغ المتبقي</th>
+                        <th className="text-right py-2 px-3 font-semibold text-gray-600">المتبقي</th>
+                        <th className="text-right py-2 px-3 font-semibold text-gray-600">الحالة</th>
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">التاريخ</th>
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">ملاحظات</th>
                       </tr>
@@ -507,7 +508,17 @@ export default function DonorsPage() {
                         <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-2 px-3 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
                           <td className="py-2 px-3"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
-                          <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">مصرف</Badge>}</td>
+                          <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
+                          <td className="py-2 px-3">
+                            {(() => {
+                              const s = a.creditTransaction?.status;
+                              if (s === 'pending') return <Badge variant="warning">مرتبط بوعد</Badge>;
+                              if (s === 'cancelled') return <Badge variant="danger">ملغي</Badge>;
+                              if (a.remainingAmount <= 0) return <Badge variant="success">مصرف بالكامل</Badge>;
+                              if (a.debitTransactionId) return <Badge variant="info">مصرف جزئياً</Badge>;
+                              return <Badge variant="info">نشط</Badge>;
+                            })()}
+                          </td>
                           <td className="py-2 px-3 text-gray-700">{formatDate(a.createdAt)}</td>
                           <td className="py-2 px-3 text-gray-500 text-xs">{a.notes || '—'}</td>
                         </tr>
