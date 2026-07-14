@@ -49,31 +49,38 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
     const associationId = req.user!.associationId;
     const {
       reference, name, nameAr, description, descriptionAr,
-      categoryId, quantity, storageLocationId,
-      condition, conditionAr, isPermanent, notes,
+      categoryId, category, quantity, storageLocationId, storageLocation,
+      condition, conditionAr, isPermanent, notes, status,
     } = req.body;
 
-    if (!reference || !name || !nameAr || !categoryId || quantity === undefined || !storageLocationId || !condition || !conditionAr) {
+    const resolvedCategoryId = categoryId || category;
+    const resolvedStorageLocationId = storageLocationId || storageLocation;
+
+    if (!name || !nameAr || !resolvedCategoryId || quantity === undefined || !resolvedStorageLocationId || !condition || !conditionAr) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
 
+    // Auto-generate reference if not provided
+    const ref = reference || `ART-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+
     const article = await prisma.article.create({
       data: {
         associationId,
-        reference,
+        reference: ref,
         name,
         nameAr,
         description,
         descriptionAr,
-        categoryId,
+        categoryId: resolvedCategoryId,
         quantity: parseInt(quantity, 10),
         availableQuantity: parseInt(quantity, 10),
-        storageLocationId,
+        storageLocationId: resolvedStorageLocationId,
         condition,
         conditionAr,
         isPermanent: isPermanent || false,
         notes,
+        status: status || 'disponible',
       },
     });
 
@@ -124,8 +131,8 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
 
     const {
       reference, name, nameAr, description, descriptionAr,
-      categoryId, quantity, availableQuantity, status,
-      storageLocationId, condition, conditionAr, isPermanent, notes,
+      categoryId, category, quantity, availableQuantity, status,
+      storageLocationId, storageLocation, condition, conditionAr, isPermanent, notes,
     } = req.body;
 
     const data: any = {};
@@ -135,10 +142,12 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
     if (description !== undefined) data.description = description;
     if (descriptionAr !== undefined) data.descriptionAr = descriptionAr;
     if (categoryId !== undefined) data.categoryId = categoryId;
+    if (category !== undefined) data.categoryId = category;
     if (quantity !== undefined) data.quantity = parseInt(quantity, 10);
     if (availableQuantity !== undefined) data.availableQuantity = parseInt(availableQuantity, 10);
     if (status !== undefined) data.status = status;
     if (storageLocationId !== undefined) data.storageLocationId = storageLocationId;
+    if (storageLocation !== undefined) data.storageLocationId = storageLocation;
     if (condition !== undefined) data.condition = condition;
     if (conditionAr !== undefined) data.conditionAr = conditionAr;
     if (isPermanent !== undefined) data.isPermanent = isPermanent;
