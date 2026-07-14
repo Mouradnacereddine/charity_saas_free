@@ -43,6 +43,14 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
         { description: { contains: term, mode: 'insensitive' } },
         { descriptionAr: { contains: term, mode: 'insensitive' } },
         { receiptNumber: { contains: term, mode: 'insensitive' } },
+        { donor: { firstNameAr: { contains: term, mode: 'insensitive' } } },
+        { donor: { lastNameAr: { contains: term, mode: 'insensitive' } } },
+        { donor: { firstName: { contains: term, mode: 'insensitive' } } },
+        { donor: { lastName: { contains: term, mode: 'insensitive' } } },
+        { beneficiary: { firstNameAr: { contains: term, mode: 'insensitive' } } },
+        { beneficiary: { lastNameAr: { contains: term, mode: 'insensitive' } } },
+        { beneficiary: { firstName: { contains: term, mode: 'insensitive' } } },
+        { beneficiary: { lastName: { contains: term, mode: 'insensitive' } } },
       ];
     }
 
