@@ -4,13 +4,14 @@ import { formatCurrency, numberToArabicWords, calculateAge } from '../utils/help
 import { printReceipt } from '../lib/receipt';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import type { MedicalReferral, Beneficiary, Caisse, MedicalAnalysisType, MedicalHospital, SubCategory } from '../types';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { caissesApi } from '../lib/api';
 import { useMedicalReferrals, useCreateMedicalReferral, useDeleteMedicalReferral, useAnalysisTypes, useCreateAnalysisType, useUpdateAnalysisType, useDeleteAnalysisType, useHospitals, useCreateHospital, useUpdateHospital, useDeleteHospital } from '../hooks/useMedical';
 import { useBeneficiaries } from '../hooks/useBeneficiaries';
 import { api, financeApi } from '../lib/api';
 
 export default function MedicalPage() {
+  const queryClient = useQueryClient();
   const { data: referrals = [] } = useMedicalReferrals();
   const { data: beneficiaries = [] } = useBeneficiaries();
   const { data: caisses = [] } = useQuery({
@@ -43,6 +44,7 @@ export default function MedicalPage() {
   const [filterDateTo, setFilterDateTo] = useState('');
   const [filterDoctor, setFilterDoctor] = useState('');
   const [filterAnalysis, setFilterAnalysis] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   const applyFilters = () => {
     setCommittedSearchTerm(filterSearchTerm);
@@ -58,6 +60,7 @@ export default function MedicalPage() {
     setFilterDateTo('');
     setFilterDoctor('');
     setFilterAnalysis('');
+    setFilterStatus('');
   };
 
   // Settings tab state
@@ -240,6 +243,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
     if (filterDoctor && !r.doctorNameAr.includes(filterDoctor)) return false;
 
     if (filterAnalysis && !(r.analysisTypeAr?.includes(filterAnalysis))) return false;
+    if (filterStatus && (r.status || 'pending') !== filterStatus) return false;
 
     return true;
   });
@@ -315,6 +319,17 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                   value={filterAnalysis} onChange={(e) => setFilterAnalysis(e.target.value)}
                 />
               </div>
+              <SearchableSelect
+                labelAr="الحالة"
+                options={[
+                  { value: '', label: 'الكل' },
+                  { value: 'pending', label: 'قيد الانتظار' },
+                  { value: 'completed', label: 'مكتمل' },
+                  { value: 'cancelled', label: 'ملغي' },
+                ]}
+                value={filterStatus}
+                onChange={(val) => setFilterStatus(val)}
+              />
               <div className="flex items-end gap-2">
                 <Button size="sm" onClick={applyFilters}>
                   <Search className="w-4 h-4" /> بحث
@@ -338,23 +353,31 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 <tr className="border-b border-gray-200">
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">الرمز المرجعي</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">المستفيد</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">رمز المستفيد</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">رقم البطاقة</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">الطبيب</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">نوع التحليل</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">المبلغ</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">الحالة</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">التاريخ</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredReferrals.map((referral: MedicalReferral) => (
+                {filteredReferrals.map((referral: MedicalReferral) => {
+                  const benef = beneficiaries.find((b: Beneficiary) => b.id === referral.beneficiaryId);
+                  return (
                   <tr key={referral.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setShowDetailModal(referral)}>
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">{referral.reference || '—'}</td>
                     <td className="py-3 px-4 font-medium">{referral.beneficiaryNameAr}</td>
-                    <td className="py-3 px-4 hidden lg:table-cell" dir="ltr">{referral.beneficiaryReference || '—'}</td>
+                    <td className="py-3 px-4 hidden lg:table-cell font-mono text-xs" dir="ltr">{benef?.nationalCardNumber || '—'}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr}</td>
                     <td className="py-3 px-4 hidden md:table-cell">{referral.analysisTypeAr || '—'}</td>
-                    <td className="py-3 px-4 font-medium text-primary-600">{formatCurrency(referral.amount)}</td>
+                    <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary-600">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">pending</Badge>}</td>
+                    <td className="py-3 px-4 hidden sm:table-cell">
+                      {(referral.status || 'pending') === 'pending' ? <Badge variant="warning">قيد الانتظار</Badge> :
+                       (referral.status || 'pending') === 'completed' ? <Badge variant="success">مكتمل</Badge> :
+                       <Badge variant="danger">ملغي</Badge>}
+                    </td>
                     <td className="py-3 px-4 text-gray-500 hidden sm:table-cell">{referral.date}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1">
@@ -364,7 +387,8 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -459,6 +483,10 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الرمز المرجعي</span><span className="font-semibold text-primary-700" dir="ltr">{showDetailModal.reference || '—'}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستفيد</span><span className="font-medium text-gray-900">{showDetailModal.beneficiaryNameAr} <span dir="ltr" className="text-xs text-gray-400">({showDetailModal.beneficiaryReference || ''})</span></span></div>
+              {(() => {
+                const b = beneficiaries.find((b: Beneficiary) => b.id === showDetailModal.beneficiaryId);
+                return b?.nationalCardNumber ? <div className="flex justify-between items-center"><span className="text-xs text-gray-500">رقم البطاقة الوطنية</span><span className="font-medium text-gray-900" dir="ltr">{b.nationalCardNumber}</span></div> : null;
+              })()}
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الطبيب</span><span className="font-medium text-gray-900">{showDetailModal.doctorNameAr}</span></div>
               {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">نوع التحليل</span><span className="font-medium text-gray-900">{showDetailModal.analysisTypeAr}</span></div>}
               {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستشفى</span><span className="font-medium text-gray-900">{showDetailModal.hospitalAr}</span></div>}
@@ -509,8 +537,13 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                   </Button>
                   <Button size="sm" variant="danger" onClick={async () => {
                     if (confirm('هل أنت متأكد من إلغاء هذا التوجيه الطبي؟')) {
-                      await financeApi.cancelTransaction(showDetailModal.id).catch(() => {});
-                      setShowDetailModal(null);
+                      try {
+                        await api.put(`/medical/referrals/${showDetailModal.id}/cancel`);
+                        queryClient.invalidateQueries({ queryKey: ['medical-referrals'] });
+                        setShowDetailModal(null);
+                      } catch (err: any) {
+                        alert(err?.response?.data?.error || 'فشل في إلغاء التوجيه');
+                      }
                     }
                   }}>
                     إلغاء
@@ -530,6 +563,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                   <Button onClick={async () => {
                     try {
                       await api.put(`/medical/referrals/${showDetailModal.id}/confirm`, { amount: Number(confirmAmount) || 0 });
+                      queryClient.invalidateQueries({ queryKey: ['medical-referrals'] });
                       setConfirmingId(null);
                       setShowDetailModal(null);
                     } catch (err: any) {
