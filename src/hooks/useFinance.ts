@@ -75,6 +75,8 @@ export function useCancelTransaction() {
     },
   });
 }
+
+export function useFinanceStats() {
   return useQuery({
     queryKey: ['finance-stats'],
     queryFn: async () => {
