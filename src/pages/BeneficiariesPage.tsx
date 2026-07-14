@@ -456,7 +456,7 @@ export default function BeneficiariesPage() {
   }
 
   // ---- Print ----
-  const handlePrintBeneficiary = (b: Beneficiary) => {
+  const handlePrintCard = (b: Beneficiary) => {
     const childrenHtml = (b.children || []).length > 0
       ? b.children.map((ch: any) =>
           `<div class="row"><span class="lbl">الطفل</span><span class="val">${ch.lastNameAr} ${ch.firstNameAr} — ${calculateAge(ch.dateOfBirth).displayAr}</span></div>`
@@ -493,6 +493,140 @@ export default function BeneficiariesPage() {
       'توقيع المستفيد',
       'ختم الجمعية'
     )
+  }
+
+  // ---- Print Full File (A4) ----
+  const handlePrintFullFile = (b: Beneficiary, allocations: DonationAllocation[], debits: any[], referrals: any[]) => {
+    const caisse = caisses.find((c: any) => c.id === b.caisseId)
+
+    const personalInfoHtml = `
+      <table class="info-table">
+        <tr><td class="lbl">الرمز المرجعي</td><td class="val">${b.reference || '—'}</td></tr>
+        <tr><td class="lbl">الاسم بالعربية</td><td class="val">${b.lastNameAr} ${b.firstNameAr}</td></tr>
+        <tr><td class="lbl">الاسم باللاتينية</td><td class="val">${b.firstName} ${b.lastName}</td></tr>
+        <tr><td class="lbl">رقم البطاقة الوطنية</td><td class="val">${b.nationalCardNumber || '—'}</td></tr>
+        <tr><td class="lbl">الهاتف</td><td class="val">${b.phone}</td></tr>
+        <tr><td class="lbl">تاريخ الميلاد</td><td class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${calculateAge(b.dateOfBirth).displayAr})` : '—'}</td></tr>
+        <tr><td class="lbl">الصفة</td><td class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</td></tr>
+        <tr><td class="lbl">الجنس</td><td class="val">${b.gender === 'female' ? 'أنثى' : 'ذكر'}</td></tr>
+        <tr><td class="lbl">العنوان</td><td class="val">${b.addressAr || '—'}</td></tr>
+        <tr><td class="lbl">الصندوق</td><td class="val">${caisse?.nameAr || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</td></tr>
+        ${b.situationAr ? `<tr><td class="lbl">الحالة</td><td class="val">${b.situationAr}</td></tr>` : ''}
+        ${b.notes ? `<tr><td class="lbl">ملاحظات</td><td class="val">${b.notes}</td></tr>` : ''}
+      </table>`
+
+    const childrenHtml = (b.children || []).length > 0 ? `
+      <h3 class="section-title">الأطفال (${b.children.length})</h3>
+      <table class="data-table">
+        <thead><tr><th>الاسم</th><th>الجنس</th><th>العمر</th><th>الحالة الصحية</th><th>المستوى الدراسي</th></tr></thead>
+        <tbody>${b.children.map((ch: any) => `
+          <tr>
+            <td>${ch.lastNameAr} ${ch.firstNameAr}</td>
+            <td>${ch.gender === 'female' ? 'أنثى' : 'ذكر'}</td>
+            <td>${calculateAge(ch.dateOfBirth).displayAr}</td>
+            <td>${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</td>
+            <td>${getGradeName(ch.schoolGradeId)}</td>
+          </tr>`).join('')}</tbody>
+      </table>` : ''
+
+    const allocsHtml = allocations.length > 0 ? `
+      <h3 class="section-title">التبرعات الواردة (${allocations.length})</h3>
+      <table class="data-table">
+        <thead><tr><th>المتبرع</th><th>المبلغ</th><th>المصرف</th><th>المتبقي</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+        <tbody>${allocations.map((a: DonationAllocation) => {
+          const spent = a.amount - a.remainingAmount
+          const s = a.creditTransaction?.status
+          const statusLabel = s === 'pending' ? 'معلق' : s === 'cancelled' ? 'ملغي' : a.remainingAmount <= 0 ? 'مصرف بالكامل' : a.debitTransactionId ? 'مصرف جزئياً' : 'نشط'
+          return `<tr>
+            <td>${a.donor.lastNameAr} ${a.donor.firstNameAr}</td>
+            <td>${formatCurrency(a.amount)}</td>
+            <td>${spent > 0 ? formatCurrency(spent) : '—'}</td>
+            <td>${a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : '0'}</td>
+            <td>${statusLabel}</td>
+            <td>${formatDate(a.createdAt)}</td>
+          </tr>`
+        }).join('')}</tbody>
+        <tfoot><tr>
+          <td colspan="2"><strong>الإجمالي: ${formatCurrency(allocations.reduce((s: number, a: DonationAllocation) => s + a.amount, 0))}</strong></td>
+          <td><strong>${formatCurrency(allocations.reduce((s: number, a: DonationAllocation) => s + (a.amount - a.remainingAmount), 0))}</strong></td>
+          <td><strong>${formatCurrency(allocations.reduce((s: number, a: DonationAllocation) => s + a.remainingAmount, 0))}</strong></td>
+          <td colspan="2"></td>
+        </tr></tfoot>
+      </table>` : ''
+
+    const debitsHtml = debits.length > 0 ? `
+      <h3 class="section-title">المبالغ المصروفة (${debits.length})</h3>
+      <table class="data-table">
+        <thead><tr><th>التاريخ</th><th>المبلغ</th><th>المصدر</th><th>الصندوق</th><th>الحالة</th><th>الوصف</th></tr></thead>
+        <tbody>${debits.map((tx: any) => {
+          const c = caisses.find((c: any) => c.id === tx.caisseId)
+          const s = (tx.status || 'completed') === 'pending' ? 'معلق' : (tx.status || 'completed') === 'cancelled' ? 'ملغي' : 'مكتمل'
+          return `<tr>
+            <td>${formatDate(tx.date)}</td>
+            <td>${formatCurrency(tx.amount)}</td>
+            <td>${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</td>
+            <td>${c?.nameAr || '—'}</td>
+            <td>${s}</td>
+            <td>${tx.descriptionAr || '—'}</td>
+          </tr>`
+        }).join('')}</tbody>
+      </table>` : ''
+
+    const refsHtml = referrals.length > 0 ? `
+      <h3 class="section-title">التوجيه الطبي (${referrals.length})</h3>
+      <table class="data-table">
+        <thead><tr><th>التاريخ</th><th>الطبيب</th><th>المبلغ</th><th>التحليل</th><th>المستشفى</th><th>الأطفال</th></tr></thead>
+        <tbody>${referrals.map((ref: any) => {
+          const childrenNames = ref.children && Array.isArray(ref.children) && ref.children.length > 0
+            ? ref.children.map((c: any) => c.nameAr).join(', ')
+            : '—'
+          return `<tr>
+            <td>${formatDate(ref.date)}</td>
+            <td>${ref.doctorNameAr}</td>
+            <td>${formatCurrency(ref.amount)}</td>
+            <td>${ref.analysisTypeAr || '—'}</td>
+            <td>${ref.hospitalAr || '—'}</td>
+            <td>${childrenNames}</td>
+          </tr>`
+        }).join('')}</tbody>
+      </table>` : ''
+
+    const fullHtml = `
+      <!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
+      <style>
+        @page { size: A4; margin: 15mm 20mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; font-size: 12px; color: #222; padding: 0; }
+        h1 { font-size: 20px; color: #2563eb; text-align: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #2563eb; }
+        h2 { font-size: 16px; color: #1e40af; margin: 15px 0 8px; }
+        h3.section-title { font-size: 14px; color: #1e40af; margin: 20px 0 10px; padding-bottom: 5px; border-bottom: 1px solid #93c5fd; }
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .info-table td { padding: 4px 8px; border: 0; }
+        .info-table td.lbl { width: 180px; font-weight: 600; color: #4b5563; font-size: 11px; }
+        .info-table td.val { font-size: 12px; }
+        .data-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px; }
+        .data-table th { background: #2563eb; color: #fff; padding: 6px 8px; text-align: center; font-size: 11px; }
+        .data-table td { padding: 5px 8px; border-bottom: 1px solid #e5e7eb; text-align: center; }
+        .data-table tbody tr:nth-child(even) { background: #f9fafb; }
+        .data-table tfoot td { font-weight: bold; background: #eff6ff; padding: 6px 8px; border-top: 2px solid #93c5fd; }
+        .print-btn { display: block; width: 200px; margin: 20px auto; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-align: center; }
+        @media print { .print-btn { display: none; } body { padding: 0; } }
+      </style></head><body>
+        <h1>ملف المستفيد</h1>
+        <h2>المعلومات الشخصية</h2>
+        ${personalInfoHtml}
+        ${childrenHtml}
+        ${allocsHtml}
+        ${debitsHtml}
+        ${refsHtml}
+        <button class="print-btn" onclick="window.print()">طباعة</button>
+      </body></html>`
+
+    const win = window.open('', '_blank')
+    if (win) {
+      win.document.write(fullHtml)
+      win.document.close()
+    }
   }
 
   // ---- Helpers ----
@@ -1055,7 +1189,15 @@ export default function BeneficiariesPage() {
             )}
 
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <Button size="sm" variant="secondary" onClick={() => handlePrintBeneficiary(selectedBeneficiary)}>
+              <Button size="sm" variant="secondary" onClick={() => handlePrintCard(selectedBeneficiary)}>
+                <Printer className="w-4 h-4" /> بطاقة المستفيد
+              </Button>
+              <Button size="sm" variant="primary" onClick={() => handlePrintFullFile(
+                selectedBeneficiary,
+                beneficiaryAllocations,
+                beneficiaryDebits,
+                beneficiaryReferrals
+              )}>
                 <Printer className="w-4 h-4" /> طباعة الملف
               </Button>
               <Button size="sm" variant="secondary" onClick={closeDetail}>إغلاق</Button>
