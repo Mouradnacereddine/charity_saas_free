@@ -7,10 +7,14 @@ const router = Router();
 // All routes require authentication
 router.use(requireAuth);
 
-// GET /api/beneficiaries — list with filters (searchTerm, attribut, caisseId, situation, minChildren, maxChildAge, gender, minAge, maxAge)
+// GET /api/beneficiaries — list with filters
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { searchTerm, attribut, caisseId, situation, minChildren, maxChildAge, gender, minAge, maxAge } = req.query;
+    const {
+      searchTerm, attribut, caisseId, situation,
+      minChildren, maxChildAge, gender, minAge, maxAge,
+      childGender, childHealthStatus, childSchoolGradeId, minChildAge, maxChildAge: maxChildAgeParam,
+    } = req.query;
     const associationId = req.user!.associationId;
 
     const where: any = { associationId };
@@ -60,6 +64,40 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         if (minAge && adjustedAge < parseInt(String(minAge), 10)) return false;
         if (maxAge && adjustedAge > parseInt(String(maxAge), 10)) return false;
         return true;
+      });
+    }
+
+    // ---- Child-focused filters ----
+    // These filter beneficiaries by requiring at least one child matching ALL criteria
+    const hasChildFilter = childGender || childHealthStatus || childSchoolGradeId || minChildAge || maxChildAgeParam;
+
+    if (hasChildFilter) {
+      const now = new Date();
+      beneficiaries = beneficiaries.filter((b: any) => {
+        const children = (b.children as any[]) || [];
+        if (children.length === 0) return false;
+
+        return children.some((child: any) => {
+          // Child gender filter
+          if (childGender && child.gender !== String(childGender)) return false;
+
+          // Child health status filter
+          if (childHealthStatus && child.healthStatus !== String(childHealthStatus)) return false;
+
+          // Child school grade filter
+          if (childSchoolGradeId && child.schoolGradeId !== String(childSchoolGradeId)) return false;
+
+          // Child age filters
+          if (child.dateOfBirth) {
+            const age = now.getFullYear() - new Date(child.dateOfBirth).getFullYear();
+            const monthDiff = now.getMonth() - new Date(child.dateOfBirth).getMonth();
+            const adjustedAge = monthDiff < 0 ? age - 1 : age;
+            if (minChildAge && adjustedAge < parseInt(String(minChildAge), 10)) return false;
+            if (maxChildAgeParam && adjustedAge > parseInt(String(maxChildAgeParam), 10)) return false;
+          }
+
+          return true;
+        });
       });
     }
 
