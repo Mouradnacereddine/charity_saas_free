@@ -45,8 +45,10 @@ api.interceptors.response.use(
 
 // Auth API
 export const authApi = {
-  register: (data: { associationName?: string; associationNameAr?: string; email: string; password: string; adminName?: string; adminNameAr?: string; inviteToken?: string }) =>
+  register: (data: { associationName?: string; associationNameAr?: string; email: string; password: string; adminName?: string; adminNameAr?: string; inviteToken?: string; logoUrl?: string }) =>
     api.post('/auth/register', data),
+  updateLogo: (logoUrl: string) =>
+    api.put('/auth/association/logo', { logoUrl }),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
   refresh: (refreshToken: string) =>

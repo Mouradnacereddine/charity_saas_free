@@ -116,6 +116,7 @@ function AppContent() {
       onNavigate={navigate}
       breadcrumbs={breadcrumbs}
       associationNameAr={association?.nameAr}
+      associationLogoUrl={association?.logoUrl}
       userNameAr={user?.nameAr}
       userRole={user?.role}
       isAdmin={isAdmin}

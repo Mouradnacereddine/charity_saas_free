@@ -31,6 +31,7 @@ export function Layout({
   onNavigate,
   breadcrumbs,
   associationNameAr,
+  associationLogoUrl,
   userNameAr,
   userRole,
   isAdmin,
@@ -41,6 +42,7 @@ export function Layout({
   onNavigate: (page: string) => void;
   breadcrumbs?: { label: string; page: string }[];
   associationNameAr?: string;
+  associationLogoUrl?: string;
   userNameAr?: string;
   userRole?: string;
   isAdmin?: boolean;
@@ -88,7 +90,14 @@ export function Layout({
         `}
       >
         <div className="flex items-center justify-between p-5 border-b border-primary-700">
-          <h1 className="text-lg font-bold">🕌 {associationNameAr || 'جمعية خيرية'}</h1>
+          <div className="flex items-center gap-2 min-w-0">
+            {associationLogoUrl ? (
+              <img src={associationLogoUrl} alt="logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+            ) : (
+              <span className="text-lg shrink-0">🕌</span>
+            )}
+            <h1 className="text-lg font-bold truncate">{associationNameAr || 'جمعية خيرية'}</h1>
+          </div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-1 text-primary-300 hover:text-white"
@@ -164,12 +173,12 @@ export function Layout({
               </button>
 
               {userMenuOpen && (
-                <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                <div className="absolute left-0 right-0 sm:left-auto sm:right-auto top-full mt-1 sm:w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 mx-0 sm:mx-0"
+                     style={{ left: '0', right: '0', marginLeft: 'auto', marginRight: 'auto', width: '260px' }}>
                   <div className="p-3 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900">{userNameAr || 'مستخدم'}</p>
                     <p className="text-xs text-gray-500">
                       {userRole === 'admin' ? 'مدير النظام' : userRole === 'treasurer' ? 'أمين المال' : 'متطوع'}
-                      {userRole === 'admin' && isAdmin !== undefined && ' ⭐'}
                     </p>
                   </div>
                   <div className="p-1">
@@ -184,7 +193,7 @@ export function Layout({
                     )}
                     <button
                       onClick={() => { onLogout?.(); setUserMenuOpen(false); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors min-h-[44px]"
                     >
                       <LogOut className="w-4 h-4" />
                       تسجيل الخروج

@@ -6,7 +6,6 @@ import { generateAccessToken, generateRefreshToken } from '../lib/jwt';
 import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth';
 import { config } from '../config';
 import crypto from 'crypto';
-
 const router = Router();
 
 // ========================================================================
@@ -286,6 +285,7 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
         name: true,
         nameAr: true,
         email: true,
+        logoUrl: true,
         createdAt: true,
       },
     });
@@ -300,6 +300,30 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
 // POST /api/auth/logout
 router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   res.json({ message: 'Logged out successfully' });
+});
+
+// PUT /api/auth/association/logo — update association logo URL (admin only)
+router.put('/association/logo', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { logoUrl } = req.body;
+    const associationId = req.user!.associationId;
+
+    if (!logoUrl || typeof logoUrl !== 'string') {
+      res.status(400).json({ error: 'رابط الشعار مطلوب' });
+      return;
+    }
+
+    const association = await prisma.association.update({
+      where: { id: associationId },
+      data: { logoUrl },
+      select: { id: true, name: true, nameAr: true, email: true, logoUrl: true, createdAt: true },
+    });
+
+    res.json(association);
+  } catch (error) {
+    console.error('Error updating logo:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // ========================================================================

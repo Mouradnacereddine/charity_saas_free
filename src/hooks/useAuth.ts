@@ -13,7 +13,7 @@ export function useAuth() {
     },
     enabled: !!token,
     retry: false,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Always refetch when component mounts — avoids stale user data
   });
 
   const loginMutation = useMutation({
@@ -21,6 +21,8 @@ export function useAuth() {
     onSuccess: (res) => {
       localStorage.setItem('accessToken', res.data.accessToken);
       localStorage.setItem('refreshToken', res.data.refreshToken);
+      // Force refetch user data immediately — prevents showing previous user
+      queryClient.resetQueries({ queryKey: ['auth', 'me'] });
     },
   });
 
@@ -29,6 +31,8 @@ export function useAuth() {
     onSuccess: (res) => {
       localStorage.setItem('accessToken', res.data.accessToken);
       localStorage.setItem('refreshToken', res.data.refreshToken);
+      // Force refetch user data immediately
+      queryClient.resetQueries({ queryKey: ['auth', 'me'] });
     },
   });
 
@@ -46,6 +50,7 @@ export function useAuth() {
   const logout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    queryClient.removeQueries({ queryKey: ['auth', 'me'] });
     window.location.hash = 'login';
   };
 
