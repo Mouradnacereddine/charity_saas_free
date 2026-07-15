@@ -16,6 +16,7 @@ datasource db {
 
 enum Role {
   admin
+  treasurer
   user
 }
 
@@ -79,6 +80,7 @@ model Association {
   donationReceipts   DonationReceipt[]
   donationAllocations DonationAllocation[]
   notifications      Notification[]
+  inviteTokens       InviteToken[]
 
   @@index([email])
 }
@@ -103,6 +105,23 @@ model User {
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
 
   @@index([associationId])
+  @@index([email])
+}
+
+model InviteToken {
+  id            String    @id @default(uuid())
+  associationId String
+  email         String
+  token         String    @unique
+  role          Role      @default(user)
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId])
+  @@index([token])
   @@index([email])
 }
 

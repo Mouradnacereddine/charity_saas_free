@@ -12,6 +12,19 @@ export type LoanStatus = 'en_cours' | 'partiellement_retourne' | 'retourne' | 'd
 export type ChildHealthStatus = 'bonne_sante' | 'malade' | 'handicape' | 'autre';
 export type UserStatus = 'pending' | 'approved' | 'rejected';
 export type TransactionStatus = 'pending' | 'completed' | 'cancelled';
+export type Role = 'admin' | 'treasurer' | 'user';
+
+export interface InviteToken {
+  id: string;
+  email: string;
+  role: Role;
+  token: string;
+  inviteLink: string | null;
+  expiresAt: string;
+  usedAt: string | null;
+  createdAt: string;
+  isExpired: boolean;
+}
 
 // ---- Beneficiary Attribut (الصفة) ----
 

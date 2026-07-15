@@ -9,4 +9,5 @@ export const config = {
   bcryptRounds: 10,
   accessTokenExpiry: '15m' as const,
   refreshTokenExpiry: '7d' as const,
+  inviteTokenExpiryDays: parseInt(process.env.INVITE_TOKEN_DAYS || '7', 10),
 };

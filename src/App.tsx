@@ -58,6 +58,15 @@ function AppContent() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
+  // Detect ?invite=TOKEN in URL → navigate to register
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('invite') && activePage !== 'register') {
+      navigate('register');
+    }
+  }, []);
+
+  // Auth guard
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !['login', 'register'].includes(activePage)) {
       navigate('login');

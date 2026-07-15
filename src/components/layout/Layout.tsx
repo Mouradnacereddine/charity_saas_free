@@ -158,7 +158,7 @@ export function Layout({
                 </div>
                 <div className="hidden sm:block text-right">
                   <p className="text-gray-900 font-medium leading-tight">{userNameAr || 'مستخدم'}</p>
-                  <p className="text-xs text-gray-400">{userRole === 'admin' ? 'مدير' : 'متطوع'}</p>
+                  <p className="text-xs text-gray-400">{userRole === 'admin' ? 'مدير' : userRole === 'treasurer' ? 'أمين المال' : 'متطوع'}</p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               </button>
@@ -168,7 +168,7 @@ export function Layout({
                   <div className="p-3 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900">{userNameAr || 'مستخدم'}</p>
                     <p className="text-xs text-gray-500">
-                      {userRole === 'admin' ? 'مدير النظام' : 'متطوع'}
+                      {userRole === 'admin' ? 'مدير النظام' : userRole === 'treasurer' ? 'أمين المال' : 'متطوع'}
                       {userRole === 'admin' && isAdmin !== undefined && ' ⭐'}
                     </p>
                   </div>

@@ -45,7 +45,7 @@ api.interceptors.response.use(
 
 // Auth API
 export const authApi = {
-  register: (data: { associationName: string; associationNameAr: string; email: string; password: string; adminName: string; adminNameAr: string }) =>
+  register: (data: { associationName?: string; associationNameAr?: string; email: string; password: string; adminName?: string; adminNameAr?: string; inviteToken?: string }) =>
     api.post('/auth/register', data),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
@@ -56,6 +56,16 @@ export const authApi = {
   users: () => api.get('/auth/users'),
   updateUser: (id: string, data: { status?: string; role?: string }) => api.put(`/auth/users/${id}`, data),
   deleteUser: (id: string) => api.delete(`/auth/users/${id}`),
+  createUser: (data: { email: string; password: string; name?: string; nameAr: string; role?: string }) =>
+    api.post('/auth/users/create', data),
+  invite: (data: { email: string; role?: string }) =>
+    api.post('/auth/invite', data),
+  invites: () =>
+    api.get('/auth/invites'),
+  deleteInvite: (id: string) =>
+    api.delete(`/auth/invites/${id}`),
+  inviteDetails: (token: string) =>
+    api.get(`/auth/invite/${token}`),
 };
 
 // Resource APIs

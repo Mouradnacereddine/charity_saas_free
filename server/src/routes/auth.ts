@@ -5,21 +5,103 @@ import prisma from '../lib/prisma';
 import { generateAccessToken, generateRefreshToken } from '../lib/jwt';
 import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth';
 import { config } from '../config';
+import crypto from 'crypto';
 
 const router = Router();
 
+// ========================================================================
+// PUBLIC AUTH
+// ========================================================================
+
 // POST /api/auth/register
-// Creates an Association and an admin User in a single transaction
+// Creates an Association + admin User, OR joins via invite token
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { associationName, associationNameAr, email, password, adminName, adminNameAr } = req.body;
+    const { associationName, associationNameAr, email, password, adminName, adminNameAr, inviteToken } = req.body;
 
-    if (!associationName || !associationNameAr || !email || !password || !adminName || !adminNameAr) {
+    if (!email || !password) {
+      res.status(400).json({ error: 'Email and password are required' });
+      return;
+    }
+
+    // --- Invite code path: join existing association ---
+    if (inviteToken) {
+      const token = await prisma.inviteToken.findUnique({ where: { token: inviteToken } });
+
+      if (!token) {
+        res.status(400).json({ error: 'رمز الدعوة غير صالح' });
+        return;
+      }
+      if (token.usedAt) {
+        res.status(400).json({ error: 'رمز الدعوة مستخدم بالفعل' });
+        return;
+      }
+      if (token.expiresAt < new Date()) {
+        res.status(400).json({ error: 'رمز الدعوة منتهي الصلاحية' });
+        return;
+      }
+      if (token.email !== email) {
+        res.status(400).json({ error: 'البريد الإلكتروني لا يتطابق مع رمز الدعوة' });
+        return;
+      }
+
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        res.status(409).json({ error: 'البريد الإلكتروني مستخدم بالفعل' });
+        return;
+      }
+
+      const hashedPassword = await bcrypt.hash(password, config.bcryptRounds);
+
+      const result = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            associationId: token.associationId,
+            email,
+            password: hashedPassword,
+            name: adminName || '',
+            nameAr: adminNameAr || '',
+            role: token.role,
+            status: 'approved',
+          },
+        });
+
+        await tx.inviteToken.update({
+          where: { id: token.id },
+          data: { usedAt: new Date() },
+        });
+
+        return user;
+      });
+
+      const accessToken = generateAccessToken({
+        userId: result.id,
+        associationId: token.associationId,
+        role: result.role,
+      });
+      const refreshToken = generateRefreshToken({ userId: result.id });
+
+      res.status(201).json({
+        accessToken,
+        refreshToken,
+        user: {
+          id: result.id,
+          email: result.email,
+          name: result.name,
+          nameAr: result.nameAr,
+          role: result.role,
+          associationId: result.associationId,
+        },
+      });
+      return;
+    }
+
+    // --- Original registration path: create new association ---
+    if (!associationName || !associationNameAr || !adminName || !adminNameAr) {
       res.status(400).json({ error: 'All fields are required' });
       return;
     }
 
-    // Check uniqueness
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       res.status(409).json({ error: 'Email already in use' });
@@ -28,7 +110,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 
     const hashedPassword = await bcrypt.hash(password, config.bcryptRounds);
 
-    // Atomic transaction: create Association + admin User
     const result = await prisma.$transaction(async (tx) => {
       const association = await tx.association.create({
         data: {
@@ -95,7 +176,6 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Check if the user account is approved
     if (user.status !== 'approved') {
       res.status(403).json({ error: user.status === 'pending' ? 'حسابك قيد المراجعة، يرجى الانتظار حتى يتم الموافقة عليه' : 'تم رفض حسابك' });
       return;
@@ -134,7 +214,6 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 });
 
 // POST /api/auth/refresh
-// Verifies the refresh token and issues a new token pair
 router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
   try {
     const { refreshToken } = req.body;
@@ -144,7 +223,6 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Verify against the refresh secret (not the access secret)
     let payload: { userId: string };
     try {
       payload = jwt.verify(refreshToken, config.jwtRefreshSecret) as { userId: string };
@@ -178,7 +256,6 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
 });
 
 // GET /api/auth/me
-// Protected — returns current user and association info
 router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.userId;
@@ -221,15 +298,227 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
 });
 
 // POST /api/auth/logout
-// Protected — stateless JWT, just returns success
 router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
-  // Optionally accept refreshToken in body for client-side cleanup
   res.json({ message: 'Logged out successfully' });
+});
+
+// ========================================================================
+// INVITE TOKENS
+// ========================================================================
+
+// POST /api/auth/invite — admin invites a person by email
+router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { email, role } = req.body;
+    const associationId = req.user!.associationId;
+
+    if (!email) {
+      res.status(400).json({ error: 'البريد الإلكتروني مطلوب' });
+      return;
+    }
+
+    const normalizedRole = role || 'user';
+    if (normalizedRole === 'admin') {
+      res.status(400).json({ error: 'لا يمكن دعوة مستخدم كمدير' });
+      return;
+    }
+    if (!['user', 'treasurer'].includes(normalizedRole)) {
+      res.status(400).json({ error: 'دور غير صالح' });
+      return;
+    }
+
+    // Check user not already registered in this association
+    const existingUser = await prisma.user.findFirst({
+      where: { email, associationId },
+    });
+    if (existingUser) {
+      res.status(409).json({ error: 'هذا البريد الإلكتروني مسجل بالفعل في الجمعية' });
+      return;
+    }
+
+    // Check for existing pending invite for this email
+    const existingInvite = await prisma.inviteToken.findFirst({
+      where: { email, associationId, usedAt: null, expiresAt: { gt: new Date() } },
+    });
+    if (existingInvite) {
+      res.status(409).json({ error: 'رمز دعوة معلق موجود بالفعل لهذا البريد' });
+      return;
+    }
+
+    const token = crypto.randomUUID();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + config.inviteTokenExpiryDays);
+
+    const invite = await prisma.inviteToken.create({
+      data: { associationId, email, token, role: normalizedRole as any, expiresAt },
+    });
+
+    const inviteLink = `${config.frontendUrl}/#register?invite=${invite.token}`;
+
+    res.status(201).json({
+      id: invite.id,
+      email: invite.email,
+      role: invite.role,
+      token: invite.token,
+      inviteLink,
+      expiresAt: invite.expiresAt,
+      createdAt: invite.createdAt,
+    });
+  } catch (error) {
+    console.error('Error creating invite:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/auth/invites — list invites (admin only)
+router.get('/invites', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const associationId = req.user!.associationId;
+
+    const invites = await prisma.inviteToken.findMany({
+      where: { associationId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        token: true,
+        expiresAt: true,
+        usedAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const now = new Date();
+    const result = invites.map((inv) => ({
+      ...inv,
+      inviteLink: inv.usedAt ? null : `${config.frontendUrl}/#register?invite=${inv.token}`,
+      isExpired: !inv.usedAt && inv.expiresAt < now,
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error listing invites:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/auth/invites/:id — cancel an invite
+router.delete('/invites/:id', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const invite = await prisma.inviteToken.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!invite) {
+      res.status(404).json({ error: 'الدعوة غير موجودة' });
+      return;
+    }
+
+    await prisma.inviteToken.delete({ where: { id } });
+    res.json({ message: 'تم إلغاء الدعوة' });
+  } catch (error) {
+    console.error('Error deleting invite:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/auth/invite/:token — public lookup of invite details
+router.get('/invite/:token', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.params;
+
+    const invite = await prisma.inviteToken.findUnique({
+      where: { token },
+      include: {
+        association: { select: { name: true, nameAr: true } },
+      },
+    });
+
+    if (!invite) {
+      res.status(404).json({ error: 'رمز الدعوة غير صالح' });
+      return;
+    }
+    if (invite.usedAt) {
+      res.status(400).json({ error: 'رمز الدعوة مستخدم بالفعل' });
+      return;
+    }
+    if (invite.expiresAt < new Date()) {
+      res.status(400).json({ error: 'رمز الدعوة منتهي الصلاحية' });
+      return;
+    }
+
+    res.json({
+      email: invite.email,
+      role: invite.role,
+      associationName: invite.association.name,
+      associationNameAr: invite.association.nameAr,
+    });
+  } catch (error) {
+    console.error('Error looking up invite:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // ========================================================================
 // USER MANAGEMENT (admin only)
 // ========================================================================
+
+// POST /api/auth/users/create — admin creates a user directly
+router.post('/users/create', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { email, password, name, nameAr, role } = req.body;
+    const associationId = req.user!.associationId;
+
+    if (!email || !password || !nameAr) {
+      res.status(400).json({ error: 'البريد الإلكتروني، كلمة المرور، والاسم بالعربية مطلوبون' });
+      return;
+    }
+
+    const normalizedRole = role || 'user';
+    if (!['user', 'treasurer'].includes(normalizedRole)) {
+      res.status(400).json({ error: 'دور غير صالح' });
+      return;
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      res.status(409).json({ error: 'البريد الإلكتروني مستخدم بالفعل' });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, config.bcryptRounds);
+
+    const user = await prisma.user.create({
+      data: {
+        associationId,
+        email,
+        password: hashedPassword,
+        name: name || nameAr,
+        nameAr,
+        role: normalizedRole as any,
+        status: 'approved',
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        nameAr: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    res.status(201).json(user);
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // GET /api/auth/users — list all users for this association
 router.get('/users', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
@@ -274,6 +563,13 @@ router.put('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, res
 
     const { status, role } = req.body;
     const data: any = {};
+
+    // Prevent self-demotion
+    if (id === req.user!.userId && role !== undefined && role !== existing.role) {
+      res.status(400).json({ error: 'لا يمكنك تغيير دورك الخاص' });
+      return;
+    }
+
     if (status !== undefined) data.status = status;
     if (role !== undefined) data.role = role;
 
@@ -312,7 +608,6 @@ router.delete('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, 
       return;
     }
 
-    // Prevent deleting yourself
     if (id === req.user!.userId) {
       res.status(400).json({ error: 'لا يمكنك حذف حسابك الخاص' });
       return;
