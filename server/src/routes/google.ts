@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import { OAuth2Client } from 'google-auth-library';
 import prisma from '../lib/prisma';
 import { generateAccessToken, generateRefreshToken } from '../lib/jwt';
 import { config } from '../config';
@@ -16,36 +15,40 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Verify Google token
-    const client = new OAuth2Client(config.googleClientId);
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: config.googleClientId,
-    });
+    // Verify Google token using Google's public API (no library needed)
+    const verifyUrl = `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${encodeURIComponent(credential)}`;
+    const verifyRes = await fetch(verifyUrl);
 
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
+    if (!verifyRes.ok) {
       res.status(400).json({ error: 'Invalid Google token' });
       return;
     }
 
+    const payload = await verifyRes.json() as any;
+
+    if (!payload || !payload.email) {
+      res.status(400).json({ error: 'Invalid Google token payload' });
+      return;
+    }
+
+    // Verify the token is meant for our app
+    if (payload.aud !== config.googleClientId) {
+      res.status(400).json({ error: 'Token audience mismatch' });
+      return;
+    }
+
     const googleEmail = payload.email;
-    const googleName = payload.name || '';
+    const googleName = payload.name || payload.email || '';
     const googlePicture = payload.picture || '';
-    // Extract first/last name from display name
-    const nameParts = googleName.split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
 
     // Check if user already exists
     let user = await prisma.user.findUnique({
       where: { email: googleEmail },
     });
 
-    // New user: process invite token if provided
+    // New user: process invite token or create association
     if (!user) {
       if (inviteToken) {
-        // Invite flow: join existing association
         const token = await prisma.inviteToken.findUnique({
           where: { token: inviteToken },
         });
@@ -72,9 +75,9 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
             data: {
               associationId: token.associationId,
               email: googleEmail,
-              password: '', // No password — Google OAuth user
-              name: token.name || `${firstName} ${lastName}` || googleName,
-              nameAr: token.nameAr || `${firstName} ${lastName}` || googleName,
+              password: '',
+              name: token.name || googleName,
+              nameAr: token.nameAr || googleName,
               role: token.role,
               status: 'approved',
             },
@@ -90,8 +93,8 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
 
         user = result;
       } else {
-        // No invite — create a new association (first-time Google sign-in)
-        const association = await prisma.$transaction(async (tx) => {
+        // Create a new association with this Google user as admin
+        const assocResult = await prisma.$transaction(async (tx) => {
           const assoc = await tx.association.create({
             data: {
               name: googleName,
@@ -112,10 +115,10 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
             },
           });
 
-          return { association: assoc, user: newUser };
+          return newUser;
         });
 
-        user = association.user;
+        user = assocResult;
       }
     }
 
