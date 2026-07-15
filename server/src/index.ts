@@ -19,7 +19,10 @@ import googleRoutes from './routes/google';
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginOpenerPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 const allowedOrigins = [
   config.frontendUrl,
   ...(process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean),

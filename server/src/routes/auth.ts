@@ -180,6 +180,12 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Google-only accounts have no password set
+    if (!user.password) {
+      res.status(400).json({ error: 'هذا الحساب يستخدم تسجيل الدخول بواسطة Google فقط' });
+      return;
+    }
+
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       res.status(401).json({ error: 'Invalid email or password' });
