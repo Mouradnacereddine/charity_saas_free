@@ -1330,7 +1330,31 @@ export default function BeneficiariesPage() {
                           <td className="py-2 px-3 text-gray-600">{ref.hospitalAr || '—'}</td>
                           <td className="py-2 px-3">
                             <button
-                              onClick={(e) => { e.stopPropagation(); handlePrintBeneficiary(ref); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const caisse = caisses.find((c: any) => c.id === ref.caisseId)
+                                const subCat = caisse?.subCategories.find((s: any) => s.id === ref.subCategoryId)
+                                const caisseRow = caisse ? `<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse.nameAr}</span></div>` : ''
+                                const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
+                                const childrenHtml = ref.children && Array.isArray(ref.children) && ref.children.length > 0
+                                  ? `<div class="row"><span class="lbl">الأطفال المستفيدون</span><span class="val">${ref.children.map((c: any) => c.nameAr || c.name).join(', ')}</span></div>`
+                                  : ''
+                                printReceipt(
+                                  'توجيه طبي', 'Orientation Médicale',
+                                  `<div class="col"><div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${ref.reference || '—'}</span></div>
+<div class="row"><span class="lbl">المستفيد</span><span class="val">${ref.beneficiaryNameAr || ''}</span></div>
+<div class="row"><span class="lbl">الطبيب</span><span class="val">${ref.doctorNameAr}</span></div>
+${ref.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${ref.analysisTypeAr}</span></div>` : ''}</div>
+<div class="col">${caisseRow}${subCatRow}
+<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(ref.date)}</span></div>
+${ref.hospitalAr ? `<div class="row"><span class="lbl">المستشفى</span><span class="val">${ref.hospitalAr}</span></div>` : ''}
+${childrenHtml}
+${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${ref.notes}</span></div>` : ''}</div>`,
+                                  'color:#2563eb',
+                                  formatCurrency(ref.amount), ref.amountInWordsAr || '', '',
+                                  'توقيع المسؤول', 'ختم الجمعية'
+                                )
+                              }}
                               className="p-1 text-gray-400 hover:text-primary-600"
                               title="طباعة"
                             >
@@ -1343,7 +1367,10 @@ export default function BeneficiariesPage() {
                   </table>
                 </div>
                 <div className="mt-2 p-3 bg-orange-50 rounded-lg text-sm">
-                  <span>إجمالي التوجيه الطبي: <strong className="text-orange-600">{formatCurrency(beneficiaryReferrals.reduce((sum: number, ref: any) => sum + (ref.amount || 0), 0))}</strong></span>
+                  <span>إجمالي التوجيه الطبي: <strong className="text-orange-600">{formatCurrency(beneficiaryReferrals
+                    .filter((ref: any) => (ref.status || 'pending') !== 'cancelled')
+                    .reduce((sum: number, ref: any) => sum + (ref.amount || 0), 0)
+                  )}</strong> <span className="text-gray-400 text-xs mr-2">({beneficiaryReferrals.filter((ref: any) => (ref.status || 'pending') === 'cancelled').length} ملغية غير محتسبة)</span></span>
                 </div>
               </div>
             )}
