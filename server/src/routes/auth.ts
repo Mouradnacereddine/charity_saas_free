@@ -403,13 +403,6 @@ router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: 
 });
 
 // GET /api/auth/invites — list invites (admin only)
-  } catch (error) {
-    console.error('Error creating invite:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// GET /api/auth/invites — list invites (admin only)
 router.get('/invites', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
