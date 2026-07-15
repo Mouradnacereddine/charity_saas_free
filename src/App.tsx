@@ -40,7 +40,9 @@ const PAGE_NAMES: Record<string, string> = {
 function AppContent() {
   const [activePage, setActivePage] = useState(() => {
     const hash = window.location.hash.replace('#', '');
-    return hash && PAGE_NAMES[hash] ? hash : (localStorage.getItem('accessToken') ? 'dashboard' : 'login');
+    // Extract page name from hash (strip query params like register?invite=X)
+    const pageName = hash.split('?')[0].split('&')[0];
+    return pageName && PAGE_NAMES[pageName] ? pageName : (localStorage.getItem('accessToken') ? 'dashboard' : 'login');
   });
   const { user, association, isAuthenticated, isAdmin, isLoading, logout } = useAuth();
 
@@ -52,17 +54,19 @@ function AppContent() {
   useEffect(() => {
     const onHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash && PAGE_NAMES[hash]) setActivePage(hash);
+      const pageName = hash.split('?')[0].split('&')[0];
+      if (pageName && PAGE_NAMES[pageName]) setActivePage(pageName);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
-  // Detect ?invite=TOKEN in URL → navigate to register
+  // Detect ?invite=TOKEN in hash → navigate to register
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('invite') && activePage !== 'register') {
-      navigate('register');
+    const hash = window.location.hash;
+    const hasInvite = hash.includes('invite=');
+    if (hasInvite && activePage !== 'register') {
+      setActivePage('register');
     }
   }, []);
 

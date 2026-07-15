@@ -18,10 +18,11 @@ export default function RegisterPage({ onSuccess }: { onSuccess: () => void }) {
   } | null>(null);
   const [checkingInvite, setCheckingInvite] = useState(false);
 
-  // Detect invite code in URL on mount
+  // Detect invite code in URL hash on mount
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('invite');
+    const hash = window.location.hash;
+    const match = hash.match(/[?&]invite=([^&]+)/);
+    const token = match ? decodeURIComponent(match[1]) : null;
     if (token) {
       setForm(f => ({ ...f, inviteToken: token }));
       setCheckingInvite(true);
