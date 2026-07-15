@@ -349,6 +349,7 @@ export interface DonorFilter {
 
 export interface TransactionFilter {
   type?: TransactionType;
+  status?: TransactionStatus;
   fundSource?: FundSource;
   caisseId?: string;
   dateFrom?: string;

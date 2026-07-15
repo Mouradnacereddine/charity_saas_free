@@ -450,4 +450,102 @@ describe('financeStore', () => {
       expect(total).toBe(0);
     });
   });
+
+  describe('transaction status', () => {
+    const setupCaisseWithBalance = async () => {
+      const now = new Date();
+      await db.caisses.add({
+        id: 'caisse-st',
+        reference: 'CAI-ST',
+        name: 'Status Caisse',
+        nameAr: 'صندوق الحالة',
+        subCategories: [],
+        balance: 10000,
+        createdAt: now,
+        updatedAt: now,
+      });
+    };
+
+    it('completed credit transaction increases balance', async () => {
+      await setupCaisseWithBalance();
+      const store = useFinanceStore.getState();
+      await store.addTransaction({
+        type: 'credit', amount: 5000, fundSource: 'caisse_physique',
+        caisseId: 'caisse-st', description: 'Test', descriptionAr: 'اختبار',
+        date: '2026-07-14', status: 'completed',
+      });
+      const caisse = await db.caisses.get('caisse-st');
+      expect(caisse!.balance).toBe(15000);
+    });
+
+    it('pending credit transaction does NOT affect balance', async () => {
+      await setupCaisseWithBalance();
+      const store = useFinanceStore.getState();
+      await store.addTransaction({
+        type: 'credit', amount: 5000, fundSource: 'caisse_physique',
+        caisseId: 'caisse-st', description: 'Pending', descriptionAr: 'معلق',
+        date: '2026-07-14', status: 'pending',
+      });
+      const caisse = await db.caisses.get('caisse-st');
+      expect(caisse!.balance).toBe(10000); // unchanged
+      // But transaction is still saved
+      const state = useFinanceStore.getState();
+      expect(state.transactions).toHaveLength(1);
+      expect(state.transactions[0].status).toBe('pending');
+    });
+
+    it('pending debit does not check balance', async () => {
+      await setupCaisseWithBalance();
+      const store = useFinanceStore.getState();
+      // Should not throw despite insufficient balance
+      await store.addTransaction({
+        type: 'debit', amount: 99999, fundSource: 'caisse_physique',
+        caisseId: 'caisse-st', description: 'Big pending', descriptionAr: 'معلق كبير',
+        date: '2026-07-14', status: 'pending',
+      });
+      const caisse = await db.caisses.get('caisse-st');
+      expect(caisse!.balance).toBe(10000); // unchanged
+    });
+
+    it('defaults to completed when status omitted', async () => {
+      await setupCaisseWithBalance();
+      const store = useFinanceStore.getState();
+      await store.addTransaction({
+        type: 'credit', amount: 3000, fundSource: 'caisse_physique',
+        caisseId: 'caisse-st', description: 'Default', descriptionAr: 'افتراضي',
+        date: '2026-07-14',
+      });
+      const state = useFinanceStore.getState();
+      const tx = state.transactions.find((t) => t.description === 'Default');
+      expect(tx!.status).toBe('completed');
+    });
+
+    it('loadTransactions filters by status', async () => {
+      const now = new Date();
+      await db.transactions.bulkAdd([
+        { id: 'st-1', type: 'credit', amount: 100, amountInWords: '', amountInWordsAr: '', fundSource: 'caisse_physique', caisseId: 'c1', description: 'Completed', descriptionAr: '', status: 'completed', date: '2026-07-14', createdAt: now, updatedAt: now },
+        { id: 'st-2', type: 'credit', amount: 200, amountInWords: '', amountInWordsAr: '', fundSource: 'caisse_physique', caisseId: 'c1', description: 'Pending', descriptionAr: '', status: 'pending', date: '2026-07-14', createdAt: now, updatedAt: now },
+        { id: 'st-3', type: 'credit', amount: 300, amountInWords: '', amountInWordsAr: '', fundSource: 'caisse_physique', caisseId: 'c1', description: 'Cancelled', descriptionAr: '', status: 'cancelled', date: '2026-07-14', createdAt: now, updatedAt: now },
+      ]);
+      const store = useFinanceStore.getState();
+      await store.loadTransactions({ status: 'pending' });
+      const state = useFinanceStore.getState();
+      expect(state.transactions).toHaveLength(1);
+      expect(state.transactions[0].id).toBe('st-2');
+    });
+
+    it('calculateTotalCash excludes non-completed transactions', async () => {
+      const now = new Date();
+      await db.transactions.bulkAdd([
+        { id: 'cash-1', type: 'credit', amount: 1000, amountInWords: '', amountInWordsAr: '', fundSource: 'caisse_physique', caisseId: 'c1', description: '', descriptionAr: '', status: 'completed', date: '2026-07-14', createdAt: now, updatedAt: now },
+        { id: 'cash-2', type: 'debit', amount: 500, amountInWords: '', amountInWordsAr: '', fundSource: 'caisse_physique', caisseId: 'c1', description: '', descriptionAr: '', status: 'completed', date: '2026-07-14', createdAt: now, updatedAt: now },
+        { id: 'cash-3', type: 'credit', amount: 2000, amountInWords: '', amountInWordsAr: '', fundSource: 'caisse_physique', caisseId: 'c1', description: '', descriptionAr: '', status: 'pending', date: '2026-07-14', createdAt: now, updatedAt: now },
+        { id: 'cash-4', type: 'credit', amount: 3000, amountInWords: '', amountInWordsAr: '', fundSource: 'caisse_physique', caisseId: 'c1', description: '', descriptionAr: '', status: 'cancelled', date: '2026-07-14', createdAt: now, updatedAt: now },
+      ]);
+      const store = useFinanceStore.getState();
+      await store.calculateTotalCash();
+      // Only completed: 1000 - 500 = 500
+      expect(useFinanceStore.getState().totalCash).toBe(500);
+    });
+  });
 });

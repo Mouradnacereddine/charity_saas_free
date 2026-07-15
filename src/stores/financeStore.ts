@@ -10,7 +10,7 @@ interface FinanceStore {
   loading: boolean;
   loadTransactions: (filter?: TransactionFilter) => Promise<void>;
   loadBankAccounts: () => Promise<void>;
-  addTransaction: (data: Omit<Transaction, 'id' | 'amountInWords' | 'amountInWordsAr' | 'createdAt' | 'updatedAt'>) => Promise<Transaction>;
+  addTransaction: (data: Omit<Transaction, 'id' | 'amountInWords' | 'amountInWordsAr' | 'createdAt' | 'updatedAt'> & { status?: TransactionStatus }) => Promise<Transaction>;
   addBankAccount: (data: Omit<BankAccount, 'id' | 'balance' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateBankAccount: (id: string, data: Partial<BankAccount>) => Promise<void>;
   deleteBankAccount: (id: string) => Promise<void>;
@@ -32,6 +32,7 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
 
     if (filter) {
       if (filter.type) results = results.filter((t) => t.type === filter.type);
+      if (filter.status) results = results.filter((t) => t.status === filter.status);
       if (filter.fundSource) results = results.filter((t) => t.fundSource === filter.fundSource);
       if (filter.caisseId) results = results.filter((t) => t.caisseId === filter.caisseId);
       if (filter.dateFrom) results = results.filter((t) => t.date >= filter.dateFrom!);
@@ -59,19 +60,23 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
 
   addTransaction: async (data) => {
     const now = new Date();
+    const txStatus = data.status || 'completed';
 
-    // Check available balance before debit
-    if (data.type === 'debit') {
-      // Check caisse balance
-      const caisseCheck = await db.caisses.get(data.caisseId);
-      if (caisseCheck && caisseCheck.balance < data.amount) {
-        throw new Error(`رصيد الصندوق غير كافٍ. الرصيد المتاح: ${caisseCheck.balance}`)
-      }
-      // Check bank account balance if source is bank
-      if (data.fundSource === 'banque' && data.bankAccountId) {
-        const bankCheck = await db.bankAccounts.get(data.bankAccountId)
-        if (bankCheck && bankCheck.balance < data.amount) {
-          throw new Error(`رصيد الحساب البنكي غير كافٍ. الرصيد المتاح: ${bankCheck.balance}`)
+    // Skip balance checks/updates for pending transactions
+    if (txStatus !== 'pending') {
+      // Check available balance before debit
+      if (data.type === 'debit') {
+        // Check caisse balance
+        const caisseCheck = await db.caisses.get(data.caisseId);
+        if (caisseCheck && caisseCheck.balance < data.amount) {
+          throw new Error(`رصيد الصندوق غير كافٍ. الرصيد المتاح: ${caisseCheck.balance}`)
+        }
+        // Check bank account balance if source is bank
+        if (data.fundSource === 'banque' && data.bankAccountId) {
+          const bankCheck = await db.bankAccounts.get(data.bankAccountId)
+          if (bankCheck && bankCheck.balance < data.amount) {
+            throw new Error(`رصيد الحساب البنكي غير كافٍ. الرصيد المتاح: ${bankCheck.balance}`)
+          }
         }
       }
     }
@@ -79,7 +84,8 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
     const transaction: Transaction = {
       ...data,
       id: generateId(),
-      receiptNumber: data.receiptNumber || generateReceiptNumber(),
+      status: txStatus as Transaction['status'],
+      receiptNumber: data.receiptNumber || (txStatus === 'completed' ? generateReceiptNumber() : undefined),
       amountInWords: numberToFrenchWords(data.amount),
       amountInWordsAr: numberToArabicWords(data.amount),
       createdAt: now,
@@ -87,53 +93,56 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
     };
     await db.transactions.add(transaction);
 
-    // Update caisse balance
-    const caisse = await db.caisses.get(data.caisseId);
-    if (caisse) {
-      const newBalance = data.type === 'credit'
-        ? caisse.balance + data.amount
-        : caisse.balance - data.amount;
-      await db.caisses.update(data.caisseId, { balance: newBalance, updatedAt: now });
-    }
-
-    // Update bank balance if bank transaction
-    if (data.fundSource === 'banque' && data.bankAccountId) {
-      const account = await db.bankAccounts.get(data.bankAccountId);
-      if (account) {
+    // Only update balances for completed transactions
+    if (txStatus === 'completed') {
+      // Update caisse balance
+      const caisse = await db.caisses.get(data.caisseId);
+      if (caisse) {
         const newBalance = data.type === 'credit'
-          ? account.balance + data.amount
-          : account.balance - data.amount;
-        await db.bankAccounts.update(data.bankAccountId, { balance: newBalance, updatedAt: now });
+          ? caisse.balance + data.amount
+          : caisse.balance - data.amount;
+        await db.caisses.update(data.caisseId, { balance: newBalance, updatedAt: now });
       }
-    }
 
-    // Auto-generate receipt for donations
-    if (data.type === 'credit' && data.donorId) {
-      const donor = await db.donors.get(data.donorId);
-      const caisseInfo = await db.caisses.get(data.caisseId);
-      if (donor && caisseInfo) {
-        await db.donationReceipts.add({
-          id: generateId(),
-          receiptNumber: generateReceiptNumber(),
-          donorId: data.donorId,
-          donorName: `${donor.firstName} ${donor.lastName}`,
-          donorNameAr: `${donor.firstNameAr} ${donor.lastNameAr}`,
-          transactionId: transaction.id,
-          amount: data.amount,
-          amountInWords: numberToFrenchWords(data.amount),
-          amountInWordsAr: numberToArabicWords(data.amount),
-          caisseId: data.caisseId,
-          caisseName: caisseInfo.name,
-          caisseNameAr: caisseInfo.nameAr,
-          date: data.date,
-          createdAt: now,
-        });
+      // Update bank balance if bank transaction
+      if (data.fundSource === 'banque' && data.bankAccountId) {
+        const account = await db.bankAccounts.get(data.bankAccountId);
+        if (account) {
+          const newBalance = data.type === 'credit'
+            ? account.balance + data.amount
+            : account.balance - data.amount;
+          await db.bankAccounts.update(data.bankAccountId, { balance: newBalance, updatedAt: now });
+        }
+      }
 
-        // Update donor total
-        await db.donors.update(data.donorId, {
-          totalDonated: (donor.totalDonated || 0) + data.amount,
-          updatedAt: now,
-        });
+      // Auto-generate receipt for donations
+      if (data.type === 'credit' && data.donorId) {
+        const donor = await db.donors.get(data.donorId);
+        const caisseInfo = await db.caisses.get(data.caisseId);
+        if (donor && caisseInfo) {
+          await db.donationReceipts.add({
+            id: generateId(),
+            receiptNumber: generateReceiptNumber(),
+            donorId: data.donorId,
+            donorName: `${donor.firstName} ${donor.lastName}`,
+            donorNameAr: `${donor.firstNameAr} ${donor.lastNameAr}`,
+            transactionId: transaction.id,
+            amount: data.amount,
+            amountInWords: numberToFrenchWords(data.amount),
+            amountInWordsAr: numberToArabicWords(data.amount),
+            caisseId: data.caisseId,
+            caisseName: caisseInfo.name,
+            caisseNameAr: caisseInfo.nameAr,
+            date: data.date,
+            createdAt: now,
+          });
+
+          // Update donor total
+          await db.donors.update(data.donorId, {
+            totalDonated: (donor.totalDonated || 0) + data.amount,
+            updatedAt: now,
+          });
+        }
       }
     }
 
@@ -170,7 +179,10 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
     const transactions = await db.transactions.where('fundSource').equals('caisse_physique').toArray();
     let total = 0;
     for (const t of transactions) {
-      total += t.type === 'credit' ? t.amount : -t.amount;
+      const s = t.status || 'completed';
+      if (s === 'completed') {
+        total += t.type === 'credit' ? t.amount : -t.amount;
+      }
     }
     set({ totalCash: total });
   },
