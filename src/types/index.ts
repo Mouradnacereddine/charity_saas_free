@@ -18,6 +18,8 @@ export interface InviteToken {
   id: string;
   email: string;
   role: Role;
+  name: string | null;
+  nameAr: string | null;
   token: string;
   inviteLink: string | null;
   expiresAt: string;

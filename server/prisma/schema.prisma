@@ -115,6 +115,8 @@ model InviteToken {
   email         String
   token         String    @unique
   role          Role      @default(user)
+  name          String?
+  nameAr        String?
   expiresAt     DateTime
   usedAt        DateTime?
   createdAt     DateTime  @default(now())

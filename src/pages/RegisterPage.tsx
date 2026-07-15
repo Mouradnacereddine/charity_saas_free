@@ -13,7 +13,7 @@ export default function RegisterPage({ onSuccess }: { onSuccess: () => void }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [inviteInfo, setInviteInfo] = useState<{
-    email: string; role: string;
+    email: string; role: string; name?: string; nameAr?: string;
     associationNameAr: string;
   } | null>(null);
   const [checkingInvite, setCheckingInvite] = useState(false);
@@ -28,7 +28,7 @@ export default function RegisterPage({ onSuccess }: { onSuccess: () => void }) {
       authApi.inviteDetails(token)
         .then(res => {
           setInviteInfo(res.data);
-          setForm(f => ({ ...f, email: res.data.email }));
+          setForm(f => ({ ...f, email: res.data.email, adminName: res.data.name || '', adminNameAr: res.data.nameAr || '' }));
         })
         .catch(err => {
           setError(err.response?.data?.error || 'رمز الدعوة غير صالح');
@@ -51,7 +51,7 @@ export default function RegisterPage({ onSuccess }: { onSuccess: () => void }) {
       authApi.inviteDetails(form.inviteToken)
         .then(res => {
           setInviteInfo(res.data);
-          setForm(f => ({ ...f, email: res.data.email }));
+          setForm(f => ({ ...f, email: res.data.email, adminName: res.data.name || '', adminNameAr: res.data.nameAr || '' }));
           setError('');
         })
         .catch(err => {

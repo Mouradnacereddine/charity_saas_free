@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, Button, Badge, Input, Modal, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../lib/api';
-import { UserCog, Trash2, CheckCircle, XCircle, Shield, User as UserIcon, Plus, Mail, Copy, Link as LinkIcon, Clock, Check } from 'lucide-react';
+import { UserCog, Trash2, CheckCircle, XCircle, Shield, User as UserIcon, Mail, Copy, Check } from 'lucide-react';
 
 interface UserData {
   id: string;
@@ -18,6 +18,8 @@ interface InviteData {
   id: string;
   email: string;
   role: 'admin' | 'treasurer' | 'user';
+  name: string | null;
+  nameAr: string | null;
   token: string;
   inviteLink: string | null;
   expiresAt: string;
@@ -69,11 +71,13 @@ const INVITE_STATUS_BADGE: Record<string, 'warning' | 'danger' | 'success'> = {
 };
 
 // ==========================================
-// Invite Modal
+// Invite Modal — seul moyen d'ajouter un utilisateur
 // ==========================================
 
 function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const [nameAr, setNameAr] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'user' | 'treasurer'>('user');
   const [result, setResult] = useState<{ inviteLink: string; email: string } | null>(null);
@@ -98,14 +102,15 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch {
-        // Fallback: select text manually
         const input = document.getElementById('invite-link-input') as HTMLInputElement;
-        if (input) { input.select(); document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+        if (input) { input.select(); (document as any).execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 2000); }
       }
     }
   };
 
   const reset = () => {
+    setNameAr('');
+    setName('');
     setEmail('');
     setRole('user');
     setResult(null);
@@ -118,22 +123,33 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
     onClose();
   };
 
+  const handleSubmit = () => {
+    setError('');
+    if (!nameAr.trim() || !email.trim()) {
+      setError('الاسم بالعربية والبريد الإلكتروني مطلوبان');
+      return;
+    }
+    inviteMutation.mutate({
+      email: email.trim(),
+      role,
+      name: name.trim() || nameAr.trim(),
+      nameAr: nameAr.trim(),
+    });
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="دعوة مستخدم جديد" size="md">
       <div className="space-y-4">
         {!result ? (
           <>
-            <p className="text-sm text-gray-600">أدخل البريد الإلكتروني للشخص الذي تريد دعوته للانضمام إلى الجمعية</p>
+            <p className="text-sm text-gray-600">قم بدعوة شخص للانضمام إلى الجمعية. سيتم إرسال رابط الدعوة الذي يمكنه من تعيين كلمة المرور الخاصة به.</p>
 
-            <Input
-              labelAr="البريد الإلكتروني"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@example.com"
-              dir="ltr"
-              required
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input labelAr="الاسم بالعربية" value={nameAr} onChange={(e) => setNameAr(e.target.value)} placeholder="مثال: أحمد" required />
+              <Input labelAr="الاسم باللاتينية" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Ahmed" dir="ltr" />
+            </div>
+
+            <Input labelAr="البريد الإلكتروني" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" dir="ltr" required />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">الدور</label>
@@ -161,8 +177,7 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
             <div className="flex gap-2 justify-end pt-2">
               <Button variant="secondary" onClick={handleClose}>إلغاء</Button>
-              <Button onClick={() => { setError(''); inviteMutation.mutate({ email, role }); }}
-                disabled={!email.trim() || inviteMutation.isPending}>
+              <Button onClick={handleSubmit} disabled={!nameAr.trim() || !email.trim() || inviteMutation.isPending}>
                 {inviteMutation.isPending ? 'جاري الإنشاء...' : 'إنشاء رابط الدعوة'}
               </Button>
             </div>
@@ -171,7 +186,8 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
           <>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <p className="text-sm font-medium text-green-800 mb-2">✅ تم إنشاء رابط الدعوة</p>
-              <p className="text-xs text-green-600 mb-3">{result.email}</p>
+              <p className="text-xs text-green-600 mb-1">{result.email}</p>
+              <p className="text-xs text-gray-500 mb-3">انقل الرابط إلى الشخص المعني ليختار كلمة المرور الخاصة به</p>
               <div className="flex items-center gap-2">
                 <input id="invite-link-input" type="text" readOnly value={result.inviteLink}
                   className="flex-1 bg-white border border-green-300 rounded-lg px-3 py-2 text-xs text-gray-700 font-mono"
@@ -196,120 +212,6 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 }
 
 // ==========================================
-// Create User Modal
-// ==========================================
-
-function CreateUserModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const queryClient = useQueryClient();
-  const [nameAr, setNameAr] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'user' | 'treasurer'>('user');
-  const [error, setError] = useState('');
-
-  const createMutation = useMutation({
-    mutationFn: authApi.createUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      reset();
-      onClose();
-    },
-    onError: (err: any) => {
-      setError(err.response?.data?.error || 'فشل إنشاء الحساب');
-    },
-  });
-
-  const reset = () => {
-    setNameAr('');
-    setName('');
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-    setRole('user');
-    setError('');
-  };
-
-  const handleSubmit = () => {
-    setError('');
-    if (!nameAr.trim() || !email.trim() || !password) {
-      setError('جميع الحقول المطلوبة يجب أن تمتلئ');
-      return;
-    }
-    if (password.length < 6) {
-      setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError('كلمة المرور غير متطابقة');
-      return;
-    }
-    createMutation.mutate({
-      email: email.trim(),
-      password,
-      name: name.trim() || nameAr.trim(),
-      nameAr: nameAr.trim(),
-      role,
-    });
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={() => { reset(); onClose(); }} title="إنشاء حساب مستخدم" size="md">
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600">إنشاء حساب مباشر لمستخدم جديد (سيتمكن من تسجيل الدخول فوراً)</p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input labelAr="الاسم بالعربية" value={nameAr} onChange={(e) => setNameAr(e.target.value)} placeholder="مثال: محمد" required />
-          <Input labelAr="الاسم باللاتينية" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Mohamed" dir="ltr" />
-        </div>
-
-        <Input labelAr="البريد الإلكتروني" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" dir="ltr" required />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input labelAr="كلمة المرور" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required dir="ltr" />
-          <Input labelAr="تأكيد كلمة المرور" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required dir="ltr" />
-        </div>
-        {password && password.length > 0 && password.length < 6 && (
-          <p className="text-xs text-red-500">كلمة المرور يجب أن تكون 6 أحرف على الأقل</p>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">الدور</label>
-          <div className="flex gap-3">
-            <label className={`flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-colors ${role === 'user' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
-              <input type="radio" name="createRole" value="user" checked={role === 'user'}
-                onChange={() => setRole('user')} className="sr-only" />
-              <UserIcon className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium">متطوع</span>
-            </label>
-            <label className={`flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-colors ${role === 'treasurer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
-              <input type="radio" name="createRole" value="treasurer" checked={role === 'treasurer'}
-                onChange={() => setRole('treasurer')} className="sr-only" />
-              <Shield className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium">أمين المال</span>
-            </label>
-          </div>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 text-center">
-            {error}
-          </div>
-        )}
-
-        <div className="flex gap-2 justify-end pt-2">
-          <Button variant="secondary" onClick={() => { reset(); onClose(); }}>إلغاء</Button>
-          <Button onClick={handleSubmit} disabled={createMutation.isPending}>
-            {createMutation.isPending ? 'جاري الإنشاء...' : 'إنشاء الحساب'}
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-// ==========================================
 // UsersPage Main Component
 // ==========================================
 
@@ -318,7 +220,6 @@ export default function UsersPage() {
   const [actionMsg, setActionMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'users' | 'invites'>('users');
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ['users'],
@@ -412,9 +313,6 @@ export default function UsersPage() {
         <div className="flex gap-2">
           <Button size="sm" variant="primary" onClick={() => setShowInviteModal(true)}>
             <Mail className="w-4 h-4" /> دعوة مستخدم
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4" /> إنشاء حساب
           </Button>
         </div>
       </div>
@@ -549,11 +447,11 @@ export default function UsersPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200">
+                      <th className="text-right py-3 px-4 font-semibold text-gray-600">الاسم</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-600">البريد الإلكتروني</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-600">الدور</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-600">الحالة</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">تاريخ الإنشاء</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden md:table-cell">تاريخ الانتهاء</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-600">الإجراءات</th>
                     </tr>
                   </thead>
@@ -562,7 +460,8 @@ export default function UsersPage() {
                       const status = getInviteStatus(inv);
                       return (
                         <tr key={inv.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                          <td className="py-3 px-4 font-medium text-gray-900" dir="ltr">{inv.email}</td>
+                          <td className="py-3 px-4 font-medium text-gray-900">{inv.nameAr || inv.email}</td>
+                          <td className="py-3 px-4 text-gray-600" dir="ltr">{inv.email}</td>
                           <td className="py-3 px-4">
                             <Badge variant={ROLE_BADGE_VARIANT[inv.role] || 'default'}>
                               {ROLE_LABELS[inv.role] || inv.role}
@@ -575,9 +474,6 @@ export default function UsersPage() {
                           </td>
                           <td className="py-3 px-4 text-gray-500 hidden sm:table-cell">
                             {new Date(inv.createdAt).toLocaleDateString('ar-DZ')}
-                          </td>
-                          <td className="py-3 px-4 text-gray-500 hidden md:table-cell">
-                            {new Date(inv.expiresAt).toLocaleDateString('ar-DZ')}
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1">
@@ -613,7 +509,6 @@ export default function UsersPage() {
 
       {/* Modals */}
       <InviteModal isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} />
-      <CreateUserModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} />
     </div>
   );
 }

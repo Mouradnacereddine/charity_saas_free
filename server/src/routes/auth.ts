@@ -58,8 +58,8 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             associationId: token.associationId,
             email,
             password: hashedPassword,
-            name: adminName || '',
-            nameAr: adminNameAr || '',
+            name: adminName || token.name || '',
+            nameAr: adminNameAr || token.nameAr || '',
             role: token.role,
             status: 'approved',
           },
@@ -333,7 +333,7 @@ router.put('/association/logo', requireAuth, requireAdmin, async (req: AuthReque
 // POST /api/auth/invite — admin invites a person by email
 router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { email, role } = req.body;
+    const { email, role, name, nameAr } = req.body;
     const associationId = req.user!.associationId;
 
     if (!email) {
@@ -374,7 +374,15 @@ router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: 
     expiresAt.setDate(expiresAt.getDate() + config.inviteTokenExpiryDays);
 
     const invite = await prisma.inviteToken.create({
-      data: { associationId, email, token, role: normalizedRole as any, expiresAt },
+      data: {
+        associationId,
+        email,
+        token,
+        role: normalizedRole as any,
+        name: name || '',
+        nameAr: nameAr || '',
+        expiresAt,
+      },
     });
 
     const inviteLink = `${config.frontendUrl}/#register?invite=${invite.token}`;
@@ -395,6 +403,13 @@ router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: 
 });
 
 // GET /api/auth/invites — list invites (admin only)
+  } catch (error) {
+    console.error('Error creating invite:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/auth/invites — list invites (admin only)
 router.get('/invites', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
@@ -405,6 +420,8 @@ router.get('/invites', requireAuth, requireAdmin, async (req: AuthRequest, res: 
         id: true,
         email: true,
         role: true,
+        name: true,
+        nameAr: true,
         token: true,
         expiresAt: true,
         usedAt: true,
@@ -478,6 +495,8 @@ router.get('/invite/:token', async (req: Request, res: Response): Promise<void> 
     res.json({
       email: invite.email,
       role: invite.role,
+      name: invite.name,
+      nameAr: invite.nameAr,
       associationName: invite.association.name,
       associationNameAr: invite.association.nameAr,
     });
