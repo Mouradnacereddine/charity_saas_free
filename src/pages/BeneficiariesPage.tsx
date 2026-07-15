@@ -1279,7 +1279,22 @@ export default function BeneficiariesPage() {
                           <td className="py-2 px-3 text-gray-500 text-xs max-w-[150px] truncate">{tx.descriptionAr || '—'}</td>
                           <td className="py-2 px-3">
                             <button
-                              onClick={(e) => { e.stopPropagation(); handlePrintBeneficiary(tx); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const caisse = caisses.find((c: any) => c.id === tx.caisseId)
+                                printReceipt(
+                                  'وصل صرف', 'Bon de Sortie',
+                                  `<div class="col"><div class="row"><span class="lbl">رقم العملية</span><span class="val">${tx.id.slice(0, 8) || '—'}</span></div>
+<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
+<div class="row"><span class="lbl">المستفيد</span><span class="val">${selectedBeneficiary?.lastNameAr || ''} ${selectedBeneficiary?.firstNameAr || ''}</span></div></div>
+<div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>
+<div class="row"><span class="lbl">المصدر</span><span class="val">${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</span></div>
+${tx.descriptionAr ? `<div class="row"><span class="lbl">الوصف</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
+                                  'background:#fff0f0;color:#dc2626',
+                                  `- ${formatCurrency(tx.amount)}`, tx.amountInWordsAr || '', tx.amountInWords || '',
+                                  'إمضاء المستفيد', 'ختم الجمعية'
+                                )
+                              }}
                               className="p-1 text-gray-400 hover:text-primary-600"
                               title="طباعة"
                             >
