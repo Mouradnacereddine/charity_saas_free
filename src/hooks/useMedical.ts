@@ -18,6 +18,7 @@ export function useCreateMedicalReferral() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['medical-referrals'] });
       qc.invalidateQueries({ queryKey: ['caisses'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
@@ -26,7 +27,11 @@ export function useDeleteMedicalReferral() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: medicalApi.deleteReferral,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['medical-referrals'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['medical-referrals'] });
+      qc.invalidateQueries({ queryKey: ['caisses'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
   });
 }
 

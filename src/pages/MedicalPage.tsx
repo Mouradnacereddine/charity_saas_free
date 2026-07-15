@@ -540,6 +540,8 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                       try {
                         await api.put(`/medical/referrals/${showDetailModal.id}/cancel`);
                         queryClient.invalidateQueries({ queryKey: ['medical-referrals'] });
+                        queryClient.invalidateQueries({ queryKey: ['caisses'] });
+                        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
                         setShowDetailModal(null);
                       } catch (err: any) {
                         alert(err?.response?.data?.error || 'فشل في إلغاء التوجيه');
@@ -564,6 +566,8 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                     try {
                       await api.put(`/medical/referrals/${showDetailModal.id}/confirm`, { amount: Number(confirmAmount) || 0 });
                       queryClient.invalidateQueries({ queryKey: ['medical-referrals'] });
+                      queryClient.invalidateQueries({ queryKey: ['caisses'] });
+                      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
                       setConfirmingId(null);
                       setShowDetailModal(null);
                     } catch (err: any) {

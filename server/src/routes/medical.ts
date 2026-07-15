@@ -79,47 +79,55 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    // Only update balance if amount > 0 (status is pending when unpaid)
+    // Status: pending = amount TBD by doctor later (no deduction until confirmed)
     const txStatus = status || 'pending';
 
-    if (numericAmount > 0) {
-      if (caisse.balance < numericAmount) {
-        res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
-        return;
+    // Create referral and optionally deduct caisse balance atomically
+    const referral = await prisma.$transaction(async (tx) => {
+      // Only deduct balance when status is 'completed' and amount > 0
+      if (numericAmount > 0 && txStatus === 'completed') {
+        const caisse = await tx.caisse.findFirst({
+          where: { id: caisseId, associationId },
+        });
+        if (!caisse || caisse.balance < numericAmount) {
+          throw new Error('INSUFFICIENT_BALANCE');
+        }
+        await tx.caisse.update({
+          where: { id: caisseId },
+          data: { balance: { decrement: numericAmount } },
+        });
       }
-      // Deduct from caisse
-      await prisma.caisse.update({
-        where: { id: caisseId },
-        data: { balance: { decrement: numericAmount } },
-      });
-    }
 
-    // Create the referral
-    const referral = await prisma.medicalReferral.create({
-      data: {
-        associationId,
-        reference,
-        beneficiaryId,
-        caisseId,
-        subCategoryId,
-        doctorName,
-        doctorNameAr,
-        analysisType,
-        analysisTypeAr,
-        hospital,
-        hospitalAr,
-        amount: numericAmount,
-        amountInWords: words,
-        amountInWordsAr: wordsAr,
-        status: txStatus,
-        date: new Date(date),
-        notes,
-        children: children || [],
-      },
+      return tx.medicalReferral.create({
+        data: {
+          associationId,
+          reference,
+          beneficiaryId,
+          caisseId,
+          subCategoryId,
+          doctorName,
+          doctorNameAr,
+          analysisType,
+          analysisTypeAr,
+          hospital,
+          hospitalAr,
+          amount: numericAmount,
+          amountInWords: words,
+          amountInWordsAr: wordsAr,
+          status: txStatus,
+          date: new Date(date),
+          notes,
+          children: children || [],
+        },
+      });
     });
 
     res.status(201).json(referral);
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'INSUFFICIENT_BALANCE') {
+      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+      return;
+    }
     console.error('Error creating medical referral:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -171,33 +179,38 @@ router.put('/referrals/:id/confirm', async (req: AuthRequest, res: Response): Pr
     const { amount, amountInWords, amountInWordsAr } = req.body;
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
 
-    if (numericAmount > 0) {
-      // Deduct from caisse
-      const caisse = await prisma.caisse.findFirst({
-        where: { id: existing.caisseId, associationId },
-      });
-      if (!caisse || caisse.balance < numericAmount) {
-        res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
-        return;
+    const referral = await prisma.$transaction(async (tx) => {
+      if (numericAmount > 0) {
+        // Deduct from caisse (atomic: locked within transaction)
+        const caisse = await tx.caisse.findFirst({
+          where: { id: existing.caisseId, associationId },
+        });
+        if (!caisse || caisse.balance < numericAmount) {
+          throw new Error('INSUFFICIENT_BALANCE');
+        }
+        await tx.caisse.update({
+          where: { id: existing.caisseId },
+          data: { balance: { decrement: numericAmount } },
+        });
       }
-      await prisma.caisse.update({
-        where: { id: existing.caisseId },
-        data: { balance: { decrement: numericAmount } },
-      });
-    }
 
-    const referral = await prisma.medicalReferral.update({
-      where: { id },
-      data: {
-        amount: numericAmount,
-        amountInWords: amountInWords || `${numericAmount} DZD`,
-        amountInWordsAr: amountInWordsAr || `${numericAmount} دينار`,
-        status: 'completed',
-      },
+      return tx.medicalReferral.update({
+        where: { id },
+        data: {
+          amount: numericAmount,
+          amountInWords: amountInWords || `${numericAmount} DZD`,
+          amountInWordsAr: amountInWordsAr || `${numericAmount} دينار`,
+          status: 'completed',
+        },
+      });
     });
 
     res.json(referral);
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'INSUFFICIENT_BALANCE') {
+      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+      return;
+    }
     console.error('Error confirming medical referral:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -300,6 +313,14 @@ router.delete('/referrals/:id', async (req: AuthRequest, res: Response): Promise
     if (!existing) {
       res.status(404).json({ error: 'Medical referral not found' });
       return;
+    }
+
+    // Refund the caisse if the referral was completed with amount > 0
+    if (existing.status === 'completed' && existing.amount > 0) {
+      await prisma.caisse.update({
+        where: { id: existing.caisseId },
+        data: { balance: { increment: existing.amount } },
+      });
     }
 
     await prisma.medicalReferral.delete({ where: { id } });
