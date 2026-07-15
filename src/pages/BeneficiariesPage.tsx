@@ -1311,6 +1311,7 @@ export default function BeneficiariesPage() {
                         <th className="py-2 px-3 text-right font-medium">التاريخ</th>
                         <th className="py-2 px-3 text-right font-medium">الطبيب</th>
                         <th className="py-2 px-3 text-right font-medium">المبلغ</th>
+                        <th className="py-2 px-3 text-right font-medium">الحالة</th>
                         <th className="py-2 px-3 text-right font-medium">الصندوق</th>
                         <th className="py-2 px-3 text-right font-medium">التحليل</th>
                         <th className="py-2 px-3 text-right font-medium">المستشفى</th>
@@ -1325,6 +1326,11 @@ export default function BeneficiariesPage() {
                           <td className="py-2 px-3 text-gray-700">{formatDate(ref.date)}</td>
                           <td className="py-2 px-3 font-medium text-gray-900">{ref.doctorNameAr}</td>
                           <td className="py-2 px-3"><Badge variant="warning">{formatCurrency(ref.amount)}</Badge></td>
+                          <td className="py-2 px-3">
+                            {(ref.status || 'pending') === 'pending' ? <Badge variant="warning">قيد الانتظار</Badge> :
+                             (ref.status || 'pending') === 'completed' ? <Badge variant="success">مكتمل</Badge> :
+                             <Badge variant="danger">ملغي</Badge>}
+                          </td>
                           <td className="py-2 px-3 text-gray-600">{caisse?.nameAr || '—'}</td>
                           <td className="py-2 px-3 text-gray-600">{ref.analysisTypeAr || '—'}</td>
                           <td className="py-2 px-3 text-gray-600">{ref.hospitalAr || '—'}</td>
