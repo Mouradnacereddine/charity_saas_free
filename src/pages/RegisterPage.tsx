@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button, Input } from '../components/common/UI';
 import { authApi } from '../lib/api';
 import { CheckCircle } from 'lucide-react';
 
 export default function RegisterPage({ onSuccess }: { onSuccess: () => void }) {
+  const googleBtnRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
     associationName: '', associationNameAr: '',
     email: '', password: '',
@@ -17,6 +18,47 @@ export default function RegisterPage({ onSuccess }: { onSuccess: () => void }) {
     associationNameAr: string;
   } | null>(null);
   const [checkingInvite, setCheckingInvite] = useState(false);
+
+  // Load Google Sign-In
+  useEffect(() => {
+    if (document.getElementById('google-gsi-script')) return;
+    const script = document.createElement('script');
+    script.id = 'google-gsi-script';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google && googleBtnRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '1074847403581-qs7gvuumokefa5cid6cu0m0cibt67nc4.apps.googleusercontent.com',
+          callback: handleGoogleCredential,
+        });
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'outline', size: 'large', width: 280,
+          text: 'signup_with', locale: 'ar',
+        });
+      }
+    };
+    document.head.appendChild(script);
+  }, []);
+
+  const handleGoogleCredential = async (response: any) => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await authApi.googleLogin({
+        credential: response.credential,
+        inviteToken: form.inviteToken || undefined,
+      });
+      localStorage.setItem('accessToken', res.data.accessToken);
+      localStorage.setItem('refreshToken', res.data.refreshToken);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'فشل تسجيل الدخول بواسطة Google');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Detect invite code in URL hash on mount
   useEffect(() => {
@@ -170,6 +212,23 @@ export default function RegisterPage({ onSuccess }: { onSuccess: () => void }) {
              isInviteFlow ? 'انضمام إلى الجمعية' : 'إنشاء الحساب'}
           </Button>
         </form>
+
+        {/* Google Sign-In */}
+        {!isInviteFlow && (
+          <>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-4 text-gray-500">أو</span>
+              </div>
+            </div>
+            <div className="flex justify-center mb-4">
+              <div ref={googleBtnRef}></div>
+            </div>
+          </>
+        )}
 
         <p className="text-center text-sm text-gray-500 mt-6">
           لديك حساب بالفعل؟{' '}

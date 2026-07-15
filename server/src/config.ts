@@ -10,4 +10,6 @@ export const config = {
   accessTokenExpiry: '15m' as const,
   refreshTokenExpiry: '7d' as const,
   inviteTokenExpiryDays: parseInt(process.env.INVITE_TOKEN_DAYS || '7', 10),
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
 };

@@ -47,6 +47,8 @@ api.interceptors.response.use(
 export const authApi = {
   register: (data: { associationName?: string; associationNameAr?: string; email: string; password: string; adminName?: string; adminNameAr?: string; inviteToken?: string; logoUrl?: string }) =>
     api.post('/auth/register', data),
+  googleLogin: (data: { credential: string; inviteToken?: string }) =>
+    api.post('/auth/google', data),
   updateLogo: (logoUrl: string) =>
     api.put('/auth/association/logo', { logoUrl }),
   login: (data: { email: string; password: string }) =>
