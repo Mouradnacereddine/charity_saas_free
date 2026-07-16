@@ -16,9 +16,12 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Verify Google token using Google's public API (no library needed)
-    const verifyUrl = `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${encodeURIComponent(credential)}`;
-    const verifyRes = await fetch(verifyUrl);
+    // Verify Google token using POST to avoid URL length limits
+    const verifyRes = await fetch('https://oauth2.googleapis.com/tokeninfo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ id_token: credential }),
+    });
 
     if (!verifyRes.ok) {
       res.status(400).json({ error: 'Invalid Google token' });
