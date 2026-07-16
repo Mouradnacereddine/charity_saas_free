@@ -284,6 +284,7 @@ export default function DoctorsPage() {
               <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-primary-600" /> إحصائيات المرضى
               </h4>
+              <p className="text-xs text-gray-400 mb-3">عدد المرات التي تم فيها توجيه مرضى إلى هذا الطبيب</p>
               {doctorStats ? (
                 <>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -294,7 +295,7 @@ export default function DoctorsPage() {
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> آخر 12 شهراً
+                      <Calendar className="w-3 h-3" /> عدد المرضى حسب الشهر
                     </p>
                     <div className="flex items-end gap-1 h-20">
                       {doctorStats.referralsByMonth?.map((m: { month: string; count: number }) => {
