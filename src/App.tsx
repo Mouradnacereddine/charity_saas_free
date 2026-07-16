@@ -10,8 +10,7 @@ import DonorsPage from './pages/DonorsPage';
 import InventoryPage from './pages/InventoryPage';
 import MedicalPage from './pages/MedicalPage';
 import UsersPage from './pages/UsersPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import AuthPage from './pages/AuthPage';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -88,9 +87,8 @@ function AppContent() {
     );
   }
 
-  // Auth pages (no layout)
-  if (activePage === 'login') return <LoginPage onSuccess={() => navigate('dashboard')} />;
-  if (activePage === 'register') return <RegisterPage onSuccess={() => navigate('dashboard')} />;
+  // Auth pages (no layout) — unified page for login and register
+  if (activePage === 'login' || activePage === 'register') return <AuthPage onSuccess={() => navigate('dashboard')} />;
 
   // Protected pages
   if (!isAuthenticated) return null;
