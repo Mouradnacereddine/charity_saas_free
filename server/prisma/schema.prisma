@@ -75,6 +75,8 @@ model Association {
   loans              Loan[]
   medicalAnalysisTypes MedicalAnalysisType[]
   medicalHospitals   MedicalHospital[]
+  doctorSpecialties  DoctorSpecialty[]
+  doctors           Doctor[]
   schoolGrades       SchoolGrade[]
   articleStatuses    ArticleStatusType[]
   medicalReferrals   MedicalReferral[]
@@ -372,6 +374,43 @@ model SchoolGrade {
   @@index([associationId])
 }
 
+model DoctorSpecialty {
+  id            String   @id @default(uuid())
+  associationId String
+  name          String
+  nameAr        String
+  createdAt     DateTime @default(now())
+
+  doctors    Doctor[]   @relation("DoctorSpecialtyDoctors")
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId])
+}
+
+model Doctor {
+  id            String   @id @default(uuid())
+  associationId String
+  reference     String
+  firstName     String
+  lastName      String
+  firstNameAr   String
+  lastNameAr    String
+  phone         String
+  email         String?
+  specialtyId   String?
+  address       String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  specialty   DoctorSpecialty? @relation("DoctorSpecialtyDoctors", fields: [specialtyId], references: [id], onDelete: SetNull)
+  association Association      @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  referrals   MedicalReferral[]
+
+  @@index([associationId])
+  @@index([specialtyId])
+}
+
 model ArticleStatusType {
   id            String         @id @default(uuid())
   associationId String
@@ -406,8 +445,7 @@ model MedicalReferral {
   beneficiaryId   String
   caisseId        String
   subCategoryId   String?
-  doctorName      String
-  doctorNameAr    String
+  doctorId        String
   analysisType    String?
   analysisTypeAr  String?
   hospital        String?
@@ -425,10 +463,12 @@ model MedicalReferral {
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
   beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [id])
   caisse      Caisse      @relation(fields: [caisseId], references: [id])
+  doctor      Doctor      @relation(fields: [doctorId], references: [id])
 
   @@index([associationId])
   @@index([beneficiaryId])
   @@index([caisseId])
+  @@index([doctorId])
   @@index([date])
 }
 

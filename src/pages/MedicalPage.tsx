@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { caissesApi } from '../lib/api';
 import { useMedicalReferrals, useCreateMedicalReferral, useDeleteMedicalReferral, useAnalysisTypes, useCreateAnalysisType, useUpdateAnalysisType, useDeleteAnalysisType, useHospitals, useCreateHospital, useUpdateHospital, useDeleteHospital } from '../hooks/useMedical';
 import { useBeneficiaries } from '../hooks/useBeneficiaries';
-import { api, financeApi } from '../lib/api';
+import { api, doctorsApi, financeApi } from '../lib/api';
 
 export default function MedicalPage() {
   const queryClient = useQueryClient();
@@ -79,8 +79,15 @@ export default function MedicalPage() {
   const [beneficiaryId, setBeneficiaryId] = useState('');
   const [caisseId, setCaisseId] = useState('');
   const [subCategoryId, setSubCategoryId] = useState('');
-  const [doctorNameAr, setDoctorNameAr] = useState('');
-  const [doctorName, setDoctorName] = useState('');
+  const [doctorId, setDoctorId] = useState('');
+
+  // Load doctors for searchable select
+  const { data: allDoctors = [] } = useQuery({
+    queryKey: ['doctors'],
+    queryFn: () => doctorsApi.list().then(r => r.data),
+  });
+
+  const selectedDoctor = allDoctors.find((d: any) => d.id === doctorId);
   const [analysisTypeAr, setAnalysisTypeAr] = useState('');
   const [analysisType, setAnalysisType] = useState('');
   const [hospitalAr, setHospitalAr] = useState('');
@@ -147,7 +154,7 @@ export default function MedicalPage() {
   };
 
   const handleAddReferral = async () => {
-    if (!beneficiaryId || !caisseId || !doctorNameAr) return;
+    if (!beneficiaryId || !caisseId || !doctorId) return;
 
     const beneficiary = beneficiaries.find((b: Beneficiary) => b.id === beneficiaryId);
     if (!beneficiary) return;
@@ -169,8 +176,7 @@ export default function MedicalPage() {
       beneficiaryNameAr: `${beneficiary.lastNameAr} ${beneficiary.firstNameAr}`,
       caisseId,
       subCategoryId: subCategoryId || undefined,
-      doctorName: doctorName || doctorNameAr,
-      doctorNameAr,
+      doctorId,
       analysisType: analysisType || undefined,
       analysisTypeAr: analysisTypeAr || undefined,
       hospital: hospital || undefined,
@@ -207,7 +213,7 @@ export default function MedicalPage() {
       `<div class="col"><div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
 <div class="row"><span class="lbl">المستفيد</span><span class="val">${referral.beneficiaryNameAr}</span></div>
 <div class="row"><span class="lbl">رمز المستفيد</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
-<div class="row"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr}</span></div>
+<div class="row"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr || (referral.doctor ? referral.doctor.lastNameAr + ' ' + referral.doctor.firstNameAr : '')}</span></div>
 ${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}</div>
 <div class="col">${caisseRow}${subCatRow}
 <div class="row"><span class="lbl">التاريخ</span><span class="val">${referral.date}</span></div>
@@ -225,8 +231,8 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
     if (appliedTerm && !(
       (r.beneficiaryNameAr || '').includes(appliedTerm) ||
       (r.beneficiaryName || '').toLowerCase().includes(appliedTerm) ||
-      (r.doctorNameAr || '').includes(appliedTerm) ||
-      (r.doctorName || '').toLowerCase().includes(appliedTerm) ||
+      (r.doctorNameAr || (r.doctor ? `${r.doctor.lastNameAr} ${r.doctor.firstNameAr}` : '')).includes(appliedTerm) ||
+      (r.doctorName || (r.doctor ? `${r.doctor.firstName} ${r.doctor.lastName}` : '')).toLowerCase().includes(appliedTerm) ||
       (r.analysisTypeAr || '').includes(appliedTerm) ||
       (r.hospitalAr || '').includes(appliedTerm) ||
       (r.reference || '').toLowerCase().includes(appliedTerm)
@@ -240,7 +246,8 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
     if (filterDateFrom && r.date < filterDateFrom) return false;
     if (filterDateTo && r.date > filterDateTo) return false;
 
-    if (filterDoctor && !r.doctorNameAr.includes(filterDoctor)) return false;
+    const docNameAr = r.doctorNameAr || (r.doctor ? `${r.doctor.lastNameAr} ${r.doctor.firstNameAr}` : '');
+    if (filterDoctor && !docNameAr.includes(filterDoctor)) return false;
 
     if (filterAnalysis && !(r.analysisTypeAr?.includes(filterAnalysis))) return false;
     if (filterStatus && (r.status || 'pending') !== filterStatus) return false;
@@ -370,7 +377,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">{referral.reference || '—'}</td>
                     <td className="py-3 px-4 font-medium">{referral.beneficiaryNameAr}</td>
                     <td className="py-3 px-4 hidden lg:table-cell font-mono text-xs" dir="ltr">{benef?.nationalCardNumber || '—'}</td>
-                    <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr}</td>
+                    <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr || (referral.doctor ? `${referral.doctor.lastNameAr} ${referral.doctor.firstNameAr}` : '—')}</td>
                     <td className="py-3 px-4 hidden md:table-cell">{referral.analysisTypeAr || '—'}</td>
                     <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary-600">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">pending</Badge>}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">
@@ -440,8 +447,21 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
               options={subs.map((s: SubCategory) => ({ value: s.id, label: s.nameAr }))} />
           })()}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input labelAr="اسم الطبيب بالعربية" value={doctorNameAr} onChange={(e) => setDoctorNameAr(e.target.value)} placeholder="د. محمد ..." />
-            <Input labelAr="اسم الطبيب بالفرنسية (اختياري)" value={doctorName} onChange={(e) => setDoctorName(e.target.value)} dir="ltr" />
+            <SearchableSelect labelAr="الطبيب" value={doctorId} onChange={setDoctorId}
+              options={allDoctors.map((d: any) => ({
+                value: d.id,
+                label: `${d.lastNameAr} ${d.firstNameAr}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''}`,
+              }))}
+              placeholder="اختر طبيباً..." />
+            {selectedDoctor && (
+              <div className="flex items-end pb-2">
+                <p className="text-xs text-gray-500">
+                  <span className="font-medium">{selectedDoctor.lastNameAr} {selectedDoctor.firstNameAr}</span>
+                  {selectedDoctor.specialty?.nameAr && <span> — {selectedDoctor.specialty.nameAr}</span>}
+                  <br /><span dir="ltr">{selectedDoctor.phone}</span>
+                </p>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SearchableSelect labelAr="نوع التحليل / الفحص" value={analysisTypeAr} onChange={(val) => { const a = analysisTypes.find((x: MedicalAnalysisType) => x.nameAr === val); setAnalysisTypeAr(val); setAnalysisType(a?.name || val); }}
@@ -471,7 +491,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
           <TextArea labelAr="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
           <div className="flex gap-3 justify-end pt-4">
             <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>إلغاء</Button>
-            <Button onClick={handleAddReferral} disabled={!beneficiaryId || !caisseId || !doctorNameAr}>إضافة التوجيه</Button>
+            <Button onClick={handleAddReferral} disabled={!beneficiaryId || !caisseId || !doctorId}>إضافة التوجيه</Button>
           </div>
         </div>
       </Modal>
@@ -487,7 +507,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                 const b = beneficiaries.find((b: Beneficiary) => b.id === showDetailModal.beneficiaryId);
                 return b?.nationalCardNumber ? <div className="flex justify-between items-center"><span className="text-xs text-gray-500">رقم البطاقة الوطنية</span><span className="font-medium text-gray-900" dir="ltr">{b.nationalCardNumber}</span></div> : null;
               })()}
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الطبيب</span><span className="font-medium text-gray-900">{showDetailModal.doctorNameAr}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الطبيب</span><span className="font-medium text-gray-900">{showDetailModal.doctorNameAr || (showDetailModal.doctor ? `${showDetailModal.doctor.lastNameAr} ${showDetailModal.doctor.firstNameAr}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-gray-400 mr-2">({showDetailModal.doctor.specialty.nameAr})</span> : ''}</span></div>
               {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">نوع التحليل</span><span className="font-medium text-gray-900">{showDetailModal.analysisTypeAr}</span></div>}
               {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستشفى</span><span className="font-medium text-gray-900">{showDetailModal.hospitalAr}</span></div>}
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">التاريخ</span><span className="font-medium text-gray-900">{showDetailModal.date}</span></div>

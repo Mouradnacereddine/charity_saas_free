@@ -192,10 +192,17 @@ async function main() {
 
   console.log('   ✓ 2 loans created');
 
+  // Doctors
+  const [doctor1, doctor2] = await Promise.all([
+    prisma.doctor.create({ data: { associationId: aid, reference: ref('DOC'), firstName: 'Amina', lastName: 'Belkacem', firstNameAr: 'أمينة', lastNameAr: 'بلقاسم', phone: '0551987654' } }),
+    prisma.doctor.create({ data: { associationId: aid, reference: ref('DOC'), firstName: 'Mourad', lastName: 'Bensebaa', firstNameAr: 'مراد', lastNameAr: 'بن سبع', phone: '0555765432' } }),
+  ]);
+  console.log('   ✓ 2 doctors created');
+
   // Medical Referrals
   await prisma.medicalReferral.create({
     data: { associationId: aid, reference: ref('MED'), beneficiaryId: bens[0].id, caisseId: caisses[1].id,
-      doctorName: 'Dr. Amina Belkacem', doctorNameAr: 'د. أمينة بلقاسم',
+      doctorId: doctor1.id,
       analysisType: 'Bilan sanguin', analysisTypeAr: 'تحليل دم شامل',
       hospital: 'CHU Mustapha Pacha', hospitalAr: 'مستشفى مصطفى باشا',
       amount: 4500, amountInWords: '4500 DZD', amountInWordsAr: 'أربعة آلاف وخمسمائة دينار',
@@ -205,7 +212,7 @@ async function main() {
 
   await prisma.medicalReferral.create({
     data: { associationId: aid, reference: ref('MED'), beneficiaryId: bens[1].id, caisseId: caisses[1].id,
-      doctorName: 'Pr. Mourad Bensebaa', doctorNameAr: 'أ.د. مراد بن سبع',
+      doctorId: doctor2.id,
       analysisType: 'Echographie', analysisTypeAr: 'تخطيط صدى القلب',
       hospital: 'Clinique Belcourt', hospitalAr: 'عيادة بلكور',
       amount: 8000, amountInWords: '8000 DZD', amountInWordsAr: 'ثمانية آلاف دينار',

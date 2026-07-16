@@ -9,6 +9,7 @@ import BeneficiariesPage from './pages/BeneficiariesPage';
 import DonorsPage from './pages/DonorsPage';
 import InventoryPage from './pages/InventoryPage';
 import MedicalPage from './pages/MedicalPage';
+import DoctorsPage from './pages/DoctorsPage';
 import UsersPage from './pages/UsersPage';
 import AuthPage from './pages/AuthPage';
 import './index.css';
@@ -33,6 +34,7 @@ const PAGE_NAMES: Record<string, string> = {
   donors: 'المتبرعون',
   inventory: 'المخزون والإعارات',
   medical: 'التوجيه الطبي',
+  doctors: 'الأطباء',
   users: 'إدارة المستخدمين',
 };
 
@@ -107,6 +109,7 @@ function AppContent() {
       case 'donors': return <DonorsPage />;
       case 'inventory': return <InventoryPage />;
       case 'medical': return <MedicalPage />;
+      case 'doctors': return <DoctorsPage />;
       case 'users': return isAdmin ? <UsersPage /> : <DashboardPage />;
       default: return <DashboardPage />;
     }

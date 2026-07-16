@@ -16,6 +16,7 @@ import dashboardRoutes from './routes/dashboard';
 import notificationsRoutes from './routes/notifications';
 import attributsRoutes from './routes/beneficiaryAttributs';
 import googleRoutes from './routes/google';
+import doctorsRoutes from './routes/doctors';
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/loans', loansRoutes);
 app.use('/api/medical', medicalRoutes);
+app.use('/api/doctors', doctorsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/beneficiary-attributs', attributsRoutes);

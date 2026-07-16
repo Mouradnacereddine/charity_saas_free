@@ -161,6 +161,19 @@ export const medicalApi = {
   deleteHospital: (id: string) => api.delete(`/medical/hospitals/${id}`),
 };
 
+export const doctorsApi = {
+  list: (params?: Record<string, string>) => api.get('/doctors', { params }),
+  get: (id: string) => api.get(`/doctors/${id}`),
+  create: (data: any) => api.post('/doctors', data),
+  update: (id: string, data: any) => api.put(`/doctors/${id}`, data),
+  delete: (id: string) => api.delete(`/doctors/${id}`),
+  stats: (id: string) => api.get(`/doctors/${id}/stats`),
+  specialties: () => api.get('/doctors/specialties/list'),
+  createSpecialty: (data: any) => api.post('/doctors/specialties', data),
+  updateSpecialty: (id: string, data: any) => api.put(`/doctors/specialties/${id}`, data),
+  deleteSpecialty: (id: string) => api.delete(`/doctors/specialties/${id}`),
+};
+
 export const attributsApi = {
   list: () => api.get('/beneficiary-attributs'),
   create: (data: any) => api.post('/beneficiary-attributs', data),

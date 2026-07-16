@@ -62,6 +62,39 @@ export interface MedicalHospital {
   createdAt: Date;
 }
 
+export interface DoctorSpecialty {
+  id: string;
+  name: string;
+  nameAr: string;
+  _count?: { doctors: number };
+}
+
+export interface Doctor {
+  id: string;
+  reference: string;
+  firstName: string;
+  lastName: string;
+  firstNameAr: string;
+  lastNameAr: string;
+  phone: string;
+  email?: string;
+  specialtyId?: string;
+  specialty?: DoctorSpecialty;
+  address?: string;
+  notes?: string;
+  _count?: { referrals: number };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DoctorStats {
+  totalReferrals: number;
+  referralsThisMonth: number;
+  referralsThisWeek: number;
+  lastReferral: string | null;
+  referralsByMonth: { month: string; count: number }[];
+}
+
 export interface SchoolGrade {
   id: string;
   name: string;
@@ -272,8 +305,11 @@ export interface MedicalReferral {
   beneficiaryReference?: string;
   caisseId: string;
   subCategoryId?: string;
-  doctorName: string;
-  doctorNameAr: string;
+  doctorId: string;
+  doctor?: Doctor;
+  doctorName?: string;
+  doctorNameAr?: string;
+  doctorSpecialtyAr?: string;
   analysisType?: string;
   analysisTypeAr?: string;
   hospital?: string;

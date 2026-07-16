@@ -23,6 +23,7 @@ const navItems = [
   { id: 'donors', label: 'المتبرعون', icon: HeartHandshake },
   { id: 'inventory', label: 'المخزون', icon: Package },
   { id: 'medical', label: 'التوجيه الطبي', icon: Stethoscope },
+  { id: 'doctors', label: 'الأطباء', icon: Stethoscope },
 ];
 
 export function Layout({
