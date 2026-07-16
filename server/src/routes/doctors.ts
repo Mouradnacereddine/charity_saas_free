@@ -3,17 +3,15 @@ import prisma from '../lib/prisma';
 import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth';
 import { config } from '../config';
 
+import { generateRef } from '../lib/ref';
+
 const router = Router();
 
 router.use(requireAuth);
 
-// Helper to generate reference
-function generateRef(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const r = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-  return `DOC-${y}${m}-${r}`;
+// Helper to generate doctor reference
+function generateDocRef(): string {
+  return generateRef('DOC');
 }
 
 // ========================================================================
@@ -169,7 +167,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
     const doctor = await prisma.doctor.create({
       data: {
         associationId,
-        reference: generateRef(),
+        reference: generateDocRef(),
         firstName: firstName || firstNameAr,
         lastName: lastName || lastNameAr,
         firstNameAr,

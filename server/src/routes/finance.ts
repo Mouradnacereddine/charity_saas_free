@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { generateRef } from '../lib/ref';
 
 const router = Router();
 
@@ -110,7 +111,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
     const wordsAr = amountInWordsAr || `${amount} دينار`;
 
     // Auto-generate receipt number for credits
-    const ref = receiptNumber || `BON-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+    const ref = receiptNumber || generateRef('BON');
 
     // Verify caisse belongs to association
     const caisse = await prisma.caisse.findFirst({
@@ -549,7 +550,7 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
         // Create donation receipt
         const donor = await prismaTx.donor.findUnique({ where: { id: tx.donorId } });
         const caisse = await prismaTx.caisse.findUnique({ where: { id: tx.caisseId } });
-        const ref = tx.receiptNumber || `BON-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+        const ref = tx.receiptNumber || generateRef('BON');
 
         if (donor && caisse) {
           await prismaTx.donationReceipt.create({

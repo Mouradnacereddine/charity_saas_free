@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { generateRef } from '../lib/ref';
 
 const router = Router();
 
@@ -117,7 +118,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
       phone, email, address, gender, totalDonated, notes,
     } = req.body;
 
-    const reference = refInput || `DON-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+    const reference = refInput || generateRef('DON');
 
     if (!firstName || !lastName || !firstNameAr || !lastNameAr || !phone) {
       res.status(400).json({ error: 'Missing required fields' });

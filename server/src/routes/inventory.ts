@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { generateRef } from '../lib/ref';
 
 const router = Router();
 
@@ -62,7 +63,7 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
     }
 
     // Auto-generate reference if not provided
-    const ref = reference || `ART-${new Date().toISOString().slice(0, 7).replace('-', '')}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+    const ref = reference || generateRef('ART');
 
     const article = await prisma.article.create({
       data: {

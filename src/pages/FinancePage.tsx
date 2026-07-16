@@ -1017,6 +1017,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-right py-3 px-3 font-medium text-gray-500">التاريخ</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">رقم الوصل</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">النوع</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">الحالة</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المصدر</th>
@@ -1041,6 +1042,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                         <td className="py-3 px-3 text-gray-600 whitespace-nowrap">
                           {formatDate(tx.date)}
                         </td>
+                        <td className="py-3 px-3 text-gray-500 font-mono text-xs" dir="ltr">{tx.receiptNumber || '—'}</td>
                         <td className="py-3 px-3">
                           {tx.type === 'credit' ? (
                             <Badge variant="success">إيداع</Badge>

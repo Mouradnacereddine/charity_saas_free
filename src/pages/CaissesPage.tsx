@@ -1,17 +1,13 @@
 import { useState } from 'react';
 import { Card, Button, Input, Modal, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { formatCurrency, generateId } from '../utils/helpers';
+import { formatCurrency, generateId, generateReceiptNumber } from '../utils/helpers';
 import { Plus, Edit, Trash2, FolderOpen, Tag } from 'lucide-react';
 import type { Caisse, SubCategory } from '../types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { caissesApi } from '../lib/api';
 
 const generateCaisseReference = () => {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth()+1).padStart(2,'0');
-  const r = String(Math.floor(Math.random()*10000)).padStart(4,'0');
-  return `CAI-${y}${m}-${r}`;
+  return generateReceiptNumber().replace('BON', 'CAI');
 };
 
 export default function CaissesPage() {

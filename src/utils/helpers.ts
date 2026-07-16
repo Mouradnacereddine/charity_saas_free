@@ -178,67 +178,58 @@ export function formatDate(date: string | Date): string {
 /**
  * Generate receipt number
  */
-export function generateReceiptNumber(): string {
+function generateTimestampRef(prefix: string): string {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-  return `BON-${year}${month}-${random}`;
+  const y = now.getFullYear();
+  const mo = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const h = String(now.getHours()).padStart(2, '0');
+  const mi = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  const ms = String(now.getMilliseconds()).padStart(3, '0');
+  return `${prefix}-${y}${mo}${d}-${h}${mi}${s}-${ms}`;
+}
+
+/**
+ * Generate Receipt Number
+ */
+export function generateReceiptNumber(): string {
+  return generateTimestampRef('BON');
 }
 
 /**
  * Generate Article Reference
  */
 export function generateArticleReference(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-  return `ART-${year}${month}-${random}`;
+  return generateTimestampRef('ART');
 }
 
 /**
  * Generate Loan Reference
  */
 export function generateLoanReference(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-  return `LOAN-${year}${month}-${random}`;
+  return generateTimestampRef('LOAN');
 }
 
 /**
  * Generate Beneficiary Reference
  */
 export function generateBeneficiaryReference(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-  return `BEN-${year}${month}-${random}`;
+  return generateTimestampRef('BEN');
 }
 
 /**
  * Generate Donor Reference
  */
 export function generateDonorReference(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-  return `DON-${year}${month}-${random}`;
+  return generateTimestampRef('DON');
 }
 
 /**
  * Generate Medical Referral Reference
  */
 export function generateMedicalReferralReference(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-  return `MED-${year}${month}-${random}`;
+  return generateTimestampRef('MED');
 }
 
 
