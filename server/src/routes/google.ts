@@ -9,7 +9,7 @@ const router = Router();
 // mode: 'login' → only if user exists, 'register' → create new association
 router.post('/google', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { credential, inviteToken, mode } = req.body;
+    const { credential, inviteToken, mode, associationName, associationNameAr } = req.body;
 
     if (!credential) {
       res.status(400).json({ error: 'Google credential is required' });
@@ -106,10 +106,13 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       } else {
         // mode is 'register' (or no mode but user didn't exist) — create new association
         const assocResult = await prisma.$transaction(async (tx) => {
+          const assocName = associationName || googleName;
+          const assocNameAr = associationNameAr || associationName || googleName;
+
           const assoc = await tx.association.create({
             data: {
-              name: googleName,
-              nameAr: googleName,
+              name: assocName,
+              nameAr: assocNameAr,
               email: googleEmail,
               password: '',
             },
