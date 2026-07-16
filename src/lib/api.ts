@@ -51,6 +51,8 @@ export const authApi = {
     api.post('/auth/google', data),
   updateLogo: (logoUrl: string) =>
     api.put('/auth/association/logo', { logoUrl }),
+  updateName: (data: { name: string; nameAr: string }) =>
+    api.put('/auth/association/name', data),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
   refresh: (refreshToken: string) =>

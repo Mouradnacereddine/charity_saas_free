@@ -308,6 +308,33 @@ router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Pro
   res.json({ message: 'Logged out successfully' });
 });
 
+// PUT /api/auth/association/name — update association name (admin only)
+router.put('/association/name', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { name, nameAr } = req.body;
+    const associationId = req.user!.associationId;
+
+    if (!nameAr || typeof nameAr !== 'string' || !nameAr.trim()) {
+      res.status(400).json({ error: 'الاسم بالعربية مطلوب' });
+      return;
+    }
+
+    const association = await prisma.association.update({
+      where: { id: associationId },
+      data: {
+        name: name || nameAr,
+        nameAr,
+      },
+      select: { id: true, name: true, nameAr: true, email: true, logoUrl: true, createdAt: true },
+    });
+
+    res.json(association);
+  } catch (error) {
+    console.error('Error updating association name:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // PUT /api/auth/association/logo — update association logo URL (admin only)
 router.put('/association/logo', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {

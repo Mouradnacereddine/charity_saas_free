@@ -13,7 +13,9 @@ import {
   LogOut,
   UserCog,
   ChevronDown,
+  Settings,
 } from 'lucide-react';
+import { authApi } from '../../lib/api';
 
 const navItems = [
   { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
@@ -51,6 +53,30 @@ export function Layout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsNameAr, setSettingsNameAr] = useState(associationNameAr || '');
+  const [settingsName, setSettingsName] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState('');
+
+  useEffect(() => {
+    setSettingsNameAr(associationNameAr || '');
+  }, [associationNameAr]);
+
+  const handleUpdateName = async () => {
+    if (!settingsNameAr.trim()) return;
+    setSavingName(true);
+    setNameError('');
+    try {
+      await authApi.updateName({ name: settingsName || settingsNameAr, nameAr: settingsNameAr });
+      setShowSettingsModal(false);
+      window.location.reload();
+    } catch (err: any) {
+      setNameError(err.response?.data?.error || 'فشل تحديث الاسم');
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   useEffect(() => {
     if (sidebarOpen) {
@@ -192,6 +218,15 @@ export function Layout({
                         إدارة المستخدمين
                       </button>
                     )}
+                    {isAdmin && (
+                      <button
+                        onClick={() => { setShowSettingsModal(true); setUserMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        إعدادات الجمعية
+                      </button>
+                    )}
                     <button
                       onClick={() => { onLogout?.(); setUserMenuOpen(false); }}
                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors min-h-[44px]"
@@ -217,6 +252,57 @@ export function Layout({
         {/* Scrollable page content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
+
+      {/* Settings modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">إعدادات الجمعية</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">اسم الجمعية بالعربية *</label>
+                <input
+                  type="text"
+                  value={settingsNameAr}
+                  onChange={(e) => setSettingsNameAr(e.target.value)}
+                  placeholder="مثال: جمعية البركة الخيرية"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-right"
+                  dir="rtl"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">اسم الجمعية بالفرنسية</label>
+                <input
+                  type="text"
+                  value={settingsName}
+                  onChange={(e) => setSettingsName(e.target.value)}
+                  placeholder="Ex: Association El-Baraka"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  dir="ltr"
+                />
+              </div>
+              {nameError && (
+                <p className="text-xs text-red-500">{nameError}</p>
+              )}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setShowSettingsModal(false)}
+                  className="flex-1 py-2.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleUpdateName}
+                  disabled={savingName || !settingsNameAr.trim()}
+                  className="flex-1 py-2.5 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {savingName ? 'جاري الحفظ...' : 'حفظ'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
