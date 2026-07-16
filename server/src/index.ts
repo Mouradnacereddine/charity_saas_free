@@ -21,8 +21,9 @@ import doctorsRoutes from './routes/doctors';
 const app = express();
 
 app.use(helmet({
-  crossOriginOpenerPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'unsafe-none' },
   crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: false,
 }));
 const allowedOrigins = [
   config.frontendUrl,
