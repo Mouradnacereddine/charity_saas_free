@@ -16,6 +16,10 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const renderAttempted = useRef(false);
+  const modeRef = useRef<'login' | 'register'>('login');
+
+  // Keep modeRef in sync
+  useEffect(() => { modeRef.current = mode; }, [mode]);
 
   // Detect invite code in URL hash
   useEffect(() => {
@@ -75,7 +79,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       const res = await authApi.googleLogin({
         credential: response.credential,
         inviteToken: inviteToken || undefined,
-        mode,
+        mode: modeRef.current,
       });
       localStorage.setItem('accessToken', res.data.accessToken);
       localStorage.setItem('refreshToken', res.data.refreshToken);
