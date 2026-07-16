@@ -127,7 +127,7 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
       _count: { id: true },
     });
 
-    // Convert to month buckets
+    // Convert to month buckets — accumulate counts per month
     const monthMap = new Map<string, number>();
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -137,7 +137,7 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
     for (const item of monthlyData) {
       const d = new Date(item.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      if (monthMap.has(key)) monthMap.set(key, item._count.id);
+      if (monthMap.has(key)) monthMap.set(key, monthMap.get(key)! + item._count.id);
     }
 
     const referralsByMonth = Array.from(monthMap.entries()).map(([month, count]) => ({ month, count }));
