@@ -488,12 +488,13 @@ export default function UsersPage() {
                                   <Copy size={16} />
                                 </button>
                               )}
-                              {status === 'pending' && (
-                                <button onClick={() => handleDeleteInvite(inv.id)}
-                                  className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors" title="إلغاء الدعوة">
-                                  <Trash2 size={16} />
-                                </button>
+                              {status === 'used' && (
+                                <span className="text-xs text-gray-400 italic">تم التسجيل</span>
                               )}
+                              <button onClick={() => handleDeleteInvite(inv.id)}
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors" title="حذف الدعوة">
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </td>
                         </tr>
