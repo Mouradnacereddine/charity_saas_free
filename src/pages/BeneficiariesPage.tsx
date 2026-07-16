@@ -503,7 +503,7 @@ export default function BeneficiariesPage() {
         <div class="row"><span class="lbl">الصفة</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
         <div class="row"><span class="lbl">الجنس</span><span class="val">${b.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
         <div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>
-        ${b.situationAr ? `<div class="row"><span class="lbl">الحالة</span><span class="val">${b.situationAr}</span></div>` : ''}
+        ${b.situationAr ? `<div class="row"><span class="lbl">الحالة</span><span class="val">${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}</span></div>` : ''}
        </div>
        <div class="col">
         ${childrenHtml}
@@ -651,7 +651,7 @@ export default function BeneficiariesPage() {
             <div class="item"><span class="lbl">الجنس</span><span class="val">${b.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
             <div class="item"><span class="lbl">العنوان</span><span class="val">${b.addressAr || '—'}</span></div>
             <div class="item"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
-            ${b.situationAr ? `<div class="item"><span class="lbl">الحالة</span><span class="val">${b.situationAr}</span></div>` : ''}
+            ${b.situationAr ? `<div class="item"><span class="lbl">الحالة</span><span class="val">${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}</span></div>` : ''}
             ${b.notes ? `<div class="item"><span class="lbl" style="min-width:140px">ملاحظات</span><span class="val">${b.notes}</span></div>` : ''}
           </div>
         </div>
@@ -758,11 +758,11 @@ export default function BeneficiariesPage() {
                 value={filterGender}
                 onChange={(val) => setFilterGender(val)}
               />
-              <Input
-                labelAr="الحالة (المرض أو غيره)"
-                placeholder="مثال: مرض السكري"
+              <SearchableSelect
+                labelAr="الحالة"
+                options={[{ value: '', label: 'الكل' }, ...HEALTH_STATUS_OPTIONS]}
                 value={filterSituation}
-                onChange={(e) => setFilterSituation(e.target.value)}
+                onChange={(val) => setFilterSituation(val)}
               />
               <Input
                 labelAr="الحد الأدنى لعدد الأطفال"
@@ -1077,8 +1077,13 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">الحالة</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr="الحالة بالعربية (مرض أو غيره)" placeholder="مثال: مرض السكري" value={form.situationAr} onChange={(e) => handleFormChange('situationAr', e.target.value)} />
-              <Input labelAr="الحالة باللاتينية" placeholder="Ex: Diabète" value={form.situation} onChange={(e) => handleFormChange('situation', e.target.value)} dir="ltr" />
+              <SearchableSelect
+                labelAr="الحالة"
+                options={HEALTH_STATUS_OPTIONS}
+                value={form.situationAr}
+                onChange={(val) => handleFormChange('situationAr', val)}
+              />
+              <Input labelAr="تفاصيل الحالة" placeholder="تفاصيل إضافية..." value={form.situation} onChange={(e) => handleFormChange('situation', e.target.value)} />
             </div>
           </div>
 
@@ -1159,7 +1164,7 @@ export default function BeneficiariesPage() {
                 <div className="flex justify-between"><span className="text-gray-500">العنوان باللاتينية</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.address || '—'}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">الصندوق</span><span className="font-medium text-gray-900">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-gray-500 mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
                 {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between"><span className="text-gray-500">باسم من</span><span className="font-medium text-gray-900">{selectedBeneficiary.onBehalfOfName}</span></div>}
-                {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">الحالة</span><span className="font-medium text-gray-900">{selectedBeneficiary.situationAr}{selectedBeneficiary.situation && <span className="text-gray-400 mr-2" dir="ltr">({selectedBeneficiary.situation})</span>}</span></div>}
+                {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">الحالة</span><span className="font-medium text-gray-900">{HEALTH_STATUS_LABELS[selectedBeneficiary.situationAr] || selectedBeneficiary.situationAr}{selectedBeneficiary.situation && <span className="text-gray-400 mr-2" dir="ltr">({selectedBeneficiary.situation})</span>}</span></div>}
                 {selectedBeneficiary.notes && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">ملاحظات</span><span className="font-medium text-gray-900">{selectedBeneficiary.notes}</span></div>}
               </div>
             </div>

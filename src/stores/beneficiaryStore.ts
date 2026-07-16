@@ -99,9 +99,7 @@ function applyFilter(beneficiaries: Beneficiary[], filter: BeneficiaryFilter): B
 
   if (filter.situation) {
     results = results.filter(
-      (b) =>
-        b.situation?.toLowerCase().includes(filter.situation!.toLowerCase()) ||
-        b.situationAr?.includes(filter.situation!)
+      (b) => b.situationAr === filter.situation
     );
   }
 
