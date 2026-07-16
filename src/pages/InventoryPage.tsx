@@ -831,15 +831,6 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     { value: '', label: 'الكل' },
     ...statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.nameAr })),
   ]
-  if (statusOptions.length <= 1) {
-    // Fallback to hardcoded values when no API statuses exist
-    statusOptions.push(
-      { value: 'disponible', label: 'متاح' },
-      { value: 'prete', label: 'مُعار' },
-      { value: 'endommage', label: 'تالف' },
-      { value: 'hors_service', label: 'خارج الخدمة' },
-    )
-  }
 
   const typeOptions = [
     { value: '', label: 'الكل' },
@@ -1046,12 +1037,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             options={
               statuses.length > 0
                 ? statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.nameAr }))
-                : [
-                    { value: 'disponible', label: 'متاح' },
-                    { value: 'prete', label: 'مُعار' },
-                    { value: 'endommage', label: 'تالف' },
-                    { value: 'hors_service', label: 'خارج الخدمة' },
-                  ]
+                : []
             }
           />
           <Input

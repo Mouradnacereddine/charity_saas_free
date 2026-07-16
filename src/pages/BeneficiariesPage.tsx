@@ -277,10 +277,10 @@ export default function BeneficiariesPage() {
     label: c.nameAr || c.name,
   }))
 
-  const attributOptions = attributs.length > 0 ? attributs.map((a: BeneficiaryAttribut) => ({
+  const attributOptions = attributs.map((a: BeneficiaryAttribut) => ({
     value: a.name,
     label: a.nameAr,
-  })) : Object.entries(ATTRIBUT_LABELS).map(([value, label]) => ({ value, label }))
+  }))
 
   const gradeOptions = schoolGrades.map((g: any) => ({ value: g.id, label: g.nameAr }))
 
@@ -1036,7 +1036,6 @@ export default function BeneficiariesPage() {
                 options={attributOptions}
                 value={form.attribut}
                 onChange={(val) => handleFormChange('attribut', val)}
-                required
               />
               <SearchableSelect
                 labelAr="الجنس"
