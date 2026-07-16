@@ -495,6 +495,7 @@ export default function DonorsPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200">
+                        <th className="text-right py-2 px-3 font-semibold text-gray-600">رقم الوصل</th>
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">المستفيد</th>
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">المبلغ</th>
                         <th className="text-right py-2 px-3 font-semibold text-gray-600">المتبقي</th>
@@ -506,7 +507,8 @@ export default function DonorsPage() {
                     <tbody>
                       {allocations.map((a: DonationAllocation) => (
                         <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-2 px-3 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
+                          <td className="py-2 px-3 text-gray-500 font-mono text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
+                        <td className="py-2 px-3 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
                           <td className="py-2 px-3"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
                           <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
                           <td className="py-2 px-3">

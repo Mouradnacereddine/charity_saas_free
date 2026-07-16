@@ -521,6 +521,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">رقم الوصل</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المتبرع</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المستفيد</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المبلغ</th>
@@ -532,6 +533,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               <tbody>
                 {filteredAllocations.map((a: DonationAllocation) => (
                   <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelectedAlloc(a)}>
+                    <td className="py-3 px-4 text-gray-500 font-mono text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
                     <td className="py-3 px-4 font-medium">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
                     <td className="py-3 px-4 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
                     <td className="py-3 px-4"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
