@@ -75,6 +75,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       const res = await authApi.googleLogin({
         credential: response.credential,
         inviteToken: inviteToken || undefined,
+        mode,
       });
       localStorage.setItem('accessToken', res.data.accessToken);
       localStorage.setItem('refreshToken', res.data.refreshToken);

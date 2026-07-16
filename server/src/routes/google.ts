@@ -6,9 +6,10 @@ import { config } from '../config';
 const router = Router();
 
 // POST /api/auth/google — authenticate with Google token
+// mode: 'login' → only if user exists, 'register' → create new association
 router.post('/google', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { credential, inviteToken } = req.body;
+    const { credential, inviteToken, mode } = req.body;
 
     if (!credential) {
       res.status(400).json({ error: 'Google credential is required' });
@@ -46,9 +47,19 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       where: { email: googleEmail },
     });
 
+    // Mode validation
+    const authMode = mode || 'login';
+
+    // If user doesn't exist and mode is 'login' → error (must register first)
+    if (!user && authMode === 'login' && !inviteToken) {
+      res.status(404).json({ error: 'لا يوجد حساب بهذا البريد الإلكتروني. الرجاء إنشاء حساب جديد أولاً.' });
+      return;
+    }
+
     // New user: process invite token or create association
     if (!user) {
       if (inviteToken) {
+        // Invite flow: always allowed regardless of mode
         const token = await prisma.inviteToken.findUnique({
           where: { token: inviteToken },
         });
@@ -93,7 +104,7 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
 
         user = result;
       } else {
-        // Create a new association with this Google user as admin
+        // mode is 'register' (or no mode but user didn't exist) — create new association
         const assocResult = await prisma.$transaction(async (tx) => {
           const assoc = await tx.association.create({
             data: {
