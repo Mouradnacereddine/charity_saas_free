@@ -60,6 +60,7 @@ export default function AnalyticsPage() {
   }, [quickFilter]);
 
   const filteredTx = useMemo(() => {
+    if (!startDate || !endDate) return transactions;
     return transactions.filter((tx: Transaction) => {
       const txDate = tx.date.split('T')[0];
       return txDate >= startDate && txDate <= endDate;
@@ -95,21 +96,22 @@ export default function AnalyticsPage() {
 
   const caisseBreakdown = useMemo(() => {
     return caisses.map((c) => {
-      let credits = 0;
-      let debits = 0;
+      let periodCredits = 0;
+      let periodDebits = 0;
       filteredTx.forEach((tx) => {
         if (tx.status === 'cancelled') return;
         if (tx.caisseId === c.id) {
-          if (tx.type === 'credit') credits += tx.amount;
-          else debits += tx.amount;
+          if (tx.type === 'credit') periodCredits += tx.amount;
+          else periodDebits += tx.amount;
         }
       });
       return {
         id: c.id,
         nameAr: c.nameAr,
-        credits,
-        debits,
-        balance: credits - debits,
+        actualBalance: c.balance,          // real balance from database
+        periodCredits,
+        periodDebits,
+        periodFlow: periodCredits - periodDebits,
       };
     });
   }, [caisses, filteredTx]);
@@ -308,7 +310,7 @@ export default function AnalyticsPage() {
             </Button>
           </div>
         </div>
-      </Card>\n
+      </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -491,18 +493,18 @@ export default function AnalyticsPage() {
       <Card titleAr="توزيع التدفق المالي حسب الصناديق">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {caisseBreakdown.map((c) => {
-            const sum = c.credits + c.debits;
-            const credPercent = sum > 0 ? (c.credits / sum) * 100 : 0;
-            const debPercent = sum > 0 ? (c.debits / sum) * 100 : 0;
+            const sum = c.periodCredits + c.periodDebits;
+            const credPercent = sum > 0 ? (c.periodCredits / sum) * 100 : 0;
+            const debPercent = sum > 0 ? (c.periodDebits / sum) * 100 : 0;
 
             return (
               <div key={c.id} className="p-4 bg-gray-50 border border-gray-100 rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
                   <span className="font-bold text-gray-900">{c.nameAr}</span>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    c.balance >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                    c.actualBalance >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    {c.balance >= 0 ? 'فائض: ' : 'عجز: '}{formatCurrency(c.balance)}
+                    رصيد فعلي: {formatCurrency(c.actualBalance)}
                   </span>
                 </div>
                 <div className="space-y-1">
@@ -511,9 +513,12 @@ export default function AnalyticsPage() {
                     <div className="bg-red-500 h-full" style={{ width: `${debPercent}%` }} />
                   </div>
                   <div className="flex justify-between text-[10px] text-gray-400">
-                    <span>مداخيل: {formatCurrency(c.credits)}</span>
-                    <span>مصاريف: {formatCurrency(c.debits)}</span>
+                    <span>مداخيل الفترة: {formatCurrency(c.periodCredits)}</span>
+                    <span>مصاريف الفترة: {formatCurrency(c.periodDebits)}</span>
                   </div>
+                </div>
+                <div className={`text-xs font-medium ${c.periodFlow >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  تدفق الفترة الصافي: {c.periodFlow >= 0 ? '+' : ''}{formatCurrency(c.periodFlow)}
                 </div>
               </div>
             );
@@ -559,7 +564,7 @@ export default function AnalyticsPage() {
             )}
 
             {(() => {
-              const deficits = caisseBreakdown.filter((c) => c.balance < 0);
+              const deficits = caisseBreakdown.filter((c) => c.periodFlow < 0);
               if (deficits.length === 0) return null;
               return (
                 <div className="flex gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-800">
