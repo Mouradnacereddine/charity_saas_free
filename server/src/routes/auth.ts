@@ -39,10 +39,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         res.status(400).json({ error: 'رمز الدعوة منتهي الصلاحية' });
         return;
       }
-      if (token.email !== email) {
-        res.status(400).json({ error: 'البريد الإلكتروني لا يتطابق مع رمز الدعوة' });
-        return;
-      }
 
       const existingUser = await prisma.user.findUnique({ where: { email } });
       if (existingUser) {
@@ -363,16 +359,11 @@ router.put('/association/logo', requireAuth, requireAdmin, async (req: AuthReque
 // INVITE TOKENS
 // ========================================================================
 
-// POST /api/auth/invite — admin invites a person by email
+// POST /api/auth/invite — admin generates an invite link
 router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { email, role, name, nameAr } = req.body;
+    const { role, name, nameAr } = req.body;
     const associationId = req.user!.associationId;
-
-    if (!email) {
-      res.status(400).json({ error: 'البريد الإلكتروني مطلوب' });
-      return;
-    }
 
     const normalizedRole = role || 'user';
     if (normalizedRole === 'admin') {
@@ -384,24 +375,6 @@ router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: 
       return;
     }
 
-    // Check user not already registered in this association
-    const existingUser = await prisma.user.findFirst({
-      where: { email, associationId },
-    });
-    if (existingUser) {
-      res.status(409).json({ error: 'هذا البريد الإلكتروني مسجل بالفعل في الجمعية' });
-      return;
-    }
-
-    // Check for existing pending invite for this email
-    const existingInvite = await prisma.inviteToken.findFirst({
-      where: { email, associationId, usedAt: null, expiresAt: { gt: new Date() } },
-    });
-    if (existingInvite) {
-      res.status(409).json({ error: 'رمز دعوة معلق موجود بالفعل لهذا البريد' });
-      return;
-    }
-
     const token = crypto.randomUUID();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + config.inviteTokenExpiryDays);
@@ -409,7 +382,6 @@ router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: 
     const invite = await prisma.inviteToken.create({
       data: {
         associationId,
-        email,
         token,
         role: normalizedRole as any,
         name: name || '',
@@ -422,7 +394,6 @@ router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: 
 
     res.status(201).json({
       id: invite.id,
-      email: invite.email,
       role: invite.role,
       token: invite.token,
       inviteLink,
@@ -444,7 +415,6 @@ router.get('/invites', requireAuth, requireAdmin, async (req: AuthRequest, res: 
       where: { associationId },
       select: {
         id: true,
-        email: true,
         role: true,
         name: true,
         nameAr: true,
@@ -519,7 +489,6 @@ router.get('/invite/:token', async (req: Request, res: Response): Promise<void> 
     }
 
     res.json({
-      email: invite.email,
       role: invite.role,
       name: invite.name,
       nameAr: invite.nameAr,

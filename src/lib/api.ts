@@ -64,7 +64,7 @@ export const authApi = {
   deleteUser: (id: string) => api.delete(`/auth/users/${id}`),
   createUser: (data: { email: string; password: string; name?: string; nameAr: string; role?: string }) =>
     api.post('/auth/users/create', data),
-  invite: (data: { email: string; role?: string; name?: string; nameAr?: string }) =>
+  invite: (data: { role?: string; name?: string; nameAr?: string }) =>
     api.post('/auth/invite', data),
   invites: () =>
     api.get('/auth/invites'),

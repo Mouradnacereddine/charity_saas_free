@@ -79,10 +79,6 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
           res.status(400).json({ error: 'رمز الدعوة منتهي الصلاحية' });
           return;
         }
-        if (token.email !== googleEmail) {
-          res.status(400).json({ error: 'البريد الإلكتروني لا يتطابق مع رمز الدعوة' });
-          return;
-        }
 
         const result = await prisma.$transaction(async (tx) => {
           const newUser = await tx.user.create({

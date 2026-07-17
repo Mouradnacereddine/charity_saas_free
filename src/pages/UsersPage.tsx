@@ -16,7 +16,6 @@ interface UserData {
 
 interface InviteData {
   id: string;
-  email: string;
   role: 'admin' | 'treasurer' | 'user';
   name: string | null;
   nameAr: string | null;
@@ -78,16 +77,15 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
   const queryClient = useQueryClient();
   const [nameAr, setNameAr] = useState('');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [role, setRole] = useState<'user' | 'treasurer'>('user');
-  const [result, setResult] = useState<{ inviteLink: string; email: string } | null>(null);
+  const [result, setResult] = useState<{ inviteLink: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
 
   const inviteMutation = useMutation({
     mutationFn: authApi.invite,
     onSuccess: (res) => {
-      setResult({ inviteLink: res.data.inviteLink, email: res.data.email });
+      setResult({ inviteLink: res.data.inviteLink });
       queryClient.invalidateQueries({ queryKey: ['invites'] });
     },
     onError: (err: any) => {
@@ -111,7 +109,6 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
   const reset = () => {
     setNameAr('');
     setName('');
-    setEmail('');
     setRole('user');
     setResult(null);
     setCopied(false);
@@ -125,12 +122,11 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
   const handleSubmit = () => {
     setError('');
-    if (!nameAr.trim() || !email.trim()) {
-      setError('الاسم بالعربية والبريد الإلكتروني مطلوبان');
+    if (!nameAr.trim()) {
+      setError('الاسم بالعربية مطلوب');
       return;
     }
     inviteMutation.mutate({
-      email: email.trim(),
       role,
       name: name.trim() || nameAr.trim(),
       nameAr: nameAr.trim(),
@@ -148,8 +144,6 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
               <Input labelAr="الاسم بالعربية" value={nameAr} onChange={(e) => setNameAr(e.target.value)} placeholder="مثال: أحمد" required />
               <Input labelAr="الاسم باللاتينية" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Ahmed" dir="ltr" />
             </div>
-
-            <Input labelAr="البريد الإلكتروني" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" dir="ltr" required />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">الدور</label>
@@ -177,7 +171,7 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
             <div className="flex gap-2 justify-end pt-2">
               <Button variant="secondary" onClick={handleClose}>إلغاء</Button>
-              <Button onClick={handleSubmit} disabled={!nameAr.trim() || !email.trim() || inviteMutation.isPending}>
+              <Button onClick={handleSubmit} disabled={!nameAr.trim() || inviteMutation.isPending}>
                 {inviteMutation.isPending ? 'جاري الإنشاء...' : 'إنشاء رابط الدعوة'}
               </Button>
             </div>
@@ -186,7 +180,6 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
           <>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <p className="text-sm font-medium text-green-800 mb-2">✅ تم إنشاء رابط الدعوة</p>
-              <p className="text-xs text-green-600 mb-1">{result.email}</p>
               <p className="text-xs text-gray-500 mb-3">انقل الرابط إلى الشخص المعني ليختار كلمة المرور الخاصة به</p>
               <div className="flex items-center gap-2">
                 <input id="invite-link-input" type="text" readOnly value={result.inviteLink}
@@ -448,7 +441,6 @@ export default function UsersPage() {
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-right py-3 px-4 font-semibold text-gray-600">الاسم</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-600">البريد الإلكتروني</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-600">الدور</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-600">الحالة</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">تاريخ الإنشاء</th>
@@ -460,8 +452,7 @@ export default function UsersPage() {
                       const status = getInviteStatus(inv);
                       return (
                         <tr key={inv.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                          <td className="py-3 px-4 font-medium text-gray-900">{inv.nameAr || inv.email}</td>
-                          <td className="py-3 px-4 text-gray-600" dir="ltr">{inv.email}</td>
+                          <td className="py-3 px-4 font-medium text-gray-900">{inv.nameAr || 'دعوة معلقة'}</td>
                           <td className="py-3 px-4">
                             <Badge variant={ROLE_BADGE_VARIANT[inv.role] || 'default'}>
                               {ROLE_LABELS[inv.role] || inv.role}

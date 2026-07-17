@@ -661,7 +661,7 @@ async function main() {
   // =====================================================================
   await prisma.inviteToken.create({
     data: {
-      associationId: aid, email: 'nouveau.benevole@test.dz', role: 'user',
+      associationId: aid, role: 'user',
       name: 'Nouveau Benevole', nameAr: 'متطوع جديد',
       token: crypto.randomUUID(),
       expiresAt: new Date(now.getTime() + 7 * 86400000),

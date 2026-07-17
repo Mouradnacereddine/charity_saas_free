@@ -114,7 +114,6 @@ model User {
 model InviteToken {
   id            String    @id @default(uuid())
   associationId String
-  email         String
   token         String    @unique
   role          Role      @default(user)
   name          String?
@@ -127,7 +126,6 @@ model InviteToken {
 
   @@index([associationId])
   @@index([token])
-  @@index([email])
 }
 
 model Caisse {

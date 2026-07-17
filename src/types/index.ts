@@ -16,7 +16,6 @@ export type Role = 'admin' | 'treasurer' | 'user';
 
 export interface InviteToken {
   id: string;
-  email: string;
   role: Role;
   name: string | null;
   nameAr: string | null;
