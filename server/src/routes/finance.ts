@@ -110,7 +110,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
     const words = amountInWords || `${amount} DZD`;
     const wordsAr = amountInWordsAr || `${amount} دينار`;
 
-    // Auto-generate receipt number for credits
+    // Auto-generate receipt number for all transactions
     const ref = receiptNumber || generateRef('BON');
 
     // Verify caisse belongs to association
@@ -162,7 +162,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
           beneficiaryId,
           description,
           descriptionAr,
-          receiptNumber: txStatus === 'completed' ? ref : null,
+          receiptNumber: ref,
           status: txStatus as any,
           date: date ? new Date(date) : new Date(),
         },
