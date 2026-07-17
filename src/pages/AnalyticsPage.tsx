@@ -247,8 +247,6 @@ export default function AnalyticsPage() {
     return <LoadingSpinner />;
   }
 
-  const chartMax = Math.max(...monthlyProgression.map((m) => Math.max(m.credits, m.debits)), 1000) * 1.15;
-
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -356,107 +354,121 @@ export default function AnalyticsPage() {
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-500 rounded-sm" /> المداخيل</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-red-500 rounded-sm" /> المصاريف</span>
               </div>
-              {/* Chart container: horizontal scroll when many months, else fit */}
-              <div className="relative" style={{ overflowX: monthlyProgression.length > 24 ? 'auto' : 'visible' }}>
+              {/* Professional bar chart */}
+              <div className="relative" style={{ overflowX: 'auto' }}>
                 {(() => {
                   const N = monthlyProgression.length;
-                  // Dynamic sizing: more months = wider chart, scale label spacing
                   const monthsAr = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-                  const MIN_BAR_GROUP = 40; // minimum px per group
-                  const PADDING_LEFT = 55;
-                  const PADDING_RIGHT = 15;
-                  const CHART_HEIGHT = 200;
-                  const LABEL_AREA = 50;
-                  const AXIS_Y_OFFSET = 10;
-                  const PLOT_TOP = 5;
-                  const PLOT_BOTTOM = CHART_HEIGHT - LABEL_AREA;
-                  const PLOT_HEIGHT = PLOT_BOTTOM - PLOT_TOP;
 
-                  const svgWidth = Math.max(600, N * MIN_BAR_GROUP + PADDING_LEFT + PADDING_RIGHT);
-                  const chartWidth = svgWidth - PADDING_LEFT - PADDING_RIGHT;
-                  const barGroupWidth = chartWidth / N;
-                  const barWidth = Math.max(4, Math.min(28, barGroupWidth * 0.5));
+                  // ---- Layout dimensions ----
+                  const MARGIN_L = 46;       // left margin for Y-axis labels
+                  const MARGIN_R = 10;       // right margin
+                  const MARGIN_T = 8;        // top margin
+                  const PLOT_H = 170;        // height of the actual plot area
+                  const LABEL_H = 42;        // height reserved for X-axis labels at bottom
+                  const svgH = MARGIN_T + PLOT_H + LABEL_H;
 
-                  // How many labels to show: skip some when too many
-                  const labelStep = N <= 12 ? 1 : N <= 36 ? 2 : N <= 72 ? 3 : 4;
-                  // Format label: short for many months
-                  const formatLabel = (item: { month: string }, idx: number) => {
-                    const [year, month] = item.month.split('-');
-                    if (N <= 12) return `${monthsAr[parseInt(month) - 1]} ${year}`;
-                    if (N <= 36) return `${monthsAr[parseInt(month) - 1].slice(0, 3)} ${year.slice(2)}`;
-                    return year;
-                  };
+                  // ---- Width logic: scale with number of months ----
+                  const pxPerGroup = Math.max(28, Math.min(60, 520 / N));
+                  const svgW = Math.max(400, MARGIN_L + N * pxPerGroup + MARGIN_R);
+                  const chartW = svgW - MARGIN_L - MARGIN_R;
+                  const groupW = chartW / N;
+                  const barW = Math.max(4, groupW * 0.4);
+                  const gap = barW * 0.15;
+
+                  // ---- Y-axis ----
+                  const rawMax = Math.max(...monthlyProgression.map(m => Math.max(m.credits, m.debits)), 1);
+                  const nice = rawMax > 1000000 ? 500000 : rawMax > 500000 ? 200000 : rawMax > 100000 ? 100000 : rawMax > 50000 ? 25000 : rawMax > 10000 ? 10000 : rawMax > 5000 ? 5000 : rawMax > 1000 ? 1000 : 500;
+                  const yMax = Math.ceil(rawMax * 1.15 / nice) * nice;
+
+                  // ---- X-axis labels: skip strategy ----
+                  let labelStep = 1;
+                  if (N > 18) labelStep = 2;
+                  if (N > 36) labelStep = 3;
+                  if (N > 60) labelStep = 6;
+                  if (N > 96) labelStep = 12;
+
+                  // ---- Compute a nice set of Y-axis numbers ----
+                  const ySteps = 4;
+                  const yValues = Array.from({ length: ySteps + 1 }, (_, i) => (i / ySteps) * yMax);
 
                   return (
-                    <svg viewBox={`0 0 ${svgWidth} ${CHART_HEIGHT + 10}`} className="w-full" style={{ minWidth: monthlyProgression.length > 24 ? `${svgWidth}px` : undefined, height: '210px' }}>
-                      {/* Grid lines */}
-                      {[0, 0.25, 0.5, 0.75, 1].map((p, i) => {
-                        const y = PLOT_TOP + p * PLOT_HEIGHT;
-                        const val = chartMax * (1 - p);
-                        return (
-                          <g key={i}>
-                            <line x1={PADDING_LEFT} y1={y} x2={svgWidth - PADDING_RIGHT} y2={y} className="stroke-gray-100" strokeWidth="1" strokeDasharray="4" />
-                            <text x={PADDING_LEFT - 6} y={y + 3} className="fill-gray-400 text-[10px] font-medium" textAnchor="end">
-                              {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val.toFixed(0)}
-                            </text>
-                          </g>
-                        );
-                      })}
-
-                      {/* Baseline */}
-                      <line x1={PADDING_LEFT} y1={PLOT_BOTTOM} x2={svgWidth - PADDING_RIGHT} y2={PLOT_BOTTOM} className="stroke-gray-300" strokeWidth="1" />
-
-                      {/* Bars + Labels */}
-                      {monthlyProgression.map((item, idx) => {
-                        const xCenter = PADDING_LEFT + idx * barGroupWidth + barGroupWidth / 2;
-                        const credHeight = Math.max(0, (item.credits / chartMax) * PLOT_HEIGHT);
-                        const debHeight = Math.max(0, (item.debits / chartMax) * PLOT_HEIGHT);
-                        const credY = PLOT_BOTTOM - credHeight;
-                        const debY = PLOT_BOTTOM - debHeight;
-                        const showLabel = idx % labelStep === 0;
-                        const label = formatLabel(item, idx);
-                        // Tooltip-like hover label
-                        const totalStr = `${formatCurrency(item.credits)} / ${formatCurrency(item.debits)}`;
-
-                        return (
-                          <g key={idx}>
-                            {/* Credit bar */}
-                            <rect
-                              x={xCenter - barWidth - 1.5}
-                              y={credY}
-                              width={barWidth}
-                              height={credHeight}
-                              className="fill-emerald-500"
-                              rx="2"
-                            />
-                            {/* Debit bar */}
-                            <rect
-                              x={xCenter + 1.5}
-                              y={debY}
-                              width={barWidth}
-                              height={debHeight}
-                              className="fill-red-500"
-                              rx="2"
-                            />
-                            {/* Hover tooltip */}
-                            <title>{`${formatCurrency(item.credits)} مداخيل\n${formatCurrency(item.debits)} مصاريف`}</title>
-                            {/* X-axis label: angled if many months, straight otherwise */}
-                            {showLabel && (
-                              <text
-                                x={xCenter}
-                                y={PLOT_BOTTOM + 14}
-                                className="fill-gray-500 font-medium"
-                                textAnchor={N > 36 ? 'end' : 'middle'}
-                                fontSize={N > 24 ? '8' : N > 36 ? '7' : '9'}
-                                transform={N > 24 ? `rotate(-45, ${xCenter}, ${PLOT_BOTTOM + 14})` : undefined}
-                              >
-                                {label}
+                    <div style={{ overflowX: N > 18 ? 'auto' : 'visible', paddingBottom: '4px' }}>
+                      <svg
+                        viewBox={`0 0 ${svgW} ${svgH}`}
+                        style={{ minWidth: svgW > 700 ? svgW + 'px' : '100%', display: 'block' }}
+                        className={svgW <= 700 ? 'w-full' : ''}
+                      >
+                        {/* ---- Grid + Y-axis labels ---- */}
+                        {yValues.map((val, i) => {
+                          const y = MARGIN_T + PLOT_H - (i / ySteps) * PLOT_H;
+                          return (
+                            <g key={`y${i}`}>
+                              <line x1={MARGIN_L} y1={y} x2={svgW - MARGIN_R} y2={y} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="4,4" />
+                              <text x={MARGIN_L - 6} y={y + 3} fill="#9ca3af" fontSize="10" textAnchor="end" fontFamily="sans-serif">
+                                {val >= 1000000 ? (val / 1000000).toFixed(1) + 'M' : val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val.toFixed(0)}
                               </text>
-                            )}
-                          </g>
-                        );
-                      })}
-                    </svg>
+                            </g>
+                          );
+                        })}
+
+                        {/* ---- Baseline (zero) ---- */}
+                        <line x1={MARGIN_L} y1={MARGIN_T + PLOT_H} x2={svgW - MARGIN_R} y2={MARGIN_T + PLOT_H} stroke="#cbd5e1" strokeWidth="1.5" />
+                        {/* Y-axis vertical line */}
+                        <line x1={MARGIN_L} y1={MARGIN_T} x2={MARGIN_L} y2={MARGIN_T + PLOT_H} stroke="#cbd5e1" strokeWidth="1" />
+
+                        {/* ---- Bars ---- */}
+                        {monthlyProgression.map((item, idx) => {
+                          const cx = MARGIN_L + idx * groupW + groupW / 2;
+                          const credH = (item.credits / yMax) * PLOT_H;
+                          const debH = (item.debits / yMax) * PLOT_H;
+                          const baseY = MARGIN_T + PLOT_H;
+                          const [yr, mo] = item.month.split('-');
+
+                          let shortLabel: string;
+                          if (N > 60) {
+                            shortLabel = idx % 6 === 0 ? yr : '';
+                          } else if (N > 36) {
+                            const labelIdx = Math.floor((parseInt(mo) - 1) / 4);
+                            shortLabel = idx % 3 === 0 ? `${yr}-Q${labelIdx + 1}` : '';
+                          } else if (N > 18) {
+                            const m = monthsAr[parseInt(mo) - 1].slice(0, 2);
+                            shortLabel = idx % 2 === 0 ? `${m} ${yr.slice(2)}` : '';
+                          } else {
+                            shortLabel = `${monthsAr[parseInt(mo) - 1].slice(0, 3)} ${yr}`;
+                          }
+
+                          return (
+                            <g key={idx}>
+                              {/* Credit */}
+                              <rect x={cx - gap - barW} y={baseY - credH} width={barW} height={credH || 0} fill="#10b981" rx="2" />
+                              {/* Debit */}
+                              <rect x={cx + gap} y={baseY - debH} width={barW} height={debH || 0} fill="#ef4444" rx="2" />
+                              {/* Tooltip */}
+                              <title>
+                                {`${monthsAr[parseInt(mo) - 1]} ${yr}\n📈 مداخيل: ${formatCurrency(item.credits)}\n📉 مصاريف: ${formatCurrency(item.debits)}`}
+                              </title>
+                              {/* X-axis label */}
+                              {shortLabel && (
+                                <g>
+                                  <text
+                                    x={cx}
+                                    y={baseY + 14}
+                                    fill="#6b7280"
+                                    fontSize={N > 36 ? '8' : '10'}
+                                    fontFamily="sans-serif"
+                                    textAnchor="end"
+                                    transform={`rotate(-40, ${cx}, ${baseY + 14})`}
+                                  >
+                                    {shortLabel}
+                                  </text>
+                                </g>
+                              )}
+                            </g>
+                          );
+                        })}
+                      </svg>
+                    </div>
                   );
                 })()}
               </div>
