@@ -74,7 +74,9 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
 });
 
 // POST /api/finance/transactions — create with balance validation and auto receipt
-// Accepts optional `status`: "pending" (no balance impact) or "completed" (default)
+// Accepts optional `status`: "pending" or "completed" (default)
+// CREDIT PENDING: money enters caisse immediately (donor has given), but beneficiary hasn't received yet
+// DEBIT PENDING: money does NOT leave caisse until confirmed (beneficiary hasn't received yet)
 router.post('/transactions', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
@@ -123,10 +125,10 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+
     // For completed debit transactions, check balance
     if (type === 'debit' && txStatus === 'completed') {
-      const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-
       if (fundSource === 'caisse_physique') {
         if (caisse.balance < numericAmount) {
           res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
@@ -168,50 +170,39 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
         },
       });
 
-      const amountNum = typeof amount === 'string' ? parseFloat(amount) : amount;
+      const amountNum = numericAmount;
       let receipt = null;
       let allocation = null;
 
-      // Only update balances and create receipt if status is 'completed'
-      if (txStatus === 'completed') {
+      // =====================================================
+      // CREDIT: money enters caisse IMMEDIATELY (even pending)
+      // because the donor has physically given the money.
+      // =====================================================
+      if (type === 'credit') {
         // Update caisse balance
-        if (type === 'credit') {
-          await tx.caisse.update({
-            where: { id: caisseId },
-            data: { balance: { increment: amountNum } },
-          });
-        } else {
-          await tx.caisse.update({
-            where: { id: caisseId },
-            data: { balance: { decrement: amountNum } },
-          });
-        }
+        await tx.caisse.update({
+          where: { id: caisseId },
+          data: { balance: { increment: amountNum } },
+        });
 
         // Update bank account balance if applicable
         if (bankAccountId) {
-          if (type === 'credit') {
-            await tx.bankAccount.update({
-              where: { id: bankAccountId },
-              data: { balance: { increment: amountNum } },
-            });
-          } else {
-            await tx.bankAccount.update({
-              where: { id: bankAccountId },
-              data: { balance: { decrement: amountNum } },
-            });
-          }
+          await tx.bankAccount.update({
+            where: { id: bankAccountId },
+            data: { balance: { increment: amountNum } },
+          });
         }
 
-        // Update donor totalDonated if applicable
-        if (donorId && type === 'credit') {
+        // Update donor totalDonated
+        if (donorId) {
           await tx.donor.update({
             where: { id: donorId },
             data: { totalDonated: { increment: amountNum } },
           });
         }
 
-        // Auto-create donation receipt if donorId is present and type is credit
-        if (donorId && type === 'credit' && ref) {
+        // Auto-create donation receipt if donorId is present
+        if (donorId && ref) {
           const donor = await tx.donor.findUnique({
             where: { id: donorId },
           });
@@ -248,9 +239,27 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
             });
           }
         }
+      }
 
-        // If a debit is linked to an allocation, update the remaining amount
-        if (allocationId && type === 'debit') {
+      // =====================================================
+      // DEBIT: money leaves caisse ONLY if completed
+      // (pending = beneficiary hasn't received yet)
+      // =====================================================
+      if (type === 'debit' && txStatus === 'completed') {
+        await tx.caisse.update({
+          where: { id: caisseId },
+          data: { balance: { decrement: amountNum } },
+        });
+
+        if (bankAccountId) {
+          await tx.bankAccount.update({
+            where: { id: bankAccountId },
+            data: { balance: { decrement: amountNum } },
+          });
+        }
+
+        // If linked to an allocation, update remaining amount
+        if (allocationId) {
           const alloc = await tx.donationAllocation.findUnique({
             where: { id: allocationId },
           });
@@ -512,73 +521,77 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
         data: { status: 'completed' },
       });
 
-      // Update caisse balance
-      if (tx.type === 'credit') {
-        await prismaTx.caisse.update({
-          where: { id: tx.caisseId },
-          data: { balance: { increment: amountNum } },
-        });
-      } else {
+      // =====================================================
+      // DEBIT CONFIRMATION: Now the money physically leaves
+      // the caisse/bank
+      // =====================================================
+      if (tx.type === 'debit') {
+        // Update caisse balance
         await prismaTx.caisse.update({
           where: { id: tx.caisseId },
           data: { balance: { decrement: amountNum } },
         });
-      }
 
-      // Update bank account balance if applicable
-      if (tx.bankAccountId) {
-        if (tx.type === 'credit') {
-          await prismaTx.bankAccount.update({
-            where: { id: tx.bankAccountId },
-            data: { balance: { increment: amountNum } },
-          });
-        } else {
+        // Update bank account balance if applicable
+        if (tx.bankAccountId) {
           await prismaTx.bankAccount.update({
             where: { id: tx.bankAccountId },
             data: { balance: { decrement: amountNum } },
           });
         }
-      }
 
-      // Update donor totalDonated for credits
-      if (tx.donorId && tx.type === 'credit') {
-        await prismaTx.donor.update({
-          where: { id: tx.donorId },
-          data: { totalDonated: { increment: amountNum } },
+        // If this debit is linked to an allocation (e.g. distributed later)
+        // Find any allocation linked to this debit transaction
+        const debitAlloc = await prismaTx.donationAllocation.findFirst({
+          where: { debitTransactionId: tx.id },
         });
 
-        // Create donation receipt
-        const donor = await prismaTx.donor.findUnique({ where: { id: tx.donorId } });
-        const caisse = await prismaTx.caisse.findUnique({ where: { id: tx.caisseId } });
-        const ref = tx.receiptNumber || generateRef('BON');
-
-        if (donor && caisse) {
-          await prismaTx.donationReceipt.create({
-            data: {
-              associationId,
-              receiptNumber: ref,
-              donorId: tx.donorId,
-              donorName: `${donor.firstName} ${donor.lastName}`,
-              donorNameAr: `${donor.lastNameAr} ${donor.firstNameAr}`,
-              transactionId: tx.id,
-              amount: amountNum,
-              amountInWords: tx.amountInWords,
-              amountInWordsAr: tx.amountInWordsAr,
-              caisseId: tx.caisseId,
-              caisseName: caisse.name,
-              caisseNameAr: caisse.nameAr,
-              subCategoryId: tx.subCategoryId || undefined,
-              date: tx.date,
-            },
+        if (debitAlloc) {
+          const newRemaining = Math.max(0, debitAlloc.remainingAmount - amountNum);
+          await prismaTx.donationAllocation.update({
+            where: { id: debitAlloc.id },
+            data: { remainingAmount: newRemaining },
           });
         }
       }
 
-      // For debits linked to allocation, update remaining amount
-      // Find any allocation linked to this debit via creditAllocations
-      const debitAlloc = await prismaTx.donationAllocation.findFirst({
-        where: { debitTransactionId: tx.id },
-      });
+      // =====================================================
+      // CREDIT CONFIRMATION:
+      // Balances and donor totals were already updated on POST.
+      // We just need to make sure the receipt is created (if not already)
+      // =====================================================
+      if (tx.type === 'credit' && tx.donorId) {
+        const existingReceipt = await prismaTx.donationReceipt.findFirst({
+          where: { transactionId: tx.id },
+        });
+
+        if (!existingReceipt) {
+          const donor = await prismaTx.donor.findUnique({ where: { id: tx.donorId } });
+          const caisse = await prismaTx.caisse.findUnique({ where: { id: tx.caisseId } });
+          const ref = tx.receiptNumber || generateRef('BON');
+
+          if (donor && caisse) {
+            await prismaTx.donationReceipt.create({
+              data: {
+                associationId,
+                receiptNumber: ref,
+                donorId: tx.donorId,
+                donorName: `${donor.firstName} ${donor.lastName}`,
+                donorNameAr: `${donor.lastNameAr} ${donor.firstNameAr}`,
+                transactionId: tx.id,
+                amount: amountNum,
+                amountInWords: tx.amountInWords,
+                amountInWordsAr: tx.amountInWordsAr,
+                caisseId: tx.caisseId,
+                caisseName: caisse.name,
+                caisseNameAr: caisse.nameAr,
+                subCategoryId: tx.subCategoryId || undefined,
+                date: tx.date,
+              },
+            });
+          }
+        }
+      }
 
       return updated;
     });
@@ -610,9 +623,42 @@ router.put('/transactions/:id/cancel', async (req: AuthRequest, res: Response): 
       return;
     }
 
-    const updated = await prisma.transaction.update({
-      where: { id },
-      data: { status: 'cancelled' },
+    const updated = await prisma.$transaction(async (prismaTx) => {
+      const txUpdate = await prismaTx.transaction.update({
+        where: { id },
+        data: { status: 'cancelled' },
+      });
+
+      const amountNum = tx.amount;
+
+      // If a pending CREDIT is cancelled, we must subtract the money that entered
+      if (tx.type === 'credit') {
+        // Decrease caisse balance
+        await prismaTx.caisse.update({
+          where: { id: tx.caisseId },
+          data: { balance: { decrement: amountNum } },
+        });
+
+        // Decrease bank account balance if applicable
+        if (tx.bankAccountId) {
+          await prismaTx.bankAccount.update({
+            where: { id: tx.bankAccountId },
+            data: { balance: { decrement: amountNum } },
+          });
+        }
+
+        // Decrease donor totalDonated if applicable
+        if (tx.donorId) {
+          await prismaTx.donor.update({
+            where: { id: tx.donorId },
+            data: { totalDonated: { decrement: amountNum } },
+          });
+        }
+      }
+
+      // Note: For pending DEBIT cancel, nothing was subtracted yet, so no balance change needed.
+
+      return txUpdate;
     });
 
     res.json(updated);
