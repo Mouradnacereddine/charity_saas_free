@@ -12,6 +12,7 @@ import MedicalPage from './pages/MedicalPage';
 import DoctorsPage from './pages/DoctorsPage';
 import UsersPage from './pages/UsersPage';
 import AuthPage from './pages/AuthPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -36,6 +37,7 @@ const PAGE_NAMES: Record<string, string> = {
   medical: 'التوجيه الطبي',
   doctors: 'الأطباء',
   users: 'إدارة المستخدمين',
+  analytics: 'التحليلات والتقارير',
 };
 
 function AppContent() {
@@ -45,7 +47,7 @@ function AppContent() {
     const pageName = hash.split('?')[0].split('&')[0];
     return pageName && PAGE_NAMES[pageName] ? pageName : (localStorage.getItem('accessToken') ? 'dashboard' : 'login');
   });
-  const { user, association, isAuthenticated, isAdmin, isLoading, logout } = useAuth();
+  const { user, association, isAuthenticated, isAdmin, isTreasurer, isLoading, logout } = useAuth();
 
   const navigate = (page: string) => {
     setActivePage(page);
@@ -111,6 +113,7 @@ function AppContent() {
       case 'medical': return <MedicalPage />;
       case 'doctors': return <DoctorsPage />;
       case 'users': return isAdmin ? <UsersPage /> : <DashboardPage />;
+      case 'analytics': return (isAdmin || isTreasurer) ? <AnalyticsPage /> : <DashboardPage />;
       default: return <DashboardPage />;
     }
   };

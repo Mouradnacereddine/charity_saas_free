@@ -14,11 +14,13 @@ import {
   UserCog,
   ChevronDown,
   Settings,
+  TrendingUp,
 } from 'lucide-react';
 import { authApi } from '../../lib/api';
 
 const navItems = [
   { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
+  { id: 'analytics', label: 'التحليلات والتقارير', icon: TrendingUp },
   { id: 'finance', label: 'المالية', icon: Wallet },
   { id: 'caisses', label: 'الصناديق', icon: FolderOpen },
   { id: 'beneficiaries', label: 'المستفيدون', icon: Users },
@@ -133,23 +135,25 @@ export function Layout({
           </button>
         </div>
         <nav className="p-3 space-y-1 overflow-y-auto" style={{ height: 'calc(100vh - 65px)' }}>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                onNavigate(item.id);
-                setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                activePage === item.id
-                  ? 'bg-primary-700 text-white shadow-sm'
-                  : 'text-primary-200 hover:bg-primary-800 hover:text-white'
-              }`}
-            >
-              <item.icon className="w-5 h-5 shrink-0" />
-              <span className="truncate">{item.label}</span>
-            </button>
-          ))}
+          {navItems
+            .filter((item) => item.id !== 'analytics' || isAdmin || userRole === 'treasurer')
+            .map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onNavigate(item.id);
+                  setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  activePage === item.id
+                    ? 'bg-primary-700 text-white shadow-sm'
+                    : 'text-primary-200 hover:bg-primary-800 hover:text-white'
+                }`}
+              >
+                <item.icon className="w-5 h-5 shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </button>
+            ))}
         </nav>
       </aside>
 
