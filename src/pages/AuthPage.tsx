@@ -82,12 +82,18 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
   const handleGoogleCredential = async (response: any) => {
     setLoading(true);
     setError('');
+
+    // Read the invite token directly from the URL hash in real time to avoid stale closure bugs
+    const hash = window.location.hash;
+    const match = hash.match(/[?&]invite=([^&]+)/);
+    const currentInviteToken = match ? decodeURIComponent(match[1]) : null;
+
     try {
       // First try login — if user exists, this succeeds
       // If user doesn't exist, server returns 404 → show name form
       const res = await authApi.googleLogin({
         credential: response.credential,
-        inviteToken: inviteToken || undefined,
+        inviteToken: currentInviteToken || undefined,
         mode: 'login',
       });
       localStorage.setItem('accessToken', res.data.accessToken);
