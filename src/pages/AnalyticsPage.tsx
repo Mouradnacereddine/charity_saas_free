@@ -817,6 +817,28 @@ export default function AnalyticsPage() {
               </select>
             </div>
 
+            {/* Totaux des lignes filtrées */}
+            {(() => {
+              const totalCredits = logTx.filter(tx => tx.status !== 'cancelled' && tx.type === 'credit').reduce((s, tx) => s + tx.amount, 0);
+              const totalDebits = logTx.filter(tx => tx.status !== 'cancelled' && tx.type === 'debit').reduce((s, tx) => s + tx.amount, 0);
+              return (
+                <div className="flex flex-wrap gap-4 px-4 py-3 bg-gray-50 rounded-lg border border-gray-100 mb-3 text-sm">
+                  <span className="text-emerald-700 font-semibold">
+                    إجمالي الإيداعات: +{formatCurrency(totalCredits)}
+                  </span>
+                  <span className="text-red-700 font-semibold">
+                    إجمالي السحوبات: -{formatCurrency(totalDebits)}
+                  </span>
+                  <span className={`font-semibold ${totalCredits - totalDebits >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                    الصافي: {totalCredits - totalDebits >= 0 ? '+' : ''}{formatCurrency(totalCredits - totalDebits)}
+                  </span>
+                  <span className="text-gray-500 text-xs mr-auto">
+                    ({logTx.length} عملية)
+                  </span>
+                </div>
+              );
+            })()}
+
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
