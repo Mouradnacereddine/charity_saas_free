@@ -94,8 +94,9 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       localStorage.setItem('refreshToken', res.data.refreshToken);
       onSuccess();
     } catch (err: any) {
-      if (err.response?.status === 404 && !inviteToken) {
-        // User doesn't exist → show association name form
+      const hasInviteInUrl = window.location.hash.includes('invite=');
+      if (err.response?.status === 404 && !hasInviteInUrl) {
+        // User doesn't exist and not an invite flow → show association name form
         pendingCredential.current = response.credential;
         setShowAssocForm(true);
         setError('');
