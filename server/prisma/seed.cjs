@@ -529,7 +529,7 @@ async function main() {
         donorId: isCredit ? donors[t.di]?.id : undefined,
         beneficiaryId: !isCredit ? bens[i % bens.length]?.id : undefined,
         description: t.desc, descriptionAr: t.descAr,
-        receiptNumber: isCredit ? ref('BON') : undefined,
+        receiptNumber: ref('BON'),
         status: 'completed',
         date: txDate,
         createdAt: txDate, updatedAt: now,
