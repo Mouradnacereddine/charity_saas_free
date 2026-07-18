@@ -1,7 +1,7 @@
 import { useState, Fragment } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { calculateAge, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
-import { printReceipt } from '../lib/receipt'
+import { printReceipt, printBeneficiaryCard } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
 import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary } from '../hooks/useBeneficiaries'
@@ -481,43 +481,35 @@ export default function BeneficiariesPage() {
 
   // ---- Print ----
   const handlePrintCard = (b: Beneficiary) => {
-    const childrenHtml = (b.children || []).length > 0
-      ? b.children.map((ch: any) =>
-          `<div class="row"><span class="lbl">الطفل</span><span class="val">${ch.lastNameAr} ${ch.firstNameAr} — ${calculateAge(ch.dateOfBirth).displayAr} — ${ch.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>`
-        ).join('')
-      : '<div class="row"><span class="lbl">الأطفال</span><span class="val">لا يوجد</span></div>'
-
     const caisse = caisses.find((c: any) => c.id === b.caisseId)
 
-    printReceipt(
-      'بطاقة مستفيد',
-      'Carte Bénéficiaire',
-      `<div class="col">
-        <div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${b.reference || '—'}</span></div>
-        <div class="row"><span class="lbl">الاسم بالعربية</span><span class="val">${b.lastNameAr} ${b.firstNameAr}</span></div>
-        <div class="row"><span class="lbl">الاسم باللاتينية</span><span class="val">${b.firstName} ${b.lastName}</span></div>
-        <div class="row"><span class="lbl">رقم البطاقة</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
-        <div class="row"><span class="lbl">الهاتف</span><span class="val">${b.phone}</span></div>
-       </div>
-       <div class="col">
-        <div class="row"><span class="lbl">تاريخ الميلاد</span><span class="val">${b.dateOfBirth ? formatDate(b.dateOfBirth) : '—'}</span></div>
-        <div class="row"><span class="lbl">العمر</span><span class="val">${b.dateOfBirth ? calculateAge(b.dateOfBirth).displayAr : '—'}</span></div>
-        <div class="row"><span class="lbl">الصفة</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
-        <div class="row"><span class="lbl">الجنس</span><span class="val">${b.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
-        <div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>
-        ${b.situationAr ? `<div class="row"><span class="lbl">الحالة</span><span class="val">${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}</span></div>` : ''}
-       </div>
-       <div class="col">
-        ${childrenHtml}
-       </div>`,
-      'color:#2563eb',
-      `${(b.children || []).length}`,
-      `عدد الأطفال`,
-      '',
-      'توقيع المستفيد',
-      'ختم الجمعية',
-      association?.nameAr
-    )
+    // Children as a styled table in its own section
+    const childrenHtml = (b.children || []).length > 0
+      ? `<div class="section"><div class="section-title">الأطفال (${b.children.length})</div>
+         <table class="children-table"><thead><tr><th>الاسم</th><th>الجنس</th><th>العمر</th><th>الحالة الصحية</th></tr></thead><tbody>
+         ${b.children.map((ch: any) =>
+           `<tr><td>${ch.lastNameAr} ${ch.firstNameAr}</td><td>${ch.gender === 'female' ? 'أنثى' : 'ذكر'}</td><td>${calculateAge(ch.dateOfBirth).displayAr}</td><td>${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</td></tr>`
+         ).join('')}
+         </tbody></table></div>`
+      : ''
+
+    printBeneficiaryCard({
+      assocNameAr: association?.nameAr || 'الجمعية الخيرية',
+      reference: b.reference || '—',
+      lastNameAr: b.lastNameAr,
+      firstNameAr: b.firstNameAr,
+      firstName: b.firstName,
+      lastName: b.lastName,
+      nationalCardNumber: b.nationalCardNumber || '—',
+      phone: b.phone,
+      dateOfBirth: b.dateOfBirth ? formatDate(b.dateOfBirth) : '—',
+      ageDisplay: b.dateOfBirth ? calculateAge(b.dateOfBirth).displayAr : '—',
+      attribut: ATTRIBUT_LABELS[b.attribut] || b.attribut,
+      gender: b.gender === 'female' ? 'أنثى' : 'ذكر',
+      caisseNameAr: caisse?.nameAr || '—',
+      situation: b.situationAr ? `${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}` : undefined,
+      childrenHtml,
+    })
   }
 
   // ---- Print Full File (A4) ----

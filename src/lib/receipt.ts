@@ -52,3 +52,87 @@ export function printReceipt(
 `)
   w.document.close()
 }
+
+/**
+ * A4 full-width beneficiary card — children in a second column, signatures at bottom
+ * Uses the same header style as the full file report for consistency.
+ */
+export const CARD_CSS = `
+  @page { size: A4; margin: 20mm 18mm 15mm 18mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; font-size: 12px; color: #1a1a1a; background: #fff; line-height: 1.6; }
+  .header { text-align: center; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #2563eb; }
+  .header h1 { font-size: 20px; color: #1e40af; margin: 0 0 2px; }
+  .header .sub { font-size: 11px; color: #6b7280; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+  .section { margin-bottom: 16px; }
+  .section-title { font-size: 13px; font-weight: 700; color: #1e40af; margin: 0 0 8px; padding: 4px 10px; background: #eff6ff; border-right: 3px solid #2563eb; }
+  .row { display: flex; padding: 2px 0; border-bottom: 1px dotted #e5e7eb; }
+  .row .lbl { min-width: 130px; font-weight: 600; color: #4b5563; font-size: 11px; flex-shrink: 0; }
+  .row .val { flex: 1; font-size: 12px; }
+  .row .val i { font-style: normal; font-size: 10px; color: #9ca3af; }
+  .children-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 6px; }
+  .children-table thead th { background: #2563eb; color: #fff; padding: 5px 6px; text-align: center; font-weight: 600; font-size: 10px; border: 1px solid #1d4ed8; }
+  .children-table tbody td { padding: 4px 6px; border: 1px solid #d1d5db; text-align: center; }
+  .children-table tbody tr:nth-child(even) { background: #f9fafb; }
+  .sign { display: flex; justify-content: space-between; margin-top: 24px; padding-top: 10px; border-top: 1px solid #d1d5db; }
+  .sign > div { text-align: center; min-width: 120px; flex: 1; }
+  .sign .label { display: block; font-size: 10px; color: #6b7280; margin-bottom: 4px; }
+  .sign .line { border-top: 1px solid #4b5563; height: 30px; }
+  .no-print { display: block; width: 200px; margin: 20px auto; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-align: center; }
+  @media print { .no-print { display: none; } }
+`
+
+export function printBeneficiaryCard(params: {
+  assocNameAr: string;
+  reference: string;
+  lastNameAr: string;
+  firstNameAr: string;
+  firstName: string;
+  lastName: string;
+  nationalCardNumber: string;
+  phone: string;
+  dateOfBirth: string;
+  ageDisplay: string;
+  attribut: string;
+  gender: string;
+  caisseNameAr: string;
+  situation?: string;
+  childrenHtml: string;
+}) {
+  const w = window.open('', '_blank')
+  if (!w) return
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>بطاقة مستفيد</title><style>${CARD_CSS}</style></head><body>
+  <div class="header">
+    <h1>🕌 ${params.assocNameAr || 'الجمعية الخيرية'}</h1>
+    <div class="sub">بطاقة مستفيد — ${params.reference || ''}</div>
+  </div>
+  <div class="section">
+    <div class="section-title">المعلومات الشخصية</div>
+    <div class="grid-2">
+      <div>
+        <div class="row"><span class="lbl">الاسم بالعربية</span><span class="val">${params.lastNameAr} ${params.firstNameAr}</span></div>
+        <div class="row"><span class="lbl">الاسم باللاتينية</span><span class="val">${params.firstName} ${params.lastName}</span></div>
+        <div class="row"><span class="lbl">الصفة</span><span class="val">${params.attribut}</span></div>
+        <div class="row"><span class="lbl">الجنس</span><span class="val">${params.gender}</span></div>
+        <div class="row"><span class="lbl">تاريخ الميلاد</span><span class="val">${params.dateOfBirth}</span></div>
+      </div>
+      <div>
+        <div class="row"><span class="lbl">العمر</span><span class="val">${params.ageDisplay}</span></div>
+        <div class="row"><span class="lbl">رقم البطاقة الوطنية</span><span class="val">${params.nationalCardNumber || '—'}</span></div>
+        <div class="row"><span class="lbl">الهاتف</span><span class="val">${params.phone}</span></div>
+        <div class="row"><span class="lbl">الصندوق</span><span class="val">${params.caisseNameAr || '—'}</span></div>
+        ${params.situation ? `<div class="row"><span class="lbl">الحالة</span><span class="val">${params.situation}</span></div>` : ''}
+      </div>
+    </div>
+  </div>
+  ${params.childrenHtml}
+  <div class="sign">
+    <div><span class="label">توقيع المستفيد</span><div class="line"></div></div>
+    <div><span class="label">ختم الجمعية</span><div class="line"></div></div>
+  </div>
+  <button class="no-print" onclick="window.print()">طباعة</button>
+</body></html>`
+  w.document.write(html)
+  w.document.close()
+}
