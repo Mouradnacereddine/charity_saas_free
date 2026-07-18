@@ -18,7 +18,8 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     } = req.query;
     const associationId = req.user!.associationId;
 
-    const where: any = { associationId };
+    const DUMMY_PHONE = '__ATTRIBUT_DUMMY__';
+    const where: any = { associationId, phone: { not: DUMMY_PHONE } };
 
     if (searchTerm) {
       const term = String(searchTerm);
