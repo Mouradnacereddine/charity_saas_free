@@ -160,6 +160,7 @@ export default function FinancePage() {
   const [txSubmitting, setTxSubmitting] = useState(false)
   const [txError, setTxError] = useState('')
   const [confirmingTxId, setConfirmingTxId] = useState<string | null>(null)
+  const [confirmTxAmount, setConfirmTxAmount] = useState('')
   const [cancellingTxId, setCancellingTxId] = useState<string | null>(null)
 
   // ---- Allocations Data ----
@@ -413,6 +414,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
     try {
       await confirmTransaction.mutateAsync(id)
       setConfirmingTxId(null)
+      setConfirmTxAmount('')
       setDetailTx(null)
     } catch (err: any) {
       alert(err?.response?.data?.error || err?.message || 'فشل في تأكيد المعاملة')
@@ -756,17 +758,6 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 }))}
               />
             )}
-            {txType === 'credit' && (
-              <SearchableSelect
-                labelAr="المستفيد المخصص (اختياري)"
-                value={txAllocatedBeneficiaryId}
-                onChange={setTxAllocatedBeneficiaryId}
-                options={beneficiaries.map((b: Beneficiary) => ({
-                  value: b.id,
-                  label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})`,
-                }))}
-              />
-            )}
             {txType === 'debit' && (
               <SearchableSelect
                 labelAr="المستفيد (اختياري)"
@@ -778,110 +769,9 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 }))}
               />
             )}
-            {txType === 'debit' && txBeneficiaryId && (() => {
-              const allocsForBenef = allocations.filter(
-                (a: DonationAllocation) =>
-                  a.beneficiaryId === txBeneficiaryId &&
-                  a.remainingAmount > 0 &&
-                  a.creditTransaction?.status === 'completed'
-              );
-              const filteredAllocs = allocsForBenef.filter((a: DonationAllocation) => {
-                if (!txAllocSearch) return true;
-                const q = txAllocSearch.toLowerCase();
-                const name = `${a.donor.lastNameAr} ${a.donor.firstNameAr}`.toLowerCase();
-                return name.includes(q);
-              });
-              const selectedAlloc = allocsForBenef.find((a: DonationAllocation) => a.id === txAllocationId);
-              return (
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">صرف من تبرع مخصص (اختياري)</label>
-                  {allocsForBenef.length === 0 ? (
-                    <p className="text-xs text-gray-400">لا توجد تبرعات مخصصة متاحة لهذا المستفيد</p>
-                  ) : (
-                    <>
-                      <div className="relative">
-                        <Search size={14} className="absolute top-1/2 -translate-y-1/2 right-3 text-gray-400" />
-                        <input
-                          type="text"
-                          value={txAllocSearch}
-                          onChange={(e) => setTxAllocSearch(e.target.value)}
-                          placeholder="بحث باسم المتبرع..."
-                          className="w-full pr-9 pl-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          dir="rtl"
-                        />
-                      </div>
-                      <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2">
-                      {filteredAllocs.map((a: DonationAllocation) => {
-                        const spent = a.amount - a.remainingAmount;
-                        return (
-                          <label
-                            key={a.id}
-                            className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
-                              txAllocationId === a.id
-                                ? 'border-primary-500 bg-primary-50'
-                                : 'border-gray-100 hover:bg-gray-50'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="allocSelection"
-                              checked={txAllocationId === a.id}
-                              onChange={() => setTxAllocationId(a.id)}
-                              className="mt-1 w-4 h-4 text-primary-600"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium text-sm text-gray-900">{a.donor.lastNameAr} {a.donor.firstNameAr}</span>
-                                <span className="text-xs text-gray-400">{formatCurrency(a.amount)}</span>
-                              </div>
-                              <div className="flex gap-4 mt-1 text-xs text-gray-500">
-                                <span>صرف: <span className="text-gray-700">{formatCurrency(spent)}</span></span>
-                                <span>متبقي: <span className="text-green-600 font-semibold">{formatCurrency(a.remainingAmount)}</span></span>
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                      </>
-                    )}
-                  {selectedAlloc && (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-xs text-blue-600 font-medium">التبرع المحدد: {selectedAlloc.donor.lastNameAr} {selectedAlloc.donor.firstNameAr}</p>
-                          <p className="text-xs text-blue-500">المتبقي للصرف: <span className="font-bold">{formatCurrency(selectedAlloc.remainingAmount)}</span></p>
-                          {amountNum > 0 && (
-                            <p className={`text-xs mt-1 ${
-                              amountNum > selectedAlloc.remainingAmount ? 'text-red-500' :
-                              amountNum === selectedAlloc.remainingAmount ? 'text-green-600' :
-                              'text-blue-500'
-                            }`}>
-                              {amountNum > selectedAlloc.remainingAmount
-                                ? '⚠️ المبلغ يتجاوز المتبقي من هذا التبرع'
-                                : amountNum === selectedAlloc.remainingAmount
-                                ? '✓ سيتم صرف التبرع بالكامل'
-                                : `ℹ️ سيتبقى ${formatCurrency(selectedAlloc.remainingAmount - amountNum)} من هذا التبرع`}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => setTxAmount(String(selectedAlloc.remainingAmount))}
-                        >
-                          أخذ المبلغ المتبقي
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
           </div>
 
-          {/* Row 4: Amount & Date */}
+          {/* Row 4: Amount & Date */}          {/* Row 4: Amount & Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Input
@@ -1291,7 +1181,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 )}
                 {(detailTx.status || 'completed') === 'pending' && (
                   <>
-                    <Button size="sm" variant="primary" onClick={() => handleConfirmTransaction(detailTx.id)}>
+                    <Button size="sm" variant="primary" onClick={() => { setConfirmingTxId(detailTx.id); setConfirmTxAmount(String(detailTx.amount)); }}>
                       تأكيد المعاملة
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => handleCancelTransaction(detailTx.id)}>
@@ -1304,6 +1194,41 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             </div>
           )
         })()}
+      </Modal>
+
+      {/* Confirm Transaction Modal */}
+      <Modal isOpen={!!confirmingTxId} onClose={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }} title="تأكيد المعاملة" size="sm">
+        {confirmingTxId && detailTx && (
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500">رقم الوصل</span><span className="font-mono" dir="ltr">{detailTx.receiptNumber || '—'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">النوع</span><span>{detailTx.type === 'credit' ? 'إيداع' : 'سحب'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">المبلغ الأصلي</span><span className="font-bold">{formatCurrency(detailTx.amount)}</span></div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">أدخل المبلغ المراد تأكيده</label>
+              <input
+                type="number"
+                value={confirmTxAmount}
+                onChange={(e) => { setConfirmTxAmount(e.target.value); }}
+                max={detailTx.amount}
+                min={0}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                dir="ltr"
+              />
+              {Number(confirmTxAmount) > 0 && (
+                <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(Number(confirmTxAmount))}</p>
+              )}
+              {Number(confirmTxAmount) > detailTx.amount && (
+                <p className="text-xs text-red-500 mt-1">المبلغ يتجاوز الحد المسموح به ({formatCurrency(detailTx.amount)})</p>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="secondary" onClick={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }}>إلغاء</Button>
+              <Button size="sm" variant="primary" onClick={() => handleConfirmTransaction(confirmingTxId!)} disabled={!confirmTxAmount || Number(confirmTxAmount) <= 0 || Number(confirmTxAmount) > detailTx.amount}>تأكيد</Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )
