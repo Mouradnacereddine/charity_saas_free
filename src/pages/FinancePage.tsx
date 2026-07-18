@@ -354,9 +354,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         caisseId: txCaisseId,
         subCategoryId: txSubCategoryId || undefined,
         bankAccountId: txFundSource === 'banque' ? txBankAccountId || undefined : undefined,
-        donorId: txType === 'credit' ? txDonorId || undefined : undefined,
-        beneficiaryId: txType === 'debit' ? txBeneficiaryId || undefined : undefined,
-        allocatedBeneficiaryId: txType === 'credit' ? txAllocatedBeneficiaryId || undefined : undefined,
+        donorId: txDonorId || undefined,
+        beneficiaryId: txBeneficiaryId || undefined,
         allocationId: txType === 'debit' ? txAllocationId || undefined : undefined,
         description: txDescription,
         descriptionAr: txDescription,
@@ -739,28 +738,24 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 
           {/* Row 3: Donor / Beneficiary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {txType === 'credit' && (
-              <SearchableSelect
-                labelAr="المتبرع (اختياري)"
-                value={txDonorId}
-                onChange={setTxDonorId}
-                options={donors.map((d: Donor) => ({
-                  value: d.id,
-                  label: `${d.lastNameAr} ${d.firstNameAr} (${d.reference || ''})`,
-                }))}
-              />
-            )}
-            {txType === 'debit' && (
-              <SearchableSelect
-                labelAr="المستفيد (اختياري)"
-                value={txBeneficiaryId}
-                onChange={setTxBeneficiaryId}
-                options={beneficiaries.map((b: Beneficiary) => ({
-                  value: b.id,
-                  label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})`,
-                }))}
-              />
-            )}
+            <SearchableSelect
+              labelAr="المتبرع (اختياري)"
+              value={txDonorId}
+              onChange={setTxDonorId}
+              options={donors.map((d: Donor) => ({
+                value: d.id,
+                label: `${d.lastNameAr} ${d.firstNameAr} (${d.reference || ''})`,
+              }))}
+            />
+            <SearchableSelect
+              labelAr="المستفيد (اختياري)"
+              value={txBeneficiaryId}
+              onChange={setTxBeneficiaryId}
+              options={beneficiaries.map((b: Beneficiary) => ({
+                value: b.id,
+                label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})`,
+              }))}
+            />
           </div>
 
           {/* Row 4: Amount & Date */}          {/* Row 4: Amount & Date */}
@@ -967,7 +962,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     <th className="text-right py-3 px-3 font-medium text-gray-500">الحالة</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المصدر</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المبلغ</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">المتبرع/المستفيد</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">المتبرع</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">المستفيد</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">الصندوق</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden lg:table-cell">الوصف</th>
                     <th className="text-center py-3 px-3 font-medium text-gray-500">الإجراءات</th>
@@ -1026,10 +1022,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                           {formatCurrency(tx.amount)}
                         </td>
                         <td className="py-3 px-3 text-gray-700 hidden sm:table-cell">
-                          {tx.type === 'credit'
-                            ? (txDonor ? `${txDonor.lastNameAr} ${txDonor.firstNameAr}` : '—')
-                            : (txBenef ? `${txBenef.lastNameAr} ${txBenef.firstNameAr}` : '—')
-                          }
+                          {tx.type === 'credit' ? (txDonor ? `${txDonor.lastNameAr} ${txDonor.firstNameAr}` : '—') : '—'}
+                        </td>
+                        <td className="py-3 px-3 text-gray-700 hidden sm:table-cell">
+                          {tx.type === 'debit' ? (txBenef ? `${txBenef.lastNameAr} ${txBenef.firstNameAr}` : '—') : '—'}
                         </td>
                         <td className="py-3 px-3 text-gray-600 hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
                         <td className="py-3 px-3 text-gray-600 max-w-[160px] truncate hidden lg:table-cell">
