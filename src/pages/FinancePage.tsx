@@ -619,7 +619,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المبلغ المتبقي</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : 'مصرف بالكامل'}</span></div>
               {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">ملاحظات</span><span className="font-medium text-gray-900">{selectedAlloc.notes}</span></div>}
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">حالة التبرع الأصلي</span><span className="font-medium">{selectedAlloc.creditTransaction?.status === 'pending' ? <Badge variant="warning">معلق</Badge> : selectedAlloc.creditTransaction?.status === 'cancelled' ? <Badge variant="danger">ملغي</Badge> : <Badge variant="success">مكتمل</Badge>}</span></div>
-              {selectedAlloc.debitTransactionId && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">تم الصرف</span><span className="font-medium text-green-600">نعم</span></div>}
+              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount > 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">تم الصرف</span><span className="font-medium text-amber-600">مصرف جزئياً</span></div>}
+              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount <= 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">تم الصرف</span><span className="font-medium text-green-600">مصرف بالكامل</span></div>}
             </div>
             <div className="flex justify-end">
               <Button size="sm" variant="secondary" onClick={() => setSelectedAlloc(null)}>إغلاق</Button>
