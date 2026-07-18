@@ -528,6 +528,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">رقم الوصل</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المتبرع</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المستفيد</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden md:table-cell">الصندوق</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المبلغ</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">المتبقي</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">الحالة</th>
@@ -535,11 +536,14 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 </tr>
               </thead>
               <tbody>
-                {filteredAllocations.map((a: DonationAllocation) => (
+                {filteredAllocations.map((a: DonationAllocation) => {
+                  const allocCaisse = caisses.find((c: any) => c.id === a.creditTransaction?.caisseId);
+                  return (
                   <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelectedAlloc(a)}>
                     <td className="py-3 px-4 text-gray-500 font-mono text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
                     <td className="py-3 px-4 font-medium">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
                     <td className="py-3 px-4 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
+                    <td className="py-3 px-4 hidden md:table-cell text-gray-700">{allocCaisse?.nameAr || '—'}</td>
                     <td className="py-3 px-4"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
                     <td className="py-3 px-4">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
                     <td className="py-3 px-4">{(() => {
@@ -552,7 +556,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     })()}</td>
                     <td className="py-3 px-4 text-gray-600">{formatDate(a.createdAt)}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -566,6 +571,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المتبرع</span><span className="font-medium text-gray-900">{selectedAlloc.donor.lastNameAr} {selectedAlloc.donor.firstNameAr}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستفيد</span><span className="font-medium text-gray-900">{selectedAlloc.beneficiary.lastNameAr} {selectedAlloc.beneficiary.firstNameAr}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الصندوق</span><span className="font-medium text-gray-900">{(() => { const ac = caisses.find((c: any) => c.id === selectedAlloc.creditTransaction?.caisseId); return ac?.nameAr || '—'; })()}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المبلغ</span><span className="font-bold text-green-600">{formatCurrency(selectedAlloc.amount)}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المبلغ المتبقي</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : 'مصرف بالكامل'}</span></div>
               {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">ملاحظات</span><span className="font-medium text-gray-900">{selectedAlloc.notes}</span></div>}

@@ -104,6 +104,7 @@ export default function DashboardPage() {
                   <tr className="border-b border-gray-200">
                     <th className="text-right py-3 px-4 font-semibold text-gray-600">النوع</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden xl:table-cell">رقم الوصل</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden md:table-cell">الصندوق</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600">المبلغ</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden lg:table-cell">المتبرع/المستفيد</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">الوصف</th>
@@ -123,6 +124,9 @@ export default function DashboardPage() {
                         )}
                       </td>
                       <td className="py-3 px-4 text-gray-500 font-mono text-xs hidden xl:table-cell" dir="ltr">{tx.receiptNumber || '—'}</td>
+                      <td className="py-3 px-4 hidden md:table-cell">
+                        <span className="text-gray-700">{tx.caisse?.nameAr || '—'}</span>
+                      </td>
                       <td className="py-3 px-4">
                         <span className={`font-semibold ${tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
                           {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
