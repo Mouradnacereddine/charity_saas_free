@@ -1,6 +1,6 @@
 import { useState, Fragment } from 'react'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { calculateAge, formatDate, formatCurrency } from '../utils/helpers'
+import { calculateAge, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
@@ -8,6 +8,7 @@ import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDelete
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { caissesApi, attributsApi, inventoryApi, api, financeApi, medicalApi } from '../lib/api'
 import type { DonationAllocation } from '../types'
+import { useAuth } from '../hooks/useAuth'
 
 // ---- Constants ----
 
@@ -130,6 +131,7 @@ function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
 
 export default function BeneficiariesPage() {
   const queryClient = useQueryClient()
+  const { association } = useAuth()
   const [queryParams, setQueryParams] = useState<Record<string, string> | undefined>(undefined)
   const { data: beneficiaries = [], isLoading } = useBeneficiaries(queryParams)
   const { data: caisses = [] } = useQuery({
@@ -513,7 +515,8 @@ export default function BeneficiariesPage() {
       `عدد الأطفال`,
       '',
       'توقيع المستفيد',
-      'ختم الجمعية'
+      'ختم الجمعية',
+      association?.nameAr
     )
   }
 
@@ -1286,6 +1289,9 @@ export default function BeneficiariesPage() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const caisse = caisses.find((c: any) => c.id === tx.caisseId)
+                                const amount = typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)
+                                const wordsAr = tx.amountInWordsAr && !tx.amountInWordsAr.match(/^\d/) ? tx.amountInWordsAr : numberToArabicWords(amount)
+                                const wordsFr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToFrenchWords(amount)
                                 printReceipt(
                                   'وصل صرف', 'Bon de Sortie',
                                   `<div class="col"><div class="row"><span class="lbl">رقم العملية</span><span class="val">${tx.id.slice(0, 8) || '—'}</span></div>
@@ -1295,8 +1301,9 @@ export default function BeneficiariesPage() {
 <div class="row"><span class="lbl">المصدر</span><span class="val">${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</span></div>
 ${tx.descriptionAr ? `<div class="row"><span class="lbl">الوصف</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
                                   'background:#fff0f0;color:#dc2626',
-                                  `- ${formatCurrency(tx.amount)}`, tx.amountInWordsAr || '', tx.amountInWords || '',
-                                  'إمضاء المستفيد', 'ختم الجمعية'
+                                  `- ${formatCurrency(amount)}`, wordsAr, wordsFr,
+                                  'إمضاء المستفيد', 'ختم الجمعية',
+                                  association?.nameAr
                                 )
                               }}
                               className="p-1 text-gray-400 hover:text-primary-600"
@@ -1377,7 +1384,8 @@ ${childrenHtml}
 ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${ref.notes}</span></div>` : ''}</div>`,
                                   'color:#2563eb',
                                   formatCurrency(ref.amount), ref.amountInWordsAr || '', '',
-                                  'توقيع المسؤول', 'ختم الجمعية'
+                                  'توقيع المسؤول', 'ختم الجمعية',
+                                  association?.nameAr
                                 )
                               }}
                               className="p-1 text-gray-400 hover:text-primary-600"

@@ -7,6 +7,7 @@ import type { Donor, DonationReceipt } from '../types'
 import { useDonors, useCreateDonor, useUpdateDonor, useDeleteDonor, useDonorReceipts } from '../hooks/useDonors'
 import { useQuery } from '@tanstack/react-query'
 import { caissesApi, financeApi } from '../lib/api'
+import { useAuth } from '../hooks/useAuth'
 
 // ---- Initial form state ----
 const emptyDonorForm = {
@@ -24,6 +25,7 @@ type DonorFormData = typeof emptyDonorForm
 
 export default function DonorsPage() {
   // ---- Query params for filtering ----
+  const { association } = useAuth()
   const [queryParams, setQueryParams] = useState<Record<string, string> | undefined>(undefined)
   const { data: donors = [], isLoading } = useDonors(queryParams)
   const { data: caisses = [] } = useQuery({
@@ -179,7 +181,8 @@ export default function DonorsPage() {
 <div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${selectedReceipt.caisseNameAr}</span></div></div>`,
       'color:#16a34a',
       formatCurrency(amount), wordsAr, wordsFr,
-      'توقيع المتبرع', 'ختم الجمعية')
+      'توقيع المتبرع', 'ختم الجمعية',
+      association?.nameAr)
   }
 
   function updateField(field: keyof DonorFormData, value: string) {

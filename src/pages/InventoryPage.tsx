@@ -4,6 +4,7 @@ import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptySta
 import { formatDate, generateLoanReference } from '../utils/helpers'
 import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin, Printer } from 'lucide-react'
 import { printReceipt } from '../lib/receipt'
+import { useAuth } from '../hooks/useAuth'
 import type { Article, Loan, LoanItem, ArticleCategory, ArticleStatus, StorageLocation, Beneficiary } from '../types'
 import {
   useArticles,
@@ -96,6 +97,7 @@ function getStorageNameAr(storageLocation: any, locations: StorageLocation[]): s
 // ---- Component ----
 
 export default function InventoryPage() {
+  const { association } = useAuth()
   const [activeTab, setActiveTab] = useState<'stock' | 'loans' | 'settings'>('stock')
   const stockActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
   const loansActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
@@ -1370,7 +1372,8 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       `المجموع: ${loan.items.length} مقال — ${loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)} قطعة — ${statusLabel}`,
       '',
       'توقيع المستفيد',
-      'ختم الجمعية'
+      'ختم الجمعية',
+      association?.nameAr
     )
   }
 

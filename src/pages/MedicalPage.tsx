@@ -9,9 +9,11 @@ import { caissesApi } from '../lib/api';
 import { useMedicalReferrals, useCreateMedicalReferral, useDeleteMedicalReferral, useAnalysisTypes, useCreateAnalysisType, useUpdateAnalysisType, useDeleteAnalysisType, useHospitals, useCreateHospital, useUpdateHospital, useDeleteHospital } from '../hooks/useMedical';
 import { useBeneficiaries } from '../hooks/useBeneficiaries';
 import { api, doctorsApi, financeApi } from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
 
 export default function MedicalPage() {
   const queryClient = useQueryClient();
+  const { association } = useAuth();
   const { data: referrals = [] } = useMedicalReferrals();
   const { data: beneficiaries = [] } = useBeneficiaries();
   const { data: caisses = [] } = useQuery({
@@ -222,7 +224,8 @@ ${childrenHtml}
 ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${referral.notes}</span></div>` : ''}</div>`,
       'color:#2563eb',
       formatCurrency(referral.amount), referral.amountInWordsAr, '',
-      'توقيع المسؤول', 'ختم الجمعية'
+      'توقيع المسؤول', 'ختم الجمعية',
+      association?.nameAr
     );
   };
 

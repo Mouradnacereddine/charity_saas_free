@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, StatCard, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
-import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake } from 'lucide-react'
+import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake, Edit } from 'lucide-react'
 import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useConfirmTransaction, useCancelTransaction } from '../hooks/useFinance'
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
 import { useDonors } from '../hooks/useDonors'
+import { useAuth } from '../hooks/useAuth'
 import { useQuery } from '@tanstack/react-query'
 import { caissesApi, financeApi } from '../lib/api'
 import type { Transaction, BankAccount, Caisse, Beneficiary, Donor, DonationAllocation } from '../types'
@@ -123,6 +124,7 @@ export default function FinancePage() {
     queryKey: ['caisses'],
     queryFn: () => caissesApi.list().then(r => r.data),
   })
+  const { association } = useAuth()
   const { data: beneficiaries = [] } = useBeneficiaries()
   const { data: donors = [] } = useDonors()
 
@@ -292,7 +294,8 @@ export default function FinancePage() {
 ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
         'color:#16a34a',
         formatCurrency(amount), wordsAr, wordsFr,
-        'توقيع المتبرع', 'ختم الجمعية'
+        'توقيع المتبرع', 'ختم الجمعية',
+        association?.nameAr
       )
     } else {
       const benef = beneficiaries.find((b: Beneficiary) => b.id === tx.beneficiaryId)
@@ -306,7 +309,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
         'background:#fff0f0;color:#dc2626',
         `- ${formatCurrency(amount)}`, wordsAr, wordsFr,
-        'إمضاء المستفيد', 'ختم الجمعية'
+        'إمضاء المستفيد', 'ختم الجمعية',
+        association?.nameAr
       )
     }
   }
@@ -1191,8 +1195,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               <div><p className="text-xs text-gray-500">الرصيد</p><p className="font-bold text-lg text-green-600">{formatCurrency(detailBankAccount.balance)}</p></div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button size="sm" variant="secondary" onClick={() => { handleOpenEditBank(detailBankAccount.id); setDetailBankAccount(null); }}>
-                <Printer size={14} /> تعديل
+              <Button size="sm" variant="primary" onClick={() => { handleOpenEditBank(detailBankAccount.id); setDetailBankAccount(null); }}>
+                <Edit size={14} /> تعديل
               </Button>
               <Button size="sm" variant="secondary" onClick={() => setDetailBankAccount(null)}>إغلاق</Button>
             </div>
