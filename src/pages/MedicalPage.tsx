@@ -227,7 +227,9 @@ ${referral.hospitalAr ? `<div class="row"><span class="lbl">المستشفى</sp
 ${childrenHtml}
 ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${referral.notes}</span></div>` : ''}</div>`,
       'color:#2563eb',
-      formatCurrency(referral.amount), referral.amountInWordsAr, '',
+      formatCurrency(referral.amount),
+      referral.amountInWordsAr && !referral.amountInWordsAr.match(/^\d/) ? referral.amountInWordsAr : numberToArabicWords(referral.amount || 0),
+      '',
       'توقيع المسؤول', 'ختم الجمعية',
       association?.nameAr
     );
