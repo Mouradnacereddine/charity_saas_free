@@ -27,6 +27,8 @@ export default function DoctorsPage() {
   const [committedSearchTerm, setCommittedSearchTerm] = useState('');
   const [filterSpecialtyId, setFilterSpecialtyId] = useState('');
   const [committedSpecialtyId, setCommittedSpecialtyId] = useState('');
+  const [filterAddress, setFilterAddress] = useState('');
+  const [committedAddress, setCommittedAddress] = useState('');
 
   // Form states
   const [firstNameAr, setFirstNameAr] = useState('');
@@ -117,18 +119,22 @@ export default function DoctorsPage() {
   const applyFilters = () => {
     setCommittedSearchTerm(filterSearchTerm);
     setCommittedSpecialtyId(filterSpecialtyId);
+    setCommittedAddress(filterAddress);
   };
   const resetFilters = () => {
     setFilterSearchTerm('');
     setCommittedSearchTerm('');
     setFilterSpecialtyId('');
     setCommittedSpecialtyId('');
+    setFilterAddress('');
+    setCommittedAddress('');
   };
 
   const filteredDoctors = doctors.filter((d: Doctor) => {
     const term = committedSearchTerm.toLowerCase();
-    if (term && !`${d.firstNameAr} ${d.lastNameAr} ${d.phone} ${d.email || ''}`.includes(term)) return false;
+    if (term && !`${d.firstNameAr} ${d.lastNameAr} ${d.phone} ${d.email || ''} ${d.address || ''}`.includes(term)) return false;
     if (committedSpecialtyId && d.specialtyId !== committedSpecialtyId) return false;
+    if (committedAddress && !(d.addressAr || d.address || '').includes(committedAddress)) return false;
     return true;
   });
 
@@ -165,6 +171,7 @@ export default function DoctorsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <SearchableSelect labelAr="التخصص" value={filterSpecialtyId} onChange={setFilterSpecialtyId}
                 options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.nameAr }))} />
+              <Input labelAr="العنوان" value={filterAddress} onChange={(e) => setFilterAddress(e.target.value)} placeholder="بحث بالعنوان..." />
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={applyFilters}><Search className="w-4 h-4" /> بحث</Button>
@@ -185,6 +192,7 @@ export default function DoctorsPage() {
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">الرمز المرجعي</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">الاسم</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">التخصص</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">العنوان</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">الهاتف</th>
                   <th className="text-center py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">عدد المرضى</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">تاريخ الإضافة</th>
@@ -198,6 +206,7 @@ export default function DoctorsPage() {
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">{doc.reference}</td>
                     <td className="py-3 px-4 font-medium">{doc.lastNameAr} {doc.firstNameAr}</td>
                     <td className="py-3 px-4 hidden sm:table-cell text-gray-600">{doc.specialty?.nameAr || '—'}</td>
+                    <td className="py-3 px-4 hidden lg:table-cell text-gray-500 max-w-[200px] truncate" title={doc.addressAr || doc.address || '—'}>{doc.addressAr || doc.address || '—'}</td>
                     <td className="py-3 px-4 hidden md:table-cell text-gray-600" dir="ltr">{doc.phone}</td>
                     <td className="py-3 px-4 text-center hidden lg:table-cell">
                       <Badge variant="info">{doc._count?.referrals ?? 0}</Badge>
