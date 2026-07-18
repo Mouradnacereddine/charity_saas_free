@@ -172,23 +172,29 @@ export default function MedicalPage() {
       } : { id: childId, nameAr: childId, name: '', age: '', gender: 'male' };
     });
 
-    await createMedicalReferral.mutateAsync({
-      beneficiaryId,
-      beneficiaryName: `${beneficiary.firstName} ${beneficiary.lastName}`,
-      beneficiaryNameAr: `${beneficiary.lastNameAr} ${beneficiary.firstNameAr}`,
-      caisseId,
-      subCategoryId: subCategoryId || undefined,
-      doctorId,
-      analysisType: analysisType || undefined,
-      analysisTypeAr: analysisTypeAr || undefined,
-      hospital: hospital || undefined,
-      hospitalAr: hospitalAr || undefined,
-      amount: amount || 0,
-      status: txStatus,
-      date,
-      notes: notes || undefined,
-      children: childrenData.length > 0 ? childrenData : undefined,
-    });
+    try {
+      await createMedicalReferral.mutateAsync({
+        beneficiaryId,
+        beneficiaryName: `${beneficiary.firstName} ${beneficiary.lastName}`,
+        beneficiaryNameAr: `${beneficiary.lastNameAr} ${beneficiary.firstNameAr}`,
+        caisseId,
+        subCategoryId: subCategoryId || undefined,
+        doctorId,
+        analysisType: analysisType || undefined,
+        analysisTypeAr: analysisTypeAr || undefined,
+        hospital: hospital || undefined,
+        hospitalAr: hospitalAr || undefined,
+        amount: amount || 0,
+        status: txStatus,
+        date,
+        notes: notes || undefined,
+        children: childrenData.length > 0 ? childrenData : undefined,
+      });
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.message || 'Erreur lors de la création';
+      alert(msg);
+      return;
+    }
 
     resetForm();
     setShowAddModal(false);

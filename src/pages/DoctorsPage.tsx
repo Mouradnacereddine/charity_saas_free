@@ -161,10 +161,12 @@ export default function DoctorsPage() {
 
       {filterOpen && (
         <Card titleAr="بحث متقدم">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <SearchableSelect labelAr="التخصص" value={filterSpecialtyId} onChange={setFilterSpecialtyId}
-              options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.nameAr }))} />
-            <div className="flex items-end gap-2">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <SearchableSelect labelAr="التخصص" value={filterSpecialtyId} onChange={setFilterSpecialtyId}
+                options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.nameAr }))} />
+            </div>
+            <div className="flex gap-2">
               <Button size="sm" onClick={applyFilters}><Search className="w-4 h-4" /> بحث</Button>
               <Button size="sm" variant="secondary" onClick={resetFilters}>إعادة تعيين</Button>
             </div>
