@@ -2,9 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, StatCard, LoadingSpinner, Badge, Button } from '../components/common/UI';
 import { useTransactions } from '../hooks/useFinance';
 import { useDonors } from '../hooks/useDonors';
+import { useAuth } from '../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { caissesApi } from '../lib/api';
 import { formatCurrency, formatDate } from '../utils/helpers';
+import { printAnalyticsReport } from '../lib/receipt';
 import {
   Calendar,
   TrendingUp,
@@ -30,6 +32,7 @@ export default function AnalyticsPage() {
   const [logTypeFilter, setLogTypeFilter] = useState('');
   const [logSourceFilter, setLogSourceFilter] = useState('');
 
+  const { association } = useAuth();
   const { data: transactions = [], isLoading: txLoading } = useTransactions();
   const { data: caisses = [], isLoading: caissesLoading } = useQuery<Caisse[]>({
     queryKey: ['caisses'],
@@ -300,7 +303,34 @@ export default function AnalyticsPage() {
           <div className="md:mr-auto flex gap-2 w-full md:w-auto">
             <Button
               variant="secondary"
-              onClick={() => window.print()}
+              onClick={() => {
+                const totalCredits = filteredTx.filter((t: any) => t.status !== 'cancelled' && t.type === 'credit').reduce((s: number, t: any) => s + t.amount, 0);
+                const totalDebits = filteredTx.filter((t: any) => t.status !== 'cancelled' && t.type === 'debit').reduce((s: number, t: any) => s + t.amount, 0);
+                const monthsAr = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+                let bodyRows = '<div class="section-title">التطور الشهري</div>';
+                caisseBreakdown.forEach((c: any) => {
+                  const sum = c.periodCredits + c.periodDebits;
+                  const credPct = sum > 0 ? (c.periodCredits / sum) * 100 : 0;
+                  bodyRows += `<div class="bar-row"><span class="bar-label">${c.nameAr}</span><div class="bar-track"><div class="bar-cred" style="width:${credPct}%"></div><div class="bar-deb" style="width:${100 - credPct}%"></div></div><span class="bar-amt">${formatCurrency(c.periodFlow)}</span></div>`;
+                });
+                bodyRows += '<div class="section-title">آخر العمليات</div><div class="section"><table class="data-table"><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>البيان</th><th>الصندوق</th></tr></thead><tbody>';
+                filteredTx.slice(0, 20).forEach((tx: any) => {
+                  const caisse = caisses.find((c: any) => c.id === tx.caisseId);
+                  bodyRows += `<tr><td>${formatDate(tx.date)}</td><td>${tx.type === 'credit' ? 'إيداع' : 'سحب'}</td><td class="${tx.type === 'credit' ? 'credit' : 'debit'}">${formatCurrency(tx.amount)}</td><td>${tx.descriptionAr || '—'}</td><td>${caisse?.nameAr || '—'}</td></tr>`;
+                });
+                bodyRows += '</tbody></table></div>';
+                printAnalyticsReport({
+                  assocNameAr: association?.nameAr || 'الجمعية الخيرية',
+                  title: 'التقرير المالي السنوي',
+                  periodLabel: quickFilter === 'this_month' ? 'الشهر الحالي' : quickFilter === 'last_3_months' ? 'آخر 3 أشهر' : quickFilter === 'this_year' ? 'السنة الحالية' : `${startDate} إلى ${endDate}`,
+                  dateLabel: new Date().toLocaleDateString('ar-DZ'),
+                  credits: formatCurrency(totalCredits),
+                  debits: formatCurrency(totalDebits),
+                  balance: formatCurrency(totalCredits - totalDebits),
+                  ratio: `${totalCredits > 0 ? ((totalDebits / totalCredits) * 100).toFixed(1) : '0.0'}%`,
+                  bodyRows,
+                });
+              }}
               size="md"
               className="w-full md:w-auto"
             >

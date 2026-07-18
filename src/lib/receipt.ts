@@ -136,3 +136,66 @@ export function printBeneficiaryCard(params: {
   w.document.write(html)
   w.document.close()
 }
+
+/**
+ * Professional A4 analytics report for experts — portrait mode, margins, full layout.
+ */
+export function printAnalyticsReport(params: {
+  assocNameAr: string;
+  title: string;
+  periodLabel: string;
+  dateLabel: string;
+  credits: string;
+  debits: string;
+  balance: string;
+  ratio: string;
+  bodyRows: string;
+}) {
+  const REPORT_CSS = `
+    @page { size: A4 portrait; margin: 18mm 15mm 15mm 15mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; font-size: 11px; color: #1a1a1a; background: #fff; line-height: 1.5; }
+    .header { text-align: center; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 3px double #2563eb; }
+    .header h1 { font-size: 20px; color: #1e40af; margin: 0 0 2px; }
+    .header .sub { font-size: 11px; color: #6b7280; }
+    .header .period { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .kpi { border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 10px; background: #fafafa; }
+    .kpi .kpi-label { font-size: 10px; color: #6b7280; font-weight: 600; }
+    .kpi .kpi-value { font-size: 14px; font-weight: 700; margin-top: 2px; }
+    .kpi .kpi-sub { font-size: 9px; color: #9ca3af; margin-top: 1px; }
+    .section { margin-bottom: 14px; page-break-inside: avoid; }
+    .section-title { font-size: 12px; font-weight: 700; color: #1e40af; margin: 0 0 6px; padding: 4px 8px; background: #eff6ff; border-right: 3px solid #2563eb; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 9.5px; margin: 0; }
+    .data-table thead th { background: #2563eb; color: #fff; padding: 5px 6px; text-align: center; font-weight: 600; font-size: 9px; border: 1px solid #1d4ed8; }
+    .data-table tbody td { padding: 4px 6px; border: 1px solid #d1d5db; text-align: center; }
+    .data-table tbody tr:nth-child(even) { background: #f9fafb; }
+    .data-table tbody td.credit { color: #10b981; font-weight: 700; }
+    .data-table tbody td.debit { color: #ef4444; font-weight: 700; }
+    .footer { text-align: center; margin-top: 20px; padding-top: 8px; border-top: 1px solid #d1d5db; font-size: 9px; color: #9ca3af; }
+    .no-print { display: block; width: 200px; margin: 20px auto; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-align: center; }
+    @media print { .no-print { display: none; } }
+  `
+  const w = window.open('', '_blank')
+  if (!w) return
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${params.title}</title><style>${REPORT_CSS}</style></head><body>
+  <div class="header">
+    <h1>🕌 ${params.assocNameAr}</h1>
+    <div class="sub">${params.title}</div>
+    <div class="period">${params.dateLabel} — ${params.periodLabel}</div>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">إجمالي المقبوضات</div><div class="kpi-value" style="color:#10b981">${params.credits}</div></div>
+    <div class="kpi"><div class="kpi-label">إجمالي المدفوعات</div><div class="kpi-value" style="color:#ef4444">${params.debits}</div></div>
+    <div class="kpi"><div class="kpi-label">الصافي المالي للمرحلة</div><div class="kpi-value" style="${(params.balance.startsWith('-')) ? 'color:#ef4444' : 'color:#2563eb'}">${params.balance}</div></div>
+    <div class="kpi"><div class="kpi-label">معدل المصاريف إلى المداخيل</div><div class="kpi-value">${params.ratio}</div></div>
+  </div>
+  <div class="section">
+    ${params.bodyRows}
+  </div>
+  <div class="footer">تم إنشاؤه بواسطة نظام الجمعية — ${new Date().toLocaleDateString('ar-DZ')}</div>
+  <button class="no-print" onclick="window.print()">طباعة التقرير</button>
+</body></html>`
+  w.document.write(html)
+  w.document.close()
+}

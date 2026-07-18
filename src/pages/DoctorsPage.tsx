@@ -26,6 +26,7 @@ export default function DoctorsPage() {
   const [filterSearchTerm, setFilterSearchTerm] = useState('');
   const [committedSearchTerm, setCommittedSearchTerm] = useState('');
   const [filterSpecialtyId, setFilterSpecialtyId] = useState('');
+  const [committedSpecialtyId, setCommittedSpecialtyId] = useState('');
 
   // Form states
   const [firstNameAr, setFirstNameAr] = useState('');
@@ -113,17 +114,21 @@ export default function DoctorsPage() {
     }
   };
 
-  const applyFilters = () => setCommittedSearchTerm(filterSearchTerm);
+  const applyFilters = () => {
+    setCommittedSearchTerm(filterSearchTerm);
+    setCommittedSpecialtyId(filterSpecialtyId);
+  };
   const resetFilters = () => {
     setFilterSearchTerm('');
     setCommittedSearchTerm('');
     setFilterSpecialtyId('');
+    setCommittedSpecialtyId('');
   };
 
   const filteredDoctors = doctors.filter((d: Doctor) => {
     const term = committedSearchTerm.toLowerCase();
     if (term && !`${d.firstNameAr} ${d.lastNameAr} ${d.phone} ${d.email || ''}`.includes(term)) return false;
-    if (filterSpecialtyId && d.specialtyId !== filterSpecialtyId) return false;
+    if (committedSpecialtyId && d.specialtyId !== committedSpecialtyId) return false;
     return true;
   });
 
