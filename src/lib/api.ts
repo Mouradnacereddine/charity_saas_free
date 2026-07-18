@@ -112,7 +112,7 @@ export const financeApi = {
   stats: () => api.get('/finance/stats'),
   allocations: (params?: Record<string, string>) => api.get('/finance/allocations', { params }),
   distributeAllocation: (id: string, data: { debitTransactionId?: string; amount?: number }) => api.put(`/finance/allocations/${id}/distribute`, data),
-  confirmTransaction: (id: string) => api.put(`/finance/transactions/${id}/confirm`),
+  confirmTransaction: (id: string, data?: { amount?: number }) => api.put(`/finance/transactions/${id}/confirm`, data),
   cancelTransaction: (id: string) => api.put(`/finance/transactions/${id}/cancel`),
 };
 
