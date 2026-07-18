@@ -483,14 +483,18 @@ export default function BeneficiariesPage() {
   const handlePrintCard = (b: Beneficiary) => {
     const caisse = caisses.find((c: any) => c.id === b.caisseId)
 
-    // Children as a styled table in its own section
+    // Children as inline grid items (no table, matches Orientation Médicale style)
     const childrenHtml = (b.children || []).length > 0
       ? `<div class="section"><div class="section-title">الأطفال (${b.children.length})</div>
-         <table class="children-table"><thead><tr><th>الاسم</th><th>الجنس</th><th>العمر</th><th>الحالة الصحية</th></tr></thead><tbody>
+         <div class="info"><div class="col"><div class="row"><span class="lbl">الأسماء</span>
          ${b.children.map((ch: any) =>
-           `<tr><td>${ch.lastNameAr} ${ch.firstNameAr}</td><td>${ch.gender === 'female' ? 'أنثى' : 'ذكر'}</td><td>${calculateAge(ch.dateOfBirth).displayAr}</td><td>${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</td></tr>`
+           `<span class="val">${ch.lastNameAr} ${ch.firstNameAr}</span><br>`
          ).join('')}
-         </tbody></table></div>`
+         </div></div><div class="col"><div class="row"><span class="lbl">الجنس / العمر / الحالة</span>
+         ${b.children.map((ch: any) =>
+           `<span class="val">${ch.gender === 'female' ? 'أنثى' : 'ذكر'} — ${calculateAge(ch.dateOfBirth).displayAr} — ${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</span><br>`
+         ).join('')}
+         </div></div></div></div>`
       : ''
 
     printBeneficiaryCard({
