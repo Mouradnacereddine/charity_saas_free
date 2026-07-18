@@ -441,7 +441,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                     <td className="py-3 px-4 hidden lg:table-cell font-mono text-xs" dir="ltr">{benef?.nationalCardNumber || '—'}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr || (referral.doctor ? `${referral.doctor.lastNameAr} ${referral.doctor.firstNameAr}` : '—')}</td>
                     <td className="py-3 px-4 hidden md:table-cell">{referral.analysisTypeAr || '—'}</td>
-                    <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary-600">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">pending</Badge>}</td>
+                    <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary-600">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">قيد الانتظار</Badge>}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">
                       {(referral.status || 'pending') === 'pending' ? <Badge variant="warning">قيد الانتظار</Badge> :
                        (referral.status || 'pending') === 'completed' ? <Badge variant="success">مكتمل</Badge> :
