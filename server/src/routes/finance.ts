@@ -274,24 +274,16 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
         }
       }
 
-      // If a beneficiary is designated for this donation, create an allocation
-      // (even for pending — records the promise)
-      if (allocatedBeneficiaryId && donorId && type === 'credit') {
-        const donor = await tx.donor.findUnique({
-          where: { id: donorId },
-        });
-        const beneficiary = await tx.beneficiary.findUnique({
-          where: { id: allocatedBeneficiaryId },
-        });
+      // If beneficiary is set on credit, create allocation (tracks donor→beneficiary)
+      const allocBenefId = beneficiaryId || allocatedBeneficiaryId;
+      if (allocBenefId && donorId && type === 'credit') {
+        const donor = await tx.donor.findUnique({ where: { id: donorId } });
+        const beneficiary = await tx.beneficiary.findUnique({ where: { id: allocBenefId } });
         if (donor && beneficiary) {
           allocation = await tx.donationAllocation.create({
             data: {
-              associationId,
-              donorId,
-              beneficiaryId: allocatedBeneficiaryId,
-              creditTransactionId: transaction.id,
-              amount: amountNum,
-              remainingAmount: amountNum,
+              associationId, donorId, beneficiaryId: allocBenefId, creditTransactionId: transaction.id,
+              amount: amountNum, remainingAmount: amountNum,
               notes: `تبرع مخصص من ${donor.lastNameAr} ${donor.firstNameAr} إلى ${beneficiary.lastNameAr} ${beneficiary.firstNameAr}`,
             },
           });
