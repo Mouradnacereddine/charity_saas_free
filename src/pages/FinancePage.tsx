@@ -637,70 +637,62 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             {/* Transaction Type */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">نوع المعاملة</label>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="txType"
-                    value="credit"
-                    checked={txType === 'credit'}
-                    onChange={() => setTxType('credit')}
-                    className="w-4 h-4 text-green-600 focus:ring-green-500"
-                  />
-                  <span className="flex items-center gap-1 text-sm">
-                    <ArrowUpCircle size={16} className="text-green-500" />
-                    إيداع (دائن)
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="txType"
-                    value="debit"
-                    checked={txType === 'debit'}
-                    onChange={() => setTxType('debit')}
-                    className="w-4 h-4 text-red-600 focus:ring-red-500"
-                  />
-                  <span className="flex items-center gap-1 text-sm">
-                    <ArrowDownCircle size={16} className="text-red-500" />
-                    سحب (مدين)
-                  </span>
-                </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTxType('credit')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                    txType === 'credit'
+                      ? 'bg-emerald-50 border-emerald-400 text-emerald-700 shadow-sm'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <ArrowUpCircle size={18} />
+                  إيداع (دائن)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTxType('debit')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                    txType === 'debit'
+                      ? 'bg-red-50 border-red-400 text-red-700 shadow-sm'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <ArrowDownCircle size={18} />
+                  سحب (مدين)
+                </button>
               </div>
             </div>
 
             {/* Fund Source */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">مصدر التمويل</label>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="fundSource"
-                    value="banque"
-                    checked={txFundSource === 'banque'}
-                    onChange={() => setTxFundSource('banque')}
-                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="flex items-center gap-1 text-sm">
-                    <Building2 size={16} className="text-blue-500" />
-                    بنك
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="fundSource"
-                    value="caisse_physique"
-                    checked={txFundSource === 'caisse_physique'}
-                    onChange={() => setTxFundSource('caisse_physique')}
-                    className="w-4 h-4 text-amber-600 focus:ring-amber-500"
-                  />
-                  <span className="flex items-center gap-1 text-sm">
-                    <Banknote size={16} className="text-amber-500" />
-                    نقدي (صندوق)
-                  </span>
-                </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTxFundSource('banque')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                    txFundSource === 'banque'
+                      ? 'bg-blue-50 border-blue-400 text-blue-700 shadow-sm'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Building2 size={18} />
+                  بنك
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTxFundSource('caisse_physique')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                    txFundSource === 'caisse_physique'
+                      ? 'bg-amber-50 border-amber-400 text-amber-700 shadow-sm'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Banknote size={18} />
+                  نقدي (صندوق)
+                </button>
               </div>
             </div>
           </div>
@@ -833,7 +825,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 onChange={(e) => setTxPending(e.target.checked)}
                 className="w-4 h-4 text-amber-500 focus:ring-amber-500 rounded"
               />
-              <span className="text-sm text-gray-600">معاملة معلقة (لن تؤثر على الرصيد)</span>
+              <span className="text-sm text-gray-600">معاملة معلقة</span>
             </label>
             <Button type="submit" disabled={txSubmitting || amountNum <= 0 || !txCaisseId}>
               {txSubmitting ? 'جاري الحفظ...' : 'حفظ المعاملة'}
