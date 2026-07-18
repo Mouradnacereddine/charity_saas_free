@@ -142,8 +142,6 @@ export default function MedicalPage() {
     setBeneficiaryId('');
     setCaisseId('');
     setSubCategoryId('');
-    setDoctorNameAr('');
-    setDoctorName('');
     setAnalysisTypeAr('');
     setAnalysisType('');
     setHospitalAr('');
