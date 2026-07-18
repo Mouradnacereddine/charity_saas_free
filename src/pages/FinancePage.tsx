@@ -354,8 +354,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         caisseId: txCaisseId,
         subCategoryId: txSubCategoryId || undefined,
         bankAccountId: txFundSource === 'banque' ? txBankAccountId || undefined : undefined,
-        donorId: txType === 'credit' ? txDonorId || undefined : undefined,
-        beneficiaryId: txType === 'debit' ? txBeneficiaryId || undefined : undefined,
+        donorId: txDonorId || undefined,
+        beneficiaryId: txBeneficiaryId || undefined,
         allocationId: txType === 'debit' ? txAllocationId || undefined : undefined,
         description: txDescription,
         descriptionAr: txDescription,
@@ -739,15 +739,26 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
           {/* Row 3: Donor / Beneficiary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {txType === 'credit' && (
-              <SearchableSelect
-                labelAr="المتبرع (اختياري)"
-                value={txDonorId}
-                onChange={setTxDonorId}
-                options={donors.map((d: Donor) => ({
-                  value: d.id,
-                  label: `${d.lastNameAr} ${d.firstNameAr} (${d.reference || ''})`,
-                }))}
-              />
+              <>
+                <SearchableSelect
+                  labelAr="المتبرع (اختياري)"
+                  value={txDonorId}
+                  onChange={setTxDonorId}
+                  options={donors.map((d: Donor) => ({
+                    value: d.id,
+                    label: `${d.lastNameAr} ${d.firstNameAr} (${d.reference || ''})`,
+                  }))}
+                />
+                <SearchableSelect
+                  labelAr="المستفيد (اختياري)"
+                  value={txBeneficiaryId}
+                  onChange={setTxBeneficiaryId}
+                  options={beneficiaries.map((b: Beneficiary) => ({
+                    value: b.id,
+                    label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})`,
+                  }))}
+                />
+              </>
             )}
             {txType === 'debit' && (
               <SearchableSelect
