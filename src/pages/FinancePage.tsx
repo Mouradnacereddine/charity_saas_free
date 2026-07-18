@@ -411,7 +411,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 
   const handleConfirmTransaction = async (id: string) => {
     try {
-      await confirmTransaction.mutateAsync(id)
+      await confirmTransaction.mutateAsync({ id, amount: Number(confirmTxAmount) })
       setConfirmingTxId(null)
       setConfirmTxAmount('')
       setDetailTx(null)

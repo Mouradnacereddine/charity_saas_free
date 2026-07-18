@@ -488,11 +488,17 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
     }
 
     const amountNum = tx.amount;
+    const confirmAmount = req.body.amount !== undefined ? Number(req.body.amount) : amountNum;
+
+    if (isNaN(confirmAmount) || confirmAmount <= 0 || confirmAmount > amountNum) {
+      res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
+      return;
+    }
 
     // Check balance for debits
     if (tx.type === 'debit') {
       if (tx.fundSource === 'caisse_physique') {
-        if (tx.caisse.balance < amountNum) {
+        if (tx.caisse.balance < confirmAmount) {
           res.status(400).json({ error: 'رصيد الصندوق غير كافٍ لإكمال هذه المعاملة' });
           return;
         }
@@ -500,7 +506,7 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
         const bankAccount = await prisma.bankAccount.findFirst({
           where: { id: tx.bankAccountId, associationId },
         });
-        if (!bankAccount || bankAccount.balance < amountNum) {
+        if (!bankAccount || bankAccount.balance < confirmAmount) {
           res.status(400).json({ error: 'Insufficient bank balance to confirm' });
           return;
         }
@@ -519,28 +525,24 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
       // the caisse/bank
       // =====================================================
       if (tx.type === 'debit') {
-        // Update caisse balance
         await prismaTx.caisse.update({
           where: { id: tx.caisseId },
-          data: { balance: { decrement: amountNum } },
+          data: { balance: { decrement: confirmAmount } },
         });
 
-        // Update bank account balance if applicable
         if (tx.bankAccountId) {
           await prismaTx.bankAccount.update({
             where: { id: tx.bankAccountId },
-            data: { balance: { decrement: amountNum } },
+            data: { balance: { decrement: confirmAmount } },
           });
         }
 
-        // If this debit is linked to an allocation (e.g. distributed later)
-        // Find any allocation linked to this debit transaction
         const debitAlloc = await prismaTx.donationAllocation.findFirst({
           where: { debitTransactionId: tx.id },
         });
 
         if (debitAlloc) {
-          const newRemaining = Math.max(0, debitAlloc.remainingAmount - amountNum);
+          const newRemaining = Math.max(0, debitAlloc.remainingAmount - confirmAmount);
           await prismaTx.donationAllocation.update({
             where: { id: debitAlloc.id },
             data: { remainingAmount: newRemaining },
@@ -550,8 +552,8 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
 
       // =====================================================
       // CREDIT CONFIRMATION:
-      // Balances and donor totals were already updated on POST.
-      // We just need to make sure the receipt is created (if not already)
+      // If confirmAmount < original: create debit for released
+      // amount, debit caisse, update allocation.
       // =====================================================
       if (tx.type === 'credit' && tx.donorId) {
         const existingReceipt = await prismaTx.donationReceipt.findFirst({
@@ -583,6 +585,55 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
               },
             });
           }
+        }
+      }
+
+      // Partial confirmation: release money to beneficiary
+      if (confirmAmount < amountNum && tx.beneficiaryId) {
+        const debitRef = generateRef('BON');
+
+        const debitTx = await prismaTx.transaction.create({
+          data: {
+            associationId,
+            type: 'debit',
+            amount: confirmAmount,
+            amountInWords: `${confirmAmount} DZD`,
+            amountInWordsAr: `${confirmAmount} دينار`,
+            fundSource: tx.fundSource,
+            caisseId: tx.caisseId,
+            subCategoryId: tx.subCategoryId,
+            bankAccountId: tx.bankAccountId,
+            beneficiaryId: tx.beneficiaryId,
+            description: tx.description,
+            descriptionAr: tx.descriptionAr,
+            receiptNumber: debitRef,
+            status: 'completed',
+            date: new Date(),
+          },
+        });
+
+        await prismaTx.caisse.update({
+          where: { id: tx.caisseId },
+          data: { balance: { decrement: confirmAmount } },
+        });
+
+        if (tx.bankAccountId) {
+          await prismaTx.bankAccount.update({
+            where: { id: tx.bankAccountId },
+            data: { balance: { decrement: confirmAmount } },
+          });
+        }
+
+        const alloc = await prismaTx.donationAllocation.findFirst({
+          where: { creditTransactionId: tx.id },
+        });
+
+        if (alloc) {
+          const newRemaining = Math.max(0, alloc.remainingAmount - confirmAmount);
+          await prismaTx.donationAllocation.update({
+            where: { id: alloc.id },
+            data: { remainingAmount: newRemaining, debitTransactionId: debitTx.id },
+          });
         }
       }
 

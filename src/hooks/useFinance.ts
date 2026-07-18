@@ -53,7 +53,7 @@ export function useUpdateBankAccount() {
 export function useConfirmTransaction() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => financeApi.confirmTransaction(id),
+    mutationFn: (params: { id: string; amount: number }) => financeApi.confirmTransaction(params.id, { amount: params.amount }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] });
       qc.invalidateQueries({ queryKey: ['finance-allocations'] });
