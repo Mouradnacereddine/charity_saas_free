@@ -40,29 +40,58 @@ export default function MedicalPage() {
   const [filterSearchTerm, setFilterSearchTerm] = useState('');
   const [committedSearchTerm, setCommittedSearchTerm] = useState('');
   const [filterCaisseId, setFilterCaisseId] = useState('');
+  const [committedCaisseId, setCommittedCaisseId] = useState('');
   const [filterMinAmount, setFilterMinAmount] = useState('');
+  const [committedMinAmount, setCommittedMinAmount] = useState('');
   const [filterMaxAmount, setFilterMaxAmount] = useState('');
+  const [committedMaxAmount, setCommittedMaxAmount] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [committedDateFrom, setCommittedDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
+  const [committedDateTo, setCommittedDateTo] = useState('');
   const [filterDoctor, setFilterDoctor] = useState('');
+  const [committedDoctor, setCommittedDoctor] = useState('');
   const [filterAnalysis, setFilterAnalysis] = useState('');
+  const [committedAnalysis, setCommittedAnalysis] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [committedStatus, setCommittedStatus] = useState('');
+  const [filterSpecialty, setFilterSpecialty] = useState('');
+  const [committedSpecialty, setCommittedSpecialty] = useState('');
 
   const applyFilters = () => {
     setCommittedSearchTerm(filterSearchTerm);
+    setCommittedCaisseId(filterCaisseId);
+    setCommittedMinAmount(filterMinAmount);
+    setCommittedMaxAmount(filterMaxAmount);
+    setCommittedDateFrom(filterDateFrom);
+    setCommittedDateTo(filterDateTo);
+    setCommittedDoctor(filterDoctor);
+    setCommittedAnalysis(filterAnalysis);
+    setCommittedStatus(filterStatus);
+    setCommittedSpecialty(filterSpecialty);
   };
 
   const resetFilters = () => {
     setFilterSearchTerm('');
     setCommittedSearchTerm('');
     setFilterCaisseId('');
+    setCommittedCaisseId('');
     setFilterMinAmount('');
+    setCommittedMinAmount('');
     setFilterMaxAmount('');
+    setCommittedMaxAmount('');
     setFilterDateFrom('');
+    setCommittedDateFrom('');
     setFilterDateTo('');
+    setCommittedDateTo('');
     setFilterDoctor('');
+    setCommittedDoctor('');
     setFilterAnalysis('');
+    setCommittedAnalysis('');
     setFilterStatus('');
+    setCommittedStatus('');
+    setFilterSpecialty('');
+    setCommittedSpecialty('');
   };
 
   // Settings tab state
@@ -87,6 +116,11 @@ export default function MedicalPage() {
   const { data: allDoctors = [] } = useQuery({
     queryKey: ['doctors'],
     queryFn: () => doctorsApi.list().then(r => r.data),
+  });
+
+  const { data: specialties = [] } = useQuery({
+    queryKey: ['doctor-specialties'],
+    queryFn: () => doctorsApi.specialties().then(r => r.data),
   });
 
   const selectedDoctor = allDoctors.find((d: any) => d.id === doctorId);
@@ -247,19 +281,22 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
       (r.reference || '').toLowerCase().includes(appliedTerm)
     )) return false;
 
-    if (filterCaisseId && r.caisseId !== filterCaisseId) return false;
+    if (committedCaisseId && r.caisseId !== committedCaisseId) return false;
 
-    if (filterMinAmount && r.amount < Number(filterMinAmount)) return false;
-    if (filterMaxAmount && r.amount > Number(filterMaxAmount)) return false;
+    if (committedMinAmount && r.amount < Number(committedMinAmount)) return false;
+    if (committedMaxAmount && r.amount > Number(committedMaxAmount)) return false;
 
-    if (filterDateFrom && r.date < filterDateFrom) return false;
-    if (filterDateTo && r.date > filterDateTo) return false;
+    if (committedDateFrom && r.date < committedDateFrom) return false;
+    if (committedDateTo && r.date > committedDateTo) return false;
 
     const docNameAr = r.doctorNameAr || (r.doctor ? `${r.doctor.lastNameAr} ${r.doctor.firstNameAr}` : '');
-    if (filterDoctor && !docNameAr.includes(filterDoctor)) return false;
+    if (committedDoctor && !docNameAr.includes(committedDoctor)) return false;
 
-    if (filterAnalysis && !(r.analysisTypeAr?.includes(filterAnalysis))) return false;
-    if (filterStatus && (r.status || 'pending') !== filterStatus) return false;
+    if (committedAnalysis && !(r.analysisTypeAr?.includes(committedAnalysis))) return false;
+    if (committedStatus && (r.status || 'pending') !== committedStatus) return false;
+
+    const docSpecialtyAr = r.doctor?.specialty?.nameAr || '';
+    if (committedSpecialty && !docSpecialtyAr.includes(committedSpecialty)) return false;
 
     return true;
   });
@@ -321,20 +358,36 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                   value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)}
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">اسم الطبيب</label>
-                <input type="text" placeholder="بحث..."
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={filterDoctor} onChange={(e) => setFilterDoctor(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">نوع التحليل</label>
-                <input type="text" placeholder="بحث..."
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={filterAnalysis} onChange={(e) => setFilterAnalysis(e.target.value)}
-                />
-              </div>
+              <SearchableSelect
+                labelAr="اسم الطبيب"
+                value={filterDoctor}
+                onChange={setFilterDoctor}
+                options={allDoctors.map((d: any) => ({
+                  value: `${d.lastNameAr} ${d.firstNameAr}`,
+                  label: `${d.lastNameAr} ${d.firstNameAr}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''}`,
+                }))}
+                placeholder="اختر طبيب..."
+              />
+              <SearchableSelect
+                labelAr="نوع التحليل"
+                value={filterAnalysis}
+                onChange={setFilterAnalysis}
+                options={analysisTypes.map((a: any) => ({
+                  value: a.nameAr,
+                  label: a.nameAr,
+                }))}
+                placeholder="اختر تحليل..."
+              />
+              <SearchableSelect
+                labelAr="التخصص الطبي"
+                value={filterSpecialty}
+                onChange={setFilterSpecialty}
+                options={specialties.map((s: any) => ({
+                  value: s.nameAr,
+                  label: s.nameAr,
+                }))}
+                placeholder="اختر تخصص..."
+              />
               <SearchableSelect
                 labelAr="الحالة"
                 options={[
@@ -344,16 +397,16 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                   { value: 'cancelled', label: 'ملغي' },
                 ]}
                 value={filterStatus}
-                onChange={(val) => setFilterStatus(val)}
+                onChange={setFilterStatus}
               />
-              <div className="flex items-end gap-2">
-                <Button size="sm" onClick={applyFilters}>
-                  <Search className="w-4 h-4" /> بحث
-                </Button>
-                <Button size="sm" variant="secondary" onClick={resetFilters}>
-                  إعادة تعيين
-                </Button>
-              </div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button size="sm" onClick={applyFilters}>
+              <Search className="w-4 h-4" /> بحث
+            </Button>
+            <Button size="sm" variant="secondary" onClick={resetFilters}>
+              إعادة تعيين
+            </Button>
           </div>
         </Card>
       )}
