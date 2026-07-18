@@ -226,6 +226,7 @@ export default function FinancePage() {
   const [filterDateTo, setFilterDateTo] = useState('')
   const [filterMinAmount, setFilterMinAmount] = useState('')
   const [filterMaxAmount, setFilterMaxAmount] = useState('')
+  const [filterTxStatus, setFilterTxStatus] = useState('')
 
   // ---- Pagination State ----
   const [currentPage, setCurrentPage] = useState(1)
@@ -388,6 +389,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
     if (filterMinAmount) params.minAmount = filterMinAmount
     if (filterMaxAmount) params.maxAmount = filterMaxAmount
     if (filterSearchTerm) params.searchTerm = filterSearchTerm
+    if (filterTxStatus) params.status = filterTxStatus
 
     setCurrentPage(1)
     setTxFilters(Object.keys(params).length > 0 ? params : undefined)
@@ -402,6 +404,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
     setFilterMinAmount('')
     setFilterMaxAmount('')
     setFilterSearchTerm('')
+    setFilterTxStatus('')
     setCurrentPage(1)
     setTxFilters(undefined)
   }
@@ -1007,7 +1010,16 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterCaisseId(e.target.value)}
                 options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))}
               />
-              <div /> {/* spacer */}
+              <Select
+                labelAr="الحالة"
+                value={filterTxStatus}
+                onChange={(e) => setFilterTxStatus(e.target.value)}
+                options={[
+                  { value: 'completed', label: 'مكتمل' },
+                  { value: 'pending', label: 'معلق' },
+                  { value: 'cancelled', label: 'ملغي' },
+                ]}
+              />
               <Input
                 labelAr="من تاريخ"
                 type="date"
