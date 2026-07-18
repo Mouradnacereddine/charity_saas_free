@@ -173,24 +173,46 @@ export default function FinancePage() {
   const [allocFilterOpen, setAllocFilterOpen] = useState(false)
   const [allocBeneficiaryName, setAllocBeneficiaryName] = useState('')
   const [allocDonorName, setAllocDonorName] = useState('')
-  const [committedAllocSearch, setCommittedAllocSearch] = useState({ donor: '', beneficiary: '' })
+  const [allocCaisseId, setAllocCaisseId] = useState('')
+  const [allocMinAmount, setAllocMinAmount] = useState('')
+  const [allocMaxAmount, setAllocMaxAmount] = useState('')
+  const [allocRemaining, setAllocRemaining] = useState('')
+  const [allocStatus, setAllocStatus] = useState('')
+  const [allocNotes, setAllocNotes] = useState('')
+  const [committedAllocSearch, setCommittedAllocSearch] = useState({ donor: '', beneficiary: '', caisseId: '', minAmount: '', maxAmount: '', remaining: '', status: '', notes: '' })
   const [selectedAlloc, setSelectedAlloc] = useState<DonationAllocation | null>(null)
 
   const applyAllocFilters = () => {
-    setCommittedAllocSearch({ donor: allocDonorName, beneficiary: allocBeneficiaryName })
+    setCommittedAllocSearch({ donor: allocDonorName, beneficiary: allocBeneficiaryName, caisseId: allocCaisseId, minAmount: allocMinAmount, maxAmount: allocMaxAmount, remaining: allocRemaining, status: allocStatus, notes: allocNotes })
   }
 
   const resetAllocFilters = () => {
     setAllocDonorName('')
     setAllocBeneficiaryName('')
-    setCommittedAllocSearch({ donor: '', beneficiary: '' })
+    setAllocCaisseId('')
+    setAllocMinAmount('')
+    setAllocMaxAmount('')
+    setAllocRemaining('')
+    setAllocStatus('')
+    setAllocNotes('')
+    setCommittedAllocSearch({ donor: '', beneficiary: '', caisseId: '', minAmount: '', maxAmount: '', remaining: '', status: '', notes: '' })
   }
 
   const filteredAllocations = allocations.filter((a: DonationAllocation) => {
-    const donor = committedAllocSearch.donor
-    const beneficiary = committedAllocSearch.beneficiary
-    if (donor && !(a.donor.lastNameAr.includes(donor) || a.donor.firstNameAr.includes(donor))) return false
-    if (beneficiary && !(a.beneficiary.lastNameAr.includes(beneficiary) || a.beneficiary.firstNameAr.includes(beneficiary))) return false
+    const c = committedAllocSearch
+    if (c.donor && !(a.donor.lastNameAr.includes(c.donor) || a.donor.firstNameAr.includes(c.donor))) return false
+    if (c.beneficiary && !(a.beneficiary.lastNameAr.includes(c.beneficiary) || a.beneficiary.firstNameAr.includes(c.beneficiary))) return false
+    if (c.caisseId && a.creditTransaction?.caisseId !== c.caisseId) return false
+    if (c.minAmount && a.amount < Number(c.minAmount)) return false
+    if (c.maxAmount && a.amount > Number(c.maxAmount)) return false
+    if (c.remaining === 'zero' && a.remainingAmount !== 0) return false
+    if (c.remaining === 'positive' && a.remainingAmount <= 0) return false
+    if (c.status === 'pending' && a.creditTransaction?.status !== 'pending') return false
+    if (c.status === 'completed' && a.creditTransaction?.status !== 'completed') return false
+    if (c.status === 'cancelled' && a.creditTransaction?.status !== 'cancelled') return false
+    if (c.remaining === 'distributed' && !a.debitTransactionId) return false
+    if (c.remaining === 'not_distributed' && a.debitTransactionId) return false
+    if (c.notes && !(a.notes?.includes(c.notes))) return false
     return true
   })
 
@@ -508,9 +530,26 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
       >
         {allocFilterOpen && (
           <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input labelAr="البحث باسم المتبرع" value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') applyAllocFilters(); }} placeholder="..." />
-              <Input labelAr="البحث باسم المستفيد" value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') applyAllocFilters(); }} placeholder="..." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <Input labelAr="المتبرع" value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} placeholder="بحث..." />
+              <Input labelAr="المستفيد" value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} placeholder="بحث..." />
+              <SearchableSelect labelAr="الصندوق" value={allocCaisseId} onChange={setAllocCaisseId} options={caisses.map((c: any) => ({ value: c.id, label: c.nameAr }))} />
+              <Input labelAr="المبلغ من" value={allocMinAmount} onChange={(e) => setAllocMinAmount(e.target.value)} type="number" placeholder="0" />
+              <Input labelAr="المبلغ إلى" value={allocMaxAmount} onChange={(e) => setAllocMaxAmount(e.target.value)} type="number" placeholder="0" />
+              <SearchableSelect labelAr="المبلغ المتبقي" value={allocRemaining} onChange={setAllocRemaining} options={[
+                { value: '', label: 'الكل' },
+                { value: 'zero', label: 'مصرف بالكامل' },
+                { value: 'positive', label: 'متبقي' },
+                { value: 'distributed', label: 'تم الصرف' },
+                { value: 'not_distributed', label: 'لم يصرف بعد' },
+              ]} />
+              <SearchableSelect labelAr="حالة التبرع الأصلي" value={allocStatus} onChange={setAllocStatus} options={[
+                { value: '', label: 'الكل' },
+                { value: 'pending', label: 'معلق' },
+                { value: 'completed', label: 'مكتمل' },
+                { value: 'cancelled', label: 'ملغي' },
+              ]} />
+              <Input labelAr="ملاحظات" value={allocNotes} onChange={(e) => setAllocNotes(e.target.value)} placeholder="بحث..." />
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={applyAllocFilters}><Search className="w-4 h-4" /> بحث</Button>
