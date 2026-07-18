@@ -105,6 +105,7 @@ export default function DashboardPage() {
                     <th className="text-right py-3 px-4 font-semibold text-gray-600">النوع</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden xl:table-cell">رقم الوصل</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600">المبلغ</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden lg:table-cell">المتبرع/المستفيد</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">الوصف</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">الحالة</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-600">التاريخ</th>
@@ -126,6 +127,11 @@ export default function DashboardPage() {
                         <span className={`font-semibold ${tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
                           {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
                         </span>
+                      </td>
+                      <td className="py-3 px-4 text-gray-700 hidden lg:table-cell">
+                        {tx.type === 'credit' && tx.donor ? `${tx.donor.lastNameAr} ${tx.donor.firstNameAr}`
+                          : tx.type === 'debit' && tx.beneficiary ? `${tx.beneficiary.lastNameAr} ${tx.beneficiary.firstNameAr}`
+                          : '—'}
                       </td>
                       <td className="py-3 px-4 text-gray-700 hidden sm:table-cell">{tx.descriptionAr}</td>
                       <td className="py-3 px-4 hidden sm:table-cell">
