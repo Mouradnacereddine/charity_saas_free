@@ -161,6 +161,12 @@ export default function DashboardPage() {
               <div><p className="text-xs text-gray-500">المبلغ</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(detailTx.amount)}</p></div>
               <div><p className="text-xs text-gray-500">الصندوق</p><p className="font-medium text-gray-900">{detailTx.caisse?.nameAr || detailTx.caisseId || '—'}</p></div>
               <div><p className="text-xs text-gray-500">مصدر التمويل</p><p className="font-medium">{detailTx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</p></div>
+              {detailTx.type === 'credit' && detailTx.donor && (
+                <div className="sm:col-span-2"><p className="text-xs text-gray-500">المتبرع</p><p className="font-medium text-gray-900">{detailTx.donor.lastNameAr} {detailTx.donor.firstNameAr}</p></div>
+              )}
+              {detailTx.type === 'debit' && detailTx.beneficiary && (
+                <div className="sm:col-span-2"><p className="text-xs text-gray-500">المستفيد</p><p className="font-medium text-gray-900">{detailTx.beneficiary.lastNameAr} {detailTx.beneficiary.firstNameAr}</p></div>
+              )}
               {detailTx.descriptionAr && <div className="sm:col-span-2"><p className="text-xs text-gray-500">الوصف</p><p className="font-medium text-gray-900">{detailTx.descriptionAr}</p></div>}
               {detailTx.receiptNumber && <div><p className="text-xs text-gray-500">رقم الوصل</p><p className="font-mono text-gray-900" dir="ltr">{detailTx.receiptNumber}</p></div>}
               <div><p className="text-xs text-gray-500">التاريخ</p><p className="font-medium text-gray-900">{formatDate(detailTx.date)}</p></div>

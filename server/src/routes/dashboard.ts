@@ -56,7 +56,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 
       recentTransactions = await prisma.transaction.findMany({
         where: { associationId },
-        include: { caisse: true },
+        include: { caisse: true, donor: true, beneficiary: true },
         orderBy: { date: 'desc' },
         take: 10,
       });
