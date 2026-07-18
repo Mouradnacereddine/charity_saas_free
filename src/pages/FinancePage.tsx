@@ -1037,10 +1037,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                           {formatCurrency(tx.amount)}
                         </td>
                         <td className="py-3 px-3 text-gray-700 hidden sm:table-cell">
-                          {tx.type === 'credit' ? (txDonor ? `${txDonor.lastNameAr} ${txDonor.firstNameAr}` : '—') : '—'}
+                          {txDonor ? `${txDonor.lastNameAr} ${txDonor.firstNameAr}` : '—'}
                         </td>
                         <td className="py-3 px-3 text-gray-700 hidden sm:table-cell">
-                          {tx.type === 'debit' ? (txBenef ? `${txBenef.lastNameAr} ${txBenef.firstNameAr}` : '—') : '—'}
+                          {txBenef ? `${txBenef.lastNameAr} ${txBenef.firstNameAr}` : '—'}
                         </td>
                         <td className="py-3 px-3 text-gray-600 hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
                         <td className="py-3 px-3 text-gray-600 max-w-[160px] truncate hidden lg:table-cell">
