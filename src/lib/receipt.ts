@@ -58,9 +58,10 @@ export function printReceipt(
  * but on full page width with margins — exactly like the Orientation Médicale layout but wide.
  */
 export const FULL_CARD_CSS = `
-  @page { size: A4 portrait; margin: 15mm 15mm 10mm 15mm; }
+  @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 11px; color: #1a1a1a; background: #fff; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 11px; color: #1a1a1a; background: #fff; padding: 15mm; }
+  @media print { body { padding: 15mm; } }
   .hdr { border-bottom: 2px solid #2563eb; padding-bottom: 4px; margin-bottom: 8px; }
   .hdr h1 { font-size: 16px; color: #2563eb; margin: 0; display: inline; }
   .hdr .sub { float: left; font-size: 10px; color: #999; }
