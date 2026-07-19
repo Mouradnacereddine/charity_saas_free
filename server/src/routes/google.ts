@@ -16,19 +16,21 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Verify Google token using POST to avoid URL length limits
-    const verifyRes = await fetch('https://oauth2.googleapis.com/tokeninfo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ id_token: credential }),
-    });
-
-    if (!verifyRes.ok) {
-      res.status(400).json({ error: 'Invalid Google token' });
+    // Verify Google token using Google Auth Library
+    const { OAuth2Client } = require('google-auth-library');
+    const googleClient = new OAuth2Client(config.googleClientId);
+    let payload: any;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: config.googleClientId,
+      });
+      payload = ticket.getPayload();
+    } catch (verifyErr) {
+      console.error('Google token verification failed:', verifyErr);
+      res.status(400).json({ error: 'فشل التحقق من رمز Google' });
       return;
     }
-
-    const payload = await verifyRes.json() as any;
 
     if (!payload || !payload.email) {
       res.status(400).json({ error: 'Invalid Google token payload' });
