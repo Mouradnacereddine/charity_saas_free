@@ -1276,11 +1276,12 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   </>
                 )}
                 {(() => {
+                  const status = detailTx.status || 'completed';
                   const rem = (detailTx as any).remainingAmount;
                   const allocId = (detailTx as any).allocationId;
-                  if (rem !== null && typeof rem === 'number' && rem > 0 && allocId) {
+                  if (status === 'completed' && rem !== null && typeof rem === 'number' && rem > 0 && allocId) {
                     if (detailTx.type === 'credit') {
-                      // Credit: confirm will create the debit
+                      // Credit: disburse remaining to beneficiary
                       return (
                         <Button size="sm" variant="primary" onClick={() => {
                           setConfirmingTxId(detailTx.id);
