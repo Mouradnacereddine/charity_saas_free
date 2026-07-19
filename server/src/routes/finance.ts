@@ -63,11 +63,50 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
         bankAccount: true,
         donor: true,
         beneficiary: true,
+        creditAllocations: {
+          select: {
+            id: true,
+            amount: true,
+            remainingAmount: true,
+            debitTransactionId: true,
+            donorId: true,
+            beneficiaryId: true,
+          },
+        },
       },
       orderBy: { date: 'desc' },
     });
 
-    res.json(transactions);
+    // Attach debit allocations for debit transactions
+    const debitAllocMap = new Map<string, any>();
+    const allocIds = transactions.filter(t => t.type === 'debit').map(t => t.id).filter(Boolean);
+    if (allocIds.length > 0) {
+      const debitAllocs = await prisma.donationAllocation.findMany({
+        where: { debitTransactionId: { in: allocIds } },
+        select: { id: true, amount: true, remainingAmount: true, debitTransactionId: true },
+      });
+      for (const da of debitAllocs) {
+        debitAllocMap.set(da.debitTransactionId!, da);
+      }
+    }
+
+    const enriched = transactions.map(tx => {
+      const alloc = (tx as any).creditAllocations?.[0];
+      const debitAlloc = debitAllocMap.get(tx.id);
+      let rem: number | null = null;
+      if (tx.type === 'credit' && alloc) {
+        rem = alloc.remainingAmount;
+      } else if (tx.type === 'debit' && debitAlloc) {
+        rem = debitAlloc.remainingAmount;
+      }
+      // For credits without allocation (no beneficiary), don't set remainingAmount
+      return {
+        ...tx,
+        remainingAmount: rem,
+      };
+    });
+
+    res.json(enriched);
   } catch (error) {
     console.error('Error listing transactions:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -588,8 +627,13 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
         }
       }
 
-      // Partial confirmation: release money to beneficiary
-      if (confirmAmount < amountNum && tx.beneficiaryId) {
+      // =====================================================
+      // CREDIT CONFIRMATION with beneficiary:
+      // Money entered caisse on POST. Now release it to the
+      // beneficiary via a debit transaction, regardless of
+      // whether the release is partial or full.
+      // =====================================================
+      if (tx.type === 'credit' && tx.beneficiaryId && confirmAmount > 0) {
         const debitRef = generateRef('BON');
 
         const debitTx = await prismaTx.transaction.create({

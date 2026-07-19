@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/layout/Layout';
 import { useAuth } from './hooks/useAuth';
+import { useSocketSync } from './hooks/useSocketSync';
 import DashboardPage from './pages/DashboardPage';
 import FinancePage from './pages/FinancePage';
 import CaissesPage from './pages/CaissesPage';
@@ -48,6 +49,9 @@ function AppContent() {
     return pageName && PAGE_NAMES[pageName] ? pageName : (localStorage.getItem('accessToken') ? 'dashboard' : 'login');
   });
   const { user, association, isAuthenticated, isAdmin, isTreasurer, isLoading, logout } = useAuth();
+
+  // Real-time sync across browser tabs and other users
+  useSocketSync();
 
   const navigate = (page: string) => {
     setActivePage(page);

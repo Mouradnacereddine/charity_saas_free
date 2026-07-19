@@ -978,6 +978,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     <th className="text-right py-3 px-3 font-medium text-gray-500">الحالة</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المصدر</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المبلغ</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">المتبقي</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">المتبرع</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">المستفيد</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">الصندوق</th>
@@ -1008,13 +1009,22 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                           )}
                         </td>
                         <td className="py-3 px-3">
-                          {(tx.status || 'completed') === 'pending' ? (
-                            <Badge variant="warning">معلق</Badge>
-                          ) : (tx.status || 'completed') === 'cancelled' ? (
-                            <Badge variant="danger">ملغي</Badge>
-                          ) : (
-                            <Badge variant="success">مكتمل</Badge>
-                          )}
+                          {(() => {
+                            const rawStatus = tx.status || 'completed';
+                            if (rawStatus === 'pending') return <Badge variant="warning">معلق</Badge>;
+                            if (rawStatus === 'cancelled') return <Badge variant="danger">ملغي</Badge>;
+                            // Completed — check if there's a remaining amount (partial)
+                            const rem = (tx as any).remainingAmount;
+                            if (rem !== null && typeof rem === 'number') {
+                              if (tx.type === 'credit' && rem > 0 && rem < tx.amount) {
+                                return <Badge variant="info">مصرف جزئياً</Badge>;
+                              }
+                              if (tx.type === 'debit' && rem > 0) {
+                                return <Badge variant="warning">مصرف جزئياً</Badge>;
+                              }
+                            }
+                            return <Badge variant="success">مكتمل</Badge>;
+                          })()}
                         </td>
                         <td className="py-3 px-3 text-gray-600">
                           {tx.fundSource === 'banque' ? (
@@ -1036,6 +1046,18 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                         >
                           {tx.type === 'credit' ? '+' : '-'}
                           {formatCurrency(tx.amount)}
+                        </td>
+                        <td className="py-3 px-3">
+                          {(() => {
+                            const rawStatus = tx.status || 'completed';
+                            const rem = (tx as any).remainingAmount;
+                            if (rawStatus === 'pending') return <span className="text-gray-400">—</span>;
+                            if (rawStatus === 'cancelled') return <span className="text-gray-400">—</span>;
+                            // null = no allocation (credit without beneficiary)
+                            if (rem === null || rem === undefined) return <span className="text-gray-300">—</span>;
+                            if (rem > 0) return <Badge variant="warning">{formatCurrency(rem)}</Badge>;
+                            return <Badge variant="success">مصرف بالكامل</Badge>;
+                          })()}
                         </td>
                         <td className="py-3 px-3 text-gray-700 hidden sm:table-cell">
                           {txDonor ? `${txDonor.lastNameAr} ${txDonor.firstNameAr}` : '—'}
@@ -1167,7 +1189,41 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
                 <div><p className="text-xs text-gray-500">النوع</p><p className="font-medium">{detailTx.type === 'credit' ? 'إيداع' : 'سحب'}</p></div>
                 <div><p className="text-xs text-gray-500">المبلغ</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(detailTx.amount)}</p></div>
-                <div><p className="text-xs text-gray-500">الحالة</p><p className="font-medium">{(detailTx.status || 'completed') === 'pending' ? <Badge variant="warning">معلق</Badge> : (detailTx.status || 'completed') === 'cancelled' ? <Badge variant="danger">ملغي</Badge> : <Badge variant="success">مكتمل</Badge>}</p></div>
+                {(() => {
+                  const rem = (detailTx as any).remainingAmount;
+                  // Show remaining amount only for credit with allocation (non-null)
+                  if (rem !== null && rem !== undefined && typeof rem === 'number' && detailTx.type === 'credit') {
+                    const consumed = detailTx.amount - rem;
+                    return (
+                      <>
+                        <div><p className="text-xs text-gray-500">المبلغ المصرف</p><p className="font-medium text-amber-600">{formatCurrency(consumed)}</p></div>
+                        <div><p className="text-xs text-gray-500">المبلغ المتبقي</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">مصرف بالكامل</Badge>}</p></div>
+                      </>
+                    );
+                  }
+                  // For debit with allocation
+                  if (rem !== null && rem !== undefined && typeof rem === 'number' && detailTx.type === 'debit') {
+                    return (
+                      <div><p className="text-xs text-gray-500">المبلغ المتبقي لاستكمال الصرف</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">مصرف بالكامل</Badge>}</p></div>
+                    );
+                  }
+                  return null;
+                })()}
+                <div><p className="text-xs text-gray-500">الحالة</p><p className="font-medium">{(() => {
+                  const s = detailTx.status || 'completed';
+                  if (s === 'pending') return <Badge variant="warning">معلق</Badge>;
+                  if (s === 'cancelled') return <Badge variant="danger">ملغي</Badge>;
+                  const rem = (detailTx as any).remainingAmount;
+                  if (rem !== null && typeof rem === 'number') {
+                    if (detailTx.type === 'credit' && rem > 0 && rem < detailTx.amount) {
+                      return <Badge variant="info">مصرف جزئياً</Badge>;
+                    }
+                    if (detailTx.type === 'debit' && rem > 0) {
+                      return <Badge variant="warning">مصرف جزئياً</Badge>;
+                    }
+                  }
+                  return <Badge variant="success">مكتمل</Badge>;
+                })()}</p></div>
                 <div><p className="text-xs text-gray-500">الصندوق</p><p className="font-medium text-gray-900">{caisse?.nameAr || '—'}</p></div>
                 <div><p className="text-xs text-gray-500">مصدر التمويل</p><p className="font-medium">{detailTx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</p></div>
                 {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-gray-500">الحساب البنكي</p><p className="font-medium">{bankAcc.bankNameAr}</p></div>}
@@ -1185,7 +1241,13 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 )}
                 {(detailTx.status || 'completed') === 'pending' && (
                   <>
-                    <Button size="sm" variant="primary" onClick={() => { setConfirmingTxId(detailTx.id); setConfirmTxAmount(String(detailTx.amount)); }}>
+                    <Button size="sm" variant="primary" onClick={() => {
+                      const defaultAmt = (detailTx as any).remainingAmount !== null && (detailTx as any).remainingAmount !== undefined
+                        ? String((detailTx as any).remainingAmount)
+                        : String(detailTx.amount);
+                      setConfirmingTxId(detailTx.id);
+                      setConfirmTxAmount(defaultAmt);
+                    }}>
                       تأكيد المعاملة
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => handleCancelTransaction(detailTx.id)}>
@@ -1208,6 +1270,15 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               <div className="flex justify-between"><span className="text-gray-500">رقم الوصل</span><span className="font-mono" dir="ltr">{detailTx.receiptNumber || '—'}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">النوع</span><span>{detailTx.type === 'credit' ? 'إيداع' : 'سحب'}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">المبلغ الأصلي</span><span className="font-bold">{formatCurrency(detailTx.amount)}</span></div>
+              {(() => {
+                const rem = (detailTx as any).remainingAmount;
+                if (rem !== null && typeof rem === 'number' && rem > 0 && detailTx.type === 'credit') {
+                  return (
+                    <div className="flex justify-between"><span className="text-gray-500">المبلغ المتبقي</span><span className="font-bold text-amber-600">{formatCurrency(rem)}</span></div>
+                  );
+                }
+                return null;
+              })()}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">أدخل المبلغ المراد تأكيده</label>
