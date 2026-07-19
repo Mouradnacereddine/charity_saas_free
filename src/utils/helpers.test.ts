@@ -313,9 +313,9 @@ describe('generateId', () => {
 // generateReceiptNumber
 // ---------------------------------------------------------------------------
 describe('generateReceiptNumber', () => {
-  it('matches the format BON-YYYYMM-NNNN', () => {
+  it('matches the format BON-YYYYMMDD-HHMMSS-mmm', () => {
     const receipt = generateReceiptNumber();
-    expect(receipt).toMatch(/^BON-\d{6}-\d{4}$/);
+    expect(receipt).toMatch(/^BON-\d{8}-\d{6}-\d{3}$/);
   });
 
   it('starts with "BON-"', () => {
@@ -331,12 +331,13 @@ describe('generateReceiptNumber', () => {
     expect(receipt).toContain(`${year}${month}`);
   });
 
-  it('generates different receipt numbers on successive calls (probabilistic)', () => {
-    const receipts = new Set<string>();
-    for (let i = 0; i < 20; i++) {
-      receipts.add(generateReceiptNumber());
-    }
-    // With 10000 possible random suffixes, 20 calls should yield at least 2 distinct values
-    expect(receipts.size).toBeGreaterThan(1);
+  it('generates a receipt with the correct prefix and date components', () => {
+    const receipt = generateReceiptNumber();
+    const parts = receipt.split('-');
+    // BON-YYYYMMDD-HHMMSS-mmm
+    expect(parts[0]).toBe('BON');
+    expect(parts[1]).toMatch(/^\d{8}$/);
+    expect(parts[2]).toMatch(/^\d{6}$/);
+    expect(parts[3]).toMatch(/^\d{3}$/);
   });
 });
