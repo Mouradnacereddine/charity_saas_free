@@ -92,6 +92,8 @@ export default function DonorsPage() {
   function openAddModal() {
     setFormData(emptyDonorForm)
     setIsEditing(false)
+    setSelectedDonor(null)
+    setGender('male')
     setShowAddModal(true)
   }
 
@@ -108,6 +110,7 @@ export default function DonorsPage() {
     })
     setSelectedDonor(donor)
     setIsEditing(true)
+    setGender(donor.gender || 'male')
     setShowAddModal(true)
   }
 
@@ -161,6 +164,7 @@ export default function DonorsPage() {
     }
     setShowAddModal(false)
     setSelectedDonor(null)
+    setIsEditing(false)
   }
 
   function openReceiptView(receipt: DonationReceipt) {
@@ -357,7 +361,7 @@ export default function DonorsPage() {
       {/* ============================================ */}
       <Modal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => { setShowAddModal(false); setSelectedDonor(null); setIsEditing(false); }}
         title={isEditing ? 'تعديل بيانات المتبرع' : 'إضافة متبرع جديد'}
         size="lg"
       >
@@ -446,7 +450,7 @@ export default function DonorsPage() {
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-            <Button variant="secondary" type="button" onClick={() => setShowAddModal(false)}>
+            <Button variant="secondary" type="button" onClick={() => { setShowAddModal(false); setSelectedDonor(null); setIsEditing(false); }}>
               إلغاء
             </Button>
             <Button type="submit">

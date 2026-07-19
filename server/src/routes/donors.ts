@@ -197,7 +197,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 
     const {
       reference, firstName, lastName, firstNameAr, lastNameAr,
-      phone, email, address, totalDonated, notes,
+      phone, email, address, totalDonated, notes, gender,
     } = req.body;
 
     const data: any = {};
@@ -211,6 +211,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     if (address !== undefined) data.address = address;
     if (totalDonated !== undefined) data.totalDonated = totalDonated;
     if (notes !== undefined) data.notes = notes;
+    if (gender !== undefined) data.gender = gender;
 
     const donor = await prisma.donor.update({
       where: { id },
