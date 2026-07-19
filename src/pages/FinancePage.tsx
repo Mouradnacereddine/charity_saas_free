@@ -7,7 +7,7 @@ import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAc
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
 import { useDonors } from '../hooks/useDonors'
 import { useAuth } from '../hooks/useAuth'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { caissesApi, financeApi } from '../lib/api'
 import type { Transaction, BankAccount, Caisse, Beneficiary, Donor, DonationAllocation } from '../types'
 
@@ -125,6 +125,7 @@ export default function FinancePage() {
     queryFn: () => caissesApi.list().then(r => r.data),
   })
   const { association } = useAuth()
+  const queryClient = useQueryClient()
   const { data: beneficiaries = [] } = useBeneficiaries()
   const { data: donors = [] } = useDonors()
 
@@ -161,6 +162,8 @@ export default function FinancePage() {
   const [txError, setTxError] = useState('')
   const [confirmingTxId, setConfirmingTxId] = useState<string | null>(null)
   const [confirmTxAmount, setConfirmTxAmount] = useState('')
+  const [disbursingAllocId, setDisbursingAllocId] = useState<string | null>(null)
+  const [disburseAmount, setDisburseAmount] = useState('')
   const [cancellingTxId, setCancellingTxId] = useState<string | null>(null)
 
   // ---- Allocations Data ----
@@ -427,6 +430,23 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
       setDetailTx(null)
     } catch (err: any) {
       alert(err?.response?.data?.error || err?.message || 'فشل في إلغاء المعاملة')
+    }
+  }
+
+  const handleDisburseAllocation = async () => {
+    if (!disbursingAllocId || !disburseAmount || Number(disburseAmount) <= 0) return
+    try {
+      await financeApi.disburseAllocation(disbursingAllocId, Number(disburseAmount))
+      setDisbursingAllocId(null)
+      setDisburseAmount('')
+      setDetailTx(null)
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['finance-allocations'] })
+      queryClient.invalidateQueries({ queryKey: ['caisses'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || 'فشل في صرف المبلغ')
     }
   }
 
@@ -1257,15 +1277,29 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 )}
                 {(() => {
                   const rem = (detailTx as any).remainingAmount;
-                  if (detailTx.type === 'credit' && (detailTx.status || 'completed') === 'completed' && rem !== null && typeof rem === 'number' && rem > 0) {
-                    return (
-                      <Button size="sm" variant="primary" onClick={() => {
-                        setConfirmingTxId(detailTx.id);
-                        setConfirmTxAmount(String(rem));
-                      }}>
-                        صرف المبلغ المتبقي ({formatCurrency(rem)})
-                      </Button>
-                    );
+                  const allocId = (detailTx as any).allocationId;
+                  if (rem !== null && typeof rem === 'number' && rem > 0 && allocId) {
+                    if (detailTx.type === 'credit') {
+                      // Credit: confirm will create the debit
+                      return (
+                        <Button size="sm" variant="primary" onClick={() => {
+                          setConfirmingTxId(detailTx.id);
+                          setConfirmTxAmount(String(rem));
+                        }}>
+                          صرف المبلغ المتبقي ({formatCurrency(rem)})
+                        </Button>
+                      );
+                    } else if (detailTx.type === 'debit') {
+                      // Debit: disburse from the linked allocation directly
+                      return (
+                        <Button size="sm" variant="primary" onClick={() => {
+                          setDisbursingAllocId(allocId);
+                          setDisburseAmount(String(rem));
+                        }}>
+                          استكمال الصرف ({formatCurrency(rem)})
+                        </Button>
+                      );
+                    }
                   }
                   return null;
                 })()}
@@ -1334,6 +1368,36 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 })();
                 return Number(confirmTxAmount) > maxVal;
               })()}>تأكيد</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Disburse Allocation Modal */}
+      <Modal isOpen={!!disbursingAllocId} onClose={() => { setDisbursingAllocId(null); setDisburseAmount(''); }} title="صرف المبلغ المتبقي" size="sm">
+        {disbursingAllocId && (
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500">المبلغ المتبقي للصرف</span><span className="font-bold text-amber-600">{formatCurrency(Number(disburseAmount))}</span></div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">أدخل المبلغ المراد صرفه</label>
+              <input
+                type="number"
+                value={disburseAmount}
+                onChange={(e) => { setDisburseAmount(e.target.value); }}
+                max={disburseAmount}
+                min={0}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                dir="ltr"
+              />
+              {Number(disburseAmount) > 0 && (
+                <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(Number(disburseAmount))}</p>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="secondary" onClick={() => { setDisbursingAllocId(null); setDisburseAmount(''); }}>إلغاء</Button>
+              <Button size="sm" variant="primary" onClick={handleDisburseAllocation} disabled={!disburseAmount || Number(disburseAmount) <= 0}>تأكيد الصرف</Button>
             </div>
           </div>
         )}

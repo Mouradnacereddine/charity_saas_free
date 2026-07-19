@@ -78,7 +78,7 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
     });
 
     // Attach debit allocations for debit transactions
-    const debitAllocMap = new Map<string, any>();
+    const debitAllocMap = new Map<string, { remainingAmount: number; allocationId: string }>();
     const allocIds = transactions.filter(t => t.type === 'debit').map(t => t.id).filter(Boolean);
     if (allocIds.length > 0) {
       const debitAllocs = await prisma.donationAllocation.findMany({
@@ -86,7 +86,7 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
         select: { id: true, amount: true, remainingAmount: true, debitTransactionId: true },
       });
       for (const da of debitAllocs) {
-        debitAllocMap.set(da.debitTransactionId!, da);
+        debitAllocMap.set(da.debitTransactionId!, { remainingAmount: da.remainingAmount, allocationId: da.id });
       }
     }
 
@@ -94,15 +94,18 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
       const alloc = (tx as any).creditAllocations?.[0];
       const debitAlloc = debitAllocMap.get(tx.id);
       let rem: number | null = null;
+      let allocId: string | null = null;
       if (tx.type === 'credit' && alloc) {
         rem = alloc.remainingAmount;
+        allocId = alloc.id;
       } else if (tx.type === 'debit' && debitAlloc) {
         rem = debitAlloc.remainingAmount;
+        allocId = debitAlloc.allocationId;
       }
-      // For credits without allocation (no beneficiary), don't set remainingAmount
       return {
         ...tx,
         remainingAmount: rem,
+        allocationId: allocId,
       };
     });
 
@@ -787,6 +790,102 @@ router.get('/allocations', async (req: AuthRequest, res: Response): Promise<void
     res.json(allocations);
   } catch (error) {
     console.error('Error listing allocations:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/finance/allocations/:id/disburse — create a new debit for remaining amount
+router.post('/allocations/:id/disburse', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+    const { amount } = req.body;
+
+    const alloc = await prisma.donationAllocation.findFirst({
+      where: { id, associationId },
+      include: { creditTransaction: true },
+    });
+
+    if (!alloc) {
+      res.status(404).json({ error: 'Allocation not found' });
+      return;
+    }
+
+    const disburseAmount = amount || alloc.remainingAmount;
+    if (disburseAmount <= 0 || disburseAmount > alloc.remainingAmount) {
+      res.status(400).json({ error: 'المبلغ غير صالح' });
+      return;
+    }
+
+    const creditTx = alloc.creditTransaction;
+    if (!creditTx) {
+      res.status(400).json({ error: 'Crédit associé introuvable' });
+      return;
+    }
+
+    // Check caisse balance
+    if (creditTx.fundSource === 'caisse_physique') {
+      const caisse = await prisma.caisse.findFirst({ where: { id: creditTx.caisseId, associationId } });
+      if (!caisse || caisse.balance < disburseAmount) {
+        res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+        return;
+      }
+    } else if (creditTx.bankAccountId) {
+      const bankAccount = await prisma.bankAccount.findFirst({ where: { id: creditTx.bankAccountId, associationId } });
+      if (!bankAccount || bankAccount.balance < disburseAmount) {
+        res.status(400).json({ error: 'رصيد الحساب البنكي غير كافٍ' });
+        return;
+      }
+    }
+
+    const result = await prisma.$transaction(async (prismaTx) => {
+      const ref = generateRef('BON');
+      const debitTx = await prismaTx.transaction.create({
+        data: {
+          associationId,
+          type: 'debit',
+          amount: disburseAmount,
+          amountInWords: `${disburseAmount} DZD`,
+          amountInWordsAr: `${disburseAmount} دينار`,
+          fundSource: creditTx.fundSource,
+          caisseId: creditTx.caisseId,
+          subCategoryId: creditTx.subCategoryId,
+          bankAccountId: creditTx.bankAccountId,
+          beneficiaryId: alloc.beneficiaryId,
+          description: creditTx.description,
+          descriptionAr: creditTx.descriptionAr,
+          receiptNumber: ref,
+          status: 'completed',
+          date: new Date(),
+        },
+      });
+
+      // Debit caisse
+      await prismaTx.caisse.update({
+        where: { id: creditTx.caisseId },
+        data: { balance: { decrement: disburseAmount } },
+      });
+
+      if (creditTx.bankAccountId) {
+        await prismaTx.bankAccount.update({
+          where: { id: creditTx.bankAccountId },
+          data: { balance: { decrement: disburseAmount } },
+        });
+      }
+
+      // Update allocation
+      const newRemaining = Math.max(0, alloc.remainingAmount - disburseAmount);
+      await prismaTx.donationAllocation.update({
+        where: { id },
+        data: { remainingAmount: newRemaining, debitTransactionId: debitTx.id },
+      });
+
+      return { debitTx, remaining: newRemaining };
+    });
+
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Error disbursing allocation:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
