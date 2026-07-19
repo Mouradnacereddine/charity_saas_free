@@ -1023,6 +1023,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             value={form.storageLocation}
             onChange={(val) => setForm({ ...form, storageLocation: val })}
             options={locationOptions}
+            required
           />
           <Input
             labelAr="الكمية"
@@ -1046,11 +1047,13 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             labelAr="الوضع بالعربية"
             value={form.conditionAr}
             onChange={(e) => setForm({ ...form, conditionAr: e.target.value })}
+            required
           />
           <Input
             labelAr="الوضع بالفرنسية"
             value={form.condition}
             onChange={(e) => setForm({ ...form, condition: e.target.value })}
+            required
           />
           <div className="flex items-center gap-3 md:col-span-2">
             <input
