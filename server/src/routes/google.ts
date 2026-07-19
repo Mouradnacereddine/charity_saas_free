@@ -16,16 +16,20 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Verify Google token using Google Auth Library
-    const { OAuth2Client } = require('google-auth-library');
-    const googleClient = new OAuth2Client(config.googleClientId);
+    // Verify Google token using Google's tokeninfo endpoint
     let payload: any;
     try {
-      const ticket = await googleClient.verifyIdToken({
-        idToken: credential,
-        audience: config.googleClientId,
-      });
-      payload = ticket.getPayload();
+      const verifyRes = await fetch(
+        `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${encodeURIComponent(credential)}`,
+        { method: 'GET' }
+      );
+      if (!verifyRes.ok) {
+        const errText = await verifyRes.text().catch(() => '');
+        console.error('Google tokeninfo rejected:', verifyRes.status, errText);
+        res.status(400).json({ error: 'رمز Google غير صالح' });
+        return;
+      }
+      payload = await verifyRes.json();
     } catch (verifyErr) {
       console.error('Google token verification failed:', verifyErr);
       res.status(400).json({ error: 'فشل التحقق من رمز Google' });
