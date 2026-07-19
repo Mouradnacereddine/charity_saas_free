@@ -241,6 +241,8 @@ function SettingsTab() {
   const [editStsName, setEditStsName] = useState('')
   const [editStsDescAr, setEditStsDescAr] = useState('')
   const [editStsDesc, setEditStsDesc] = useState('')
+  const [newStsIsPermanent, setNewStsIsPermanent] = useState(false)
+  const [editStsIsPermanent, setEditStsIsPermanent] = useState(false)
 
   // School grade form state
 
