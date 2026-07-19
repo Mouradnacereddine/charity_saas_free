@@ -68,33 +68,31 @@ app.use('/api/dashboard', autoInvalidate, dashboardRoutes);
 app.use('/api/notifications', autoInvalidate, notificationsRoutes);
 app.use('/api/beneficiary-attributs', autoInvalidate, attributsRoutes);
 
-// Socket.IO — only in non-serverless mode (real-time sync not available on Vercel serverless)
+// Socket.IO — only in non-serverless mode (require inside the block so it doesn't fail on Vercel)
 if (!process.env.VERCEL) {
-  import('http').then(({ default: http }) => {
-    import('socket.io').then(({ Server: SocketIOServer }) => {
-      const { setIO } = require('./lib/socket');
-      const server = http.createServer(app);
-      const io = new SocketIOServer(server, {
-        cors: { origin: allowedOrigins, credentials: true },
-      });
+  const http = require('http');
+  const { Server: SocketIOServer } = require('socket.io');
+  const { setIO } = require('./lib/socket');
+  const server = http.createServer(app);
+  const io = new SocketIOServer(server, {
+    cors: { origin: allowedOrigins, credentials: true },
+  });
 
-      io.on('connection', (socket: any) => {
-        console.log(`⚡ Socket connected: ${socket.id}`);
-        socket.on('join-association', (associationId: string) => {
-          socket.join(`assoc:${associationId}`);
-        });
-        socket.on('disconnect', () => {
-          console.log(`⚡ Socket disconnected: ${socket.id}`);
-        });
-      });
-
-      app.set('io', io);
-      setIO(io);
-
-      server.listen(config.port, () => {
-        console.log(`Server running on port ${config.port}`);
-      });
+  io.on('connection', (socket: any) => {
+    console.log(`⚡ Socket connected: ${socket.id}`);
+    socket.on('join-association', (associationId: string) => {
+      socket.join(`assoc:${associationId}`);
     });
+    socket.on('disconnect', () => {
+      console.log(`⚡ Socket disconnected: ${socket.id}`);
+    });
+  });
+
+  app.set('io', io);
+  setIO(io);
+
+  server.listen(config.port, () => {
+    console.log(`Server running on port ${config.port}`);
   });
 }
 
