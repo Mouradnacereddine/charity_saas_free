@@ -1058,11 +1058,12 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             labelAr="الحالة"
             value={form.status}
             onChange={(val) => setForm({ ...form, status: val })}
-            options={
-              statuses.length > 0
-                ? statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.nameAr }))
-                : []
-            }
+            options={[
+              { value: 'disponible', label: 'متاح' },
+              { value: 'prete', label: 'معار' },
+              { value: 'endommage', label: 'تالف' },
+              { value: 'hors_service', label: 'خارج الخدمة' },
+            ]}
           />
           <Input
             labelAr="الوضع بالعربية"
