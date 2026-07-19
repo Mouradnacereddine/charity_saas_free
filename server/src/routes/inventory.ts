@@ -62,6 +62,13 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
       return;
     }
 
+    const validStatuses = ['disponible', 'prete', 'endommage', 'hors_service'];
+    const finalStatus = status || 'disponible';
+    if (!validStatuses.includes(finalStatus)) {
+      res.status(400).json({ error: `الحالة غير صالحة. القيم المسموحة: ${validStatuses.join(', ')}` });
+      return;
+    }
+
     // Auto-generate reference if not provided
     const ref = reference || generateRef('ART');
 
@@ -81,7 +88,7 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
         conditionAr,
         isPermanent: isPermanent || false,
         notes,
-        status: status || 'disponible',
+        status: finalStatus,
       },
     });
 
@@ -146,7 +153,14 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
     if (category !== undefined) data.categoryId = category;
     if (quantity !== undefined) data.quantity = parseInt(quantity, 10);
     if (availableQuantity !== undefined) data.availableQuantity = parseInt(availableQuantity, 10);
-    if (status !== undefined) data.status = status;
+    if (status !== undefined) {
+      const validStatuses = ['disponible', 'prete', 'endommage', 'hors_service'];
+      if (!validStatuses.includes(status)) {
+        res.status(400).json({ error: `الحالة غير صالحة. القيم المسموحة: ${validStatuses.join(', ')}` });
+        return;
+      }
+      data.status = status;
+    }
     if (storageLocationId !== undefined) data.storageLocationId = storageLocationId;
     if (storageLocation !== undefined) data.storageLocationId = storageLocation;
     if (condition !== undefined) data.condition = condition;
