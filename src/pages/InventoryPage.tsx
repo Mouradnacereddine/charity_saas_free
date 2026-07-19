@@ -574,7 +574,7 @@ function SettingsTab() {
 
       {/* ========== Article Statuses Section ========== */}
       <Card titleAr="الحالات">
-        {/* Add form — simplified: single field auto-fills the rest */}
+        {/* Add form — single field */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
@@ -582,20 +582,10 @@ function SettingsTab() {
               value={newStsNameAr}
               onChange={(e) => {
                 setNewStsNameAr(e.target.value)
-                // Auto-fill French name and descriptions
-                setNewStsName(newStsName === '' || newStsName === getDefaultFrenchName(newStsNameAr) ? getDefaultFrenchName(e.target.value) : newStsName)
-                setNewStsDescAr(newStsDescAr === '' ? `${e.target.value}` : newStsDescAr)
+                setNewStsName(e.target.value)
               }}
-              placeholder="مثال: متاح"
+              placeholder="مثال: très bon état"
               required
-            />
-          </div>
-          <div className="flex-1 hidden sm:block">
-            <Input
-              labelAr="الاسم بالفرنسية"
-              value={newStsName}
-              onChange={(e) => setNewStsName(e.target.value)}
-              placeholder="Ex: Disponible"
             />
           </div>
           <div className="flex items-end">
