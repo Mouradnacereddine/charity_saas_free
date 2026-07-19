@@ -3,9 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import http from 'http';
-import { Server as SocketIOServer } from 'socket.io';
 import { config } from './config';
+import { autoInvalidate } from './lib/autoInvalidate';
 import authRoutes from './routes/auth';
 import beneficiariesRoutes from './routes/beneficiaries';
 import donorsRoutes from './routes/donors';
@@ -56,8 +55,7 @@ app.use('/api/auth', autoInvalidate, googleRoutes);
 // Serve uploaded files (for logos)
 app.use('/uploads', express.static('public/uploads'));
 
-// API routes — autoInvalidate middleware fires on POST/PUT/DELETE
-import { autoInvalidate } from './lib/autoInvalidate';
+// API routes
 app.use('/api/beneficiaries', autoInvalidate, beneficiariesRoutes);
 app.use('/api/donors', autoInvalidate, donorsRoutes);
 app.use('/api/caisses', autoInvalidate, caissesRoutes);
@@ -70,38 +68,34 @@ app.use('/api/dashboard', autoInvalidate, dashboardRoutes);
 app.use('/api/notifications', autoInvalidate, notificationsRoutes);
 app.use('/api/beneficiary-attributs', autoInvalidate, attributsRoutes);
 
-// Socket.IO — real-time sync
-const server = http.createServer(app);
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true,
-  },
-});
-
-io.on('connection', (socket) => {
-  console.log(`⚡ Socket connected: ${socket.id}`);
-
-  socket.on('join-association', (associationId: string) => {
-    socket.join(`assoc:${associationId}`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`⚡ Socket disconnected: ${socket.id}`);
-  });
-});
-
-// Make io accessible to routes
-app.set('io', io);
-import { setIO } from './lib/socket';
-setIO(io);
-
-// Only start the server when run directly (not as a Vercel serverless function)
+// Socket.IO — only in non-serverless mode (real-time sync not available on Vercel serverless)
 if (!process.env.VERCEL) {
-  server.listen(config.port, () => {
-    console.log(`Server running on port ${config.port}`);
+  import('http').then(({ default: http }) => {
+    import('socket.io').then(({ Server: SocketIOServer }) => {
+      const { setIO } = require('./lib/socket');
+      const server = http.createServer(app);
+      const io = new SocketIOServer(server, {
+        cors: { origin: allowedOrigins, credentials: true },
+      });
+
+      io.on('connection', (socket: any) => {
+        console.log(`⚡ Socket connected: ${socket.id}`);
+        socket.on('join-association', (associationId: string) => {
+          socket.join(`assoc:${associationId}`);
+        });
+        socket.on('disconnect', () => {
+          console.log(`⚡ Socket disconnected: ${socket.id}`);
+        });
+      });
+
+      app.set('io', io);
+      setIO(io);
+
+      server.listen(config.port, () => {
+        console.log(`Server running on port ${config.port}`);
+      });
+    });
   });
 }
 
-export { io };
 export default app;
