@@ -337,13 +337,13 @@ export default function DonorsPage() {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openDetailModal(donor)} title="عرض التفاصيل">
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openDetailModal(donor); }} title="عرض التفاصيل">
                           <Eye size={16} />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEditModal(donor)} title="تعديل">
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditModal(donor); }} title="تعديل">
                           <Edit size={16} />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => openDeleteConfirm(donor)} title="حذف">
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openDeleteConfirm(donor); }} title="حذف">
                           <Trash2 size={16} className="text-red-500" />
                         </Button>
                       </div>
