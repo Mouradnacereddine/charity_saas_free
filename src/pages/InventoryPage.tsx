@@ -784,7 +784,23 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     setShowModal(true)
   }
 
+  const [formError, setFormError] = useState('')
+
   const handleSubmit = async () => {
+    setFormError('')
+    // Client-side validation before sending
+    if (!form.storageLocation) {
+      setFormError('يرجى اختيار مكان التخزين')
+      return
+    }
+    if (!form.conditionAr) {
+      setFormError('يرجى إدخال الوضع بالعربية')
+      return
+    }
+    if (!form.condition) {
+      setFormError('يرجى إدخال الوضع بالفرنسية')
+      return
+    }
     const data = {
       nameAr: form.nameAr,
       name: form.name,
@@ -802,15 +818,19 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       notes: form.notes || undefined,
     }
 
-    if (editingArticle) {
-      await updateArticle.mutateAsync({ id: editingArticle.id, data })
-    } else {
-      await createArticle.mutateAsync(data)
+    try {
+      if (editingArticle) {
+        await updateArticle.mutateAsync({ id: editingArticle.id, data })
+      } else {
+        await createArticle.mutateAsync(data)
+      }
+      setShowModal(false)
+      setForm(EMPTY_ARTICLE_FORM)
+      setEditingArticle(null)
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'فشل في إضافة المقال'
+      setFormError(msg)
     }
-
-    setShowModal(false)
-    setForm(EMPTY_ARTICLE_FORM)
-    setEditingArticle(null)
   }
 
   const handleDelete = async (id: string) => {
@@ -1076,6 +1096,12 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             />
           </div>
         </div>
+
+        {formError && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 mt-4">
+            {formError}
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowModal(false)}>
