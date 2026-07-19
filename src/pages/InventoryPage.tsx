@@ -94,6 +94,21 @@ function getStorageNameAr(storageLocation: any, locations: StorageLocation[]): s
   return found ? found.nameAr : storageLocation
 }
 
+/** Guess French status name from Arabic input (simple transliteration helper). */
+function getDefaultFrenchName(arName: string): string {
+  const map: Record<string, string> = {
+    'متاح': 'Disponible',
+    'معار': 'Prêté',
+    'تالف': 'Endommagé',
+    'مفقود': 'Perdu',
+    'مستهلك': 'Consommé',
+    'قيد الإصلاح': 'En réparation',
+    'جديد': 'Neuf',
+    'مستعمل': 'Usage',
+  }
+  return map[arName] || arName
+}
+
 // ---- Component ----
 
 export default function InventoryPage() {
@@ -558,44 +573,33 @@ function SettingsTab() {
 
       {/* ========== Article Statuses Section ========== */}
       <Card titleAr="الحالات">
-        {/* Add form */}
+        {/* Add form — simplified: single field auto-fills the rest */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
-              labelAr="الاسم بالعربية"
+              labelAr="الحالة"
               value={newStsNameAr}
-              onChange={(e) => setNewStsNameAr(e.target.value)}
+              onChange={(e) => {
+                setNewStsNameAr(e.target.value)
+                // Auto-fill French name and descriptions
+                setNewStsName(newStsName === '' || newStsName === getDefaultFrenchName(newStsNameAr) ? getDefaultFrenchName(e.target.value) : newStsName)
+                setNewStsDescAr(newStsDescAr === '' ? `${e.target.value}` : newStsDescAr)
+              }}
               placeholder="مثال: متاح"
+              required
             />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 hidden sm:block">
             <Input
               labelAr="الاسم بالفرنسية"
               value={newStsName}
               onChange={(e) => setNewStsName(e.target.value)}
-              placeholder="مثال: Disponible"
-            />
-          </div>
-          <div className="flex-1">
-            <Input
-              labelAr="الوصف"
-              value={newStsDescAr}
-              onChange={(e) => setNewStsDescAr(e.target.value)}
-              placeholder="مثال: متاح للإعارة والاستخدام"
-            />
-          </div>
-          <div className="flex-1">
-            <Input
-              labelAr="Description (FR)"
-              value={newStsDesc}
-              onChange={(e) => setNewStsDesc(e.target.value)}
-              placeholder="Ex: Disponible pour prêt"
+              placeholder="Ex: Disponible"
             />
           </div>
           <div className="flex items-end">
             <Button onClick={handleAddStatus} disabled={!newStsNameAr.trim()}>
-              <Plus className="w-4 h-4" />
-              إضافة
+              <Plus className="w-4 h-4" /> إضافة
             </Button>
           </div>
         </div>
@@ -765,6 +769,11 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     setShowModal(true)
   }
 
+  function resolveId(v: any): string {
+    if (!v) return ''
+    return typeof v === 'object' ? (v.id || '') : v
+  }
+
   const openEdit = (article: Article) => {
     setEditingArticle(article)
     setForm({
@@ -772,10 +781,10 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       name: article.name,
       descriptionAr: article.descriptionAr || '',
       description: article.description || '',
-      category: article.category,
+      category: resolveId(article.category),
       quantity: article.quantity,
       status: article.status,
-      storageLocation: article.storageLocation,
+      storageLocation: resolveId(article.storageLocation),
       conditionAr: article.conditionAr,
       condition: article.condition,
       isPermanent: article.isPermanent,
@@ -1077,18 +1086,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             onChange={(e) => setForm({ ...form, condition: e.target.value })}
             required
           />
-          <div className="flex items-center gap-3 md:col-span-2">
-            <input
-              type="checkbox"
-              id="isPermanent"
-              checked={form.isPermanent}
-              onChange={(e) => setForm({ ...form, isPermanent: e.target.checked })}
-              className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-            />
-            <label htmlFor="isPermanent" className="text-sm font-medium text-gray-700">
-              نهائي (لا يُعاد)
-            </label>
-          </div>
+          {/* isPermanent removed from here — handled at loan creation instead */}
           <div className="md:col-span-2">
             <TextArea
               labelAr="ملاحظات"
