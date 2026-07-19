@@ -979,8 +979,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المصدر</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المبلغ</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">المتبقي</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">المتبرع</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">المستفيد</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">المتبرع</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">المستفيد</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">الصندوق</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden lg:table-cell">الوصف</th>
                     <th className="text-center py-3 px-3 font-medium text-gray-500">الإجراءات</th>
@@ -1059,10 +1059,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                             return <Badge variant="success">مصرف بالكامل</Badge>;
                           })()}
                         </td>
-                        <td className="py-3 px-3 text-gray-700 hidden sm:table-cell">
+                        <td className="py-3 px-3 text-gray-700">
                           {txDonor ? `${txDonor.lastNameAr} ${txDonor.firstNameAr}` : '—'}
                         </td>
-                        <td className="py-3 px-3 text-gray-700 hidden sm:table-cell">
+                        <td className="py-3 px-3 text-gray-700">
                           {txBenef ? `${txBenef.lastNameAr} ${txBenef.firstNameAr}` : '—'}
                         </td>
                         <td className="py-3 px-3 text-gray-600 hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
@@ -1233,7 +1233,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 <div><p className="text-xs text-gray-500">رقم الوصل</p><p className="font-mono text-gray-900" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
                 <div><p className="text-xs text-gray-500">التاريخ</p><p className="font-medium text-gray-900">{formatDate(detailTx.date)}</p></div>
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 flex-wrap">
                 {detailTx.type === 'credit' && (detailTx.status === 'completed' || !detailTx.status) && (
                   <Button size="sm" variant="success" onClick={() => { handlePrintReceipt(detailTx); setDetailTx(null); }}>
                     <Printer size={14} /> طباعة الوصل
@@ -1255,6 +1255,20 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     </Button>
                   </>
                 )}
+                {(() => {
+                  const rem = (detailTx as any).remainingAmount;
+                  if (detailTx.type === 'credit' && (detailTx.status || 'completed') === 'completed' && rem !== null && typeof rem === 'number' && rem > 0) {
+                    return (
+                      <Button size="sm" variant="primary" onClick={() => {
+                        setConfirmingTxId(detailTx.id);
+                        setConfirmTxAmount(String(rem));
+                      }}>
+                        صرف المبلغ المتبقي ({formatCurrency(rem)})
+                      </Button>
+                    );
+                  }
+                  return null;
+                })()}
                 <Button size="sm" variant="secondary" onClick={() => setDetailTx(null)}>إغلاق</Button>
               </div>
             </div>
@@ -1286,7 +1300,11 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 type="number"
                 value={confirmTxAmount}
                 onChange={(e) => { setConfirmTxAmount(e.target.value); }}
-                max={detailTx.amount}
+                max={(() => {
+                  const rem = (detailTx as any).remainingAmount;
+                  if (rem !== null && typeof rem === 'number' && rem > 0) return rem;
+                  return detailTx.amount;
+                })()}
                 min={0}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 dir="ltr"
@@ -1294,13 +1312,28 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               {Number(confirmTxAmount) > 0 && (
                 <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(Number(confirmTxAmount))}</p>
               )}
-              {Number(confirmTxAmount) > detailTx.amount && (
-                <p className="text-xs text-red-500 mt-1">المبلغ يتجاوز الحد المسموح به ({formatCurrency(detailTx.amount)})</p>
-              )}
+              {(() => {
+                const maxVal = (() => {
+                  const rem = (detailTx as any).remainingAmount;
+                  if (rem !== null && typeof rem === 'number' && rem > 0) return rem;
+                  return detailTx.amount;
+                })();
+                if (Number(confirmTxAmount) > maxVal) {
+                  return <p className="text-xs text-red-500 mt-1">المبلغ يتجاوز الحد المسموح به ({formatCurrency(maxVal)})</p>;
+                }
+                return null;
+              })()}
             </div>
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="secondary" onClick={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }}>إلغاء</Button>
-              <Button size="sm" variant="primary" onClick={() => handleConfirmTransaction(confirmingTxId!)} disabled={!confirmTxAmount || Number(confirmTxAmount) <= 0 || Number(confirmTxAmount) > detailTx.amount}>تأكيد</Button>
+              <Button size="sm" variant="primary" onClick={() => handleConfirmTransaction(confirmingTxId!)} disabled={!confirmTxAmount || Number(confirmTxAmount) <= 0 || (() => {
+                const maxVal = (() => {
+                  const rem = (detailTx as any).remainingAmount;
+                  if (rem !== null && typeof rem === 'number' && rem > 0) return rem;
+                  return detailTx.amount;
+                })();
+                return Number(confirmTxAmount) > maxVal;
+              })()}>تأكيد</Button>
             </div>
           </div>
         )}

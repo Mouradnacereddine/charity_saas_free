@@ -49,9 +49,34 @@ export function useSocketSync() {
     if (isVercel) {
       console.log('🔌 Vercel mode: using polling fallback (15s interval)');
 
-      const refreshAll = () => {
-        queryClient.invalidateQueries({ refetchType: 'all' });
+      const refreshDataQueries = () => {
+        // Only invalidate data queries, not auth (which depends on token)
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['finance-allocations'] });
+        queryClient.invalidateQueries({ queryKey: ['caisses'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['beneficiaries'] });
+        queryClient.invalidateQueries({ queryKey: ['donors'] });
+        queryClient.invalidateQueries({ queryKey: ['articles'] });
+        queryClient.invalidateQueries({ queryKey: ['article-categories'] });
+        queryClient.invalidateQueries({ queryKey: ['storage-locations'] });
+        queryClient.invalidateQueries({ queryKey: ['school-grades'] });
+        queryClient.invalidateQueries({ queryKey: ['article-statuses'] });
+        queryClient.invalidateQueries({ queryKey: ['loans'] });
+        queryClient.invalidateQueries({ queryKey: ['medical-referrals'] });
+        queryClient.invalidateQueries({ queryKey: ['analysis-types'] });
+        queryClient.invalidateQueries({ queryKey: ['hospitals'] });
+        queryClient.invalidateQueries({ queryKey: ['doctors'] });
+        queryClient.invalidateQueries({ queryKey: ['doctor-specialties'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['attributs'] });
+        queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+        queryClient.invalidateQueries({ queryKey: ['finance-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['users'] });
+        queryClient.invalidateQueries({ queryKey: ['invites'] });
       };
+
+      refreshIntervalRef.current = setInterval(refreshDataQueries, 15000);
 
       refreshIntervalRef.current = setInterval(refreshAll, 15000);
 

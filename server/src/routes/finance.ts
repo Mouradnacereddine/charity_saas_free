@@ -522,8 +522,11 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
     }
 
     if (tx.status !== 'pending') {
-      res.status(400).json({ error: 'Seules les transactions en attente peuvent être confirmées' });
-      return;
+      // Allow completed credits with remaining amount to continue disbursing
+      if (!(tx.type === 'credit' && tx.status === 'completed')) {
+        res.status(400).json({ error: 'Seules les transactions en attente peuvent être confirmées' });
+        return;
+      }
     }
 
     const amountNum = tx.amount;
