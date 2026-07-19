@@ -164,7 +164,14 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     if (reference !== undefined) data.reference = reference;
     if (beneficiaryId !== undefined) data.beneficiaryId = beneficiaryId;
     if (items !== undefined) data.items = items;
-    if (status !== undefined) data.status = status;
+    if (status !== undefined) {
+      const validLoanStatuses = ['en_cours', 'retourne', 'partiellement_retourne', 'definitif'];
+      if (!validLoanStatuses.includes(status)) {
+        res.status(400).json({ error: 'حالة الإعارة غير صالحة' });
+        return;
+      }
+      data.status = status;
+    }
     if (loanDate !== undefined) data.loanDate = new Date(loanDate);
     if (expectedReturnDate !== undefined) data.expectedReturnDate = expectedReturnDate ? new Date(expectedReturnDate) : null;
     if (actualReturnDate !== undefined) data.actualReturnDate = actualReturnDate ? new Date(actualReturnDate) : null;

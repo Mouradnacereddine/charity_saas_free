@@ -959,14 +959,14 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => openEdit(article)}
+                          onClick={(e) => { e.stopPropagation(); openEdit(article); }}
                           className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
                           title="تعديل"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(article.id)}
+                          onClick={(e) => { e.stopPropagation(); handleDelete(article.id); }}
                           className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
                           title="حذف"
                         >
@@ -985,7 +985,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       {/* Add / Edit Modal */}
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => { setShowModal(false); setForm(EMPTY_ARTICLE_FORM); setEditingArticle(null); }}
         title={editingArticle ? 'تعديل المقال' : 'إضافة مقال جديد'}
         size="lg"
       >
@@ -1000,6 +1000,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             labelAr="الاسم بالفرنسية"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
           />
           <Input
             labelAr="الوصف بالعربية"
@@ -1080,7 +1081,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             إلغاء
           </Button>
-          <Button onClick={handleSubmit} disabled={!form.nameAr || !form.category}>
+          <Button onClick={handleSubmit} disabled={!form.nameAr || !form.name || !form.category}>
             {editingArticle ? 'تحديث' : 'إضافة'}
           </Button>
         </div>
@@ -1230,6 +1231,10 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     })
 
     setShowCreateModal(false)
+    setSelectedBeneficiaryId('')
+    setLoanItems([])
+    setExpectedReturnDate('')
+    setLoanNotes('')
   }
 
   // ---- Loan Detail ----
@@ -1487,7 +1492,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     </td>
                     <td className="py-3 px-4">
                       <button
-                        onClick={() => openLoanDetail(loan)}
+                        onClick={(e) => { e.stopPropagation(); openLoanDetail(loan); }}
                         className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
                         title="التفاصيل"
                       >
@@ -1505,7 +1510,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       {/* ============ CREATE LOAN MODAL ============ */}
       <Modal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => { setShowCreateModal(false); setSelectedBeneficiaryId(''); setLoanItems([]); setExpectedReturnDate(''); setLoanNotes(''); }}
         title="إنشاء إعارة جديدة"
         size="xl"
       >

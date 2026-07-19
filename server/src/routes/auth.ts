@@ -609,7 +609,14 @@ router.put('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, res
     }
 
     if (status !== undefined) data.status = status;
-    if (role !== undefined) data.role = role;
+    if (role !== undefined) {
+      const validRoles = ['admin', 'treasurer', 'user'];
+      if (!validRoles.includes(role)) {
+        res.status(400).json({ error: 'الدور غير صالح' });
+        return;
+      }
+      data.role = role;
+    }
 
     const updated = await prisma.user.update({
       where: { id },

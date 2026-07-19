@@ -298,6 +298,7 @@ export default function FinancePage() {
       })
     }
     setBankModalOpen(false)
+    setEditingBankId(null)
   }
 
   const handlePrintReceipt = (tx: any) => {
@@ -525,7 +526,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleOpenEditBank(account.id)}
+                        onClick={(e) => { e.stopPropagation(); handleOpenEditBank(account.id); }}
                       >
                         تعديل
                       </Button>
@@ -1091,7 +1092,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                         </td>
                         <td className="py-3 px-3 text-center">
                           <button
-                            onClick={() => handlePrintReceipt(tx)}
+                            onClick={(e) => { e.stopPropagation(); handlePrintReceipt(tx); }}
                             className="p-1.5 text-gray-400 hover:text-primary-600 transition-colors"
                             title={tx.type === 'credit' ? 'طباعة وصل التبرع' : 'طباعة وصل الصرف'}
                           >

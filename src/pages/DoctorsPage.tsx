@@ -244,7 +244,7 @@ export default function DoctorsPage() {
             <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">الاسم</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input labelAr="الاسم الأخير بالعربية" value={lastNameAr} onChange={(e) => setLastNameAr(e.target.value)} placeholder="مثال: بلقاسم" required />
-              <Input labelAr="الاسم الأول بالعربية" value={firstNameAr} onChange={(e) => setFirstNameAr(e.target.value)} placeholder="مثال: أمينة" />
+              <Input labelAr="الاسم الأول بالعربية" value={firstNameAr} onChange={(e) => setFirstNameAr(e.target.value)} placeholder="مثال: أمينة" required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
               <Input labelAr="الاسم الأخير باللاتينية" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Ex: Belkacem" dir="ltr" />

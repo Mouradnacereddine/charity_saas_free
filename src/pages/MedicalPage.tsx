@@ -450,9 +450,9 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                     <td className="py-3 px-4 text-gray-500 hidden sm:table-cell">{referral.date}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setShowDetailModal(referral)} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded"><Eye className="w-4 h-4" /></button>
-                        <button onClick={() => handlePrint(referral)} className="p-1.5 text-gray-400 hover:text-success-600 hover:bg-green-50 rounded"><Printer className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(referral.id)} className="p-1.5 text-gray-400 hover:text-danger-500 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); setShowDetailModal(referral); }} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded"><Eye className="w-4 h-4" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handlePrint(referral); }} className="p-1.5 text-gray-400 hover:text-success-600 hover:bg-green-50 rounded"><Printer className="w-4 h-4" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(referral.id); }} className="p-1.5 text-gray-400 hover:text-danger-500 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>

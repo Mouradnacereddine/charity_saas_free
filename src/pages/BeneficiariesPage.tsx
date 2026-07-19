@@ -1035,6 +1035,7 @@ export default function BeneficiariesPage() {
                 options={attributOptions}
                 value={form.attribut}
                 onChange={(val) => handleFormChange('attribut', val)}
+                required
               />
               <SearchableSelect
                 labelAr="الجنس"
@@ -1046,28 +1047,6 @@ export default function BeneficiariesPage() {
                 <Input labelAr="باسم من" placeholder="مثال: باسم الأرملة فاطمة" value={form.onBehalfOf} onChange={(e) => handleFormChange('onBehalfOf', e.target.value)} />
                 <p className="text-xs text-gray-400">عندما يأتي طفل نيابة عن أرملة أو مستفيد آخر</p>
               </div>
-              <SearchableSelect
-                labelAr="الصندوق"
-                options={caisseOptions}
-                value={form.caisseId}
-                onChange={(val) => {
-                  handleFormChange('caisseId', val)
-                  handleFormChange('subCategoryId', '')
-                }}
-              />
-              {(() => {
-                const activeCaisse = caisses.find((c: any) => c.id === form.caisseId)
-                const activeSubCats = activeCaisse?.subCategories || []
-                if (activeSubCats.length === 0) return null
-                return (
-                  <SearchableSelect
-                    labelAr="الفئة الفرعية"
-                    options={activeSubCats.map((sc: any) => ({ value: sc.id, label: sc.nameAr }))}
-                    value={form.subCategoryId}
-                    onChange={(val) => handleFormChange('subCategoryId', val)}
-                  />
-                )
-              })()}
             </div>
           </div>
 
