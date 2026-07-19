@@ -78,8 +78,6 @@ export function useSocketSync() {
 
       refreshIntervalRef.current = setInterval(refreshDataQueries, 15000);
 
-      refreshIntervalRef.current = setInterval(refreshAll, 15000);
-
       return () => {
         if (refreshIntervalRef.current) {
           clearInterval(refreshIntervalRef.current);
