@@ -70,6 +70,7 @@ const EMPTY_ARTICLE_FORM = {
   category: '',
   quantity: 1,
   status: 'disponible' as Article['status'],
+  statusId: '',
   storageLocation: '',
   conditionAr: '',
   condition: '',
@@ -784,6 +785,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       category: resolveId(article.category),
       quantity: article.quantity,
       status: article.status,
+      statusId: resolveId(article.statusModel),
       storageLocation: resolveId(article.storageLocation),
       conditionAr: article.conditionAr,
       condition: article.condition,
@@ -818,7 +820,8 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       category: form.category,
       categoryAr: '',  // kept for backward compatibility with existing data
       quantity: form.quantity,
-      status: form.status,
+      status: form.statusId ? 'disponible' : (form.status || 'disponible'),
+      statusId: form.statusId || undefined,
       storageLocation: form.storageLocation,
       storageLocationAr: '',  // kept for backward compatibility with existing data
       conditionAr: form.conditionAr,
@@ -1065,14 +1068,13 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           />
           <SearchableSelect
             labelAr="الحالة"
-            value={form.status}
-            onChange={(val) => setForm({ ...form, status: val })}
-            options={[
-              { value: 'disponible', label: 'متاح' },
-              { value: 'prete', label: 'معار' },
-              { value: 'endommage', label: 'تالف' },
-              { value: 'hors_service', label: 'خارج الخدمة' },
-            ]}
+            value={form.statusId}
+            onChange={(val) => setForm({ ...form, statusId: val })}
+            options={
+              statuses.length > 0
+                ? statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))
+                : []
+            }
           />
           <Input
             labelAr="الوضع بالعربية"

@@ -33,7 +33,7 @@ router.get('/articles', async (req: AuthRequest, res: Response): Promise<void> =
 
     const articles = await prisma.article.findMany({
       where,
-      include: { category: true, storageLocation: true },
+      include: { category: true, storageLocation: true, statusModel: true },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -51,7 +51,7 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
     const {
       reference, name, nameAr, description, descriptionAr,
       categoryId, category, quantity, storageLocationId, storageLocation,
-      condition, conditionAr, isPermanent, notes, status,
+      condition, conditionAr, isPermanent, notes, status, statusId,
     } = req.body;
 
     const resolvedCategoryId = categoryId || category;
@@ -89,6 +89,7 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
         isPermanent: isPermanent || false,
         notes,
         status: finalStatus,
+        statusId: statusId || undefined,
       },
     });
 
@@ -107,7 +108,7 @@ router.get('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
 
     const article = await prisma.article.findFirst({
       where: { id, associationId },
-      include: { category: true, storageLocation: true },
+      include: { category: true, storageLocation: true, statusModel: true },
     });
 
     if (!article) {
@@ -139,7 +140,7 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
 
     const {
       reference, name, nameAr, description, descriptionAr,
-      categoryId, category, quantity, availableQuantity, status,
+      categoryId, category, quantity, availableQuantity, status, statusId,
       storageLocationId, storageLocation, condition, conditionAr, isPermanent, notes,
     } = req.body;
 
@@ -153,14 +154,8 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
     if (category !== undefined) data.categoryId = category;
     if (quantity !== undefined) data.quantity = parseInt(quantity, 10);
     if (availableQuantity !== undefined) data.availableQuantity = parseInt(availableQuantity, 10);
-    if (status !== undefined) {
-      const validStatuses = ['disponible', 'prete', 'endommage', 'hors_service'];
-      if (!validStatuses.includes(status)) {
-        res.status(400).json({ error: `الحالة غير صالحة. القيم المسموحة: ${validStatuses.join(', ')}` });
-        return;
-      }
-      data.status = status;
-    }
+    if (status !== undefined) data.status = status;
+    if (statusId !== undefined) data.statusId = statusId;
     if (storageLocationId !== undefined) data.storageLocationId = storageLocationId;
     if (storageLocation !== undefined) data.storageLocationId = storageLocation;
     if (condition !== undefined) data.condition = condition;
