@@ -654,6 +654,7 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
             subCategoryId: tx.subCategoryId,
             bankAccountId: tx.bankAccountId,
             beneficiaryId: tx.beneficiaryId,
+            donorId: tx.donorId,
             description: tx.description,
             descriptionAr: tx.descriptionAr,
             receiptNumber: debitRef,

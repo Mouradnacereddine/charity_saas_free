@@ -1289,17 +1289,9 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                           صرف المبلغ المتبقي ({formatCurrency(rem)})
                         </Button>
                       );
-                    } else if (detailTx.type === 'debit') {
-                      // Debit: disburse from the linked allocation directly
-                      return (
-                        <Button size="sm" variant="primary" onClick={() => {
-                          setDisbursingAllocId(allocId);
-                          setDisburseAmount(String(rem));
-                        }}>
-                          استكمال الصرف ({formatCurrency(rem)})
-                        </Button>
-                      );
                     }
+                    // Debit: the disbursement is already the action of this debit transaction.
+                    // The user should go back to the original credit to continue disbursing.
                   }
                   return null;
                 })()}

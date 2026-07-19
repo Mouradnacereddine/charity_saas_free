@@ -16,7 +16,6 @@ import medicalRoutes from './routes/medical';
 import dashboardRoutes from './routes/dashboard';
 import notificationsRoutes from './routes/notifications';
 import attributsRoutes from './routes/beneficiaryAttributs';
-import googleRoutes from './routes/google';
 import doctorsRoutes from './routes/doctors';
 
 const app = express();
@@ -50,7 +49,6 @@ app.get('/api/health', (_req, res) => {
 
 // Auth routes
 app.use('/api/auth', autoInvalidate, authRoutes);
-app.use('/api/auth', autoInvalidate, googleRoutes);
 
 // Serve uploaded files (for logos)
 app.use('/uploads', express.static('public/uploads'));

@@ -1006,8 +1006,8 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">العنوان</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr="العنوان بالعربية" value={form.addressAr} onChange={(e) => handleFormChange('addressAr', e.target.value)} />
-              <Input labelAr="العنوان باللاتينية" value={form.address} onChange={(e) => handleFormChange('address', e.target.value)} dir="ltr" />
+              <Input labelAr="العنوان بالعربية" value={form.addressAr} onChange={(e) => handleFormChange('addressAr', e.target.value)} required />
+              <Input labelAr="العنوان باللاتينية" value={form.address} onChange={(e) => handleFormChange('address', e.target.value)} dir="ltr" required />
             </div>
           </div>
 
@@ -1016,9 +1016,9 @@ export default function BeneficiariesPage() {
             <h4 className="text-sm font-semibold text-gray-700 mb-3">المعلومات الشخصية</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input labelAr="رقم البطاقة الوطنية" value={form.nationalCardNumber} onChange={(e) => handleFormChange('nationalCardNumber', e.target.value)} required />
-              <Input labelAr="رقم الهاتف" value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value)} dir="ltr" />
+              <Input labelAr="رقم الهاتف" value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value)} dir="ltr" required />
               <div className="space-y-1">
-                <Input labelAr="تاريخ الميلاد" type="date" value={form.dateOfBirth} onChange={(e) => handleFormChange('dateOfBirth', e.target.value)} />
+                <Input labelAr="تاريخ الميلاد" type="date" value={form.dateOfBirth} onChange={(e) => handleFormChange('dateOfBirth', e.target.value)} required />
                 {form.dateOfBirth && (
                   <p className="text-xs text-gray-500">العمر: {calculateAge(form.dateOfBirth).displayAr}</p>
                 )}
