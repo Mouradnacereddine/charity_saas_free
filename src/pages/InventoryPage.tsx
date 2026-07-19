@@ -72,8 +72,6 @@ const EMPTY_ARTICLE_FORM = {
   status: 'disponible' as Article['status'],
   statusId: '',
   storageLocation: '',
-  conditionAr: '',
-  condition: '',
   isPermanent: false,
   notes: '',
 }
@@ -318,11 +316,12 @@ function SettingsTab() {
 
   const handleAddStatus = async () => {
     if (!newStsNameAr.trim()) return
-    await createSts.mutateAsync({ name: newStsName.trim(), nameAr: newStsNameAr.trim(), description: newStsDesc.trim() || undefined, descriptionAr: newStsDescAr.trim() || undefined })
+    await createSts.mutateAsync({ name: newStsName.trim(), nameAr: newStsNameAr.trim(), description: newStsDesc.trim() || undefined, descriptionAr: newStsDescAr.trim() || undefined, isPermanent: newStsIsPermanent })
     setNewStsNameAr('')
     setNewStsName('')
     setNewStsDescAr('')
     setNewStsDesc('')
+    setNewStsIsPermanent(false)
   }
 
   const handleDeleteStatus = async (id: string) => {
@@ -336,11 +335,12 @@ function SettingsTab() {
     setEditStsName(sts.name)
     setEditStsDescAr(sts.descriptionAr || '')
     setEditStsDesc(sts.description || '')
+    setEditStsIsPermanent(sts.isPermanent || false)
   }
 
   const handleUpdateStatus = async () => {
     if (!editStsId || !editStsNameAr.trim()) return
-    await updateSts.mutateAsync({ id: editStsId, data: { name: editStsName.trim(), nameAr: editStsNameAr.trim(), description: editStsDesc.trim() || undefined, descriptionAr: editStsDescAr.trim() || undefined } })
+    await updateSts.mutateAsync({ id: editStsId, data: { name: editStsName.trim(), nameAr: editStsNameAr.trim(), description: editStsDesc.trim() || undefined, descriptionAr: editStsDescAr.trim() || undefined, isPermanent: editStsIsPermanent } })
     setEditStsId(null)
     setEditStsNameAr('')
     setEditStsName('')
@@ -574,7 +574,7 @@ function SettingsTab() {
 
       {/* ========== Article Statuses Section ========== */}
       <Card titleAr="الحالات">
-        {/* Add form — single field */}
+        {/* Add form — single field + type */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
@@ -587,6 +587,17 @@ function SettingsTab() {
               placeholder="مثال: très bon état"
               required
             />
+          </div>
+          <div className="w-40">
+            <label className="block text-xs text-gray-500 mb-1">النوع</label>
+            <select
+              value={newStsIsPermanent ? 'permanent' : 'returnable'}
+              onChange={(e) => setNewStsIsPermanent(e.target.value === 'permanent')}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="returnable">قابل للإرجاع</option>
+              <option value="permanent">نهائي</option>
+            </select>
           </div>
           <div className="flex items-end">
             <Button onClick={handleAddStatus} disabled={!newStsNameAr.trim()}>
@@ -603,9 +614,8 @@ function SettingsTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الوصف</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">النوع</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>
               </thead>
@@ -624,21 +634,14 @@ function SettingsTab() {
                           />
                         </td>
                         <td className="py-3 px-4">
-                          <input
-                            type="text"
-                            value={editStsName}
-                            onChange={(e) => setEditStsName(e.target.value)}
+                          <select
+                            value={editStsIsPermanent ? 'permanent' : 'returnable'}
+                            onChange={(e) => setEditStsIsPermanent(e.target.value === 'permanent')}
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                          />
-                        </td>
-                        <td className="py-3 px-4">
-                          <input
-                            type="text"
-                            value={editStsDescAr}
-                            onChange={(e) => setEditStsDescAr(e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                            placeholder="الوصف بالعربية"
-                          />
+                          >
+                            <option value="returnable">قابل للإرجاع</option>
+                            <option value="permanent">نهائي</option>
+                          </select>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
@@ -654,8 +657,11 @@ function SettingsTab() {
                     ) : (
                       <>
                         <td className="py-3 px-4 font-medium text-gray-900">{sts.nameAr}</td>
-                        <td className="py-3 px-4 text-gray-600">{sts.name || '—'}</td>
-                        <td className="py-3 px-4 text-gray-500 text-xs">{sts.descriptionAr || sts.description || '—'}</td>
+                        <td className="py-3 px-4">
+                          <Badge variant={sts.isPermanent ? 'default' : 'info'}>
+                            {sts.isPermanent ? 'نهائي' : 'قابل للإرجاع'}
+                          </Badge>
+                        </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <button
@@ -777,8 +783,6 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       status: article.status,
       statusId: resolveId(article.statusModel),
       storageLocation: resolveId(article.storageLocation),
-      conditionAr: article.conditionAr,
-      condition: article.condition,
       isPermanent: article.isPermanent,
       notes: article.notes || '',
     })
@@ -794,14 +798,6 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       setFormError('يرجى اختيار مكان التخزين')
       return
     }
-    if (!form.conditionAr) {
-      setFormError('يرجى إدخال الوضع بالعربية')
-      return
-    }
-    if (!form.condition) {
-      setFormError('يرجى إدخال الوضع بالفرنسية')
-      return
-    }
     const data = {
       nameAr: form.nameAr,
       name: form.name,
@@ -814,8 +810,6 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       statusId: form.statusId || undefined,
       storageLocation: form.storageLocation,
       storageLocationAr: '',  // kept for backward compatibility with existing data
-      conditionAr: form.conditionAr,
-      condition: form.condition,
       isPermanent: form.isPermanent,
       notes: form.notes || undefined,
     }
@@ -945,7 +939,6 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   <th className="text-right py-3 px-4 font-medium text-gray-500">المتاح</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">مكان التخزين</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">الوضع</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">النوع</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>
@@ -963,14 +956,13 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     <td className="py-3 px-4 text-gray-600">{article.quantity}</td>
                     <td className="py-3 px-4 text-gray-600">{article.availableQuantity}</td>
                     <td className="py-3 px-4">
-                      <Badge variant={STATUS_VARIANTS[article.status] || 'default'}>
-                        {STATUS_LABELS[article.status] || article.status}
+                      <Badge variant="default">
+                        {(article as any).statusModel?.nameAr || STATUS_LABELS[article.status] || article.status}
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-gray-600 hidden md:table-cell">
                       {getStorageNameAr(article.storageLocation, locations)}
                     </td>
-                    <td className="py-3 px-4 text-gray-600 hidden md:table-cell">{article.conditionAr}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">
                       {article.isPermanent ? (
                         <Badge variant="default">نهائي</Badge>
@@ -1059,26 +1051,21 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           <SearchableSelect
             labelAr="الحالة"
             value={form.statusId}
-            onChange={(val) => setForm({ ...form, statusId: val })}
+            onChange={(val) => {
+              const selectedSts = statuses.find((s: ArticleStatus) => s.id === val)
+              setForm({
+                ...form,
+                statusId: val,
+                isPermanent: selectedSts ? selectedSts.isPermanent : false,
+              })
+            }}
             options={
               statuses.length > 0
                 ? statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))
                 : []
             }
           />
-          <Input
-            labelAr="الوضع بالعربية"
-            value={form.conditionAr}
-            onChange={(e) => setForm({ ...form, conditionAr: e.target.value })}
-            required
-          />
-          <Input
-            labelAr="الوضع بالفرنسية"
-            value={form.condition}
-            onChange={(e) => setForm({ ...form, condition: e.target.value })}
-            required
-          />
-          {/* isPermanent removed from here — handled at loan creation instead */}
+          {/* Condition fields removed from form */}
           <div className="md:col-span-2">
             <TextArea
               labelAr="ملاحظات"

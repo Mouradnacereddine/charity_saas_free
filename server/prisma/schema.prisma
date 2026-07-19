@@ -307,8 +307,6 @@ model Article {
   status            ArticleStatus @default(disponible)
   statusId          String?
   storageLocationId String?
-  condition         String
-  conditionAr       String
   isPermanent       Boolean       @default(false)
   notes             String?
   createdAt         DateTime      @default(now())
@@ -414,6 +412,7 @@ model ArticleStatusType {
   associationId String
   name          String
   nameAr        String
+  isPermanent   Boolean        @default(false)
   description   String?
   descriptionAr String?
   createdAt     DateTime       @default(now())

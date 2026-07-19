@@ -112,7 +112,6 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
         await db.articles.update(ret.articleId, {
           availableQuantity: article.availableQuantity + ret.quantity,
           status: 'disponible',
-          conditionAr: ret.condition,
           updatedAt: now,
         });
       }

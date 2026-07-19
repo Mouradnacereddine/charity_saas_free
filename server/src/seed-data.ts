@@ -592,28 +592,28 @@ async function main() {
   // =====================================================================
   await Promise.all([
     prisma.article.create({
-      data: { associationId: aid, reference: ref('ART'), name: 'Fauteuil roulant adulte pliable', nameAr: 'كرسي متحرك للكبار قابل للطي', description: 'Fauteuil roulant standard adulte, pliable, poids max 120kg', descriptionAr: 'كرسي متحرك قياسي للكبار، قابل للطي، أقصى وزن 120 كغ', categoryId: cats[0].id, quantity: 15, availableQuantity: 10, status: 'disponible', storageLocationId: locs[0].id, condition: 'Neuf', conditionAr: 'جديد', isPermanent: false, createdAt: day(150), updatedAt: now },
+      data: { associationId: aid, reference: ref('ART'), name: 'Fauteuil roulant adulte pliable', nameAr: 'كرسي متحرك للكبار قابل للطي', description: 'Fauteuil roulant standard adulte, pliable, poids max 120kg', descriptionAr: 'كرسي متحرك قياسي للكبار، قابل للطي، أقصى وزن 120 كغ', categoryId: cats[0].id, quantity: 15, availableQuantity: 10, status: 'disponible', storageLocationId: locs[0].id, isPermanent: false, createdAt: day(150), updatedAt: now },
     }),
     prisma.article.create({
-      data: { associationId: aid, reference: ref('ART'), name: 'Lit medicalise 2 places', nameAr: 'سرير طبي بمحرك', description: 'Lit medicalise electrique avec matelas anti-escarres', descriptionAr: 'سرير طبي كهربائي مع فراش مضاد للقرحة', categoryId: cats[0].id, quantity: 8, availableQuantity: 5, status: 'disponible', storageLocationId: locs[3].id, condition: 'Bon', conditionAr: 'جيد', isPermanent: false, createdAt: day(140), updatedAt: now },
+      data: { associationId: aid, reference: ref('ART'), name: 'Lit medicalise 2 places', nameAr: 'سرير طبي بمحرك', description: 'Lit medicalise electrique avec matelas anti-escarres', descriptionAr: 'سرير طبي كهربائي مع فراش مضاد للقرحة', categoryId: cats[0].id, quantity: 8, availableQuantity: 5, status: 'disponible', storageLocationId: locs[3].id, isPermanent: false, createdAt: day(140), updatedAt: now },
     }),
     prisma.article.create({
-      data: { associationId: aid, reference: ref('ART'), name: 'Paire de bequilles aluminium', nameAr: 'عكازات ألمنيوم (زوج)', categoryId: cats[0].id, quantity: 25, availableQuantity: 22, status: 'disponible', storageLocationId: locs[0].id, condition: 'Neuf', conditionAr: 'جديد', isPermanent: false, createdAt: day(130), updatedAt: now },
+      data: { associationId: aid, reference: ref('ART'), name: 'Paire de bequilles aluminium', nameAr: 'عكازات ألمنيوم (زوج)', categoryId: cats[0].id, quantity: 25, availableQuantity: 22, status: 'disponible', storageLocationId: locs[0].id, isPermanent: false, createdAt: day(130), updatedAt: now },
     }),
     prisma.article.create({
-      data: { associationId: aid, reference: ref('ART'), name: 'Cartable scolaire 5-7 ans', nameAr: 'حقيبة مدرسية للأطفال', description: 'Cartable ergonomique pour enfant 5-7 ans, avec fournitures', descriptionAr: 'حقيبة مدرسية مريحة للأطفال من 5 إلى 7 سنوات مع القرطاسية', categoryId: cats[1].id, quantity: 50, availableQuantity: 50, status: 'disponible', storageLocationId: locs[2].id, condition: 'Neuf', conditionAr: 'جديد', isPermanent: false, createdAt: day(120), updatedAt: now },
+      data: { associationId: aid, reference: ref('ART'), name: 'Cartable scolaire 5-7 ans', nameAr: 'حقيبة مدرسية للأطفال', description: 'Cartable ergonomique pour enfant 5-7 ans, avec fournitures', descriptionAr: 'حقيبة مدرسية مريحة للأطفال من 5 إلى 7 سنوات مع القرطاسية', categoryId: cats[1].id, quantity: 50, availableQuantity: 50, status: 'disponible', storageLocationId: locs[2].id, isPermanent: false, createdAt: day(120), updatedAt: now },
     }),
     prisma.article.create({
-      data: { associationId: aid, reference: ref('ART'), name: 'Colis alimentaire de base', nameAr: 'سلة غذائية أساسية', description: 'Semoule 5kg, huile 5L, sucre 5kg, lait 6L, legumes secs', descriptionAr: 'سميد 5 كغ، زيت 5 لتر، سكر 5 كغ، حليب 6 لتر، بقول جافة', categoryId: cats[2].id, quantity: 200, availableQuantity: 200, status: 'disponible', storageLocationId: locs[2].id, condition: 'Neuf', conditionAr: 'جديد', isPermanent: true, notes: 'Colis distribue pendant le Ramadan', createdAt: day(110), updatedAt: now },
+      data: { associationId: aid, reference: ref('ART'), name: 'Colis alimentaire de base', nameAr: 'سلة غذائية أساسية', description: 'Semoule 5kg, huile 5L, sucre 5kg, lait 6L, legumes secs', descriptionAr: 'سميد 5 كغ، زيت 5 لتر، سكر 5 كغ، حليب 6 لتر، بقول جافة', categoryId: cats[2].id, quantity: 200, availableQuantity: 200, status: 'disponible', storageLocationId: locs[2].id, isPermanent: true, notes: 'Colis distribue pendant le Ramadan', createdAt: day(110), updatedAt: now },
     }),
     prisma.article.create({
-      data: { associationId: aid, reference: ref('ART'), name: 'Couverture polaire double', nameAr: 'بطانية صوفية كبيرة', description: 'Couverture polaire double, 200x220cm', descriptionAr: 'بطانية صوفية كبيرة، 200x220 سم', categoryId: cats[3].id, quantity: 80, availableQuantity: 75, status: 'disponible', storageLocationId: locs[1].id, condition: 'Neuf', conditionAr: 'جديد', isPermanent: true, createdAt: day(100), updatedAt: now },
+      data: { associationId: aid, reference: ref('ART'), name: 'Couverture polaire double', nameAr: 'بطانية صوفية كبيرة', description: 'Couverture polaire double, 200x220cm', descriptionAr: 'بطانية صوفية كبيرة، 200x220 سم', categoryId: cats[3].id, quantity: 80, availableQuantity: 75, status: 'disponible', storageLocationId: locs[1].id, isPermanent: true, createdAt: day(100), updatedAt: now },
     }),
     prisma.article.create({
-      data: { associationId: aid, reference: ref('ART'), name: 'Table pliante 4 places', nameAr: 'طاولة قابلة للطي 4 مقاعد', categoryId: cats[4].id, quantity: 10, availableQuantity: 10, status: 'disponible', storageLocationId: locs[3].id, condition: 'Neuf', conditionAr: 'جديد', isPermanent: true, createdAt: day(90), updatedAt: now },
+      data: { associationId: aid, reference: ref('ART'), name: 'Table pliante 4 places', nameAr: 'طاولة قابلة للطي 4 مقاعد', categoryId: cats[4].id, quantity: 10, availableQuantity: 10, status: 'disponible', storageLocationId: locs[3].id, isPermanent: true, createdAt: day(90), updatedAt: now },
     }),
     prisma.article.create({
-      data: { associationId: aid, reference: ref('ART'), name: 'Ventilateur sur pied', nameAr: 'مروحة وقوف', categoryId: cats[5].id, quantity: 30, availableQuantity: 30, status: 'disponible', storageLocationId: locs[1].id, condition: 'Neuf', conditionAr: 'جديد', isPermanent: true, createdAt: day(80), updatedAt: now },
+      data: { associationId: aid, reference: ref('ART'), name: 'Ventilateur sur pied', nameAr: 'مروحة وقوف', categoryId: cats[5].id, quantity: 30, availableQuantity: 30, status: 'disponible', storageLocationId: locs[1].id, isPermanent: true, createdAt: day(80), updatedAt: now },
     }),
   ]);
   console.log('   ✔ 8 articles crees');

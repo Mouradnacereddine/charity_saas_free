@@ -51,13 +51,13 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
     const {
       reference, name, nameAr, description, descriptionAr,
       categoryId, category, quantity, storageLocationId, storageLocation,
-      condition, conditionAr, isPermanent, notes, status, statusId,
+      notes, status, statusId,
     } = req.body;
 
     const resolvedCategoryId = categoryId || category;
     const resolvedStorageLocationId = storageLocationId || storageLocation;
 
-    if (!name || !nameAr || !resolvedCategoryId || quantity === undefined || !resolvedStorageLocationId || !condition || !conditionAr) {
+    if (!name || !nameAr || !resolvedCategoryId || quantity === undefined || !resolvedStorageLocationId) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
@@ -72,6 +72,17 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
     // Auto-generate reference if not provided
     const ref = reference || generateRef('ART');
 
+    // Resolve isPermanent from the selected custom status
+    let isPermanentValue = false;
+    if (statusId) {
+      const statusType = await prisma.articleStatusType.findFirst({
+        where: { id: statusId, associationId },
+      });
+      if (statusType) {
+        isPermanentValue = statusType.isPermanent;
+      }
+    }
+
     const article = await prisma.article.create({
       data: {
         associationId,
@@ -84,9 +95,7 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
         quantity: parseInt(quantity, 10),
         availableQuantity: parseInt(quantity, 10),
         storageLocationId: resolvedStorageLocationId,
-        condition,
-        conditionAr,
-        isPermanent: isPermanent || false,
+        isPermanent: isPermanentValue,
         notes,
         status: finalStatus,
         statusId: statusId || undefined,
@@ -141,7 +150,7 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
     const {
       reference, name, nameAr, description, descriptionAr,
       categoryId, category, quantity, availableQuantity, status, statusId,
-      storageLocationId, storageLocation, condition, conditionAr, isPermanent, notes,
+      storageLocationId, storageLocation, isPermanent, notes,
     } = req.body;
 
     const data: any = {};
@@ -155,11 +164,22 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
     if (quantity !== undefined) data.quantity = parseInt(quantity, 10);
     if (availableQuantity !== undefined) data.availableQuantity = parseInt(availableQuantity, 10);
     if (status !== undefined) data.status = status;
-    if (statusId !== undefined) data.statusId = statusId;
+    if (statusId !== undefined) {
+      data.statusId = statusId;
+      // Auto-resolve isPermanent from the selected custom status
+      if (statusId) {
+        const statusType = await prisma.articleStatusType.findFirst({
+          where: { id: statusId, associationId },
+        });
+        if (statusType) {
+          data.isPermanent = statusType.isPermanent;
+        }
+      } else {
+        data.isPermanent = false;
+      }
+    }
     if (storageLocationId !== undefined) data.storageLocationId = storageLocationId;
     if (storageLocation !== undefined) data.storageLocationId = storageLocation;
-    if (condition !== undefined) data.condition = condition;
-    if (conditionAr !== undefined) data.conditionAr = conditionAr;
     if (isPermanent !== undefined) data.isPermanent = isPermanent;
     if (notes !== undefined) data.notes = notes;
 
@@ -532,7 +552,7 @@ router.get('/article-statuses', async (req: AuthRequest, res: Response): Promise
 router.post('/article-statuses', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { name, nameAr, description, descriptionAr } = req.body;
+    const { name, nameAr, description, descriptionAr, isPermanent } = req.body;
 
     if (!name || !nameAr) {
       res.status(400).json({ error: 'Missing required fields: name, nameAr' });
@@ -540,7 +560,7 @@ router.post('/article-statuses', async (req: AuthRequest, res: Response): Promis
     }
 
     const status = await prisma.articleStatusType.create({
-      data: { associationId, name, nameAr, description, descriptionAr },
+      data: { associationId, name, nameAr, description, descriptionAr, isPermanent: isPermanent ?? false },
     });
 
     res.status(201).json(status);
@@ -565,17 +585,26 @@ router.put('/article-statuses/:id', async (req: AuthRequest, res: Response): Pro
       return;
     }
 
-    const { name, nameAr, description, descriptionAr } = req.body;
+    const { name, nameAr, description, descriptionAr, isPermanent } = req.body;
     const data: any = {};
     if (name !== undefined) data.name = name;
     if (nameAr !== undefined) data.nameAr = nameAr;
     if (description !== undefined) data.description = description;
     if (descriptionAr !== undefined) data.descriptionAr = descriptionAr;
+    if (isPermanent !== undefined) data.isPermanent = isPermanent;
 
     const status = await prisma.articleStatusType.update({
       where: { id },
       data,
     });
+
+    // If isPermanent was updated, sync all articles linked to this status
+    if (isPermanent !== undefined) {
+      await prisma.article.updateMany({
+        where: { statusId: id, associationId },
+        data: { isPermanent },
+      });
+    }
 
     res.json(status);
   } catch (error) {

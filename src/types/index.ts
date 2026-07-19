@@ -105,6 +105,7 @@ export interface ArticleStatus {
   id: string;
   name: string;
   nameAr: string;
+  isPermanent: boolean;
   description?: string;
   descriptionAr?: string;
   createdAt: Date;
@@ -252,10 +253,10 @@ export interface Article {
   quantity: number;
   availableQuantity: number;
   status: ArticleStatusEnum;
+  statusId?: string;
+  statusModel?: ArticleStatus;
   storageLocation: string;
   storageLocationAr: string;
-  condition: string;
-  conditionAr: string;
   isPermanent: boolean; // definitif = not returnable
   notes?: string;
   createdAt: Date;

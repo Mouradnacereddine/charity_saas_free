@@ -99,8 +99,6 @@ async function runTests() {
       categoryId: category.id,
       quantity: 5,
       storageLocationId: location.id,
-      condition: 'Excellent',
-      conditionAr: 'ممتاز',
       isPermanent: false
     });
     const article = articleRes.data;
