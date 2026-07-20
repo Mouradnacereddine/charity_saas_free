@@ -316,10 +316,10 @@ export default function MedicalPage() {
   </div>
   ${childrenHtml ? `<div class="section-title">الأطفال المستفيدون</div><div class="children-grid">${childrenHtml}</div>` : ''}
   ${referral.notes ? `<div class="section-title">ملاحظات</div><div class="info-item" style="width:100%"><span class="val">${referral.notes}</span></div>` : ''}
-  <div class="amt">
-    <div class="num">${formatCurrency(referral.amount)}</div>
-    <div class="words">${referral.amountInWordsAr && !referral.amountInWordsAr.match(/^\d/) ? referral.amountInWordsAr : numberToArabicWords(referral.amount || 0)}</div>
-  </div>
+  ${referral.amount > 0
+    ? `<div class="amt"><div class="num">${formatCurrency(referral.amount)}</div><div class="words">${referral.amountInWordsAr && !referral.amountInWordsAr.match(/^\d/) ? referral.amountInWordsAr : numberToArabicWords(referral.amount)}</div></div>`
+    : `<div class="amt" style="background:#fef9e7"><div class="words" style="font-size:9px;color:#b8860b;font-weight:600">سعر الطبيب</div></div>`
+  }
   <div class="sign-section">
     <div class="sign-row">
       <div class="sign-box"><span class="label">إمضاء رئيس الجمعية</span><div class="line"></div></div>
