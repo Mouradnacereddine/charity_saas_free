@@ -508,23 +508,13 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
             return <SearchableSelect labelAr="الفئة الفرعية" value={subCategoryId} onChange={setSubCategoryId}
               options={subs.map((s: SubCategory) => ({ value: s.id, label: s.nameAr }))} />
           })()}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
             <SearchableSelect labelAr="الطبيب" value={doctorId} onChange={setDoctorId}
               options={allDoctors.map((d: any) => ({
                 value: d.id,
-                label: `${d.lastNameAr} ${d.firstNameAr}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''}`,
+                label: `${d.lastNameAr} ${d.firstNameAr}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''} | ${d.phone}${d.address ? ' - ' + d.address : ''}`,
               }))}
               placeholder="اختر طبيباً..." />
-            {selectedDoctor && (
-              <div className="flex items-end pb-2">
-                <p className="text-xs text-gray-500">
-                  <span className="font-medium">{selectedDoctor.lastNameAr} {selectedDoctor.firstNameAr}</span>
-                  {selectedDoctor.specialty?.nameAr && <span> — {selectedDoctor.specialty.nameAr}</span>}
-                  <br /><span dir="ltr">{selectedDoctor.phone}</span>
-                  {selectedDoctor.address && <><br /><span>{selectedDoctor.address}</span></>}
-                </p>
-              </div>
-            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SearchableSelect labelAr="نوع التحليل / الفحص" value={analysisTypeAr} onChange={(val) => { const a = analysisTypes.find((x: MedicalAnalysisType) => x.nameAr === val); setAnalysisTypeAr(val); setAnalysisType(a?.name || val); }}
