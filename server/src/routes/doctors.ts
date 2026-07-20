@@ -117,8 +117,8 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
       select: { date: true },
     });
 
-    // Monthly breakdown (last 12 months + next month for future dates)
-    const startMonth = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    // Monthly breakdown (last 12 months, centered around now so future dates are visible)
+    const startMonth = new Date(now.getFullYear(), now.getMonth() - 10, 1);
     const endMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
     const monthlyData = await prisma.medicalReferral.groupBy({
       by: ['date'],
@@ -126,13 +126,17 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
       _count: { id: true },
     });
 
-    // Convert to month buckets
+    // Convert to month buckets (include current month and next month)
     const monthMap = new Map<string, number>();
-    for (let i = 11; i >= 0; i--) {
+    for (let i = 10; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       monthMap.set(key, 0);
     }
+    // Also add the next month slot
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextKey = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
+    monthMap.set(nextKey, 0);
     for (const item of monthlyData) {
       const d = new Date(item.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
