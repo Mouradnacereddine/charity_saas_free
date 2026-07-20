@@ -985,8 +985,6 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input labelAr="الاسم بالعربية" value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} required />
               <Input labelAr="الاسم بالفرنسية" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-              <Input labelAr="الوصف بالعربية" value={form.descriptionAr} onChange={(e) => setForm({ ...form, descriptionAr: e.target.value })} />
-              <Input labelAr="الوصف بالفرنسية" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               <SearchableSelect labelAr="الفئة" value={form.category} onChange={(val) => setForm({ ...form, category: val })} options={categoryOptions} required />
               <SearchableSelect labelAr="مكان التخزين" value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required />
               <Input labelAr="الكمية" type="number" min={0} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} required />
