@@ -453,7 +453,8 @@ export default function AnalyticsPage() {
                   <circle cx="50" cy="50" r="40" className="stroke-gray-100 fill-none" strokeWidth="8" />
                   {(() => {
                     const totalCred = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                    const bankShare = totalCred > 0 ? fundSourceBreakdown.bank.credits / totalCred : 0.5;
+                    if (totalCred <= 0) return <circle cx="50" cy="50" r="40" className="stroke-gray-200 fill-none" strokeWidth="8" />;
+                    const bankShare = fundSourceBreakdown.bank.credits / totalCred;
                     const circ = 2 * Math.PI * 40;
                     const offset = circ - bankShare * circ;
                     return (
@@ -475,7 +476,7 @@ export default function AnalyticsPage() {
                   <span className="text-lg font-bold text-primary-600">
                     {(() => {
                       const totalCred = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                      return totalCred > 0 ? `${((fundSourceBreakdown.bank.credits / totalCred) * 100).toFixed(0)}%` : '50%';
+                      return totalCred > 0 ? `${((fundSourceBreakdown.bank.credits / totalCred) * 100).toFixed(0)}%` : '—';
                     })()}
                   </span>
                 </div>
@@ -502,7 +503,7 @@ export default function AnalyticsPage() {
               <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
-                    <span className="w-3 h-3 bg-gray-300 rounded-full" /> الصندوق النقدي (Cash)
+                    <span className="w-3 h-3 bg-amber-400 rounded-full" /> الصندوق النقدي (Cash)
                   </span>
                   <span className="text-xs text-gray-500">رصيد الفترة الصافي</span>
                 </div>
