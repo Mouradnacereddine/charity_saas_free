@@ -475,10 +475,15 @@ export default function AnalyticsPage() {
                     {formatCurrency(fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits)}
                   </span>
                 </div>
-                <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-primary-500 rounded-full" /> بنك: {((fundSourceBreakdown.bank.credits / Math.max(1, totalCred)) * 100).toFixed(0)}%</span>
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-amber-400 rounded-full" /> نقدي: {((fundSourceBreakdown.cash.credits / Math.max(1, totalCred)) * 100).toFixed(0)}%</span>
-                </div>
+                {(() => {
+                  const tc = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
+                  return (
+                    <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-primary-500 rounded-full" /> بنك: {tc > 0 ? ((fundSourceBreakdown.bank.credits / tc) * 100).toFixed(0) + '%' : '—'}</span>
+                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-amber-400 rounded-full" /> نقدي: {tc > 0 ? ((fundSourceBreakdown.cash.credits / tc) * 100).toFixed(0) + '%' : '—'}</span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
