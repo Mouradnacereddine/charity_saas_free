@@ -916,7 +916,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
               </thead>
               <tbody>
                 {filtered.map((article: Article) => (
-                  <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50 hover:bg-gray-50 transition-colors">
+                  <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => openEdit(article)}>
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
                       {article.reference || '—'}
                     </td>
@@ -946,95 +946,50 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       <Modal
         isOpen={showModal}
         onClose={() => { setShowModal(false); setForm(EMPTY_ARTICLE_FORM); setEditingArticle(null); }}
-        title={editingArticle ? 'تعديل المقال' : 'إضافة مقال جديد'}
+        title={editingArticle ? 'تفاصيل المقال' : 'إضافة مقال جديد'}
         size="lg"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            labelAr="الاسم بالعربية"
-            value={form.nameAr}
-            onChange={(e) => setForm({ ...form, nameAr: e.target.value })}
-            required
-          />
-          <Input
-            labelAr="الاسم بالفرنسية"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-          />
-          <Input
-            labelAr="الوصف بالعربية"
-            value={form.descriptionAr}
-            onChange={(e) => setForm({ ...form, descriptionAr: e.target.value })}
-          />
-          <Input
-            labelAr="الوصف بالفرنسية"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-          <SearchableSelect
-            labelAr="الفئة"
-            value={form.category}
-            onChange={(val) => setForm({ ...form, category: val })}
-            options={categoryOptions}
-            required
-          />
-          <SearchableSelect
-            labelAr="مكان التخزين"
-            value={form.storageLocation}
-            onChange={(val) => setForm({ ...form, storageLocation: val })}
-            options={locationOptions}
-            required
-          />
-          <Input
-            labelAr="الكمية"
-            type="number"
-            min={0}
-            value={form.quantity}
-            onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })}
-            required
-          />
-          <SearchableSelect
-            labelAr="الحالة"
-            value={form.statusId}
-            onChange={(val) => {
-              const selectedSts = statuses.find((s: ArticleStatus) => s.id === val)
-              setForm({
-                ...form,
-                statusId: val,
-                isPermanent: selectedSts ? selectedSts.isPermanent : false,
-              })
-            }}
-            options={
-              statuses.length > 0
-                ? statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))
-                : []
-            }
-          />
-          {/* Condition fields removed from form */}
-          <div className="md:col-span-2">
-            <TextArea
-              labelAr="ملاحظات"
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            />
+        {editingArticle ? (
+          /* ---- EDIT MODE: only storageLocation, status, notes are editable ---- */
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
+              <div><p className="text-xs text-gray-500">الاسم بالعربية</p><p className="font-medium">{form.nameAr}</p></div>
+              <div><p className="text-xs text-gray-500">الاسم بالفرنسية</p><p className="font-medium">{form.name}</p></div>
+              {form.descriptionAr && <div><p className="text-xs text-gray-500">الوصف بالعربية</p><p className="font-medium">{form.descriptionAr}</p></div>}
+              {form.description && <div><p className="text-xs text-gray-500">الوصف بالفرنسية</p><p className="font-medium">{form.description}</p></div>}
+              <div><p className="text-xs text-gray-500">الفئة</p><p className="font-medium">{categories.find((c) => c.id === form.category)?.nameAr || '—'}</p></div>
+              <div><p className="text-xs text-gray-500">الكمية</p><p className="font-medium">{form.quantity}</p></div>
+              <div><SearchableSelect labelAr="مكان التخزين" value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required /></div>
+              <div><SearchableSelect labelAr="الحالة" value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} /></div>
+            </div>
+            <TextArea labelAr="ملاحظات" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            {formError && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{formError}</div>}
+            <div className="flex justify-end gap-3">
+              <Button variant="secondary" onClick={() => setShowModal(false)}>إلغاء</Button>
+              <Button onClick={handleSubmit}>تحديث</Button>
+            </div>
           </div>
-        </div>
-
-        {formError && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 mt-4">
-            {formError}
+        ) : (
+          /* ---- CREATE MODE: all fields editable ---- */
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input labelAr="الاسم بالعربية" value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} required />
+              <Input labelAr="الاسم بالفرنسية" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <Input labelAr="الوصف بالعربية" value={form.descriptionAr} onChange={(e) => setForm({ ...form, descriptionAr: e.target.value })} />
+              <Input labelAr="الوصف بالفرنسية" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <SearchableSelect labelAr="الفئة" value={form.category} onChange={(val) => setForm({ ...form, category: val })} options={categoryOptions} required />
+              <SearchableSelect labelAr="مكان التخزين" value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required />
+              <Input labelAr="الكمية" type="number" min={0} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} required />
+              <SearchableSelect labelAr="الحالة" value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} />
+              <div className="md:col-span-2"><TextArea labelAr="ملاحظات" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+            </div>
+            {formError && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 mt-4">{formError}</div>}
+            <div className="flex justify-end gap-3 mt-6">
+              <Button variant="secondary" onClick={() => setShowModal(false)}>إلغاء</Button>
+              <Button onClick={handleSubmit} disabled={!form.nameAr || !form.name || !form.category}>إضافة</Button>
+            </div>
           </div>
         )}
-
-        <div className="flex justify-end gap-3 mt-6">
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            إلغاء
-          </Button>
-          <Button onClick={handleSubmit} disabled={!form.nameAr || !form.name || !form.category}>
-            {editingArticle ? 'تحديث' : 'إضافة'}
-          </Button>
-        </div>
       </Modal>
     </>
   )
