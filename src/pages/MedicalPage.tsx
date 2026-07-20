@@ -287,7 +287,7 @@ export default function MedicalPage() {
       .sign-box { width: 60mm; text-align: center; }
       .sign-box .label { font-size: 7.5px; color: #888; display: block; margin-bottom: 1px; }
       .sign-box .line { border-top: 0.8px solid #444; height: 18px; }
-      .notice { font-size: 7px; color: #666; text-align: center; margin-top: 4px; line-height: 1.6; }
+      .notice { font-size: 7px; color: #666; text-align: center; margin-top: 8px; line-height: 1.6; }
     `
 
     const w = window.open('', '_blank')
@@ -505,7 +505,7 @@ export default function MedicalPage() {
                     <td className="py-3 px-4 hidden lg:table-cell font-mono text-xs" dir="ltr">{benef?.nationalCardNumber || '—'}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr || (referral.doctor ? `${referral.doctor.lastNameAr} ${referral.doctor.firstNameAr}` : '—')}</td>
                     <td className="py-3 px-4 hidden md:table-cell">{referral.analysisTypeAr || '—'}</td>
-                    <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary-600">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">قيد الانتظار</Badge>}</td>
+                    <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary-600">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">لم يحدد المبلغ بعد</Badge>}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">
                       {(referral.status || 'pending') === 'pending' ? <Badge variant="warning">قيد الانتظار</Badge> :
                        (referral.status || 'pending') === 'completed' ? <Badge variant="success">مكتمل</Badge> :
