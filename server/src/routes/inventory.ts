@@ -161,7 +161,15 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
     if (descriptionAr !== undefined) data.descriptionAr = descriptionAr;
     if (categoryId !== undefined) data.categoryId = categoryId;
     if (category !== undefined) data.categoryId = category;
-    if (quantity !== undefined) data.quantity = parseInt(quantity, 10);
+    if (quantity !== undefined) {
+      const newQty = parseInt(quantity, 10);
+      const oldQty = existing.quantity;
+      data.quantity = newQty;
+      // If availableQuantity is not explicitly provided, adjust it by the same delta as quantity
+      if (availableQuantity === undefined) {
+        data.availableQuantity = Math.max(0, existing.availableQuantity + (newQty - oldQty));
+      }
+    }
     if (availableQuantity !== undefined) data.availableQuantity = parseInt(availableQuantity, 10);
     if (status !== undefined) data.status = status;
     if (statusId !== undefined) {
