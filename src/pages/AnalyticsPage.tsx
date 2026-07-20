@@ -458,12 +458,15 @@ export default function AnalyticsPage() {
                     if (total <= 0) return <circle cx="50" cy="50" r="42" className="stroke-gray-200 fill-none" strokeWidth="10" />;
                     const circ = 2 * Math.PI * 42;
                     const bankPct = bankC / total;
-                    const bankOff = circ - bankPct * circ;
-                    const cashOff = circ - circ;
+                    const bankLen = bankPct * circ;
                     return (
                       <>
-                        <circle cx="50" cy="50" r="42" className="stroke-primary-500 fill-none" strokeWidth="10" strokeDasharray={circ} strokeDashoffset={bankOff} strokeLinecap="butt" />
-                        <circle cx="50" cy="50" r="42" className="stroke-amber-400 fill-none" strokeWidth="10" strokeDasharray={circ} strokeDashoffset={circ - bankPct * circ} strokeLinecap="butt" />
+                        {/* Bank segment: goes from top clockwise for bankPct of the circle */}
+                        <circle cx="50" cy="50" r="42" className="stroke-primary-500 fill-none" strokeWidth="10"
+                          strokeDasharray={`${bankLen} ${circ - bankLen}`} strokeDashoffset="0" strokeLinecap="butt" />
+                        {/* Cash segment: fills the remaining part */}
+                        <circle cx="50" cy="50" r="42" className="stroke-amber-400 fill-none" strokeWidth="10"
+                          strokeDasharray={`${circ - bankLen} ${bankLen}`} strokeDashoffset={`-${bankLen}`} strokeLinecap="butt" />
                       </>
                     );
                   })()}
