@@ -155,7 +155,6 @@ export default function FinancePage() {
   const [txAllocationId, setTxAllocationId] = useState('')
   const [txAmount, setTxAmount] = useState('')
   const [txDescription, setTxDescription] = useState('')
-  const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0])
   const [txAllocSearch, setTxAllocSearch] = useState('')
   const [txPending, setTxPending] = useState(false)
   const [txSubmitting, setTxSubmitting] = useState(false)
@@ -363,7 +362,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         allocationId: txType === 'debit' ? txAllocationId || undefined : undefined,
         description: txDescription,
         descriptionAr: txDescription,
-        date: txDate,
+        date: new Date().toISOString().split('T')[0],
         status: txPending ? 'pending' : 'completed',
       })
 
@@ -822,18 +821,9 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 </div>
               )}
             </div>
-            <Input
-              labelAr="التاريخ"
-              type="date"
-              value={txDate}
-              onChange={(e) => setTxDate(e.target.value)}
-              required
-              dir="ltr"
-              className="text-left"
-            />
           </div>
 
-          {/* Row 5: Description */}
+          {/* Description */}
           <TextArea
             labelAr="الوصف"
             value={txDescription}
