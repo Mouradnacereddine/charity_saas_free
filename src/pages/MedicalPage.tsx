@@ -324,7 +324,7 @@ export default function MedicalPage() {
       <div class="sign-box"><span class="label">ختم الجمعية</span><div class="line"></div></div>
     </div>
   </div>
-  <div class="notice">الجمعية تتخلى من مسؤوليتها عن كل توجيه الذي لا يحمل ختم الجمعية و إمضاء رئيس الجمعية، يُعتبر هذا التوجيه غير صالح و غير معترف به.</div>
+  <div class="notice">الجمعية تتخلى من مسؤوليتها عن كل توجيه طبي لا يحمل ختم الجمعية و إمضاء رئيس الجمعية، يُعتبر هذا التوجيه غير صالح و غير معترف به.</div>
   <script>window.print();window.close();</script>
 </body></html>
 `)
