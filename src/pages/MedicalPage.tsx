@@ -256,7 +256,7 @@ export default function MedicalPage() {
 <div class="row"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr || (referral.doctor ? referral.doctor.lastNameAr + ' ' + referral.doctor.firstNameAr : '')}</span></div>
 ${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}</div>
 <div class="col">${caisseRow}${subCatRow}
-<div class="row"><span class="lbl">التاريخ</span><span class="val">${referral.date}</span></div>
+<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(referral.date)}</span></div>
 ${referral.hospitalAr ? `<div class="row"><span class="lbl">المستشفى</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
 ${childrenHtml}
 ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${referral.notes}</span></div>` : ''}</div>`,
@@ -447,7 +447,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                        (referral.status || 'pending') === 'completed' ? <Badge variant="success">مكتمل</Badge> :
                        <Badge variant="danger">ملغي</Badge>}
                     </td>
-                    <td className="py-3 px-4 text-gray-500 hidden sm:table-cell">{referral.date}</td>
+                    <td className="py-3 px-4 text-gray-500 hidden sm:table-cell">{formatDate(referral.date)}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1">
                         <button onClick={(e) => { e.stopPropagation(); setShowDetailModal(referral); }} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded"><Eye className="w-4 h-4" /></button>
@@ -563,7 +563,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الطبيب</span><span className="font-medium text-gray-900">{showDetailModal.doctorNameAr || (showDetailModal.doctor ? `${showDetailModal.doctor.lastNameAr} ${showDetailModal.doctor.firstNameAr}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-gray-400 mr-2">({showDetailModal.doctor.specialty.nameAr})</span> : ''}</span></div>
               {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">نوع التحليل</span><span className="font-medium text-gray-900">{showDetailModal.analysisTypeAr}</span></div>}
               {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستشفى</span><span className="font-medium text-gray-900">{showDetailModal.hospitalAr}</span></div>}
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">التاريخ</span><span className="font-medium text-gray-900">{showDetailModal.date}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">التاريخ</span><span className="font-medium text-gray-900">{formatDate(showDetailModal.date)}</span></div>
               {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-500">الأطفال المستفيدون</span>
