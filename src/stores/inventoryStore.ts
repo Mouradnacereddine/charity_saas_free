@@ -121,7 +121,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
     const allReturned = loan.items.every((i) => i.returnedQuantity >= i.quantity);
     const someReturned = loan.items.some((i) => i.returnedQuantity > 0);
 
-    loan.status = allReturned ? 'retourne' : someReturned ? 'partiellement_retourne' : 'en_cours';
+    loan.status = allReturned ? 'definitif' : someReturned ? 'partiellement_retourne' : 'en_cours';
     if (allReturned) loan.actualReturnDate = new Date().toISOString().split('T')[0];
 
     await db.loans.update(loanId, { items: loan.items, status: loan.status, actualReturnDate: loan.actualReturnDate, updatedAt: now });

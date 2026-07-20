@@ -51,14 +51,14 @@ const STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'danger' | 'defaul
 const LOAN_STATUS_LABELS: Record<string, string> = {
   en_cours: 'جاري',
   partiellement_retourne: 'مرتجع جزئياً',
-  retourne: 'مرتجع',
+  retourne: 'نهائي',
   definitif: 'نهائي',
 }
 
 const LOAN_STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'danger' | 'default' | 'info'> = {
   en_cours: 'info',
   partiellement_retourne: 'warning',
-  retourne: 'success',
+  retourne: 'default',
   definitif: 'default',
 }
 
@@ -1150,7 +1150,6 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     { value: '', label: 'الكل' },
     { value: 'en_cours', label: 'جاري' },
     { value: 'partiellement_retourne', label: 'مرتجع جزئياً' },
-    { value: 'retourne', label: 'مرتجع' },
     { value: 'definitif', label: 'نهائي' },
   ]
 
@@ -1432,6 +1431,8 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   <th className="text-right py-3 px-4 font-medium text-gray-500">المستفيد</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden lg:table-cell">رمز المستفيد</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">المقالات</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">المُرتجع</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">المتبقي</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">تاريخ الإعارة</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">تاريخ الإرجاع المتوقع</th>
@@ -1451,6 +1452,12 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     </td>
                     <td className="py-3 px-4 text-gray-600">
                       {loan.items.map((item) => item.articleNameAr).filter(Boolean).join('، ') || `(${loan.items.length} مقالات)`}
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">
+                      {loan.items.map((item) => item.returnedQuantity || 0).reduce((a, b) => a + b, 0) || '—'}
+                    </td>
+                    <td className="py-3 px-4 text-gray-600 hidden md:table-cell">
+                      {loan.items.map((item) => item.quantity - (item.returnedQuantity || 0)).reduce((a, b) => a + b, 0)}
                     </td>
                     <td className="py-3 px-4">
                       <Badge variant={LOAN_STATUS_VARIANTS[loan.status] || 'default'}>

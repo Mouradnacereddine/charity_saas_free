@@ -282,7 +282,7 @@ router.post('/:id/return', async (req: AuthRequest, res: Response): Promise<void
 
       let newStatus = loan.status;
       if (allReturned) {
-        newStatus = 'retourne';
+        newStatus = 'definitif';
       } else if (someReturned) {
         newStatus = 'partiellement_retourne';
       }
