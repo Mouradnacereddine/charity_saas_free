@@ -1652,7 +1652,6 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                       <th className="text-right py-2 px-3 font-medium text-gray-500">المتبقي</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">الحالة عند الإعارة</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">الحالة عند الإرجاع</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1676,17 +1675,6 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                         <td className="py-2 px-3 text-gray-600">{item.quantity - item.returnedQuantity}</td>
                         <td className="py-2 px-3 text-gray-600">{item.conditionOnLoan || '—'}</td>
                         <td className="py-2 px-3 text-gray-600">{item.conditionOnReturn || '—'}</td>
-                        <td className="py-2 px-3">
-                          {selectedLoan.status !== 'definitif' && selectedLoan.status !== 'retourne' && (
-                            <button
-                              onClick={() => handleRemoveItem(item.articleId)}
-                              className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
-                              title="إزالة"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
