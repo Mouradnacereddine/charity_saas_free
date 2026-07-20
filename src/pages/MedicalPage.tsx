@@ -245,9 +245,18 @@ export default function MedicalPage() {
 
     const childrenHtml = referral.children && Array.isArray(referral.children) && referral.children.length > 0
       ? referral.children.map((c: any) => {
-          const age = calculateAge(c.dateOfBirth)
-          const gender = c.gender === 'female' ? 'أنثى' : 'ذكر'
-          return `<div class="child-item"><span class="child-name">${c.lastNameAr} ${c.firstNameAr}</span> — ${age.displayAr} — ${gender}</div>`
+          const nameAr = c.nameAr || `${c.lastNameAr || ''} ${c.firstNameAr || ''}`.trim() || '—'
+          let ageDisplay = ''
+          try {
+            if (c.dateOfBirth) {
+              const age = calculateAge(c.dateOfBirth)
+              ageDisplay = age?.displayAr || ''
+            } else if (c.age) {
+              ageDisplay = `${c.age} سنة`
+            }
+          } catch { ageDisplay = '' }
+          const gender = c.gender === 'female' ? 'أنثى' : c.gender === 'male' ? 'ذكر' : ''
+          return `<div class="child-item"><span class="child-name">${nameAr}</span>${ageDisplay ? ` — ${ageDisplay}` : ''}${gender ? ` — ${gender}` : ''}</div>`
         }).join('')
       : ''
 
