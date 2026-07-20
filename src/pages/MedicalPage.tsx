@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { formatCurrency, numberToArabicWords, calculateAge } from '../utils/helpers';
+import { formatCurrency, formatDate, numberToArabicWords, calculateAge } from '../utils/helpers';
 import { printReceipt } from '../lib/receipt';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import type { MedicalReferral, Beneficiary, Caisse, MedicalAnalysisType, MedicalHospital, SubCategory } from '../types';
