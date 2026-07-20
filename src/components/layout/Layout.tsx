@@ -186,6 +186,9 @@ export function Layout({
               </nav>
             )}
           </div>
+          <div className="text-center flex-1">
+            <span className="text-sm text-green-800 font-arabic">بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</span>
+          </div>
           <div className="flex items-center gap-3">
             {/* User menu */}
             <div className="relative" onClick={(e) => e.stopPropagation()}>
