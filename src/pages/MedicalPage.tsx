@@ -265,9 +265,9 @@ export default function MedicalPage() {
     const genderDisplay = fullBeneficiary?.gender === 'female' ? 'أنثى' : fullBeneficiary?.gender === 'male' ? 'ذكر' : ''
 
     const MEDICAL_CSS = `
-      @page { size: A5 portrait; margin: 12mm; }
+      @page { size: 148mm 210mm; margin: 10mm 12mm; }
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 10px; background: #fff; padding: 0; }
+      body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 10px; background: #fff; padding: 0; max-width: 124mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #2563eb; padding-bottom: 3px; margin-bottom: 6px; }
       .header .assoc { font-size: 13px; font-weight: bold; color: #2563eb; }
       .header .title { font-size: 11px; color: #1e40af; font-weight: 600; }
@@ -293,7 +293,8 @@ export default function MedicalPage() {
     const w = window.open('', '_blank')
     if (!w) return
     w.document.write(`
-<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>توجيه طبي</title><style>${MEDICAL_CSS}</style></head>
+<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title></title><style>${MEDICAL_CSS}</style>
+<style>@media print{@page{margin-top:0!important}}</style></head>
 <body>
   <div class="header">
     <span class="assoc">🕌 ${association?.nameAr || 'الجمعية الخيرية'}</span>
