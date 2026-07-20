@@ -117,11 +117,12 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
       select: { date: true },
     });
 
-    // Monthly breakdown (last 12 months)
-    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    // Monthly breakdown (last 12 months + next month for future dates)
+    const startMonth = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    const endMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
     const monthlyData = await prisma.medicalReferral.groupBy({
       by: ['date'],
-      where: { doctorId: id, associationId, date: { gte: twelveMonthsAgo }, status: { not: 'cancelled' } },
+      where: { doctorId: id, associationId, date: { gte: startMonth, lte: endMonth }, status: { not: 'cancelled' } },
       _count: { id: true },
     });
 
