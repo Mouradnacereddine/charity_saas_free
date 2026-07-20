@@ -564,7 +564,7 @@ router.get('/article-statuses', async (req: AuthRequest, res: Response): Promise
 
     const statuses = await prisma.articleStatusType.findMany({
       where: { associationId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
     });
 
     res.json(statuses);

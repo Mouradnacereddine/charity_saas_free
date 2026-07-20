@@ -74,7 +74,7 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
           },
         },
       },
-      orderBy: { date: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { date: 'desc' }],
     });
 
     // Attach debit allocations for debit transactions

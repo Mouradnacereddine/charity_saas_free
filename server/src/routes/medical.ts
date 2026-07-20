@@ -23,7 +23,7 @@ router.get('/referrals', async (req: AuthRequest, res: Response): Promise<void> 
     const referrals = await prisma.medicalReferral.findMany({
       where,
       include: { beneficiary: true, caisse: true, doctor: { include: { specialty: { select: { id: true, name: true, nameAr: true } } } } },
-      orderBy: { date: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { date: 'desc' }],
     });
 
     const result = referrals.map((r: any) => ({
