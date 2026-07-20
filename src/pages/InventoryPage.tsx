@@ -912,7 +912,6 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   <th className="text-right py-3 px-4 font-medium text-gray-500">المتاح</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">مكان التخزين</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">النوع</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>
               </thead>
@@ -935,13 +934,6 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     </td>
                     <td className="py-3 px-4 text-gray-600 hidden md:table-cell">
                       {getStorageNameAr(article.storageLocation, locations)}
-                    </td>
-                    <td className="py-3 px-4 hidden sm:table-cell">
-                      {article.isPermanent ? (
-                        <Badge variant="default">نهائي</Badge>
-                      ) : (
-                        <Badge variant="info">قابل للإرجاع</Badge>
-                      )}
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
@@ -1076,6 +1068,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   const { data: loans = [], isLoading: loading } = useLoans()
   const { data: articles = [] } = useArticles()
   const { data: beneficiaries = [] } = useBeneficiaries()
+  const { data: statuses = [] } = useArticleStatuses()
   const createLoan = useCreateLoan()
   const returnItems = useReturnItems()
   const addItemToLoan = useAddItemToLoan()
@@ -1542,10 +1535,15 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   value={item.quantity}
                   onChange={(e) => updateLoanItemRow(index, 'quantity', parseInt(e.target.value) || 1)}
                 />
-                <Input
+                <SearchableSelect
                   labelAr="الحالة عند الإعارة"
                   value={item.conditionOnLoan}
-                  onChange={(e) => updateLoanItemRow(index, 'conditionOnLoan', e.target.value)}
+                  onChange={(val) => updateLoanItemRow(index, 'conditionOnLoan', val)}
+                  options={
+                    statuses.length > 0
+                      ? statuses.map((s: ArticleStatus) => ({ value: s.nameAr, label: s.nameAr }))
+                      : []
+                  }
                 />
                 <div className="flex items-end">
                   <Button size="sm" variant="danger" onClick={() => removeLoanItemRow(index)}>
@@ -1720,10 +1718,15 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                           updateReturnEntry(index, 'quantity', Math.min(parseInt(e.target.value) || 0, remaining))
                         }
                       />
-                      <Input
+                      <SearchableSelect
                         labelAr="الحالة عند الإرجاع"
                         value={entry.condition}
-                        onChange={(e) => updateReturnEntry(index, 'condition', e.target.value)}
+                        onChange={(val) => updateReturnEntry(index, 'condition', val)}
+                        options={
+                          statuses.length > 0
+                            ? statuses.map((s: ArticleStatus) => ({ value: s.nameAr, label: s.nameAr }))
+                            : []
+                        }
                       />
                     </div>
                   )
@@ -1770,10 +1773,15 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     value={newItemQuantity}
                     onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)}
                   />
-                  <Input
+                  <SearchableSelect
                     labelAr="الحالة"
                     value={newItemCondition}
-                    onChange={(e) => setNewItemCondition(e.target.value)}
+                    onChange={(val) => setNewItemCondition(val)}
+                    options={
+                      statuses.length > 0
+                        ? statuses.map((s: ArticleStatus) => ({ value: s.nameAr, label: s.nameAr }))
+                        : []
+                    }
                   />
                 </div>
                 <div className="flex justify-end gap-3">

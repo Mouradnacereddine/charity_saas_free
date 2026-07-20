@@ -218,6 +218,24 @@ router.delete('/articles/:id', async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
+    // Check if article is referenced in any active loans
+    const activeLoans = await prisma.loan.findMany({
+      where: {
+        associationId,
+        status: { in: ['en_cours', 'partiellement_retourne'] },
+      },
+    });
+
+    const isReferenced = activeLoans.some((loan) => {
+      const items = loan.items as any[];
+      return items.some((item) => item.articleId === id);
+    });
+
+    if (isReferenced) {
+      res.status(400).json({ error: 'لا يمكن حذف هذا المقال لأنه مرتبط بإعارات نشطة' });
+      return;
+    }
+
     await prisma.article.delete({ where: { id } });
     res.json({ message: 'Article deleted successfully' });
   } catch (error) {
