@@ -446,78 +446,48 @@ export default function AnalyticsPage() {
         </Card>
 
         <Card titleAr="مقارنة مصادر التمويل">
-          <div className="space-y-6">
-            <div className="flex flex-col items-center">
-              <div className="relative w-36 h-36">
-                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                  <circle cx="50" cy="50" r="40" className="stroke-gray-100 fill-none" strokeWidth="8" />
-                  {(() => {
-                    const totalCred = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                    const circ = 2 * Math.PI * 40;
-                    if (totalCred <= 0) return <circle cx="50" cy="50" r="40" className="stroke-gray-100 fill-none" strokeWidth="8" />;
-                    const bankShare = fundSourceBreakdown.bank.credits / totalCred;
-                    const bankOffset = circ - bankShare * circ;
-                    const cashShare = fundSourceBreakdown.cash.credits / totalCred;
-                    const cashOffset = circ - (bankShare + cashShare) * circ;
-                    return <>
-                      <circle cx="50" cy="50" r="40" className="stroke-primary-500 fill-none" strokeWidth="8"
-                        strokeDasharray={circ} strokeDashoffset={bankOffset} strokeLinecap="butt" />
-                      {cashShare > 0 && (
-                        <circle cx="50" cy="50" r="40" className="stroke-amber-400 fill-none" strokeWidth="8"
-                          strokeDasharray={circ} strokeDashoffset={cashOffset} strokeLinecap="butt" />
-                      )}
-                    </>;
-                  })()}
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-xs text-gray-400">إجمالي المداخيل</span>
-                  <span className="text-base font-bold text-gray-900">
-                    {formatCurrency(fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits)}
-                  </span>
+          <div className="space-y-4">
+            {/* Bank bar */}
+            <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
+                  <span className="w-3 h-3 bg-primary-500 rounded-full" /> البنك (Banque)
+                </span>
+                <span className="text-xs text-gray-500">رصيد الفترة الصافي</span>
+              </div>
+              <div className="flex items-center gap-3 mt-2">
+                <div className="flex-1 bg-blue-100 rounded-full h-5 overflow-hidden">
+                  {fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits > 0 ? (
+                    <div className="bg-primary-500 h-full rounded-full transition-all" style={{ width: `${(fundSourceBreakdown.bank.credits / Math.max(1, fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits)) * 100}%` }} />
+                  ) : <div className="bg-gray-200 h-full rounded-full" style={{ width: '100%' }} />}
                 </div>
-                {(() => {
-                  const tc = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                  return (
-                    <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-primary-500 rounded-full" /> بنك: {tc > 0 ? ((fundSourceBreakdown.bank.credits / tc) * 100).toFixed(0) + '%' : '—'}</span>
-                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-amber-400 rounded-full" /> نقدي: {tc > 0 ? ((fundSourceBreakdown.cash.credits / tc) * 100).toFixed(0) + '%' : '—'}</span>
-                    </div>
-                  );
-                })()}
+                <span className="text-sm font-bold text-gray-900 w-28 text-left" dir="ltr">{formatCurrency(fundSourceBreakdown.bank.net)}</span>
+              </div>
+              <div className="flex justify-between text-xs mt-1.5">
+                <span className="text-emerald-600">مداخيل: {formatCurrency(fundSourceBreakdown.bank.credits)}</span>
+                <span className="text-red-600">مصاريف: {formatCurrency(fundSourceBreakdown.bank.debits)}</span>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
-                    <span className="w-3 h-3 bg-primary-500 rounded-full" /> البنك (Banque)
-                  </span>
-                  <span className="text-xs text-gray-500">رصيد الفترة الصافي</span>
-                </div>
-                <div className="flex justify-between text-xs mt-2">
-                  <span className="text-emerald-600">مداخيل: {formatCurrency(fundSourceBreakdown.bank.credits)}</span>
-                  <span className="text-red-600">مصاريف: {formatCurrency(fundSourceBreakdown.bank.debits)}</span>
-                </div>
-                <div className="text-left font-bold text-sm text-gray-900 border-t border-blue-100/50 mt-1.5 pt-1" dir="ltr">
-                  {formatCurrency(fundSourceBreakdown.bank.net)}
-                </div>
+            {/* Cash bar */}
+            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
+                  <span className="w-3 h-3 bg-amber-400 rounded-full" /> الصندوق النقدي (Cash)
+                </span>
+                <span className="text-xs text-gray-500">رصيد الفترة الصافي</span>
               </div>
-
-              <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
-                    <span className="w-3 h-3 bg-amber-400 rounded-full" /> الصندوق النقدي (Cash)
-                  </span>
-                  <span className="text-xs text-gray-500">رصيد الفترة الصافي</span>
+              <div className="flex items-center gap-3 mt-2">
+                <div className="flex-1 bg-amber-100 rounded-full h-5 overflow-hidden">
+                  {fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits > 0 ? (
+                    <div className="bg-amber-400 h-full rounded-full transition-all" style={{ width: `${(fundSourceBreakdown.cash.credits / Math.max(1, fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits)) * 100}%` }} />
+                  ) : <div className="bg-gray-200 h-full rounded-full" style={{ width: '100%' }} />}
                 </div>
-                <div className="flex justify-between text-xs mt-2">
-                  <span className="text-emerald-600">مداخيل: {formatCurrency(fundSourceBreakdown.cash.credits)}</span>
-                  <span className="text-red-600">مصاريف: {formatCurrency(fundSourceBreakdown.cash.debits)}</span>
-                </div>
-                <div className="text-left font-bold text-sm text-gray-900 border-t border-amber-100/50 mt-1.5 pt-1" dir="ltr">
-                  {formatCurrency(fundSourceBreakdown.cash.net)}
-                </div>
+                <span className="text-sm font-bold text-gray-900 w-28 text-left" dir="ltr">{formatCurrency(fundSourceBreakdown.cash.net)}</span>
+              </div>
+              <div className="flex justify-between text-xs mt-1.5">
+                <span className="text-emerald-600">مداخيل: {formatCurrency(fundSourceBreakdown.cash.credits)}</span>
+                <span className="text-red-600">مصاريف: {formatCurrency(fundSourceBreakdown.cash.debits)}</span>
               </div>
             </div>
           </div>
