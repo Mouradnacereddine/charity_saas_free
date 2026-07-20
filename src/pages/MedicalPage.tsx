@@ -265,7 +265,7 @@ export default function MedicalPage() {
     const genderDisplay = fullBeneficiary?.gender === 'female' ? 'أنثى' : fullBeneficiary?.gender === 'male' ? 'ذكر' : ''
 
     const MEDICAL_CSS = `
-      @page { size: 148mm 210mm; margin: 10mm 12mm; }
+      @page { size: 148mm 210mm; margin: 15mm 12mm 10mm; }
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 10px; background: #fff; padding: 0; max-width: 124mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #2563eb; padding-bottom: 3px; margin-bottom: 6px; }
@@ -294,7 +294,7 @@ export default function MedicalPage() {
     if (!w) return
     w.document.write(`
 <!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title></title><style>${MEDICAL_CSS}</style>
-<style>@media print{@page{margin-top:0!important}}</style></head>
+</head>
 <body>
   <div class="header">
     <span class="assoc">🕌 ${association?.nameAr || 'الجمعية الخيرية'}</span>
