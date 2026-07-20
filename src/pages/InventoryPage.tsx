@@ -912,12 +912,11 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   <th className="text-right py-3 px-4 font-medium text-gray-500">المتاح</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">مكان التخزين</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((article: Article) => (
-                  <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => openEdit(article)}>
+                  <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
                       {article.reference || '—'}
                     </td>
@@ -934,24 +933,6 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     </td>
                     <td className="py-3 px-4 text-gray-600 hidden md:table-cell">
                       {getStorageNameAr(article.storageLocation, locations)}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); openEdit(article); }}
-                          className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
-                          title="تعديل"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(article.id); }}
-                          className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
-                          title="حذف"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1565,14 +1546,6 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
               </div>
             ))}
           </div>
-
-          {/* Expected return date */}
-          <Input
-            labelAr="تاريخ الإرجاع المتوقع"
-            type="date"
-            value={expectedReturnDate}
-            onChange={(e) => setExpectedReturnDate(e.target.value)}
-          />
 
           {/* Notes */}
           <TextArea
