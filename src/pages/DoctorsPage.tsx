@@ -339,15 +339,21 @@ export default function DoctorsPage() {
                       <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
                         <Calendar className="w-3 h-3" /> آخر 12 شهراً
                       </p>
-                      <div className="flex items-end gap-1 h-20">
-                        {doctorStats.referralsByMonth.map((m: { month: string; count: number }) => {
+                      <div className="space-y-1">
+                        {doctorStats.referralsByMonth.slice().reverse().map((m: { month: string; count: number }) => {
+                          const y = m.month.slice(0,4);
+                          const mo = parseInt(m.month.slice(5), 10);
+                          const names = ['جانفي','فيفري','مارس','أفريل','ماي','جوان','جويلية','أوت','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+                          const label = `${names[mo-1]} ${y}`;
                           const max = Math.max(...doctorStats.referralsByMonth.map((x: any) => x.count), 1);
-                          const height = Math.max((m.count / max) * 100, 4);
+                          const pct = Math.round((m.count / max) * 100);
                           return (
-                            <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                              <span className="text-[10px] text-gray-500 font-medium">{m.count}</span>
-                              <div className="w-full bg-primary-200 rounded-t" style={{ height: `${height}%`, minHeight: '4px' }} />
-                              <span className="text-[9px] text-gray-400">{m.month.slice(5)}</span>
+                            <div key={m.month} className="flex items-center gap-2 text-xs">
+                              <span className="w-24 text-left text-gray-600">{label}</span>
+                              <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                                <div className="bg-primary-500 h-full rounded-full transition-all" style={{ width: `${Math.max(pct, m.count > 0 ? 8 : 0)}%` }} />
+                              </div>
+                              <span className="w-6 text-center font-medium text-gray-700">{m.count}</span>
                             </div>
                           );
                         })}
