@@ -1319,11 +1319,8 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
     await markLoanDefinitive.mutateAsync(selectedLoan.id)
     await queryClient.invalidateQueries({ queryKey: ['loans'] })
-    const loansData = queryClient.getQueryData<Loan[]>(['loans'])
-    if (loansData) {
-      const updated = loansData.find((l) => l.id === selectedLoan.id)
-      if (updated) setSelectedLoan(updated)
-    }
+    setShowDetailModal(null)
+    setSelectedLoan(null)
   }
 
   // ---- Print Loan ----
