@@ -318,12 +318,11 @@ function SettingsTab() {
 
   const handleAddStatus = async () => {
     if (!newStsNameAr.trim()) return
-    await createSts.mutateAsync({ name: newStsName.trim(), nameAr: newStsNameAr.trim(), description: newStsDesc.trim() || undefined, descriptionAr: newStsDescAr.trim() || undefined, isPermanent: newStsIsPermanent })
+    await createSts.mutateAsync({ name: newStsName.trim(), nameAr: newStsNameAr.trim(), description: newStsDesc.trim() || undefined, descriptionAr: newStsDescAr.trim() || undefined })
     setNewStsNameAr('')
     setNewStsName('')
     setNewStsDescAr('')
     setNewStsDesc('')
-    setNewStsIsPermanent(false)
   }
 
   const handleDeleteStatus = async (id: string) => {
@@ -337,12 +336,11 @@ function SettingsTab() {
     setEditStsName(sts.name)
     setEditStsDescAr(sts.descriptionAr || '')
     setEditStsDesc(sts.description || '')
-    setEditStsIsPermanent(sts.isPermanent || false)
   }
 
   const handleUpdateStatus = async () => {
     if (!editStsId || !editStsNameAr.trim()) return
-    await updateSts.mutateAsync({ id: editStsId, data: { name: editStsName.trim(), nameAr: editStsNameAr.trim(), description: editStsDesc.trim() || undefined, descriptionAr: editStsDescAr.trim() || undefined, isPermanent: editStsIsPermanent } })
+    await updateSts.mutateAsync({ id: editStsId, data: { name: editStsName.trim(), nameAr: editStsNameAr.trim(), description: editStsDesc.trim() || undefined, descriptionAr: editStsDescAr.trim() || undefined } })
     setEditStsId(null)
     setEditStsNameAr('')
     setEditStsName('')
@@ -576,7 +574,7 @@ function SettingsTab() {
 
       {/* ========== Article Statuses Section ========== */}
       <Card titleAr="الحالات">
-        {/* Add form — single field + type */}
+        {/* Add form — single field */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
@@ -589,17 +587,6 @@ function SettingsTab() {
               placeholder="مثال: très bon état"
               required
             />
-          </div>
-          <div className="w-40">
-            <label className="block text-xs text-gray-500 mb-1">النوع</label>
-            <select
-              value={newStsIsPermanent ? 'permanent' : 'returnable'}
-              onChange={(e) => setNewStsIsPermanent(e.target.value === 'permanent')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="returnable">قابل للإرجاع</option>
-              <option value="permanent">نهائي</option>
-            </select>
           </div>
           <div className="flex items-end">
             <Button onClick={handleAddStatus} disabled={!newStsNameAr.trim()}>
@@ -617,7 +604,6 @@ function SettingsTab() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">النوع</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>
               </thead>
@@ -636,16 +622,6 @@ function SettingsTab() {
                           />
                         </td>
                         <td className="py-3 px-4">
-                          <select
-                            value={editStsIsPermanent ? 'permanent' : 'returnable'}
-                            onChange={(e) => setEditStsIsPermanent(e.target.value === 'permanent')}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                          >
-                            <option value="returnable">قابل للإرجاع</option>
-                            <option value="permanent">نهائي</option>
-                          </select>
-                        </td>
-                        <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Button size="sm" onClick={handleUpdateStatus} disabled={!editStsNameAr.trim()}>
                               حفظ
@@ -659,11 +635,6 @@ function SettingsTab() {
                     ) : (
                       <>
                         <td className="py-3 px-4 font-medium text-gray-900">{sts.nameAr}</td>
-                        <td className="py-3 px-4">
-                          <Badge variant={sts.isPermanent ? 'default' : 'info'}>
-                            {sts.isPermanent ? 'نهائي' : 'قابل للإرجاع'}
-                          </Badge>
-                        </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <button
@@ -1137,7 +1108,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
   // Expose actions to parent header buttons
   useEffect(() => {
-    actionsRef.current = { toggleFilter: () => setFilterOpen((v) => !v), addItem: () => setShowCreateModal(true) }
+    actionsRef.current = { toggleFilter: () => setFilterOpen((v) => !v), addItem: () => { queryClient.invalidateQueries({ queryKey: ['articles'] }); setShowCreateModal(true); } }
   })
 
   // Create loan form state
