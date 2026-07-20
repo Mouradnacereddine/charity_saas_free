@@ -1247,12 +1247,9 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
     await returnItems.mutateAsync({ id: selectedLoan.id, items: validReturns })
     await queryClient.invalidateQueries({ queryKey: ['loans'] })
-    const loansData = queryClient.getQueryData<Loan[]>(['loans'])
-    if (loansData) {
-      const updated = loansData.find((l) => l.id === selectedLoan.id)
-      if (updated) setSelectedLoan(updated)
-    }
     setShowReturnForm(false)
+    setShowDetailModal(null)
+    setSelectedLoan(null)
   }
 
   // ---- Add Item to Loan ----
@@ -1429,7 +1426,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   <th className="text-right py-3 px-4 font-medium text-gray-500">رمز المرجعي</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">المستفيد</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden lg:table-cell">رمز المستفيد</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">عدد المقالات</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">المقالات</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">تاريخ الإعارة</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">تاريخ الإرجاع المتوقع</th>
@@ -1447,7 +1444,9 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     <td className="py-3 px-4 text-gray-600 hidden lg:table-cell" dir="ltr">
                       {loan.beneficiaryReference || '—'}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{loan.items.length}</td>
+                    <td className="py-3 px-4 text-gray-600">
+                      {loan.items.map((item) => item.articleNameAr).filter(Boolean).join('، ') || `(${loan.items.length} مقالات)`}
+                    </td>
                     <td className="py-3 px-4">
                       <Badge variant={LOAN_STATUS_VARIANTS[loan.status] || 'default'}>
                         {LOAN_STATUS_LABELS[loan.status] || loan.status}
