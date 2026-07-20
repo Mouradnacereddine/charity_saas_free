@@ -448,42 +448,42 @@ export default function AnalyticsPage() {
         <Card titleAr="مقارنة مصادر التمويل">
           <div className="space-y-6">
             <div className="flex flex-col items-center">
-              <div className="relative w-40 h-40">
+              <div className="relative w-48 h-48">
                 <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                  <circle cx="50" cy="50" r="42" className="stroke-gray-100 fill-none" strokeWidth="10" />
+                  <circle cx="50" cy="50" r="44" className="stroke-gray-100 fill-none" strokeWidth="8" />
                   {(() => {
                     const bankC = fundSourceBreakdown.bank.credits;
                     const cashC = fundSourceBreakdown.cash.credits;
                     const total = bankC + cashC;
-                    if (total <= 0) return <circle cx="50" cy="50" r="42" className="stroke-gray-200 fill-none" strokeWidth="10" />;
-                    const circ = 2 * Math.PI * 42;
+                    if (total <= 0) return <circle cx="50" cy="50" r="44" className="stroke-gray-200 fill-none" strokeWidth="8" />;
+                    const circ = 2 * Math.PI * 44;
                     const bankPct = bankC / total;
                     const bankLen = bankPct * circ;
                     return (
                       <>
-                        {/* Bank segment: goes from top clockwise for bankPct of the circle */}
-                        <circle cx="50" cy="50" r="42" className="stroke-primary-500 fill-none" strokeWidth="10"
+                        <circle cx="50" cy="50" r="44" className="stroke-primary-500 fill-none" strokeWidth="8"
                           strokeDasharray={`${bankLen} ${circ - bankLen}`} strokeDashoffset="0" strokeLinecap="butt" />
-                        {/* Cash segment: fills the remaining part */}
-                        <circle cx="50" cy="50" r="42" className="stroke-amber-400 fill-none" strokeWidth="10"
+                        <circle cx="50" cy="50" r="44" className="stroke-amber-400 fill-none" strokeWidth="8"
                           strokeDasharray={`${circ - bankLen} ${bankLen}`} strokeDashoffset={`-${bankLen}`} strokeLinecap="butt" />
                       </>
                     );
                   })()}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-xs text-gray-400">حصة البنك</span>
-                  <span className="text-lg font-bold text-primary-600">
-                    {(() => {
-                      const t = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                      return t > 0 ? `${((fundSourceBreakdown.bank.credits / t) * 100).toFixed(0)}%` : '—';
-                    })()}
-                  </span>
+                  {(() => {
+                    const t = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
+                    if (t <= 0) return <><span className="text-xs text-gray-400">لا توجد مداخيل</span></>;
+                    const bankPct = ((fundSourceBreakdown.bank.credits / t) * 100).toFixed(0);
+                    const cashPct = ((fundSourceBreakdown.cash.credits / t) * 100).toFixed(0);
+                    return (
+                      <>
+                        <span className="text-xs text-gray-400 mb-1">مصادر التمويل</span>
+                        <span className="text-sm font-semibold text-primary-600">🔵 بنك {bankPct}%</span>
+                        <span className="text-sm font-semibold text-amber-500">🟠 نقدي {cashPct}%</span>
+                      </>
+                    );
+                  })()}
                 </div>
-              </div>
-              <div className="flex gap-6 mt-2 text-xs text-gray-500">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-primary-500 rounded-full" /> بنك</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-amber-400 rounded-full" /> نقدي</span>
               </div>
             </div>
 
