@@ -912,6 +912,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   <th className="text-right py-3 px-4 font-medium text-gray-500">المتاح</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">مكان التخزين</th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -933,6 +934,15 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     </td>
                     <td className="py-3 px-4 text-gray-600 hidden md:table-cell">
                       {getStorageNameAr(article.storageLocation, locations)}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openEdit(article); }}
+                        className="p-1.5 text-gray-400 hover:text-primary-600 transition-colors"
+                        title="تعديل"
+                      >
+                        <Edit size={16} />
+                      </button>
                     </td>
                   </tr>
                 ))}
