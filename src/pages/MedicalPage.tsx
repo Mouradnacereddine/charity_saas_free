@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { formatCurrency, formatDate, numberToArabicWords, calculateAge } from '../utils/helpers';
-import { printReceipt } from '../lib/receipt';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import type { MedicalReferral, Beneficiary, Caisse, MedicalAnalysisType, MedicalHospital, SubCategory } from '../types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -245,28 +244,71 @@ export default function MedicalPage() {
     const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
 
     const childrenHtml = referral.children && Array.isArray(referral.children) && referral.children.length > 0
-      ? `<div class="row"><span class="lbl">الأطفال المستفيدون</span><span class="val">${referral.children.map((c: any) => c.nameAr || c.name).join(', ')}</span></div>`
-      : '';
+      ? referral.children.map((c: any) => c.nameAr || c.name).join('، ')
+      : ''
 
-    printReceipt(
-      'توجيه طبي', 'Orientation Médicale',
-      `<div class="col"><div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
-<div class="row"><span class="lbl">المستفيد</span><span class="val">${referral.beneficiaryNameAr}</span></div>
-<div class="row"><span class="lbl">رمز المستفيد</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
-<div class="row"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr || (referral.doctor ? referral.doctor.lastNameAr + ' ' + referral.doctor.firstNameAr : '')}</span></div>
-${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}</div>
-<div class="col">${caisseRow}${subCatRow}
-<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(referral.date)}</span></div>
-${referral.hospitalAr ? `<div class="row"><span class="lbl">المستشفى</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
-${childrenHtml}
-${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${referral.notes}</span></div>` : ''}</div>`,
-      'color:#2563eb',
-      formatCurrency(referral.amount),
-      referral.amountInWordsAr && !referral.amountInWordsAr.match(/^\d/) ? referral.amountInWordsAr : numberToArabicWords(referral.amount || 0),
-      '',
-      'توقيع المسؤول', 'ختم الجمعية',
-      association?.nameAr
-    );
+    // Find the full beneficiary to get nationalCardNumber
+    const fullBeneficiary = beneficiaries.find((b: Beneficiary) => b.id === referral.beneficiaryId)
+
+    const MEDICAL_CSS = `
+      @page { size: A5 portrait; margin: 6mm; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 10px; background: #fff; padding: 5mm; width: 148mm; }
+      .hdr { border-bottom: 1.5px solid #2563eb; padding-bottom: 3px; margin-bottom: 5px; }
+      .hdr h1 { font-size: 13px; color: #2563eb; margin: 0; }
+      .info { display: flex; flex-wrap: wrap; gap: 0 8px; margin-bottom: 4px; }
+      .col { width: 47%; }
+      .row { margin: 0.4mm 0; line-height: 1.4; }
+      .row .lbl { display: block; font-size: 7.5px; color: #999; }
+      .row .val { display: block; font-size: 10px; color: #222; }
+      .divider { border-top: 1px dashed #ccc; margin: 4px 0; }
+      .amt { background: #f0f4ff; border-radius: 3px; padding: 3px 8px; text-align: center; margin: 4px 0; }
+      .amt .num { font-size: 16px; font-weight: bold; }
+      .amt .words { font-size: 7.5px; color: #555; margin-top: 1px; }
+      .sign { display: flex; justify-content: space-between; padding-top: 3px; border-top: 0.8px dashed #ccc; font-size: 7.5px; color: #999; margin-top: 5px; }
+      .sign > div { text-align: center; min-width: 50mm; }
+      .sign .label { display: block; margin-bottom: 0.5mm; }
+      .sign .line { border-top: 0.8px solid #444; height: 16px; }
+      .footer-notice { font-size: 7px; color: #666; text-align: center; margin-top: 4px; padding-top: 3px; border-top: 0.5px solid #ddd; line-height: 1.5; }
+    `
+
+    const w = window.open('', '_blank')
+    if (!w) return
+    w.document.write(`
+<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>توجيه طبي</title><style>${MEDICAL_CSS}</style></head>
+<body>
+  <div class="hdr"><h1>🕌 ${association?.nameAr || 'الجمعية الخيرية'}</h1></div>
+  <div class="info">
+    <div class="col">
+      <div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
+      <div class="row"><span class="lbl">المستفيد</span><span class="val">${referral.beneficiaryNameAr}</span></div>
+      <div class="row"><span class="lbl">رمز المستفيد</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
+      ${fullBeneficiary?.nationalCardNumber ? `<div class="row"><span class="lbl">رقم البطاقة الوطنية</span><span class="val">${fullBeneficiary.nationalCardNumber}</span></div>` : ''}
+    </div>
+    <div class="col">
+      <div class="row"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr || (referral.doctor ? referral.doctor.lastNameAr + ' ' + referral.doctor.firstNameAr : '')}</span></div>
+      ${referral.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل / الفحص</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}
+      ${referral.hospitalAr ? `<div class="row"><span class="lbl">المستشفى / العيادة</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
+      <div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(referral.date)}</span></div>
+      ${caisseRow}
+      ${subCatRow}
+    </div>
+  </div>
+  ${childrenHtml ? `<div class="row"><span class="lbl">الأطفال المستفيدون</span><span class="val">${childrenHtml}</span></div>` : ''}
+  ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${referral.notes}</span></div>` : ''}
+  <div class="amt">
+    <div class="num">${formatCurrency(referral.amount)}</div>
+    <div class="words">${referral.amountInWordsAr && !referral.amountInWordsAr.match(/^\d/) ? referral.amountInWordsAr : numberToArabicWords(referral.amount || 0)}</div>
+  </div>
+  <div class="sign">
+    <div><span class="label">إمضاء رئيس الجمعية</span><div class="line"></div></div>
+    <div><span class="label">ختم الجمعية</span><div class="line"></div></div>
+  </div>
+  <div class="footer-notice">الجمعية تتخلى من مسؤوليتها عن كل توجيه الذي لا يحمل ختم الجمعية و إمضاء رئيس الجمعية، يُعتبر هذا التوجيه غير صالح و غير معترف به.</div>
+  <script>window.print();window.close();</script>
+</body></html>
+`)
+    w.document.close()
   };
 
   const appliedTerm = committedSearchTerm.toLowerCase();
