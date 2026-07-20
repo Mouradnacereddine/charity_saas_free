@@ -265,9 +265,9 @@ export default function MedicalPage() {
     const genderDisplay = fullBeneficiary?.gender === 'female' ? 'أنثى' : fullBeneficiary?.gender === 'male' ? 'ذكر' : ''
 
     const MEDICAL_CSS = `
-      @page { size: A5 portrait; margin: 8mm; }
+      @page { size: A5 portrait; margin: 10mm; }
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 10px; background: #fff; padding: 2mm; width: 148mm; }
+      body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 10px; background: #fff; padding: 0; width: 148mm; }
       .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #2563eb; padding-bottom: 3px; margin-bottom: 6px; }
       .header .assoc { font-size: 13px; font-weight: bold; color: #2563eb; }
       .header .title { font-size: 11px; color: #1e40af; font-weight: 600; }
@@ -306,7 +306,8 @@ export default function MedicalPage() {
     <div class="info-item"><span class="lbl">رمز المستفيد</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
     ${fullBeneficiary?.nationalCardNumber ? `<div class="info-item"><span class="lbl">رقم البطاقة الوطنية</span><span class="val">${fullBeneficiary.nationalCardNumber}</span></div>` : ''}
     ${ageDisplay ? `<div class="info-item"><span class="lbl">العمر / الجنس</span><span class="val">${ageDisplay} — ${genderDisplay}</span></div>` : ''}
-    <div class="info-item"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr || (referral.doctor ? referral.doctor.lastNameAr + ' ' + referral.doctor.firstNameAr : '')}</span></div>
+    <div class="info-item"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr || (referral.doctor ? referral.doctor.lastNameAr + ' ' + referral.doctor.firstNameAr : '')}${referral.doctor?.specialty?.nameAr ? ` (${referral.doctor.specialty.nameAr})` : ''}</span></div>
+    ${referral.doctor?.address ? `<div class="info-item"><span class="lbl">عنوان الطبيب</span><span class="val">${referral.doctor.address}</span></div>` : ''}
     ${referral.analysisTypeAr ? `<div class="info-item"><span class="lbl">التحليل / الفحص</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}
     ${referral.hospitalAr ? `<div class="info-item"><span class="lbl">المستشفى / العيادة</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
     ${caisseRow ? `<div class="info-item">${caisseRow}</div>` : ''}
