@@ -521,6 +521,7 @@ ${referral.notes ? `<div class="row"><span class="lbl">ملاحظات</span><spa
                   <span className="font-medium">{selectedDoctor.lastNameAr} {selectedDoctor.firstNameAr}</span>
                   {selectedDoctor.specialty?.nameAr && <span> — {selectedDoctor.specialty.nameAr}</span>}
                   <br /><span dir="ltr">{selectedDoctor.phone}</span>
+                  {selectedDoctor.address && <><br /><span>{selectedDoctor.address}</span></>}
                 </p>
               </div>
             )}
