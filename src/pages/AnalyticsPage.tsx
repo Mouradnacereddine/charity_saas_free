@@ -453,32 +453,31 @@ export default function AnalyticsPage() {
                   <circle cx="50" cy="50" r="40" className="stroke-gray-100 fill-none" strokeWidth="8" />
                   {(() => {
                     const totalCred = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                    if (totalCred <= 0) return <circle cx="50" cy="50" r="40" className="stroke-gray-200 fill-none" strokeWidth="8" />;
-                    const bankShare = fundSourceBreakdown.bank.credits / totalCred;
                     const circ = 2 * Math.PI * 40;
-                    const offset = circ - bankShare * circ;
-                    return (
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        className="stroke-primary-500 fill-none"
-                        strokeWidth="8"
-                        strokeDasharray={circ}
-                        strokeDashoffset={offset}
-                        strokeLinecap="round"
-                      />
-                    );
+                    if (totalCred <= 0) return <circle cx="50" cy="50" r="40" className="stroke-gray-100 fill-none" strokeWidth="8" />;
+                    const bankShare = fundSourceBreakdown.bank.credits / totalCred;
+                    const bankOffset = circ - bankShare * circ;
+                    const cashShare = fundSourceBreakdown.cash.credits / totalCred;
+                    const cashOffset = circ - (bankShare + cashShare) * circ;
+                    return <>
+                      <circle cx="50" cy="50" r="40" className="stroke-primary-500 fill-none" strokeWidth="8"
+                        strokeDasharray={circ} strokeDashoffset={bankOffset} strokeLinecap="butt" />
+                      {cashShare > 0 && (
+                        <circle cx="50" cy="50" r="40" className="stroke-amber-400 fill-none" strokeWidth="8"
+                          strokeDasharray={circ} strokeDashoffset={cashOffset} strokeLinecap="butt" />
+                      )}
+                    </>;
                   })()}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-xs text-gray-400">حصة البنك</span>
-                  <span className="text-lg font-bold text-primary-600">
-                    {(() => {
-                      const totalCred = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                      return totalCred > 0 ? `${((fundSourceBreakdown.bank.credits / totalCred) * 100).toFixed(0)}%` : '—';
-                    })()}
+                  <span className="text-xs text-gray-400">إجمالي المداخيل</span>
+                  <span className="text-base font-bold text-gray-900">
+                    {formatCurrency(fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits)}
                   </span>
+                </div>
+                <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-primary-500 rounded-full" /> بنك: {((fundSourceBreakdown.bank.credits / Math.max(1, totalCred)) * 100).toFixed(0)}%</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-amber-400 rounded-full" /> نقدي: {((fundSourceBreakdown.cash.credits / Math.max(1, totalCred)) * 100).toFixed(0)}%</span>
                 </div>
               </div>
             </div>
