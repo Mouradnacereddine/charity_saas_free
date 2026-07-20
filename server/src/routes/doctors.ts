@@ -103,11 +103,11 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
       where: { doctorId: id, associationId },
     });
 
-    const referralsThisMonth = await prisma.medicalReferral.count({
+    const referralsThisMonthVal = await prisma.medicalReferral.count({
       where: { doctorId: id, associationId, date: { gte: startOfMonth } },
     });
 
-    const referralsThisWeek = await prisma.medicalReferral.count({
+    const referralsThisWeekVal = await prisma.medicalReferral.count({
       where: { doctorId: id, associationId, date: { gte: startOfWeek } },
     });
 
@@ -125,7 +125,7 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
       _count: { id: true },
     });
 
-    // Convert to month buckets — accumulate counts per month
+    // Convert to month buckets
     const monthMap = new Map<string, number>();
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -140,12 +140,98 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
 
     const referralsByMonth = Array.from(monthMap.entries()).map(([month, count]) => ({ month, count }));
 
+    // Weekly breakdown (last 4 weeks)
+    const fourWeeksAgo = new Date(now);
+    fourWeeksAgo.setDate(now.getDate() - 27);
+    const weeklyData = await prisma.medicalReferral.groupBy({
+      by: ['date'],
+      where: { doctorId: id, associationId, date: { gte: fourWeeksAgo }, status: { not: 'cancelled' } },
+      _count: { id: true },
+    });
+    const weekMap = new Map<string, number>();
+    for (let i = 3; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - now.getDay() - i * 7);
+      const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const key = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+      weekMap.set(key, 0);
+    }
+    for (const item of weeklyData) {
+      const d = new Date(item.date);
+      const diff = Math.floor((now.getTime() - d.getTime()) / (7 * 86400000));
+      const weekIndex = Math.min(Math.floor(diff), 3);
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay() - weekIndex * 7);
+      const key = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+      if (weekMap.has(key)) weekMap.set(key, weekMap.get(key)! + item._count.id);
+    }
+    const referralsByWeek = Array.from(weekMap.entries()).map(([week, count]) => ({ week, count }));
+
+    // Daily breakdown (last 7 days)
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 6);
+    const dailyData = await prisma.medicalReferral.groupBy({
+      by: ['date'],
+      where: { doctorId: id, associationId, date: { gte: sevenDaysAgo }, status: { not: 'cancelled' } },
+      _count: { id: true },
+    });
+    const dayMap = new Map<string, number>();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      dayMap.set(key, 0);
+    }
+    for (const item of dailyData) {
+      const d = new Date(item.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (dayMap.has(key)) dayMap.set(key, dayMap.get(key)! + item._count.id);
+    }
+    const referralsByDay = Array.from(dayMap.entries()).map(([day, count]) => ({ day, count }));
+
+    // Recent beneficiary referrals (last 50)
+    const recentReferrals = await prisma.medicalReferral.findMany({
+      where: { doctorId: id, associationId },
+      orderBy: { date: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        date: true,
+        status: true,
+        beneficiaryId: true,
+        beneficiary: {
+          select: {
+            id: true,
+            firstNameAr: true,
+            lastNameAr: true,
+            reference: true,
+          },
+        },
+      },
+    });
+
+    const referralBeneficiaries = recentReferrals.map((r) => ({
+      id: r.id,
+      date: r.date,
+      status: r.status,
+      beneficiary: r.beneficiary
+        ? {
+            id: r.beneficiary.id,
+            nameAr: `${r.beneficiary.lastNameAr} ${r.beneficiary.firstNameAr}`,
+            reference: r.beneficiary.reference,
+          }
+        : null,
+    }));
+
     res.json({
       totalReferrals,
-      referralsThisMonth,
-      referralsThisWeek,
+      referralsThisMonth: referralsThisMonthVal,
+      referralsThisWeek: referralsThisWeekVal,
       lastReferral: lastReferral?.date || null,
       referralsByMonth,
+      referralsByWeek,
+      referralsByDay,
+      referralBeneficiaries,
     });
   } catch (error) {
     console.error('Error getting doctor stats:', error);

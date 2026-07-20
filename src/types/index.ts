@@ -92,6 +92,14 @@ export interface DoctorStats {
   referralsThisWeek: number;
   lastReferral: string | null;
   referralsByMonth: { month: string; count: number }[];
+  referralsByWeek: { week: string; count: number }[];
+  referralsByDay: { day: string; count: number }[];
+  referralBeneficiaries: {
+    id: string;
+    date: string;
+    status: string;
+    beneficiary: { id: string; nameAr: string; reference: string } | null;
+  }[];
 }
 
 export interface SchoolGrade {

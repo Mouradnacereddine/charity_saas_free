@@ -303,28 +303,91 @@ export default function DoctorsPage() {
               <p className="text-xs text-gray-400 mb-3">عدد المرات التي تم فيها توجيه مرضى إلى هذا الطبيب</p>
               {doctorStats ? (
                 <>
+                  {/* Summary boxes */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                     <StatBox label="الإجمالي" value={doctorStats.totalReferrals} color="text-primary-600" />
                     <StatBox label="هذا الشهر" value={doctorStats.referralsThisMonth} color="text-green-600" />
                     <StatBox label="هذا الأسبوع" value={doctorStats.referralsThisWeek} color="text-amber-600" />
                     <StatBox label="آخر توجيه" value={doctorStats.lastReferral ? formatDate(doctorStats.lastReferral) : '—'} color="text-gray-600" />
                   </div>
+
+                  {/* Daily breakdown */}
+                  {doctorStats.referralsByDay && doctorStats.referralsByDay.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                      <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> آخر 7 أيام
+                      </p>
+                      <div className="flex items-end gap-1 h-16">
+                        {doctorStats.referralsByDay.map((d: { day: string; count: number }) => {
+                          const max = Math.max(...doctorStats.referralsByDay.map((x: any) => x.count), 1);
+                          const height = Math.max((d.count / max) * 100, 4);
+                          return (
+                            <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
+                              <span className="text-[10px] text-gray-500 font-medium">{d.count}</span>
+                              <div className="w-full bg-green-300 rounded-t" style={{ height: `${height}%`, minHeight: '4px' }} />
+                              <span className="text-[9px] text-gray-400">{d.day.slice(8)}/{d.day.slice(5,7)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Monthly breakdown */}
+                  {doctorStats.referralsByMonth && doctorStats.referralsByMonth.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                      <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> آخر 12 شهراً
+                      </p>
+                      <div className="flex items-end gap-1 h-20">
+                        {doctorStats.referralsByMonth.map((m: { month: string; count: number }) => {
+                          const max = Math.max(...doctorStats.referralsByMonth.map((x: any) => x.count), 1);
+                          const height = Math.max((m.count / max) * 100, 4);
+                          return (
+                            <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
+                              <span className="text-[10px] text-gray-500 font-medium">{m.count}</span>
+                              <div className="w-full bg-primary-200 rounded-t" style={{ height: `${height}%`, minHeight: '4px' }} />
+                              <span className="text-[9px] text-gray-400">{m.month.slice(5)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Beneficiary history table */}
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> عدد المرضى حسب الشهر
+                      <Activity className="w-3 h-3" /> آخر المستفيدين (آخر 50)
                     </p>
-                    <div className="flex items-end gap-1 h-20">
-                      {doctorStats.referralsByMonth?.map((m: { month: string; count: number }) => {
-                        const max = Math.max(...doctorStats.referralsByMonth.map((x: any) => x.count), 1);
-                        const height = Math.max((m.count / max) * 100, 4);
-                        return (
-                          <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                            <span className="text-[10px] text-gray-500 font-medium">{m.count}</span>
-                            <div className="w-full bg-primary-200 rounded-t" style={{ height: `${height}%`, minHeight: '4px' }} />
-                            <span className="text-[9px] text-gray-400">{m.month.slice(5)}</span>
-                          </div>
-                        );
-                      })}
+                    <div className="max-h-48 overflow-y-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-right py-1 px-2 font-medium text-gray-500">التاريخ</th>
+                            <th className="text-right py-1 px-2 font-medium text-gray-500">المستفيد</th>
+                            <th className="text-right py-1 px-2 font-medium text-gray-500">رمز المستفيد</th>
+                            <th className="text-center py-1 px-2 font-medium text-gray-500">الحالة</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {doctorStats.referralBeneficiaries?.map((r: any) => (
+                            <tr key={r.id} className="border-b border-gray-100">
+                              <td className="py-1 px-2 text-gray-600">{formatDate(r.date)}</td>
+                              <td className="py-1 px-2 text-gray-900">{r.beneficiary?.nameAr || '—'}</td>
+                              <td className="py-1 px-2 text-gray-500 font-mono" dir="ltr">{r.beneficiary?.reference || '—'}</td>
+                              <td className="py-1 px-2 text-center">
+                                <Badge variant={r.status === 'completed' ? 'success' : r.status === 'pending' ? 'warning' : 'danger'}>
+                                  {r.status === 'completed' ? 'مكتمل' : r.status === 'pending' ? 'معلق' : 'ملغي'}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                          {(!doctorStats.referralBeneficiaries || doctorStats.referralBeneficiaries.length === 0) && (
+                            <tr><td colSpan={4} className="py-2 text-center text-gray-400">لا توجد توجيهات سابقة</td></tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </>
