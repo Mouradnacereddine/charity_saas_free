@@ -1112,6 +1112,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
   // Return items form state
   const [showReturnForm, setShowReturnForm] = useState(false)
+  const [isReturning, setIsReturning] = useState(false)
   const [returnEntries, setReturnEntries] = useState<{ articleId: string; quantity: number; condition: string }[]>([])
 
   // Add item to existing loan form state
@@ -1241,15 +1242,22 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   }
 
   const handleReturnItems = async () => {
-    if (!selectedLoan) return
+    if (!selectedLoan || isReturning) return
     const validReturns = returnEntries.filter((r) => r.quantity > 0)
     if (validReturns.length === 0) return
 
-    await returnItems.mutateAsync({ id: selectedLoan.id, items: validReturns })
-    await queryClient.invalidateQueries({ queryKey: ['loans'] })
-    setShowReturnForm(false)
-    setShowDetailModal(null)
-    setSelectedLoan(null)
+    setIsReturning(true)
+    try {
+      await returnItems.mutateAsync({ id: selectedLoan.id, items: validReturns })
+      await queryClient.invalidateQueries({ queryKey: ['loans'] })
+      setShowReturnForm(false)
+      setShowDetailModal(null)
+      setSelectedLoan(null)
+    } catch (err) {
+      console.error('Return failed:', err)
+    } finally {
+      setIsReturning(false)
+    }
   }
 
   // ---- Add Item to Loan ----
@@ -1624,6 +1632,16 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
             {/* Items list */}
             <div>
               <h4 className="text-sm font-semibold text-gray-700 mb-3">المقالات</h4>
+              <div className="flex flex-wrap gap-2 mb-3 text-xs text-gray-500">
+                {selectedLoan.items.map((item) => {
+                  const art = articles.find((a: Article) => a.id === item.articleId)
+                  return art ? (
+                    <span key={item.articleId} className="bg-gray-50 px-2 py-1 rounded">
+                      {art.nameAr}: المخزون {art.quantity} | المتاح {art.availableQuantity}
+                    </span>
+                  ) : null
+                })}
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -1631,6 +1649,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                       <th className="text-right py-2 px-3 font-medium text-gray-500">المقال</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">الكمية</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">المُرتجع</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">المتبقي</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">الحالة عند الإعارة</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">الحالة عند الإرجاع</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">الإجراءات</th>
@@ -1654,6 +1673,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                             {item.returnedQuantity}
                           </span>
                         </td>
+                        <td className="py-2 px-3 text-gray-600">{item.quantity - item.returnedQuantity}</td>
                         <td className="py-2 px-3 text-gray-600">{item.conditionOnLoan || '—'}</td>
                         <td className="py-2 px-3 text-gray-600">{item.conditionOnReturn || '—'}</td>
                         <td className="py-2 px-3">
@@ -1737,10 +1757,10 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   <Button
                     size="sm"
                     onClick={handleReturnItems}
-                    disabled={returnEntries.every((r) => r.quantity === 0)}
+                    disabled={returnEntries.every((r) => r.quantity === 0) || isReturning}
                   >
                     <RotateCcw className="w-4 h-4" />
-                    تأكيد الإرجاع
+                    {isReturning ? 'جاري الإرجاع...' : 'تأكيد الإرجاع'}
                   </Button>
                 </div>
               </div>
