@@ -4,7 +4,7 @@ dotenv.config();
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-in-production-2026',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   bcryptRounds: 10,
   accessTokenExpiry: '15m' as const,
