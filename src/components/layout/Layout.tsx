@@ -15,8 +15,10 @@ import {
   ChevronDown,
   Settings,
   TrendingUp,
+  ChevronRight,
 } from 'lucide-react';
 import { authApi } from '../../lib/api';
+import { useUIStore } from '../../stores/uiStore';
 
 const navItems = [
   { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
@@ -54,6 +56,7 @@ export function Layout({
   onLogout?: () => void;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsNameAr, setSettingsNameAr] = useState(associationNameAr || '');
@@ -112,9 +115,11 @@ export function Layout({
       {/* Sidebar — always full viewport height */}
       <aside
         className={`
-          fixed top-0 right-0 z-50 h-screen w-64 bg-primary-900 text-white
-          transform transition-transform duration-200 ease-in-out
+          fixed top-0 right-0 z-50 h-screen bg-primary-900 text-white
+          transform transition-all duration-200 ease-in-out
+          w-64
           lg:translate-x-0 lg:sticky lg:z-auto
+          ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}
           ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
         `}
       >
@@ -125,14 +130,26 @@ export function Layout({
             ) : (
               <span className="text-lg shrink-0">🕌</span>
             )}
-            <h1 className="text-lg font-bold truncate">{associationNameAr || 'جمعية خيرية'}</h1>
+            <h1 className={`text-lg font-bold truncate transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
+              {associationNameAr || 'جمعية خيرية'}
+            </h1>
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1 text-primary-300 hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggleSidebar}
+              className="hidden lg:flex p-1.5 rounded-lg text-primary-300 hover:text-white hover:bg-primary-800 transition-colors"
+              aria-label={sidebarCollapsed ? 'توسيع القائمة' : 'طي القائمة'}
+              title={sidebarCollapsed ? 'توسيع القائمة' : 'طي القائمة'}
+            >
+              <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? '' : 'rotate-180'}`} />
+            </button>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-1 text-primary-300 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
         <nav className="p-3 space-y-1 overflow-y-auto" style={{ height: 'calc(100vh - 65px)' }}>
           {navItems
@@ -144,14 +161,19 @@ export function Layout({
                   onNavigate(item.id);
                   setSidebarOpen(false);
                 }}
+                title={sidebarCollapsed ? item.label : undefined}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''
+                } ${
                   activePage === item.id
                     ? 'bg-primary-700 text-white shadow-sm'
                     : 'text-primary-200 hover:bg-primary-800 hover:text-white'
                 }`}
               >
                 <item.icon className="w-5 h-5 shrink-0" />
-                <span className="truncate">{item.label}</span>
+                <span className={`truncate transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
+                  {item.label}
+                </span>
               </button>
             ))}
         </nav>
