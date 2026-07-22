@@ -227,13 +227,15 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
     let payload: { userId: string };
     try {
       payload = jwt.verify(refreshToken, config.jwtRefreshSecret) as { userId: string };
-    } catch {
+    } catch (err) {
+      console.warn(`🔐 Refresh failed — Invalid/expired refresh token. Token prefix: ${refreshToken.substring(0, 12)}...`);
       res.status(401).json({ error: 'Invalid or expired refresh token' });
       return;
     }
 
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) {
+      console.warn(`🔐 Refresh failed — User not found for userId=${payload.userId}`);
       res.status(401).json({ error: 'User not found' });
       return;
     }

@@ -13,6 +13,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   const authHeader = req.headers.authorization;
 
   if (!authHeader || Array.isArray(authHeader) || !authHeader.startsWith('Bearer ')) {
+    console.warn(`🔐 401 — No valid Authorization header. URL: ${req.method} ${req.path}, IP: ${req.ip}`);
     res.status(401).json({ error: 'Authentication required' });
     return;
   }
@@ -23,7 +24,8 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     const payload = verifyToken(token);
     req.user = payload;
     next();
-  } catch {
+  } catch (err) {
+    console.warn(`🔐 401 — Invalid or expired token. URL: ${req.method} ${req.path}, IP: ${req.ip}, Token prefix: ${token.substring(0, 12)}...`);
     res.status(401).json({ error: 'Invalid or expired token' });
   }
 }

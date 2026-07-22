@@ -13,3 +13,14 @@ export const config = {
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
 };
+
+// Warn if default secrets are used in production (Vercel)
+if (!process.env.VERCEL && !process.env.JWT_SECRET) {
+  console.warn('⚠️  WARNING: Using default JWT_SECRET. Set JWT_SECRET env var in production.');
+}
+if (process.env.VERCEL && !process.env.JWT_SECRET) {
+  console.error('🚨  CRITICAL: JWT_SECRET is not set in Vercel environment variables! Authentication will fail.');
+}
+if (process.env.VERCEL && !process.env.JWT_REFRESH_SECRET) {
+  console.error('🚨  CRITICAL: JWT_REFRESH_SECRET is not set in Vercel environment variables! Token refresh will fail.');
+}
