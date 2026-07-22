@@ -12,7 +12,6 @@ import {
   ChevronLeft,
   LogOut,
   UserCog,
-  ChevronDown,
   Settings,
   TrendingUp,
   ChevronRight,
@@ -117,7 +116,7 @@ export function Layout({
         className={`
           fixed top-0 right-0 z-50 h-screen bg-primary-900 text-white
           transform transition-all duration-200 ease-in-out
-          w-64
+          w-64 flex flex-col
           lg:translate-x-0 lg:sticky lg:z-auto
           ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}
           ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
@@ -151,7 +150,7 @@ export function Layout({
             </button>
           </div>
         </div>
-        <nav className="p-3 space-y-1 overflow-y-auto" style={{ height: 'calc(100vh - 65px)' }}>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {navItems
             .filter((item) => item.id !== 'analytics' || isAdmin || userRole === 'treasurer')
             .map((item) => (
@@ -177,60 +176,23 @@ export function Layout({
               </button>
             ))}
         </nav>
-      </aside>
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Sticky header */}
-        <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 no-print">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
-              aria-label="فتح القائمة"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            {breadcrumbs && (
-              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500" dir="rtl">
-                {breadcrumbs.map((crumb, i) => (
-                  <span key={`bc-${i}`} className="flex items-center gap-1.5">
-                    {i > 0 && <ChevronLeft className="w-3 h-3 text-gray-300" />}
-                    {i < breadcrumbs.length - 1 ? (
-                      <button onClick={() => onNavigate(crumb.page)} className="hover:text-primary-600 transition-colors">
-                        {crumb.label}
-                      </button>
-                    ) : (
-                      <span className="text-gray-900 font-medium">{crumb.label}</span>
-                    )}
-                  </span>
-                ))}
-              </nav>
-            )}
-          </div>
-          <div className="text-center flex-1">
-            <span className="text-sm text-green-800 font-arabic">بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* User menu */}
+        {/* User section — fixed at bottom of sidebar */}
+        <div className="border-t border-primary-700 p-3 shrink-0">
+          {sidebarCollapsed ? (
+            /* Mode icônes : avatar cliquable → dropdown overlay */
             <div className="relative" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-sm"
+                className="w-full flex justify-center py-2 rounded-lg hover:bg-primary-800 transition-colors"
+                title={userNameAr || 'مستخدم'}
               >
-                <div className="w-7 h-7 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold text-xs">
+                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold text-sm">
                   {userNameAr?.charAt(0) || '?'}
                 </div>
-                <div className="hidden sm:block text-right">
-                  <p className="text-gray-900 font-medium leading-tight">{userNameAr || 'مستخدم'}</p>
-                  <p className="text-xs text-gray-400">{userRole === 'admin' ? 'مدير' : userRole === 'treasurer' ? 'أمين المال' : 'متطوع'}</p>
-                </div>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
               </button>
-
               {userMenuOpen && (
-                <div className="absolute left-0 right-0 sm:left-auto sm:right-auto top-full mt-1 sm:w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 mx-0 sm:mx-0"
-                     style={{ left: '0', right: '0', marginLeft: 'auto', marginRight: 'auto', width: '260px' }}>
+                <div className="absolute bottom-full right-0 mb-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                   <div className="p-3 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900">{userNameAr || 'مستخدم'}</p>
                     <p className="text-xs text-gray-500">
@@ -267,14 +229,97 @@ export function Layout({
                 </div>
               )}
             </div>
-            <div className="text-xs sm:text-sm text-gray-500 hidden sm:block">
-              {new Date().toLocaleDateString('ar-DZ', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </div>
+          ) : (
+            /* Mode étendu : infos + boutons affichés directement */
+            <>
+              <div className="flex items-center gap-3 px-2 py-2">
+                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold text-sm shrink-0">
+                  {userNameAr?.charAt(0) || '?'}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{userNameAr || 'مستخدم'}</p>
+                  <p className="text-xs text-primary-300 truncate">
+                    {userRole === 'admin' ? 'مدير النظام' : userRole === 'treasurer' ? 'أمين المال' : 'متطوع'}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-1 space-y-0.5">
+                {isAdmin && (
+                  <button
+                    onClick={() => { onNavigate('users'); setSidebarOpen(false); }}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary-200 hover:text-white hover:bg-primary-800 rounded-lg transition-colors"
+                  >
+                    <UserCog className="w-4 h-4 shrink-0" />
+                    <span className={`truncate transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
+                      إدارة المستخدمين
+                    </span>
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowSettingsModal(true)}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary-200 hover:text-white hover:bg-primary-800 rounded-lg transition-colors"
+                  >
+                    <Settings className="w-4 h-4 shrink-0" />
+                    <span className={`truncate transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
+                      إعدادات الجمعية
+                    </span>
+                  </button>
+                )}
+                <button
+                  onClick={() => { onLogout?.(); setSidebarOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-300 hover:text-red-200 hover:bg-primary-800 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-4 h-4 shrink-0" />
+                  <span className={`truncate transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
+                    تسجيل الخروج
+                  </span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </aside>
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Sticky header */}
+        <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 no-print">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
+              aria-label="فتح القائمة"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            {breadcrumbs && (
+              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500" dir="rtl">
+                {breadcrumbs.map((crumb, i) => (
+                  <span key={`bc-${i}`} className="flex items-center gap-1.5">
+                    {i > 0 && <ChevronLeft className="w-3 h-3 text-gray-300" />}
+                    {i < breadcrumbs.length - 1 ? (
+                      <button onClick={() => onNavigate(crumb.page)} className="hover:text-primary-600 transition-colors">
+                        {crumb.label}
+                      </button>
+                    ) : (
+                      <span className="text-gray-900 font-medium">{crumb.label}</span>
+                    )}
+                  </span>
+                ))}
+              </nav>
+            )}
+          </div>
+          <div className="text-center flex-1">
+            <span className="text-sm text-green-800 font-arabic">بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</span>
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500">
+            {new Date().toLocaleDateString('ar-DZ', {
+              weekday: 'short',
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            })}
           </div>
         </header>
 
