@@ -5,6 +5,17 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { config } from './config';
 import { autoInvalidate } from './lib/autoInvalidate';
+import { Prisma } from './generated/prisma/client';
+
+// Patch Decimal.prototype.toJSON so Decimal values serialize as numbers in JSON,
+// not as strings. Prisma Decimal uses decimal.js internally; its default toJSON
+// returns a string that loses the numeric type on the client.
+const OrigDecimal = Prisma.Decimal.prototype as any;
+OrigDecimal.toJSON = function (this: any) {
+  const n = Number(this);
+  // Avoid floating-point display artifacts: clamp to 2 decimals for display
+  return Math.round(n * 100) / 100;
+};
 import authRoutes from './routes/auth';
 import beneficiariesRoutes from './routes/beneficiaries';
 import donorsRoutes from './routes/donors';

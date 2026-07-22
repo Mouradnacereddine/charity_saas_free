@@ -318,7 +318,7 @@ router.delete('/referrals/:id', async (req: AuthRequest, res: Response): Promise
     }
 
     // Refund the caisse if the referral was completed with amount > 0
-    if (existing.status === 'completed' && existing.amount > 0) {
+    if (existing.status === 'completed' && Number(existing.amount) > 0) {
       await prisma.caisse.update({
         where: { id: existing.caisseId },
         data: { balance: { increment: existing.amount } },

@@ -86,7 +86,7 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
         select: { id: true, amount: true, remainingAmount: true, debitTransactionId: true },
       });
       for (const da of debitAllocs) {
-        debitAllocMap.set(da.debitTransactionId!, { remainingAmount: da.remainingAmount, allocationId: da.id });
+        debitAllocMap.set(da.debitTransactionId!, { remainingAmount: Number(da.remainingAmount), allocationId: da.id });
       }
     }
 
@@ -96,10 +96,10 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
       let rem: number | null = null;
       let allocId: string | null = null;
       if (tx.type === 'credit' && alloc) {
-        rem = alloc.remainingAmount;
+        rem = Number(alloc.remainingAmount);
         allocId = alloc.id;
       } else if (tx.type === 'debit' && debitAlloc) {
-        rem = debitAlloc.remainingAmount;
+        rem = Number(debitAlloc.remainingAmount);
         allocId = debitAlloc.allocationId;
       }
       return {
@@ -307,7 +307,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
             where: { id: allocationId },
           });
           if (alloc && alloc.associationId === associationId) {
-            const newRemaining = Math.max(0, alloc.remainingAmount - amountNum);
+            const newRemaining = Math.max(0, Number(alloc.remainingAmount) - Number(amountNum));
             await tx.donationAllocation.update({
               where: { id: allocationId },
               data: { remainingAmount: newRemaining, debitTransactionId: transaction.id },
@@ -493,8 +493,8 @@ router.get('/stats', async (req: AuthRequest, res: Response): Promise<void> => {
       where: { associationId },
     });
 
-    const totalBankBalance = bankAccounts.reduce((sum, acc) => sum + acc.balance, 0);
-    const totalCashBalance = caisses.reduce((sum, c) => sum + c.balance, 0);
+    const totalBankBalance = bankAccounts.reduce((sum, acc) => Number(sum) + Number(acc.balance), 0);
+    const totalCashBalance = caisses.reduce((sum, c) => Number(sum) + Number(c.balance), 0);
 
     res.json({
       totalBankBalance,
@@ -532,8 +532,8 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
       }
     }
 
-    const amountNum = tx.amount;
-    const confirmAmount = req.body.amount !== undefined ? Number(req.body.amount) : amountNum;
+    const amountNum = Number(tx.amount);
+    const confirmAmount = Number(req.body.amount !== undefined ? req.body.amount : amountNum);
 
     if (isNaN(confirmAmount) || confirmAmount <= 0 || confirmAmount > amountNum) {
       res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
@@ -543,7 +543,7 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
     // Check balance for debits
     if (tx.type === 'debit') {
       if (tx.fundSource === 'caisse_physique') {
-        if (tx.caisse.balance < confirmAmount) {
+        if (Number(tx.caisse.balance) < confirmAmount) {
           res.status(400).json({ error: 'رصيد الصندوق غير كافٍ لإكمال هذه المعاملة' });
           return;
         }
@@ -551,7 +551,7 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
         const bankAccount = await prisma.bankAccount.findFirst({
           where: { id: tx.bankAccountId, associationId },
         });
-        if (!bankAccount || bankAccount.balance < confirmAmount) {
+        if (!bankAccount || Number(bankAccount.balance) < confirmAmount) {
           res.status(400).json({ error: 'Insufficient bank balance to confirm' });
           return;
         }
@@ -587,7 +587,7 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
         });
 
         if (debitAlloc) {
-          const newRemaining = Math.max(0, debitAlloc.remainingAmount - confirmAmount);
+          const newRemaining = Math.max(0, Number(debitAlloc.remainingAmount) - Number(confirmAmount));
           await prismaTx.donationAllocation.update({
             where: { id: debitAlloc.id },
             data: { remainingAmount: newRemaining },
@@ -680,7 +680,7 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
         });
 
         if (alloc) {
-          const newRemaining = Math.max(0, alloc.remainingAmount - confirmAmount);
+          const newRemaining = Math.max(0, Number(alloc.remainingAmount) - Number(confirmAmount));
           await prismaTx.donationAllocation.update({
             where: { id: alloc.id },
             data: { remainingAmount: newRemaining, debitTransactionId: debitTx.id },
@@ -875,7 +875,7 @@ router.post('/allocations/:id/disburse', async (req: AuthRequest, res: Response)
       }
 
       // Update allocation
-      const newRemaining = Math.max(0, alloc.remainingAmount - disburseAmount);
+      const newRemaining = Math.max(0, Number(alloc.remainingAmount) - Number(disburseAmount));
       await prismaTx.donationAllocation.update({
         where: { id },
         data: { remainingAmount: newRemaining, debitTransactionId: debitTx.id },
@@ -907,8 +907,8 @@ router.put('/allocations/:id/distribute', async (req: AuthRequest, res: Response
       return;
     }
 
-    const distributeAmount = amount || allocation.remainingAmount;
-    const newRemaining = allocation.remainingAmount - distributeAmount;
+    const distributeAmount = Number(amount || allocation.remainingAmount);
+    const newRemaining = Number(allocation.remainingAmount) - Number(distributeAmount);
 
     const updated = await prisma.donationAllocation.update({
       where: { id },

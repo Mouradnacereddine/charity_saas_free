@@ -134,7 +134,7 @@ model Caisse {
   reference     String
   name          String
   nameAr        String
-  balance       Float    @default(0)
+  balance       Decimal  @default(0)
   subCategories Json     @default("[]")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -157,7 +157,7 @@ model BankAccount {
   rib           String
   iban          String
   swift         String
-  balance       Float    @default(0)
+  balance       Decimal  @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -215,7 +215,7 @@ model Donor {
   email         String?
   address       String?
   gender        String? @default("male")
-  totalDonated  Float    @default(0)
+  totalDonated  Decimal    @default(0)
   notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -232,7 +232,7 @@ model Transaction {
   id              String          @id @default(uuid())
   associationId   String
   type            TransactionType
-  amount          Float
+  amount          Decimal
   amountInWords   String
   amountInWordsAr String
   fundSource      FundSource
@@ -447,7 +447,7 @@ model MedicalReferral {
   analysisTypeAr  String?
   hospital        String?
   hospitalAr      String?
-  amount          Float    @default(0)
+  amount          Decimal    @default(0)
   amountInWords   String   @default("")
   amountInWordsAr String   @default("")
   status          String   @default("pending")
@@ -477,7 +477,7 @@ model DonationReceipt {
   donorName       String
   donorNameAr     String
   transactionId   String
-  amount          Float
+  amount          Decimal
   amountInWords   String
   amountInWordsAr String
   caisseId        String
@@ -524,8 +524,8 @@ model DonationAllocation {
   beneficiaryId      String
   creditTransactionId String
   debitTransactionId String?
-  amount             Float
-  remainingAmount    Float
+  amount             Decimal
+  remainingAmount    Decimal
   notes              String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

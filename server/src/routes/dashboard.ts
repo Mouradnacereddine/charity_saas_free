@@ -32,7 +32,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     // Financial data — only for admins
     let totalBankBalance = 0;
     let totalCashBalance = 0;
-    let caissesBalances: { id: string; name: string; nameAr: string; balance: number }[] = [];
+    let caissesBalances: { id: string; name: string; nameAr: string; balance: any }[] = [];
     let recentTransactions: any[] = [];
 
     if (isAdmin) {
@@ -44,8 +44,8 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         where: { associationId },
       });
 
-      totalBankBalance = bankAccounts.reduce((sum, acc) => sum + acc.balance, 0);
-      totalCashBalance = caisses.reduce((sum, c) => sum + c.balance, 0);
+      totalBankBalance = bankAccounts.reduce((sum, acc) => Number(sum) + Number(acc.balance), 0);
+      totalCashBalance = caisses.reduce((sum, c) => Number(sum) + Number(c.balance), 0);
 
       caissesBalances = caisses.map((c) => ({
         id: c.id,

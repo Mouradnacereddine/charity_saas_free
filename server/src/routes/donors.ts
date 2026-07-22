@@ -61,7 +61,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         distributionMap.set(r.donorId, { caisses: [], totalAmount: 0 });
       }
       const dist = distributionMap.get(r.donorId)!;
-      dist.totalAmount += r.amount;
+      dist.totalAmount += Number(r.amount);
 
         const rAny = r as any;
       let caisse = dist.caisses.find((c) => c.id === rAny.caisseId);
@@ -69,7 +69,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         caisse = { id: rAny.caisseId, nameAr: rAny.caisseNameAr || '', subCategories: [], total: 0 };
         dist.caisses.push(caisse);
       }
-      caisse.total += rAny.amount;
+      caisse.total += Number(rAny.amount);
 
       if (rAny.subCategoryId) {
         let sub = caisse.subCategories.find((s) => s.id === rAny.subCategoryId);
@@ -77,7 +77,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
           sub = { id: rAny.subCategoryId, nameAr: rAny.subCategoryNameAr || rAny.subCategoryName || '', name: rAny.subCategoryName || undefined, total: 0 };
           caisse.subCategories.push(sub);
         }
-        sub.total += rAny.amount;
+        sub.total += Number(rAny.amount);
       }
     }
 
@@ -85,7 +85,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       const dist = distributionMap.get(d.id) || { caisses: [], totalAmount: 0 };
       return {
         ...d,
-        totalDonated: dist.totalAmount || d.totalDonated || 0,
+        totalDonated: Number(dist.totalAmount || d.totalDonated || 0),
         receiptCount: countMap.get(d.id) || 0,
         distribution: dist,
       };
@@ -171,9 +171,9 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
       orderBy: { date: 'desc' },
     });
 
-    const dynamicTotal = receipts.reduce((sum: number, r: any) => sum + r.amount, 0);
+    const dynamicTotal = receipts.reduce((sum: number, r: any) => Number(sum) + Number(r.amount), 0);
 
-    res.json({ ...donor, totalDonated: dynamicTotal || donor.totalDonated, donationReceipts: receipts });
+    res.json({ ...donor, totalDonated: Number(dynamicTotal || donor.totalDonated || 0), donationReceipts: receipts });
   } catch (error) {
     console.error('Error getting donor:', error);
     res.status(500).json({ error: 'Internal server error' });
