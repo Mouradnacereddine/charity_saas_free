@@ -32,7 +32,7 @@ import doctorsRoutes from './routes/doctors';
 const app = express();
 
 app.use(helmet({
-  crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+  crossOriginOpenerPolicy: false,
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: false,
 }));
