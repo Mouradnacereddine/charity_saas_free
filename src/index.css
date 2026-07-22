@@ -62,3 +62,12 @@ body {
 .table-responsive {
   @apply overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
 }
+
+/* Hide scrollbar in sidebar nav */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
