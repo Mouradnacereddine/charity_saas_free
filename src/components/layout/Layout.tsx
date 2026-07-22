@@ -180,7 +180,7 @@ export function Layout({
         {/* User section — avatar only, always visible */}
         <div className="border-t border-primary-700 shrink-0">
           <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            onClick={(e) => { e.stopPropagation(); setUserMenuOpen(!userMenuOpen); }}
             className="w-full flex items-center justify-center lg:justify-center gap-3 px-3 py-3 hover:bg-primary-800 transition-colors"
             title={userNameAr || 'مستخدم'}
           >
@@ -196,8 +196,9 @@ export function Layout({
 
       {/* User dropdown — rendered independently from sidebar, fixed positioned */}
       {userMenuOpen && (
-        <div className="fixed bottom-4 right-4 lg:right-72 lg:sidebar-collapsed:right-20 min-w-[240px] bg-white border border-gray-200 rounded-xl shadow-xl z-[100] overflow-hidden"
-             style={sidebarCollapsed ? { right: '5rem' } : { right: '18rem' }}>
+        <div className="fixed bottom-4 min-w-[240px] bg-white border border-gray-200 rounded-xl shadow-xl z-[100] overflow-hidden"
+             style={sidebarCollapsed ? { right: '5rem' } : { right: '18rem' }}
+             onClick={(e) => e.stopPropagation()}>
           <div className="p-3 border-b border-gray-100">
             <p className="text-sm font-medium text-gray-900">{userNameAr || 'مستخدم'}</p>
             <p className="text-xs text-gray-500">
