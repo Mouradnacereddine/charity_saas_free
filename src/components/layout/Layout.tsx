@@ -196,9 +196,10 @@ export function Layout({
 
       {/* User dropdown — rendered independently from sidebar, fixed positioned */}
       {userMenuOpen && (
-        <div className="fixed bottom-4 min-w-[240px] bg-white border border-gray-200 rounded-xl shadow-xl z-[100] overflow-hidden"
-             style={sidebarCollapsed ? { right: '5rem' } : { right: '18rem' }}
-             onClick={(e) => e.stopPropagation()}>
+        <div className="fixed z-[100] bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
+             style={sidebarOpen ? { bottom: '4rem', left: '1rem', right: '1rem' } : sidebarCollapsed ? { bottom: '4rem', right: '5rem', minWidth: '240px' } : { bottom: '4rem', right: '18rem', minWidth: '240px' }}
+             onClick={(e) => e.stopPropagation()}
+             dir="rtl">
           <div className="p-3 border-b border-gray-100">
             <p className="text-sm font-medium text-gray-900">{userNameAr || 'مستخدم'}</p>
             <p className="text-xs text-gray-500">
