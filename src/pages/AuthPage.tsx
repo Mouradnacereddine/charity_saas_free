@@ -255,3 +255,4 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
     </div>
   );
 }
+
