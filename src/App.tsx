@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Layout } from './components/layout/Layout';
+import { AppLayout } from './components/layout/AppLayout';
 import { useAuth } from './hooks/useAuth';
 import { useSocketSync } from './hooks/useSocketSync';
 import DashboardPage from './pages/DashboardPage';
@@ -123,7 +123,7 @@ function AppContent() {
   };
 
   return (
-    <Layout
+    <AppLayout
       activePage={activePage}
       onNavigate={navigate}
       breadcrumbs={breadcrumbs}
@@ -135,7 +135,7 @@ function AppContent() {
       onLogout={logout}
     >
       {renderPage()}
-    </Layout>
+    </AppLayout>
   );
 }
 
