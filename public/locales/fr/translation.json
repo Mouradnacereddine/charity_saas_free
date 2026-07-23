@@ -1,0 +1,54 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "analytics": "Analytiques et Rapports",
+    "finance": "Finances",
+    "caisses": "Caisses",
+    "beneficiaries": "Bénéficiaires",
+    "donors": "Donateurs",
+    "inventory": "Inventaire",
+    "medical": "Orientation médicale",
+    "doctors": "Médecins",
+    "users": "Gestion des utilisateurs",
+    "settings": "Paramètres de l'association",
+    "logout": "Déconnexion"
+  },
+  "common": {
+    "loading": "Chargement du système...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "reset": "Réinitialiser",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "close": "Fermer",
+    "bismillah": "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+    "home": "Accueil"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Créer un compte",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "loginGoogle": "Se connecter avec Google",
+    "logout": "Déconnexion",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Vous avez déjà un compte ?",
+    "createAccount": "Créer un nouveau compte"
+  },
+  "user": {
+    "menu": "Menu utilisateur",
+    "profile": "Profil",
+    "role_admin": "Administrateur",
+    "role_treasurer": "Trésorier",
+    "role_user": "Bénévole"
+  },
+  "sidebar": {
+    "toggle": "Ouvrir le menu",
+    "toggleCollapse": "Réduire le menu",
+    "toggleExpand": "Développer le menu"
+  }
+}

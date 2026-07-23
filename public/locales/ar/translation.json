@@ -1,0 +1,54 @@
+{
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "analytics": "التحليلات والتقارير",
+    "finance": "المالية",
+    "caisses": "الصناديق",
+    "beneficiaries": "المستفيدون",
+    "donors": "المتبرعون",
+    "inventory": "المخزون",
+    "medical": "التوجيه الطبي",
+    "doctors": "الأطباء",
+    "users": "إدارة المستخدمين",
+    "settings": "إعدادات الجمعية",
+    "logout": "تسجيل الخروج"
+  },
+  "common": {
+    "loading": "جاري تحميل النظام...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "search": "بحث",
+    "filter": "تصفية",
+    "reset": "إعادة تعيين",
+    "confirm": "تأكيد",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "close": "إغلاق",
+    "bismillah": "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+    "home": "الرئيسية"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "loginGoogle": "تسجيل الدخول بواسطة Google",
+    "logout": "تسجيل الخروج",
+    "noAccount": "ليس لديك حساب؟",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "createAccount": "إنشاء حساب جديد"
+  },
+  "user": {
+    "menu": "قائمة المستخدم",
+    "profile": "الملف الشخصي",
+    "role_admin": "مدير النظام",
+    "role_treasurer": "أمين المال",
+    "role_user": "متطوع"
+  },
+  "sidebar": {
+    "toggle": "فتح القائمة",
+    "toggleCollapse": "طي القائمة",
+    "toggleExpand": "توسيع القائمة"
+  }
+}

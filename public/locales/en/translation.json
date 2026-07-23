@@ -1,0 +1,54 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "analytics": "Analytics & Reports",
+    "finance": "Finance",
+    "caisses": "Funds",
+    "beneficiaries": "Beneficiaries",
+    "donors": "Donors",
+    "inventory": "Inventory",
+    "medical": "Medical Referrals",
+    "doctors": "Doctors",
+    "users": "User Management",
+    "settings": "Association Settings",
+    "logout": "Logout"
+  },
+  "common": {
+    "loading": "Loading system...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close",
+    "bismillah": "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+    "home": "Home"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Create Account",
+    "email": "Email",
+    "password": "Password",
+    "loginGoogle": "Sign in with Google",
+    "logout": "Logout",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "createAccount": "Create a new account"
+  },
+  "user": {
+    "menu": "User menu",
+    "profile": "Profile",
+    "role_admin": "Administrator",
+    "role_treasurer": "Treasurer",
+    "role_user": "Volunteer"
+  },
+  "sidebar": {
+    "toggle": "Open menu",
+    "toggleCollapse": "Collapse sidebar",
+    "toggleExpand": "Expand sidebar"
+  }
+}

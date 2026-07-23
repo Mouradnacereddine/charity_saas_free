@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from './components/layout/AppLayout';
+import { DirectionProvider } from './i18n/provider';
 import { useAuth } from './hooks/useAuth';
 import { useSocketSync } from './hooks/useSocketSync';
 import DashboardPage from './pages/DashboardPage';
@@ -142,7 +143,9 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <DirectionProvider>
+        <AppContent />
+      </DirectionProvider>
     </QueryClientProvider>
   );
 }

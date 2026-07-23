@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   Wallet,
@@ -8,6 +9,9 @@ import {
   FolderOpen,
   Stethoscope,
   TrendingUp,
+  LogOut,
+  UserCog,
+  Settings,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -16,25 +20,32 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarTrigger,
-  SidebarSeparator,
 } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { LanguageSwitcher } from '@/components/language/LanguageSwitcher';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const navItems = [
-  { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-  { id: 'analytics', label: 'التحليلات والتقارير', icon: TrendingUp },
-  { id: 'finance', label: 'المالية', icon: Wallet },
-  { id: 'caisses', label: 'الصناديق', icon: FolderOpen },
-  { id: 'beneficiaries', label: 'المستفيدون', icon: Users },
-  { id: 'donors', label: 'المتبرعون', icon: HeartHandshake },
-  { id: 'inventory', label: 'المخزون', icon: Package },
-  { id: 'medical', label: 'التوجيه الطبي', icon: Stethoscope },
-  { id: 'doctors', label: 'الأطباء', icon: Stethoscope },
+  { id: 'dashboard', key: 'nav.dashboard', icon: LayoutDashboard },
+  { id: 'analytics', key: 'nav.analytics', icon: TrendingUp },
+  { id: 'finance', key: 'nav.finance', icon: Wallet },
+  { id: 'caisses', key: 'nav.caisses', icon: FolderOpen },
+  { id: 'beneficiaries', key: 'nav.beneficiaries', icon: Users },
+  { id: 'donors', key: 'nav.donors', icon: HeartHandshake },
+  { id: 'inventory', key: 'nav.inventory', icon: Package },
+  { id: 'medical', key: 'nav.medical', icon: Stethoscope },
+  { id: 'doctors', key: 'nav.doctors', icon: Stethoscope },
 ];
 
 export function AppLayout({
@@ -60,6 +71,7 @@ export function AppLayout({
   isAdmin?: boolean;
   onLogout?: () => void;
 }) {
+  const { t, i18n } = useTranslation();
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar side="right" collapsible="icon">
@@ -86,11 +98,11 @@ export function AppLayout({
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         isActive={activePage === item.id}
-                        tooltip={item.label}
+                        tooltip={t(item.key)}
                         onClick={() => onNavigate(item.id)}
                       >
                         <item.icon />
-                        <span>{item.label}</span>
+                        <span>{t(item.key)}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -100,22 +112,44 @@ export function AppLayout({
         </SidebarContent>
 
         <SidebarFooter className="border-t border-sidebar-border p-3">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip={userNameAr || 'مستخدم'}
-              >
-                <div className="flex items-center gap-2 size-full">
-                  <div className="size-6 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
-                    {userNameAr?.charAt(0) || '?'}
+          <div className="flex items-center justify-between">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton tooltip={userNameAr || t('user.menu')}>
+                  <div className="flex items-center gap-2 size-full">
+                    <Avatar className="size-6">
+                      <AvatarFallback className="text-xs bg-sidebar-primary text-sidebar-primary-foreground">
+                        {userNameAr?.charAt(0) || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="group-data-[collapsible=icon]:hidden text-sm">
+                      {userNameAr || t('user.menu')}
+                    </span>
                   </div>
-                  <span className="group-data-[collapsible=icon]:hidden text-sm">
-                    {userNameAr || 'مستخدم'}
-                  </span>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="end" className="w-56">
+                <div className="px-2 py-1.5 text-sm font-medium text-foreground">
+                  {userNameAr || t('user.menu')}
                 </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+                <div className="px-2 pb-1.5 text-xs text-muted-foreground">
+                  {userRole === 'admin' ? t('user.role_admin') : userRole === 'treasurer' ? t('user.role_treasurer') : t('user.role_user')}
+                </div>
+                <DropdownMenuSeparator />
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => onNavigate('users')}>
+                    <UserCog className="size-4" />
+                    <span>{t('nav.users')}</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => onLogout?.()}>
+                  <LogOut className="size-4" />
+                  <span>{t('nav.logout')}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <LanguageSwitcher />
+          </div>
         </SidebarFooter>
       </Sidebar>
 
@@ -141,10 +175,10 @@ export function AppLayout({
             </nav>
           )}
           <div className="flex-1 text-center">
-            <span className="text-sm text-green-700 font-arabic">بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</span>
+            <span className="text-sm text-green-700 font-arabic">{t('common.bismillah')}</span>
           </div>
           <div className="text-xs sm:text-sm text-muted-foreground">
-            {new Date().toLocaleDateString('ar-DZ', {
+            {new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-DZ' : i18n.language, {
               weekday: 'short',
               year: 'numeric',
               month: 'short',
