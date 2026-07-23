@@ -1,70 +1,73 @@
 "use client"
 
-import { useTranslation } from 'react-i18next';
-import {
-  LayoutDashboard,
-  Wallet,
-  Users,
-  HeartHandshake,
-  Package,
-  FolderOpen,
-  Stethoscope,
-  TrendingUp,
-} from 'lucide-react';
+import { ChevronRight, type LucideIcon } from "lucide-react"
 
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {
   SidebarGroup,
-  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/ui/sidebar';
-
-const navItems = [
-  { id: 'dashboard', key: 'nav.dashboard', icon: LayoutDashboard },
-  { id: 'analytics', key: 'nav.analytics', icon: TrendingUp },
-  { id: 'finance', key: 'nav.finance', icon: Wallet },
-  { id: 'caisses', key: 'nav.caisses', icon: FolderOpen },
-  { id: 'beneficiaries', key: 'nav.beneficiaries', icon: Users },
-  { id: 'donors', key: 'nav.donors', icon: HeartHandshake },
-  { id: 'inventory', key: 'nav.inventory', icon: Package },
-  { id: 'medical', key: 'nav.medical', icon: Stethoscope },
-  { id: 'doctors', key: 'nav.doctors', icon: Stethoscope },
-];
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+} from "@/components/ui/sidebar"
 
 export function NavMain({
-  activePage,
-  onNavigate,
-  isAdmin,
-  userRole,
+  items,
 }: {
-  activePage: string;
-  onNavigate: (page: string) => void;
-  isAdmin?: boolean;
-  userRole?: string;
+  items: {
+    title: string
+    url: string
+    icon?: LucideIcon
+    isActive?: boolean
+    items?: {
+      title: string
+      url: string
+    }[]
+  }[]
 }) {
-  const { t } = useTranslation();
-
   return (
     <SidebarGroup>
-      <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
-          {navItems
-            .filter((item) => item.id !== 'analytics' || isAdmin || userRole === 'treasurer')
-            .map((item) => (
-              <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton
-                  isActive={activePage === item.id}
-                  tooltip={t(item.key)}
-                  onClick={() => onNavigate(item.id)}
-                >
-                  <item.icon />
-                  <span>{t(item.key)}</span>
+      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarMenu>
+        {items.map((item) => (
+          <Collapsible
+            key={item.title}
+            asChild
+            defaultOpen={item.isActive}
+            className="group/collapsible"
+          >
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton tooltip={item.title}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenuSub>
+                  {item.items?.map((subItem) => (
+                    <SidebarMenuSubItem key={subItem.title}>
+                      <SidebarMenuSubButton asChild>
+                        <a href={subItem.url}>
+                          <span>{subItem.title}</span>
+                        </a>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </Collapsible>
+        ))}
+      </SidebarMenu>
     </SidebarGroup>
-  );
+  )
 }
