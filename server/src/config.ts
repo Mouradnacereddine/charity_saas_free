@@ -24,3 +24,4 @@ if (process.env.VERCEL && !process.env.JWT_SECRET) {
 if (process.env.VERCEL && !process.env.JWT_REFRESH_SECRET) {
   console.error('🚨  CRITICAL: JWT_REFRESH_SECRET is not set in Vercel environment variables! Token refresh will fail.');
 }
+// force rebuild for GOOGLE_CLIENT_ID
