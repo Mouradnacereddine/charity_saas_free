@@ -106,7 +106,7 @@ export default function InventoryPage() {
     hors_service: t('inventory.outOfService'),
   }
 
-  const LOAN_STATUS_LABELS: Record<string, string> = {
+  const loanStatusLabels: Record<string, string> = {
     en_cours: t('inventory.ongoing'),
     partiellement_retourne: t('inventory.partiallyReturned'),
     retourne: t('inventory.final'),
@@ -191,9 +191,9 @@ export default function InventoryPage() {
       </div>
 
       {activeTab === 'stock' ? (
-        <StockTab actionsRef={stockActions} t={t} i18n={i18n} />
+        <StockTab actionsRef={stockActions} t={t} i18n={i18n} statusLabels={STATUS_LABELS} />
       ) : activeTab === 'loans' ? (
-        <LoansTab actionsRef={loansActions} t={t} i18n={i18n} />
+        <LoansTab actionsRef={loansActions} t={t} i18n={i18n} statusLabels={STATUS_LABELS} loanStatusLabels={loanStatusLabels} />
       ) : (
         <SettingsTab t={t} i18n={i18n} />
       )}
@@ -672,7 +672,7 @@ function SettingsTab({ t, i18n }: { t: any; i18n: any }) {
 // STOCK TAB
 // ============================================================
 
-function StockTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; t: any; i18n: any }) {
+function StockTab({ actionsRef, t, i18n, statusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; t: any; i18n: any; statusLabels: Record<string, string> }) {
   const { data: articles = [], isLoading: loading } = useArticles()
   const { data: categories = [] } = useArticleCategories()
   const { data: locations = [] } = useStorageLocations()
@@ -930,7 +930,7 @@ function StockTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                     <td className="py-3 px-4 text-gray-600">{article.availableQuantity}</td>
                     <td className="py-3 px-4">
                       <Badge variant="default">
-                        {(article as any).statusModel?.nameAr || STATUS_LABELS[article.status] || article.status}
+                        {(article as any).statusModel?.nameAr || statusLabels[article.status] || article.status}
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-gray-600 hidden md:table-cell">
@@ -1008,7 +1008,7 @@ function StockTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
 // LOANS TAB
 // ============================================================
 
-function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; t: any; i18n: any }) {
+function LoansTab({ actionsRef, t, i18n, statusLabels, loanStatusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; t: any; i18n: any; statusLabels: Record<string, string>; loanStatusLabels: Record<string, string> }) {
   const queryClient = useQueryClient()
   const { data: loans = [], isLoading: loading } = useLoans()
   const { data: articles = [] } = useArticles()
@@ -1274,7 +1274,7 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
       `<div class="row"><span class="lbl">${t('inventory.category')}</span><span class="val">${item.articleNameAr} <i>×${item.quantity}</i></span></div>`
     ).join('')
 
-    const statusLabel = LOAN_STATUS_LABELS[loan.status] || loan.status
+    const statusLabel = loanStatusLabels[loan.status] || loan.status
 
     printReceipt(
       t('inventory.loanDetails'),
@@ -1406,7 +1406,7 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                     </td>
                     <td className="py-3 px-4">
                       <Badge variant={LOAN_STATUS_VARIANTS[loan.status] || 'default'}>
-                        {LOAN_STATUS_LABELS[loan.status] || loan.status}
+                        {loanStatusLabels[loan.status] || loan.status}
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-gray-600">{formatDate(loan.loanDate)}</td>
@@ -1554,7 +1554,7 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                   <p className="text-sm font-bold text-primary-700" dir="ltr">{selectedLoan.reference || '—'}</p>
                   <div className="mt-1">
                     <Badge variant={LOAN_STATUS_VARIANTS[selectedLoan.status] || 'default'}>
-                      {LOAN_STATUS_LABELS[selectedLoan.status] || selectedLoan.status}
+                      {loanStatusLabels[selectedLoan.status] || selectedLoan.status}
                     </Badge>
                   </div>
                 </div>
