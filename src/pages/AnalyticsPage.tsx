@@ -216,7 +216,7 @@ export default function AnalyticsPage() {
     filteredTx.forEach((tx) => {
       const subNameAr = getSubCategoryNameAr(tx.caisseId, tx.subCategoryId);
       const caisse = caisses.find((c) => c.id === tx.caisseId);
-      const caisseNameAr = caisse ? caisse.nameAr : 'صندوق غير معروف';
+      const caisseNameAr = caisse ? caisse.nameAr : t('caisses.noFunds');
       const key = `${tx.caisseId}-${tx.subCategoryId || 'general'}`;
       if (!groups[key]) {
         groups[key] = {
@@ -708,7 +708,7 @@ export default function AnalyticsPage() {
               <div key={group.caisse?.id || 'unknown'} className="border border-gray-100 rounded-lg overflow-hidden bg-white">
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-700 font-bold text-base">{group.caisse?.nameAr || 'صندوق غير محدد'}</span>
+                    <span className="text-gray-700 font-bold text-base">{group.caisse?.nameAr || t('caisses.noFunds')}</span>
                     <span className="text-xs text-gray-400">({group.caisse?.reference || '—'})</span>
                   </div>
                   <div className="flex gap-4 text-xs font-semibold">
@@ -892,7 +892,7 @@ export default function AnalyticsPage() {
                   <tr className="border-b border-gray-200 bg-gray-50/50 text-right">
                     <th className="py-2.5 px-4 font-semibold text-gray-600">النوع</th>
                     <th className="py-2.5 px-4 font-semibold text-gray-600">رقم الوصل</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">الصندوق المالي</th>
+                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t("dashboard.fund")}</th>
                     <th className="py-2.5 px-4 font-semibold text-gray-600">التصنيف الفرعي</th>
                     <th className="py-2.5 px-4 font-semibold text-gray-600">البيان/الوصف</th>
                     <th className="py-2.5 px-4 font-semibold text-gray-600">التاريخ</th>
