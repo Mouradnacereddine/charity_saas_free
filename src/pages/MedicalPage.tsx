@@ -738,7 +738,7 @@ export default function MedicalPage() {
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
             <Input labelAr={t('medical.nameAr')} value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder="مثال: تحليل دم" />
             <Input labelAr={t('medical.nameLatin')} value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder="Ex: Analyse" dir="ltr" />
-            <Button onClick={handleAddAnalysis} disabled={!newAnalysisAr.trim()}>إضافة</Button>
+            <Button onClick={handleAddAnalysis} disabled={!newAnalysisAr.trim()}>{t('common.add')}</Button>
           </div>
           <Card>
             <div className="overflow-x-auto">
@@ -757,8 +757,8 @@ export default function MedicalPage() {
                         <td className="py-2 px-4"><input value={editAnalysisAr} onChange={(e) => setEditAnalysisAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
                         <td className="py-2 px-4"><input value={editAnalysisFr} onChange={(e) => setEditAnalysisFr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
-                          <Button size="sm" onClick={handleUpdateAnalysis}>حفظ</Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditAnalysisId(null)}>إلغاء</Button>
+                          <Button size="sm" onClick={handleUpdateAnalysis}>{t('common.save')}</Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditAnalysisId(null)}>{t('common.cancel')}</Button>
                         </td>
                       </>
                     ) : (
@@ -788,7 +788,7 @@ export default function MedicalPage() {
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
             <Input labelAr={t('medical.nameAr')} value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder="مثال: مستشفى مصطفى باشا" />
             <Input labelAr={t('medical.nameLatin')} value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder="Ex: CHU" dir="ltr" />
-            <Button onClick={handleAddHospital} disabled={!newHospAr.trim()}>إضافة</Button>
+            <Button onClick={handleAddHospital} disabled={!newHospAr.trim()}>{t('common.add')}</Button>
           </div>
           <Card>
             <div className="overflow-x-auto">
@@ -807,8 +807,8 @@ export default function MedicalPage() {
                         <td className="py-2 px-4"><input value={editHospAr} onChange={(e) => setEditHospAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
                         <td className="py-2 px-4"><input value={editHospFr} onChange={(e) => setEditHospFr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
-                          <Button size="sm" onClick={handleUpdateHospital}>حفظ</Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditHospId(null)}>إلغاء</Button>
+                          <Button size="sm" onClick={handleUpdateHospital}>{t('common.save')}</Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditHospId(null)}>{t('common.cancel')}</Button>
                         </td>
                       </>
                     ) : (

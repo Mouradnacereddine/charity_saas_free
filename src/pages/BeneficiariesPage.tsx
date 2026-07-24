@@ -565,7 +565,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">التبرعات الواردة (${allocations.length})</div>
         <table class="data-table">
-          <thead><tr><th>المتبرع</th><th>المبلغ</th><th>المصرف</th><th>المتبقي</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+          <thead><tr><th>المتبرع</th><th>{t('common.amount')}</th><th>المصرف</th><th>المتبقي</th><th>{t('common.status')}</th><th>{t('common.date')}</th></tr></thead>
           <tbody>${allocations.map((a: DonationAllocation) => {
             const spent = a.amount - a.remainingAmount
             const s = a.creditTransaction?.status
@@ -592,7 +592,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">المبالغ المصروفة (${debits.length})</div>
         <table class="data-table">
-          <thead><tr><th>التاريخ</th><th>المبلغ</th><th>المصدر</th><th>{t('dashboard.fund')}</th><th>الحالة</th><th>الوصف</th></tr></thead>
+          <thead><tr><th>{t('common.date')}</th><th>{t('common.amount')}</th><th>المصدر</th><th>{t('dashboard.fund')}</th><th>{t('common.status')}</th><th>{t('common.description')}</th></tr></thead>
           <tbody>${debits.map((tx: any) => {
             const c = caisses.find((c: any) => c.id === tx.caisseId)
             const s = (tx.status || 'completed') === 'pending' ? 'معلق' : (tx.status || 'completed') === 'cancelled' ? 'ملغي' : 'مكتمل'
@@ -612,7 +612,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">التوجيه الطبي (${referrals.length})</div>
         <table class="data-table">
-          <thead><tr><th>التاريخ</th><th>الطبيب</th><th>المبلغ</th><th>التحليل</th><th>المستشفى</th><th>{t('beneficiaries.children')}</th></tr></thead>
+          <thead><tr><th>{t('common.date')}</th><th>الطبيب</th><th>{t('common.amount')}</th><th>التحليل</th><th>المستشفى</th><th>{t('beneficiaries.children')}</th></tr></thead>
           <tbody>${referrals.map((ref: any) => {
             const childrenNames = ref.children && Array.isArray(ref.children) && ref.children.length > 0
               ? ref.children.map((c: any) => c.nameAr).join(', ')
@@ -662,18 +662,18 @@ export default function BeneficiariesPage() {
           <div class="sub">${b.reference || ''}</div>
         </div>
         <div class="section">
-          <div class="section-title">المعلومات الشخصية</div>
+          <div class="section-title">{t('beneficiaries.personalInfo')}</div>
           <div class="info-grid">
             <div class="item"><span class="lbl">الاسم بالعربية</span><span class="val">${b.lastNameAr} ${b.firstNameAr}</span></div>
             <div class="item"><span class="lbl">الاسم باللاتينية</span><span class="val">${b.firstName} ${b.lastName}</span></div>
-            <div class="item"><span class="lbl">رقم البطاقة الوطنية</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
+            <div class="item"><span class="lbl">{t('receipt.idNumber')}</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
             <div class="item"><span class="lbl">{t('receipt.phone')}</span><span class="val">${b.phone}</span></div>
-            <div class="item"><span class="lbl">تاريخ الميلاد</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${calculateAge(b.dateOfBirth).displayAr})` : '—'}</span></div>
+            <div class="item"><span class="lbl">{t('receipt.birthDate')}</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${calculateAge(b.dateOfBirth).displayAr})` : '—'}</span></div>
             <div class="item"><span class="lbl">{t('beneficiaries.filterAttribute')}</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
             <div class="item"><span class="lbl">{t('beneficiaries.filterGender')}</span><span class="val">${b.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
             <div class="item"><span class="lbl">العنوان</span><span class="val">${b.addressAr || '—'}</span></div>
             <div class="item"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
-            ${b.situationAr ? `<div class="item"><span class="lbl">الحالة</span><span class="val">${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}</span></div>` : ''}
+            ${b.situationAr ? `<div class="item"><span class="lbl">{t('common.status')}</span><span class="val">${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}</span></div>` : ''}
             ${b.notes ? `<div class="item"><span class="lbl" style="min-width:140px">ملاحظات</span><span class="val">${b.notes}</span></div>` : ''}
           </div>
         </div>
@@ -886,15 +886,15 @@ export default function BeneficiariesPage() {
               <thead>
                 <tr className="border-b border-gray-200 text-gray-500">
                   <th className="py-3 px-4 text-right font-medium w-8"></th>
-                  <th className="py-3 px-4 text-right font-medium">الرمز المرجعي</th>
+                  <th className="py-3 px-4 text-right font-medium">{t('doctors.refCode')}</th>
                   <th className="py-3 px-4 text-right font-medium">{t('beneficiaries.sectionName')}</th>
-                  <th className="py-3 px-4 text-right font-medium hidden md:table-cell">رقم البطاقة الوطنية</th>
+                  <th className="py-3 px-4 text-right font-medium hidden md:table-cell">{t('receipt.idNumber')}</th>
                   <th className="py-3 px-4 text-right font-medium hidden lg:table-cell">{t('receipt.phone')}</th>
                   <th className="py-3 px-4 text-right font-medium">{t('beneficiaries.filterAttribute')}</th>
                   <th className="py-3 px-4 text-right font-medium hidden sm:table-cell">{t('receipt.age')}</th>
                   <th className="py-3 px-4 text-right font-medium">عدد الأطفال</th>
                   <th className="py-3 px-4 text-right font-medium hidden lg:table-cell">{t('dashboard.fund')}</th>
-                  <th className="py-3 px-4 text-center font-medium">الإجراءات</th>
+                  <th className="py-3 px-4 text-center font-medium">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1036,7 +1036,7 @@ export default function BeneficiariesPage() {
 
           {/* Identity & Contact */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">المعلومات الشخصية</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('beneficiaries.personalInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input labelAr={t('receipt.idNumber')} value={form.nationalCardNumber} onChange={(e) => handleFormChange('nationalCardNumber', e.target.value)} required />
               <Input labelAr={t('receipt.phone')} value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value)} dir="ltr" required />
@@ -1075,7 +1075,7 @@ export default function BeneficiariesPage() {
 
           {/* Situation */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">الحالة</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('common.status')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SearchableSelect
                 labelAr={t('common.status')}
@@ -1114,7 +1114,7 @@ export default function BeneficiariesPage() {
                         onChange={(val) => updateChild(index, 'gender', val)}
                       />
                       <SearchableSelect
-                        labelAr="الحالة الصحية"
+                        labelAr={t('common.status')}
                         options={HEALTH_STATUS_OPTIONS}
                         value={child.healthStatus}
                         onChange={(val) => updateChild(index, 'healthStatus', val)}
@@ -1122,7 +1122,7 @@ export default function BeneficiariesPage() {
                       <Input labelAr="تفاصيل الحالة الصحية" placeholder="تفاصيل إضافية..." value={child.healthDetails || ''} onChange={(e) => updateChild(index, 'healthDetails', e.target.value)} />
                       {gradeOptions.length > 0 && (
                         <SearchableSelect
-                          labelAr="المستوى الدراسي"
+                          labelAr={t('beneficiaries.schoolGrade')}
                           options={gradeOptions}
                           value={child.schoolGradeId || ''}
                           onChange={(val) => updateChild(index, 'schoolGradeId', val)}
@@ -1139,7 +1139,7 @@ export default function BeneficiariesPage() {
           <TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => handleFormChange('notes', e.target.value)} />
 
           <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
-            <Button variant="secondary" onClick={closeFormModal}>إلغاء</Button>
+            <Button variant="secondary" onClick={closeFormModal}>{t('common.cancel')}</Button>
             <Button onClick={handleSave}>{editingId ? 'تحديث' : 'إضافة'}</Button>
           </div>
         </div>
@@ -1150,21 +1150,21 @@ export default function BeneficiariesPage() {
         <Modal isOpen={showDetailModal} onClose={closeDetail} title={`${selectedBeneficiary.lastNameAr} ${selectedBeneficiary.firstNameAr}`} size="xl">
           <div className="space-y-6" dir="rtl">
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">المعلومات الشخصية</h4>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('beneficiaries.personalInfo')}</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">الرمز المرجعي</span><span className="font-semibold text-primary-700" dir="ltr">{selectedBeneficiary.reference || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">{t('doctors.refCode')}</span><span className="font-semibold text-primary-700" dir="ltr">{selectedBeneficiary.reference || '—'}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">الاسم بالعربية</span><span className="font-medium text-gray-900">{selectedBeneficiary.lastNameAr} {selectedBeneficiary.firstNameAr}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">الاسم باللاتينية</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.firstName} {selectedBeneficiary.lastName}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">رقم البطاقة الوطنية</span><span className="font-medium text-gray-900">{selectedBeneficiary.nationalCardNumber}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">{t('receipt.idNumber')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.nationalCardNumber}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">{t('receipt.phone')}</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.phone}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">تاريخ الميلاد</span><span className="font-medium text-gray-900">{selectedBeneficiary.dateOfBirth ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${calculateAge(selectedBeneficiary.dateOfBirth).displayAr})` : '—'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">{t('receipt.birthDate')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.dateOfBirth ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${calculateAge(selectedBeneficiary.dateOfBirth).displayAr})` : '—'}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.filterAttribute')}</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
                 <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.filterGender')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">العنوان بالعربية</span><span className="font-medium text-gray-900">{selectedBeneficiary.addressAr || '—'}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">العنوان باللاتينية</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.address || '—'}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">{t('dashboard.fund')}</span><span className="font-medium text-gray-900">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-gray-500 mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
                 {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between"><span className="text-gray-500">باسم من</span><span className="font-medium text-gray-900">{selectedBeneficiary.onBehalfOfName}</span></div>}
-                {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">الحالة</span><span className="font-medium text-gray-900">{HEALTH_STATUS_LABELS[selectedBeneficiary.situationAr] || selectedBeneficiary.situationAr}{selectedBeneficiary.situation && <span className="text-gray-400 mr-2" dir="ltr">({selectedBeneficiary.situation})</span>}</span></div>}
+                {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">{t('common.status')}</span><span className="font-medium text-gray-900">{HEALTH_STATUS_LABELS[selectedBeneficiary.situationAr] || selectedBeneficiary.situationAr}{selectedBeneficiary.situation && <span className="text-gray-400 mr-2" dir="ltr">({selectedBeneficiary.situation})</span>}</span></div>}
                 {selectedBeneficiary.notes && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">ملاحظات</span><span className="font-medium text-gray-900">{selectedBeneficiary.notes}</span></div>}
               </div>
             </div>
@@ -1207,11 +1207,11 @@ export default function BeneficiariesPage() {
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="py-2 px-3 text-right font-medium">المتبرع</th>
-                        <th className="py-2 px-3 text-right font-medium">المبلغ</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.amount')}</th>
                         <th className="py-2 px-3 text-right font-medium">المصرف</th>
                         <th className="py-2 px-3 text-right font-medium">المتبقي</th>
-                        <th className="py-2 px-3 text-right font-medium">الحالة</th>
-                        <th className="py-2 px-3 text-right font-medium">التاريخ</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.date')}</th>
                         <th className="py-2 px-3 text-right font-medium">رقم الوصل</th>
                       </tr>
                     </thead>
@@ -1228,10 +1228,10 @@ export default function BeneficiariesPage() {
                             {(() => {
                               const s = a.creditTransaction?.status;
                               if (s === 'pending') return <Badge variant="warning">مرتبط بوعد</Badge>;
-                              if (s === 'cancelled') return <Badge variant="danger">ملغي</Badge>;
-                              if (a.remainingAmount <= 0) return <Badge variant="success">مصرف بالكامل</Badge>;
-                              if (a.debitTransactionId) return <Badge variant="info">مصرف جزئياً</Badge>;
-                              return <Badge variant="info">نشط</Badge>;
+                              if (s === 'cancelled') return <Badge variant="danger">{t('dashboard.cancelled')}</Badge>;
+                              if (a.remainingAmount <= 0) return <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>;
+                              if (a.debitTransactionId) return <Badge variant="info">{t('dashboard.partiallyDisbursed')}</Badge>;
+                              return <Badge variant="info">{t('dashboard.active')}</Badge>;
                             })()}
                           </td>
                           <td className="py-2 px-3 text-gray-700">{formatDate(a.createdAt)}</td>
@@ -1258,13 +1258,13 @@ export default function BeneficiariesPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="py-2 px-3 text-right font-medium">التاريخ</th>
-                        <th className="py-2 px-3 text-right font-medium">المبلغ</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.date')}</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.amount')}</th>
                         <th className="py-2 px-3 text-right font-medium">مصدر التمويل</th>
                         <th className="py-2 px-3 text-right font-medium">{t('dashboard.fund')}</th>
-                        <th className="py-2 px-3 text-right font-medium">الحالة</th>
-                        <th className="py-2 px-3 text-right font-medium">الوصف</th>
-                        <th className="py-2 px-3 text-right font-medium">الإجراءات</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.description')}</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1277,9 +1277,9 @@ export default function BeneficiariesPage() {
                           <td className="py-2 px-3 text-gray-600">{tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</td>
                           <td className="py-2 px-3 text-gray-600">{caisse?.nameAr || '—'}</td>
                           <td className="py-2 px-3">
-                            {(tx.status || 'completed') === 'pending' ? <Badge variant="warning">معلق</Badge> :
-                             (tx.status || 'completed') === 'cancelled' ? <Badge variant="danger">ملغي</Badge> :
-                             <Badge variant="success">مكتمل</Badge>}
+                            {(tx.status || 'completed') === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> :
+                             (tx.status || 'completed') === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> :
+                             <Badge variant="success">{t('dashboard.completed')}</Badge>}
                           </td>
                           <td className="py-2 px-3 text-gray-500 text-xs max-w-[150px] truncate">{tx.descriptionAr || '—'}</td>
                           <td className="py-2 px-3">
@@ -1293,11 +1293,11 @@ export default function BeneficiariesPage() {
                                 printReceipt(
                                   'وصل صرف', 'Bon de Sortie',
                                   `<div class="col"><div class="row"><span class="lbl">رقم العملية</span><span class="val">${tx.id.slice(0, 8) || '—'}</span></div>
-<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
+<div class="row"><span class="lbl">{t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
 <div class="row"><span class="lbl">المستفيد</span><span class="val">${selectedBeneficiary?.lastNameAr || ''} ${selectedBeneficiary?.firstNameAr || ''}</span></div></div>
 <div class="col"><div class="row"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}</span></div>
 <div class="row"><span class="lbl">المصدر</span><span class="val">${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</span></div>
-${tx.descriptionAr ? `<div class="row"><span class="lbl">الوصف</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
+${tx.descriptionAr ? `<div class="row"><span class="lbl">{t('common.description')}</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
                                   'background:#fff0f0;color:#dc2626',
                                   `- ${formatCurrency(amount)}`, wordsAr, wordsFr,
                                   'إمضاء المستفيد', 'ختم الجمعية',
@@ -1332,14 +1332,14 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">الوصف</span><span 
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="py-2 px-3 text-right font-medium">التاريخ</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.date')}</th>
                         <th className="py-2 px-3 text-right font-medium">الطبيب</th>
-                        <th className="py-2 px-3 text-right font-medium">المبلغ</th>
-                        <th className="py-2 px-3 text-right font-medium">الحالة</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.amount')}</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
                         <th className="py-2 px-3 text-right font-medium">{t('dashboard.fund')}</th>
                         <th className="py-2 px-3 text-right font-medium">التحليل</th>
                         <th className="py-2 px-3 text-right font-medium">المستشفى</th>
-                        <th className="py-2 px-3 text-right font-medium">الإجراءات</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1351,9 +1351,9 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">الوصف</span><span 
                           <td className="py-2 px-3 font-medium text-gray-900">{ref.doctorNameAr}</td>
                           <td className="py-2 px-3"><Badge variant="warning">{formatCurrency(ref.amount)}</Badge></td>
                           <td className="py-2 px-3">
-                            {(ref.status || 'pending') === 'pending' ? <Badge variant="warning">قيد الانتظار</Badge> :
-                             (ref.status || 'pending') === 'completed' ? <Badge variant="success">مكتمل</Badge> :
-                             <Badge variant="danger">ملغي</Badge>}
+                            {(ref.status || 'pending') === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> :
+                             (ref.status || 'pending') === 'completed' ? <Badge variant="success">{t('dashboard.completed')}</Badge> :
+                             <Badge variant="danger">{t('dashboard.cancelled')}</Badge>}
                           </td>
                           <td className="py-2 px-3 text-gray-600">{caisse?.nameAr || '—'}</td>
                           <td className="py-2 px-3 text-gray-600">{ref.analysisTypeAr || '—'}</td>
@@ -1371,12 +1371,12 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">الوصف</span><span 
                                   : ''
                                 printReceipt(
                                   'توجيه طبي', 'Orientation Médicale',
-                                  `<div class="col"><div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${ref.reference || '—'}</span></div>
+                                  `<div class="col"><div class="row"><span class="lbl">{t('doctors.refCode')}</span><span class="val">${ref.reference || '—'}</span></div>
 <div class="row"><span class="lbl">المستفيد</span><span class="val">${ref.beneficiaryNameAr || ''}</span></div>
 <div class="row"><span class="lbl">الطبيب</span><span class="val">${ref.doctorNameAr}</span></div>
 ${ref.analysisTypeAr ? `<div class="row"><span class="lbl">التحليل</span><span class="val">${ref.analysisTypeAr}</span></div>` : ''}</div>
 <div class="col">${caisseRow}${subCatRow}
-<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(ref.date)}</span></div>
+<div class="row"><span class="lbl">{t('common.date')}</span><span class="val">${formatDate(ref.date)}</span></div>
 ${ref.hospitalAr ? `<div class="row"><span class="lbl">المستشفى</span><span class="val">${ref.hospitalAr}</span></div>` : ''}
 ${childrenHtml}
 ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span class="val">${ref.notes}</span></div>` : ''}</div>`,
@@ -1477,7 +1477,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
               <Input labelAr={t('beneficiaries.nameAr')} value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder="مثال: يتيم" />
               <Input labelAr={t('beneficiaries.nameLatin')} value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder="Ex: orphelin" dir="ltr" />
-              <Button onClick={handleAddAttribut} disabled={!newAttrNameAr.trim()}>إضافة</Button>
+              <Button onClick={handleAddAttribut} disabled={!newAttrNameAr.trim()}>{t('common.add')}</Button>
             </div>
             <Card>
               <div className="overflow-x-auto">
@@ -1486,7 +1486,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
                     <tr className="border-b border-gray-200">
                       <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
                       <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
-                      <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1497,8 +1497,8 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
                             <td className="py-2 px-4"><input value={editAttrNameAr} onChange={(e) => setEditAttrNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
                             <td className="py-2 px-4"><input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
                             <td className="py-2 px-4 text-center flex gap-1 justify-center">
-                              <Button size="sm" onClick={handleUpdateAttribut}>حفظ</Button>
-                              <Button size="sm" variant="ghost" onClick={() => setEditAttrId(null)}>إلغاء</Button>
+                              <Button size="sm" onClick={handleUpdateAttribut}>{t('common.save')}</Button>
+                              <Button size="sm" variant="ghost" onClick={() => setEditAttrId(null)}>{t('common.cancel')}</Button>
                             </td>
                           </>
                         ) : (
@@ -1529,7 +1529,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
               <Input labelAr={t('beneficiaries.nameAr')} value={newGradeNameAr} onChange={(e) => setNewGradeNameAr(e.target.value)} placeholder="مثال: السنة الأولى" />
               <Input labelAr={t('beneficiaries.nameLatin')} value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder="Ex: CP1" dir="ltr" />
-              <Button onClick={handleAddGrade} disabled={!newGradeNameAr.trim()}>إضافة</Button>
+              <Button onClick={handleAddGrade} disabled={!newGradeNameAr.trim()}>{t('common.add')}</Button>
             </div>
             <Card>
               <div className="overflow-x-auto">
@@ -1538,7 +1538,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
                     <tr className="border-b border-gray-200">
                       <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
                       <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
-                      <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1549,8 +1549,8 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
                             <td className="py-2 px-4"><input value={editGradeNameAr} onChange={(e) => setEditGradeNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
                             <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
                             <td className="py-2 px-4 text-center flex gap-1 justify-center">
-                              <Button size="sm" onClick={handleUpdateGrade}>حفظ</Button>
-                              <Button size="sm" variant="ghost" onClick={() => setEditGradeId(null)}>إلغاء</Button>
+                              <Button size="sm" onClick={handleUpdateGrade}>{t('common.save')}</Button>
+                              <Button size="sm" variant="ghost" onClick={() => setEditGradeId(null)}>{t('common.cancel')}</Button>
                             </td>
                           </>
                         ) : (

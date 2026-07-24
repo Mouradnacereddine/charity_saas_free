@@ -798,7 +798,7 @@ function StockTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
       setForm(EMPTY_ARTICLE_FORM)
       setEditingArticle(null)
     } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || 'فشل في إضافة المقال'
+      const msg = err?.response?.data?.error || err?.message || t('inventory.addFailed', 'فشل في إضافة المقال')
       setFormError(msg)
     }
   }
@@ -957,7 +957,7 @@ function StockTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
       <Modal
         isOpen={showModal}
         onClose={() => { setShowModal(false); setForm(EMPTY_ARTICLE_FORM); setEditingArticle(null); }}
-        title={editingArticle ? 'تفاصيل المقال' : 'إضافة مقال جديد'}
+        title={editingArticle ? t('inventory.articleDetails') : t('inventory.newArticle')}
         size="lg"
       >
         {editingArticle ? (
@@ -1293,10 +1293,10 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
        </div>`,
       loan.status === 'definitif' ? 'color:#dc2626' : loan.status === 'retourne' ? 'color:#16a34a' : 'color:#2563eb',
       loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0).toString(),
-      `المجموع: ${loan.items.length} مقال — ${loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)} قطعة — ${statusLabel}`,
+      `{t('inventory.totalSummary', 'المجموع')}: ${loan.items.length} {t('inventory.articles')} — ${loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)} {t('inventory.pieces', 'قطعة')} — ${statusLabel}`,
       '',
-      'توقيع المستفيد',
-      'ختم الجمعية',
+      t('receipt.beneficiarySign'),
+      t('receipt.stampSignature'),
       association?.nameAr
     )
   }
@@ -1420,7 +1420,7 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                       <button
                         onClick={(e) => { e.stopPropagation(); openLoanDetail(loan); }}
                         className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
-                        title="التفاصيل"
+                        title={t("common.details", "التفاصيل")}
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -1466,12 +1466,12 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
               </Button>
             </div>
             {loanItems.length === 0 && (
-              <p className="text-sm text-gray-400">لم يتم إضافة أي مقال بعد</p>
+              <p className="text-sm text-gray-400">{t('inventory.noArticles')}</p>
             )}
             {loanItems.map((item: { articleId: string; quantity: number; conditionOnLoan: string }, index: number) => (
               <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-gray-50 rounded-lg">
                 <SearchableSelect
-                  labelAr="المقال"
+                  labelAr={t("inventory.category")}
                   value={item.articleId}
                   onChange={(val) => updateLoanItemRow(index, 'articleId', val)}
                   options={availableArticles.map((a: Article) => ({
@@ -1492,7 +1492,7 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                   onChange={(e) => updateLoanItemRow(index, 'quantity', parseInt(e.target.value) || 1)}
                 />
                 <SearchableSelect
-                  labelAr="الحالة عند الإعارة"
+                  labelAr={t("inventory.loanStatusAtLoan", "الحالة عند الإعارة")}
                   value={item.conditionOnLoan}
                   onChange={(val) => updateLoanItemRow(index, 'conditionOnLoan', val)}
                   options={
@@ -1545,12 +1545,12 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700">معلومات المستفيد</h4>
+                  <h4 className="text-sm font-semibold text-gray-700">{t("medical.beneficiary")}</h4>
                   <p className="text-sm text-gray-900">{selectedLoan.beneficiaryNameAr}</p>
-                  <p className="text-xs text-gray-500" dir="ltr">رمز المستفيد: {selectedLoan.beneficiaryReference || '—'}</p>
+                  <p className="text-xs text-gray-500" dir="ltr">{t('medical.beneficiaryRef')}: {selectedLoan.beneficiaryReference || '—'}</p>
                 </div>
                 <div className="text-left">
-                  <span className="text-xs text-gray-500">الرمز المرجعي للإعارة</span>
+                  <span className="text-xs text-gray-500">{t("inventory.loanRefCode", "الرمز المرجعي للإعارة")}</span>
                   <p className="text-sm font-bold text-primary-700" dir="ltr">{selectedLoan.reference || '—'}</p>
                   <div className="mt-1">
                     <Badge variant={LOAN_STATUS_VARIANTS[selectedLoan.status] || 'default'}>
@@ -1560,12 +1560,12 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                 </div>
               </div>
               <div className="flex items-center gap-4 text-xs text-gray-500">
-                <span>تاريخ الإعارة: {formatDate(selectedLoan.loanDate)}</span>
+                <span>{t('inventory.loanDate')}: {formatDate(selectedLoan.loanDate)}</span>
                 {selectedLoan.expectedReturnDate && (
-                  <span>الإرجاع المتوقع: {formatDate(selectedLoan.expectedReturnDate)}</span>
+                  <span>{t('inventory.expectedReturnDate')}: {formatDate(selectedLoan.expectedReturnDate)}</span>
                 )}
                 {selectedLoan.actualReturnDate && (
-                  <span>الإرجاع الفعلي: {formatDate(selectedLoan.actualReturnDate)}</span>
+                  <span>{t('inventory.actualReturnDate')}: {formatDate(selectedLoan.actualReturnDate)}</span>
                 )}
               </div>
             </div>
@@ -1587,12 +1587,12 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">المقال</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.category')}</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.quantity')}</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.returnedItems', 'المُرتجع')}</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">{t('finance.remainingAmount', 'المتبقي')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">الحالة عند الإعارة</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">الحالة عند الإرجاع</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.loanStatusAtLoan', 'الحالة عند الإعارة')}</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.loanStatusAtReturn', 'الحالة عند الإرجاع')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1644,7 +1644,7 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
             {/* Return Items Form */}
             {showReturnForm && (
               <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-                <h4 className="text-sm font-semibold text-gray-700">إرجاع المقالات</h4>
+                <h4 className="text-sm font-semibold text-gray-700">{t("inventory.returnItems")}</h4>
                 {returnEntries.map((entry: { articleId: string; quantity: number; condition: string }, index: number) => {
                   const loanItem = selectedLoan.items.find((i) => i.articleId === entry.articleId)
                   if (!loanItem) return null
@@ -1652,12 +1652,12 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                   return (
                     <div key={entry.articleId} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg">
                       <div className="space-y-1">
-                        <label className="block text-xs font-medium text-gray-500">المقال</label>
+                        <label className="block text-xs font-medium text-gray-500">{t('inventory.category')}</label>
                         <p className="text-sm font-medium text-gray-900">{loanItem.articleNameAr}</p>
-                        <p className="text-xs text-gray-400">المتبقي: {remaining}</p>
+                        <p className="text-xs text-gray-400">{t('finance.remainingAmount')}: {remaining}</p>
                       </div>
                       <Input
-                        labelAr="الكمية المُرتجعة"
+                        labelAr={t("inventory.returnedQuantity", "الكمية المُرتجعة")}
                         type="number"
                         min={0}
                         max={remaining}
@@ -1667,7 +1667,7 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                         }
                       />
                       <SearchableSelect
-                        labelAr="الحالة عند الإرجاع"
+                        labelAr={t("inventory.loanStatusAtReturn", "الحالة عند الإرجاع")}
                         value={entry.condition}
                         onChange={(val) => updateReturnEntry(index, 'condition', val)}
                         options={
@@ -1689,7 +1689,7 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
                     disabled={returnEntries.every((r) => r.quantity === 0) || isReturning}
                   >
                     <RotateCcw className="w-4 h-4" />
-                    {isReturning ? 'جاري الإرجاع...' : 'تأكيد الإرجاع'}
+                    {isReturning ? t('common.saving') : t('inventory.confirmReturn')}
                   </Button>
                 </div>
               </div>
@@ -1698,10 +1698,10 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
             {/* Add Item to Loan Form */}
             {showAddItemForm && (
               <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-                <h4 className="text-sm font-semibold text-gray-700">إضافة مقال إلى الإعارة</h4>
+                <h4 className="text-sm font-semibold text-gray-700">{t("inventory.addArticleToLoan", "إضافة مقال إلى الإعارة")}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <SearchableSelect
-                    labelAr="المقال"
+                    labelAr={t("inventory.category")}
                     value={newItemArticleId}
                     onChange={setNewItemArticleId}
                     options={availableArticles.map((a: Article) => ({
@@ -1747,7 +1747,7 @@ function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<
             {/* Notes */}
             {selectedLoan.notes && (
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-1">ملاحظات</h4>
+                <h4 className="text-sm font-semibold text-gray-700 mb-1">{t('common.notes')}</h4>
                 <p className="text-sm text-gray-600">{selectedLoan.notes}</p>
               </div>
             )}

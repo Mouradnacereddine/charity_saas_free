@@ -389,13 +389,13 @@ export default function AnalyticsPage() {
           {monthlyProgression.length === 0 ? (
             <div className="h-64 flex flex-col items-center justify-center text-gray-400">
               <Calendar className="w-12 h-12 mb-2 stroke-1" />
-              <p className="text-sm">لا توجد بيانات لعرض المخطط البياني في هذه الفترة</p>
+              <p className="text-sm">{t('analytics.noChartData', 'لا توجد بيانات لعرض المخطط البياني في هذه الفترة')}</p>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="flex gap-4 text-xs font-semibold justify-end">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-500 rounded-sm" /> المداخيل</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-red-500 rounded-sm" /> المصاريف</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-500 rounded-sm" /> {t('analytics.income')}</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-red-500 rounded-sm" /> {t('analytics.expenses')}</span>
               </div>
               {/* Table-based bar chart: never overlaps, always readable */}
               <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '420px' }}>
@@ -405,7 +405,7 @@ export default function AnalyticsPage() {
                       <th className="text-right py-2 px-2 font-semibold text-gray-500 w-24">{t('analytics.month')}</th>
                       <th className="text-right py-2 px-2 font-semibold text-gray-500 w-20">{t('analytics.income')}</th>
                       <th className="py-2 px-2 w-1/2 min-w-[200px]"></th>
-                      <th className="text-left py-2 px-2 font-semibold text-gray-500 w-20">المصاريف</th>
+                      <th className="text-left py-2 px-2 font-semibold text-gray-500 w-20">{t('analytics.expenses')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -490,9 +490,9 @@ export default function AnalyticsPage() {
                     const cashPct = ((fundSourceBreakdown.cash.credits / t) * 100).toFixed(0);
                     return (
                       <>
-                        <span className="text-xs text-gray-400 mb-1">مصادر التمويل</span>
-                        <span className="text-sm font-semibold text-primary-600">🔵 بنك {bankPct}%</span>
-                        <span className="text-sm font-semibold text-amber-500">🟠 نقدي {cashPct}%</span>
+                        <span className="text-xs text-gray-400 mb-1">{t('analytics.fundingSources', 'مصادر التمويل')}</span>
+                        <span className="text-sm font-semibold text-primary-600">🔵 {t('dashboard.bank')} {bankPct}%</span>
+                        <span className="text-sm font-semibold text-amber-500">🟠 {t('dashboard.cash')} {cashPct}%</span>
                       </>
                     );
                   })()}
@@ -504,13 +504,13 @@ export default function AnalyticsPage() {
               <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
-                    <span className="w-3 h-3 bg-primary-500 rounded-full" /> البنك (Banque)
+                    <span className="w-3 h-3 bg-primary-500 rounded-full" /> ال{t('dashboard.bank')} (Banque)
                   </span>
-                  <span className="text-xs text-gray-500">رصيد الفترة الصافي</span>
+                  <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance', 'رصيد الفترة الصافي')}</span>
                 </div>
                 <div className="flex justify-between text-xs mt-2">
-                  <span className="text-emerald-600">مداخيل: {formatCurrency(fundSourceBreakdown.bank.credits)}</span>
-                  <span className="text-red-600">مصاريف: {formatCurrency(fundSourceBreakdown.bank.debits)}</span>
+                  <span className="text-emerald-600">{t('analytics.income')}: {formatCurrency(fundSourceBreakdown.bank.credits)}</span>
+                  <span className="text-red-600">{t('analytics.expenses')}: {formatCurrency(fundSourceBreakdown.bank.debits)}</span>
                 </div>
                 <div className="text-left font-bold text-sm text-gray-900 border-t border-blue-100/50 mt-1.5 pt-1" dir="ltr">
                   {formatCurrency(fundSourceBreakdown.bank.net)}
@@ -520,13 +520,13 @@ export default function AnalyticsPage() {
               <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
-                    <span className="w-3 h-3 bg-amber-400 rounded-full" /> الصندوق النقدي (Cash)
+                    <span className="w-3 h-3 bg-amber-400 rounded-full" /> الصندوق ال{t('dashboard.cash')} (Cash)
                   </span>
-                  <span className="text-xs text-gray-500">رصيد الفترة الصافي</span>
+                  <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance', 'رصيد الفترة الصافي')}</span>
                 </div>
                 <div className="flex justify-between text-xs mt-2">
-                  <span className="text-emerald-600">مداخيل: {formatCurrency(fundSourceBreakdown.cash.credits)}</span>
-                  <span className="text-red-600">مصاريف: {formatCurrency(fundSourceBreakdown.cash.debits)}</span>
+                  <span className="text-emerald-600">{t('analytics.income')}: {formatCurrency(fundSourceBreakdown.cash.credits)}</span>
+                  <span className="text-red-600">{t('analytics.expenses')}: {formatCurrency(fundSourceBreakdown.cash.debits)}</span>
                 </div>
                 <div className="text-left font-bold text-sm text-gray-900 border-t border-amber-100/50 mt-1.5 pt-1" dir="ltr">
                   {formatCurrency(fundSourceBreakdown.cash.net)}
@@ -560,8 +560,8 @@ export default function AnalyticsPage() {
                     <div className="bg-red-500 h-full" style={{ width: `${debPercent}%` }} />
                   </div>
                   <div className="flex justify-between text-[10px] text-gray-400">
-                    <span>مداخيل الفترة: {formatCurrency(c.periodCredits)}</span>
-                    <span>مصاريف الفترة: {formatCurrency(c.periodDebits)}</span>
+                    <span>{t('analytics.periodIncome', 'مداخيل الفترة')}: {formatCurrency(c.periodCredits)}</span>
+                    <span>{t('analytics.periodExpenses', 'مصاريف الفترة')}: {formatCurrency(c.periodDebits)}</span>
                   </div>
                 </div>
                 <div className={`text-xs font-medium ${c.periodFlow >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -580,7 +580,7 @@ export default function AnalyticsPage() {
               <div className="flex gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-800">
                 <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
                 <div>
-                  <h4 className="font-bold">تنبيه: معدل نفقات حرج جداً</h4>
+                  <h4 className="font-bold">{t('analytics.criticalAlert', 'تنبيه: معدل نفقات حرج جداً')}</h4>
                   <p className="mt-1 text-xs text-red-700 leading-relaxed">
                     نسبة نفقات الفترة مقارنة بالمداخيل تتجاوز عتبة الأمان 85% حيث بلغت{' '}
                     <span className="font-bold">{stats.ratio.toFixed(1)}%</span>. يُخشى أن تتعرض الجمعية لشح في السيولة. ننصح بترشيد النفقات التشغيلية.
@@ -656,7 +656,7 @@ export default function AnalyticsPage() {
             <div className="flex gap-3 p-3 bg-purple-50 border border-purple-100 rounded-lg text-sm text-purple-800">
               <Activity className="w-5 h-5 shrink-0 text-purple-500" />
               <div>
-                <h4 className="font-bold">مؤشر سرعة تدفق المعاملات</h4>
+                <h4 className="font-bold">{t('analytics.velocity', 'مؤشر سرعة تدفق المعاملات')}</h4>
                 <p className="mt-1 text-xs text-purple-700 leading-relaxed">
                   تم تسجيل <span className="font-bold">{velocity.total}</span> عملية مالية خلال{' '}
                   <span className="font-bold">{velocity.days} يوماً</span>، بمعدل{' '}
@@ -746,7 +746,7 @@ export default function AnalyticsPage() {
                           <td className="py-2 px-4 text-gray-500 font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
-                              {tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}
+                              {tx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}
                             </Badge>
                           </td>
                           <td className={`py-2 px-4 font-bold text-left ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -804,7 +804,7 @@ export default function AnalyticsPage() {
                           <td className="py-2 px-4 text-gray-500 font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
-                              {tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}
+                              {tx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}
                             </Badge>
                           </td>
                           <td className={`py-2 px-4 font-bold text-left ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -859,8 +859,8 @@ export default function AnalyticsPage() {
                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right font-medium"
               >
                 <option value="">كل مصادر التمويل</option>
-                <option value="banque">البنك</option>
-                <option value="caisse_physique">الصندوق النقدي</option>
+                <option value="banque">ال{t('dashboard.bank')}</option>
+                <option value="caisse_physique">الصندوق ال{t('dashboard.cash')}</option>
               </select>
             </div>
 
@@ -922,7 +922,7 @@ export default function AnalyticsPage() {
                           <td className="py-2 px-4 text-gray-500">{formatDate(tx.date)}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
-                              {tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}
+                              {tx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}
                             </Badge>
                           </td>
                           <td className={`py-2 px-4 font-bold text-left ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-600'}`}>
