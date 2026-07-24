@@ -1,5 +1,11 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '../ui/dropdown-menu';
+import {
   LayoutDashboard,
   Wallet,
   Users,
@@ -56,7 +62,7 @@ export function Layout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsNameAr, setSettingsNameAr] = useState(associationNameAr || '');
   const [settingsName, setSettingsName] = useState('');
@@ -66,7 +72,6 @@ export function Layout({
   useEffect(() => {
     setSettingsNameAr(associationNameAr || '');
   }, [associationNameAr]);
-
   const handleUpdateName = async () => {
     if (!settingsNameAr.trim()) return;
     setSavingName(true);
@@ -81,25 +86,6 @@ export function Layout({
       setSavingName(false);
     }
   };
-
-  useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [sidebarOpen]);
-
-  // Close user menu on outside click
-  useEffect(() => {
-    if (!userMenuOpen) return;
-    const close = () => setUserMenuOpen(false);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
-  }, [userMenuOpen]);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -177,64 +163,57 @@ export function Layout({
             ))}
         </nav>
 
-        {/* User section — avatar only, always visible */}
+        {/* User section — avatar as dropdown trigger */}
         <div className="border-t border-primary-700 shrink-0">
-          <button
-            onClick={(e) => { e.stopPropagation(); setUserMenuOpen(!userMenuOpen); }}
-            className="w-full flex items-center justify-center lg:justify-center gap-3 px-3 py-3 hover:bg-primary-800 transition-colors"
-            title={userNameAr || 'مستخدم'}
-          >
-            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold text-sm shrink-0">
-              {userNameAr?.charAt(0) || '?'}
-            </div>
-            <span className={`truncate text-sm text-primary-200 transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
-              {userNameAr || 'مستخدم'}
-            </span>
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="w-full flex items-center justify-center lg:justify-center gap-3 px-3 py-3 hover:bg-primary-800 transition-colors"
+                title={userNameAr || 'مستخدم'}
+              >
+                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold text-sm shrink-0">
+                  {userNameAr?.charAt(0) || '?'}
+                </div>
+                <span className={`truncate text-sm text-primary-200 transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
+                  {userNameAr || 'مستخدم'}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="top"
+              align="end"
+              sideOffset={8}
+              className="min-w-[240px]"
+              dir="rtl"
+            >
+              <div className="p-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-900">{userNameAr || 'مستخدم'}</p>
+                <p className="text-xs text-gray-500">
+                  {userRole === 'admin' ? 'مدير النظام' : userRole === 'treasurer' ? 'أمين المال' : 'متطوع'}
+                </p>
+              </div>
+              <div className="p-1">
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => { onNavigate('users'); }}>
+                    <UserCog className="w-4 h-4" />
+                    إدارة المستخدمين
+                  </DropdownMenuItem>
+                )}
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => { setShowSettingsModal(true); }}>
+                    <Settings className="w-4 h-4" />
+                    إعدادات الجمعية
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => { onLogout?.(); }}>
+                  <LogOut className="w-4 h-4" />
+                  تسجيل الخروج
+                </DropdownMenuItem>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
-
-      {/* User dropdown — rendered independently from sidebar, fixed positioned */}
-      {userMenuOpen && (
-        <div className="fixed z-[100] bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
-             style={sidebarOpen ? { bottom: '4rem', left: '1rem', right: '1rem' } : sidebarCollapsed ? { bottom: '4rem', right: '5rem', minWidth: '240px' } : { bottom: '4rem', right: '18rem', minWidth: '240px' }}
-             onClick={(e) => e.stopPropagation()}
-             dir="rtl">
-          <div className="p-3 border-b border-gray-100">
-            <p className="text-sm font-medium text-gray-900">{userNameAr || 'مستخدم'}</p>
-            <p className="text-xs text-gray-500">
-              {userRole === 'admin' ? 'مدير النظام' : userRole === 'treasurer' ? 'أمين المال' : 'متطوع'}
-            </p>
-          </div>
-          <div className="p-1">
-            {isAdmin && (
-              <button
-                onClick={() => { onNavigate('users'); setUserMenuOpen(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <UserCog className="w-4 h-4" />
-                إدارة المستخدمين
-              </button>
-            )}
-            {isAdmin && (
-              <button
-                onClick={() => { setShowSettingsModal(true); setUserMenuOpen(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                إعدادات الجمعية
-              </button>
-            )}
-            <button
-              onClick={() => { onLogout?.(); setUserMenuOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              تسجيل الخروج
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0">
