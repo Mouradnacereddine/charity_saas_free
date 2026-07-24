@@ -520,7 +520,7 @@ export default function AnalyticsPage() {
               <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
-                    <span className="w-3 h-3 bg-amber-400 rounded-full" /> الصندوق {t('dashboard.cash')} (Cash)
+                    <span className="w-3 h-3 bg-amber-400 rounded-full" /> {t('finance.cashFund')} (Cash)
                   </span>
                   <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance', 'رصيد الفترة الصافي')}</span>
                 </div>
@@ -860,7 +860,7 @@ export default function AnalyticsPage() {
               >
                 <option value="">كل مصادر التمويل</option>
                 <option value="banque">{t('dashboard.bank')}</option>
-                <option value="caisse_physique">الصندوق {t('dashboard.cash')}</option>
+                <option value="caisse_physique">{t('finance.cashFund')}</option>
               </select>
             </div>
 
