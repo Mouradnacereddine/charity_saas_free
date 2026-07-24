@@ -384,7 +384,7 @@ function SettingsTab({ t, i18n }: { t: any; i18n: any }) {
           <div className="flex items-end">
             <Button onClick={handleAddCategory} disabled={!newCatNameAr.trim()}>
               <Plus className="w-4 h-4" />
-              إضافة
+{t("common.add")}
             </Button>
           </div>
         </div>
@@ -427,10 +427,10 @@ function SettingsTab({ t, i18n }: { t: any; i18n: any }) {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Button size="sm" onClick={handleUpdateCategory} disabled={!editCatNameAr.trim()}>
-                              حفظ
+{t("common.save")}
                             </Button>
                             <Button size="sm" variant="secondary" onClick={cancelEditCategory}>
-                              إلغاء
+{t("common.cancel")}
                             </Button>
                           </div>
                         </td>
@@ -490,7 +490,7 @@ function SettingsTab({ t, i18n }: { t: any; i18n: any }) {
           <div className="flex items-end">
             <Button onClick={handleAddLocation} disabled={!newLocNameAr.trim()}>
               <Plus className="w-4 h-4" />
-              إضافة
+{t("common.add")}
             </Button>
           </div>
         </div>
@@ -533,10 +533,10 @@ function SettingsTab({ t, i18n }: { t: any; i18n: any }) {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Button size="sm" onClick={handleUpdateLocation} disabled={!editLocNameAr.trim()}>
-                              حفظ
+{t("common.save")}
                             </Button>
                             <Button size="sm" variant="secondary" onClick={cancelEditLocation}>
-                              إلغاء
+{t("common.cancel")}
                             </Button>
                           </div>
                         </td>
@@ -625,10 +625,10 @@ function SettingsTab({ t, i18n }: { t: any; i18n: any }) {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Button size="sm" onClick={handleUpdateStatus} disabled={!editStsNameAr.trim()}>
-                              حفظ
+{t("common.save")}
                             </Button>
                             <Button size="sm" variant="secondary" onClick={cancelEditStatus}>
-                              إلغاء
+{t("common.cancel")}
                             </Button>
                           </div>
                         </td>
@@ -888,10 +888,10 @@ function StockTab({ actionsRef, t, i18n, statusLabels }: { actionsRef: React.Mut
           </div>
           <div className="flex gap-2 mt-4">
             <Button size="sm" onClick={applyStockFilters}>
-              <Search className="w-4 h-4" /> بحث
+              <Search className="w-4 h-4" /> {t("common.search")}
             </Button>
             <Button variant="secondary" size="sm" onClick={resetStockFilters}>
-              إعادة تعيين
+{t("doctors.reset")}
             </Button>
           </div>
         </Card>
@@ -1354,10 +1354,10 @@ function LoansTab({ actionsRef, t, i18n, statusLabels, loanStatusLabels }: { act
           </div>
           <div className="flex gap-2 mt-4">
             <Button size="sm" onClick={applyLoanFilters}>
-              <Search className="w-4 h-4" /> بحث
+              <Search className="w-4 h-4" /> {t("common.search")}
             </Button>
             <Button variant="secondary" size="sm" onClick={resetLoanFilters}>
-              إعادة تعيين
+{t("doctors.reset")}
             </Button>
           </div>
         </Card>
@@ -1462,7 +1462,7 @@ function LoansTab({ actionsRef, t, i18n, statusLabels, loanStatusLabels }: { act
               <label className="block text-sm font-medium text-gray-700">{t('inventory.quantity', 'المقالات')}</label>
               <Button size="sm" variant="secondary" onClick={addLoanItemRow}>
                 <Plus className="w-3 h-3" />
-                إضافة مقال
+{t("inventory.addArticle")}
               </Button>
             </div>
             {loanItems.length === 0 && (
@@ -1504,7 +1504,7 @@ function LoansTab({ actionsRef, t, i18n, statusLabels, loanStatusLabels }: { act
                 <div className="flex items-end">
                   <Button size="sm" variant="danger" onClick={() => removeLoanItemRow(index)}>
                     <Trash2 className="w-3 h-3" />
-                    إزالة
+{t("common.remove")}
                   </Button>
                 </div>
               </div>
@@ -1520,13 +1520,13 @@ function LoansTab({ actionsRef, t, i18n, statusLabels, loanStatusLabels }: { act
 
           <div className="flex justify-end gap-3">
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
-              إلغاء
+{t("common.cancel")}
             </Button>
             <Button
               onClick={handleCreateLoan}
               disabled={!selectedBeneficiaryId || loanItems.length === 0 || loanItems.some((li) => !li.articleId)}
             >
-              إنشاء الإعارة
+{t("inventory.newLoan")}
             </Button>
           </div>
         </div>
@@ -1628,15 +1628,15 @@ function LoansTab({ actionsRef, t, i18n, statusLabels, loanStatusLabels }: { act
               <div className="flex flex-wrap gap-3">
                 <Button size="sm" variant="secondary" onClick={openReturnForm}>
                   <RotateCcw className="w-4 h-4" />
-                  إرجاع مقالات
+{t("inventory.returnItems")}
                 </Button>
                 <Button size="sm" variant="secondary" onClick={openAddItemForm}>
                   <Plus className="w-4 h-4" />
-                  إضافة مقال
+{t("inventory.addArticle")}
                 </Button>
                 <Button size="sm" variant="danger" onClick={handleMarkDefinitive}>
                   <CheckCircle className="w-4 h-4" />
-                  تحويل إلى نهائي
+{t("inventory.convertToFinal")}
                 </Button>
               </div>
             )}
@@ -1681,7 +1681,7 @@ function LoansTab({ actionsRef, t, i18n, statusLabels, loanStatusLabels }: { act
                 })}
                 <div className="flex justify-end gap-3">
                   <Button size="sm" variant="secondary" onClick={() => setShowReturnForm(false)}>
-                    إلغاء
+{t("common.cancel")}
                   </Button>
                   <Button
                     size="sm"
@@ -1734,11 +1734,11 @@ function LoansTab({ actionsRef, t, i18n, statusLabels, loanStatusLabels }: { act
                 </div>
                 <div className="flex justify-end gap-3">
                   <Button size="sm" variant="secondary" onClick={() => setShowAddItemForm(false)}>
-                    إلغاء
+{t("common.cancel")}
                   </Button>
                   <Button size="sm" onClick={handleAddItemToLoan} disabled={!newItemArticleId}>
                     <Plus className="w-4 h-4" />
-                    إضافة
+{t("common.add")}
                   </Button>
                 </div>
               </div>
