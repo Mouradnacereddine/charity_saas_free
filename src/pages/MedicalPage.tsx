@@ -140,8 +140,8 @@ export default function MedicalPage() {
   const selectedBeneficiary = beneficiaries.find((b: Beneficiary) => b.id === beneficiaryId);
 
   const ATTRIBUT_LABELS: Record<string, string> = {
-    veuve: 'أرملة', orphelin: 'يتيم', personne_agee: 'شخص مسن',
-    handicape: 'معاق', famille_demunie: 'عائلة معوزة', autre: 'أخرى',
+    veuve: t('beneficiaries.widow'), orphelin: t('beneficiaries.orphan'), personne_agee: t('beneficiaries.elderly'),
+    handicape: t('beneficiaries.disabled'), famille_demunie: t('beneficiaries.needyFamily'), autre: t('beneficiaries.other'),
   };
 
   const handleAddAnalysis = async () => {

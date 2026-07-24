@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatDate, generateLoanReference } from '../utils/helpers'
@@ -111,6 +112,7 @@ function getDefaultFrenchName(arName: string): string {
 // ---- Component ----
 
 export default function InventoryPage() {
+  const { t } = useTranslation();
   const { association } = useAuth()
   const [activeTab, setActiveTab] = useState<'stock' | 'loans' | 'settings'>('stock')
   const stockActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })

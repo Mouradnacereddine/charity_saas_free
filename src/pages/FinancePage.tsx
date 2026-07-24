@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, StatCard, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
@@ -116,6 +117,7 @@ function BankAccountModal({
 // ---- Main Page ----
 
 export default function FinancePage() {
+  const { t } = useTranslation();
   // ---- Data Hooks ----
   const [txFilters, setTxFilters] = useState<Record<string, string> | undefined>(undefined)
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions(txFilters)

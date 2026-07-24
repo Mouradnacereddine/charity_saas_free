@@ -1,4 +1,5 @@
 import { useState, Fragment } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { calculateAge, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { printReceipt, printBeneficiaryCard } from '../lib/receipt'
@@ -130,6 +131,7 @@ function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
 // ============================================
 
 export default function BeneficiariesPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient()
   const { association } = useAuth()
   const [queryParams, setQueryParams] = useState<Record<string, string> | undefined>(undefined)
