@@ -24,10 +24,7 @@ import {
 import type { Transaction, Caisse } from '../types';
 
 export default function AnalyticsPage() {
-  const { t: _t, i18n } = useTranslation();
-  const t = (...args: Parameters<typeof _t>) => {
-    try { return _t(...args); } catch { return i18n.t(...args); }
-  };
+  const { t, i18n } = useTranslation();
   const [quickFilter, setQuickFilter] = useState<'this_month' | 'last_3_months' | 'this_year' | 'custom'>('this_month');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
