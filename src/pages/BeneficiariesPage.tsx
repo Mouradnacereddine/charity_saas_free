@@ -13,27 +13,6 @@ import { useAuth } from '../hooks/useAuth'
 
 // ---- Constants ----
 
-const ATTRIBUT_LABELS: Record<string, string> = {
-  veuve: 'أرملة',
-  orphelin: 'يتيم',
-  personne_agee: 'شخص مسن',
-  handicape: 'معاق',
-  famille_demunie: 'عائلة معوزة',
-  autre: 'أخرى',
-}
-
-const HEALTH_STATUS_LABELS: Record<string, string> = {
-  bonne_sante: 'بصحة جيدة',
-  malade: 'مريض',
-  handicape: 'معاق',
-  autre: 'أخرى',
-}
-
-const HEALTH_STATUS_OPTIONS = Object.entries(HEALTH_STATUS_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}))
-
 const ATTRIBUT_BADGE_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   veuve: 'info',
   orphelin: 'warning',
@@ -131,7 +110,28 @@ function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
 // ============================================
 
 export default function BeneficiariesPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const ATTRIBUT_LABELS: Record<string, string> = {
+    veuve: t('beneficiaries.widow'),
+    orphelin: t('beneficiaries.orphan'),
+    personne_agee: t('beneficiaries.elderly'),
+    handicape: t('beneficiaries.disabled'),
+    famille_demunie: t('beneficiaries.needyFamily'),
+    autre: t('beneficiaries.other'),
+  }
+
+  const HEALTH_STATUS_LABELS: Record<string, string> = {
+    bonne_sante: t('beneficiaries.goodHealth'),
+    malade: t('beneficiaries.sick'),
+    handicape: t('beneficiaries.disabled'),
+    autre: t('beneficiaries.other'),
+  }
+
+  const HEALTH_STATUS_OPTIONS = Object.entries(HEALTH_STATUS_LABELS).map(([value, label]) => ({
+    value,
+    label,
+  }))
+
   const queryClient = useQueryClient()
   const { association } = useAuth()
   const [queryParams, setQueryParams] = useState<Record<string, string> | undefined>(undefined)
@@ -223,11 +223,11 @@ export default function BeneficiariesPage() {
   }
 
   const handleDeleteAttribut = async (name: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذه الصفة؟')) return
+    if (!window.confirm(t('beneficiaries.confirmDeleteAttribute'))) return
     try {
       await deleteAttributMutation.mutateAsync(name)
     } catch (err: any) {
-      const msg = err?.response?.data?.error || 'لا يمكن حذف الصفة لأنها مستخدمة من قبل مستفيدين'
+      const msg = err?.response?.data?.error || t('beneficiaries.attributeDeleteError')
       window.alert(msg)
     }
   }
@@ -247,7 +247,7 @@ export default function BeneficiariesPage() {
   }
 
   const handleDeleteGrade = async (id: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا المستوى؟')) return
+    if (!window.confirm(t('beneficiaries.confirmDeleteGrade'))) return
     await deleteGradeMutation.mutateAsync(id)
   }
 
@@ -466,7 +466,7 @@ export default function BeneficiariesPage() {
 
   // ---- Delete ----
   const handleDelete = async (id: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا المستفيد؟')) return
+    if (!window.confirm(t('beneficiaries.confirmDeleteBeneficiary'))) return
     await deleteBeneficiary.mutateAsync(id)
   }
 
@@ -484,23 +484,25 @@ export default function BeneficiariesPage() {
   // ---- Print ----
   const handlePrintCard = (b: Beneficiary) => {
     const caisse = caisses.find((c: any) => c.id === b.caisseId)
+    const isLtr = i18n.language !== 'ar';
+    const cl = i18n.language;
 
     // Children as inline grid items (no table, matches Orientation Médicale style)
     const childrenHtml = (b.children || []).length > 0
-      ? `<div class="section"><div class="section-title">الأطفال (${b.children.length})</div>
-         <div class="info"><div class="col"><div class="row"><span class="lbl">الأسماء</span>
+      ? `<div class="section"><div class="section-title">${t('beneficiaries.children')} (${b.children.length})</div>
+         <div class="info"><div class="col"><div class="row"><span class="lbl">${t('receipt.nameAr')}</span>
          ${b.children.map((ch: any) =>
            `<span class="val">${ch.lastNameAr} ${ch.firstNameAr}</span><br>`
          ).join('')}
-         </div></div><div class="col"><div class="row"><span class="lbl">الجنس / العمر / الحالة</span>
+         </div></div><div class="col"><div class="row"><span class="lbl">${t('receipt.gender')} / ${t('receipt.age')} / ${t('common.status')}</span>
          ${b.children.map((ch: any) =>
-           `<span class="val">${ch.gender === 'female' ? 'أنثى' : 'ذكر'} — ${calculateAge(ch.dateOfBirth).displayAr} — ${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</span><br>`
+           `<span class="val">${ch.gender === 'female' ? t('common.female') : t('common.male')} — ${calculateAge(ch.dateOfBirth).displayAr} — ${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</span><br>`
          ).join('')}
          </div></div></div></div>`
       : ''
 
     printBeneficiaryCard({
-      assocNameAr: association?.nameAr || 'الجمعية الخيرية',
+      assocNameAr: association?.nameAr || t('app.title'),
       reference: b.reference || '—',
       lastNameAr: b.lastNameAr,
       firstNameAr: b.firstNameAr,
@@ -511,10 +513,29 @@ export default function BeneficiariesPage() {
       dateOfBirth: b.dateOfBirth ? formatDate(b.dateOfBirth) : '—',
       ageDisplay: b.dateOfBirth ? calculateAge(b.dateOfBirth).displayAr : '—',
       attribut: ATTRIBUT_LABELS[b.attribut] || b.attribut,
-      gender: b.gender === 'female' ? 'أنثى' : 'ذكر',
+      gender: b.gender === 'female' ? t('common.female') : t('common.male'),
       caisseNameAr: caisse?.nameAr || '—',
       situation: b.situationAr ? `${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}` : undefined,
       childrenHtml,
+      dir: isLtr ? 'ltr' : 'rtl',
+      lang: cl,
+      labels: {
+        title: t('receipt.beneficiaryCard'),
+        personalInfo: t('receipt.personalInfo'),
+        nameAr: t('receipt.nameAr'),
+        attribut: t('receipt.attribute'),
+        birthDate: t('receipt.birthDate'),
+        idNumber: t('receipt.idNumber'),
+        fund: t('dashboard.fund'),
+        nameLatin: t('receipt.nameLatin'),
+        gender: t('receipt.gender'),
+        age: t('receipt.age'),
+        phone: t('receipt.phone'),
+        status: t('common.status'),
+        beneficiarySignature: t('receipt.beneficiarySign'),
+        stampSignature: t('receipt.stampSignature'),
+        print: t('receipt.print')
+      }
     })
   }
 

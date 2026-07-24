@@ -43,6 +43,7 @@ function BankAccountModal({
   initialData: BankAccountFormData
   onSave: (data: BankAccountFormData) => void
 }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState<BankAccountFormData>(initialData)
 
   useEffect(() => {
@@ -58,19 +59,19 @@ function BankAccountModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editingId ? 'تعديل الحساب البنكي' : 'إضافة حساب بنكي جديد'}
+      title={editingId ? t('finance.editBankAccount') : t('finance.addBankAccount')}
       size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          labelAr="اسم البنك"
+          labelAr={t('finance.bankName')}
           value={form.bankNameAr}
           onChange={(e) => setForm({ ...form, bankNameAr: e.target.value })}
           required
           dir="rtl"
         />
         <Input
-          labelAr="رقم الحساب"
+          labelAr={t('finance.accountNumber')}
           value={form.accountNumber}
           onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
           required
@@ -103,10 +104,10 @@ function BankAccountModal({
         />
         <div className="flex gap-3 justify-end pt-4">
           <Button type="button" variant="secondary" onClick={onClose}>
-            إلغاء
+            {t('common.cancel')}
           </Button>
           <Button type="submit" variant="primary">
-            {editingId ? 'تحديث' : 'إضافة'}
+            {editingId ? t('common.update') : t('common.add')}
           </Button>
         </div>
       </form>
@@ -305,41 +306,47 @@ export default function FinancePage() {
   const handlePrintReceipt = (tx: any) => {
     const caisse = caisses.find((c: Caisse) => c.id === tx.caisseId)
     const subCat = caisse?.subCategories.find((s: { id: string; name: string; nameAr: string }) => s.id === tx.subCategoryId)
-    const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
+    const subCatRow = subCat ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${subCat.nameAr}</span></div>` : ''
 
     // Generate proper amount in words at print time (handles old data with numeric-only strings)
     const amount = typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)
     const wordsAr = tx.amountInWordsAr && !tx.amountInWordsAr.match(/^\d/) ? tx.amountInWordsAr : numberToArabicWords(amount)
     const wordsFr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToFrenchWords(amount)
 
+    const isLtr = i18n.language !== 'ar';
+
     if (tx.type === 'credit') {
       const donor = donors.find((d: Donor) => d.id === tx.donorId)
       printReceipt(
-        'وصل تبرع', 'Reçu de Don',
-        `<div class="col"><div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
-<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
-<div class="row"><span class="lbl">المتبرع</span><span class="val">${donor ? `${donor.lastNameAr} ${donor.firstNameAr}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div></div>
-<div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
-${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
+        t('receipt.title'), 'Reçu de Don',
+        `<div class="col"><div class="row"><span class="lbl">${t('receipt.receiptNo')}</span><span class="val">${tx.receiptNumber || '—'}</span></div>
+<div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
+<div class="row"><span class="lbl">${t('dashboard.donor')}</span><span class="val">${donor ? `${donor.lastNameAr} ${donor.firstNameAr}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div></div>
+<div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
+${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.description')}</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
         'color:#16a34a',
         formatCurrency(amount), wordsAr, wordsFr,
-        'توقيع المتبرع', 'ختم الجمعية',
-        association?.nameAr
+        t('donors.donorSignature'), t('receipt.stampSignature'),
+        association?.nameAr,
+        isLtr ? 'ltr' : 'rtl',
+        i18n.language
       )
     } else {
       const benef = beneficiaries.find((b: Beneficiary) => b.id === tx.beneficiaryId)
       printReceipt(
-        'وصل صرف', 'Bon de Sortie',
-        `<div class="col"><div class="row"><span class="lbl">رقم الوصل</span><span class="val">${tx.receiptNumber || '—'}</span></div>
-<div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
-<div class="row"><span class="lbl">المستفيد</span><span class="val">${benef ? `${benef.lastNameAr} ${benef.firstNameAr}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div></div>
-<div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
-<div class="row"><span class="lbl">المصدر</span><span class="val">${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</span></div>
-${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
+        t('receipt.expenseTitle'), 'Bon de Sortie',
+        `<div class="col"><div class="row"><span class="lbl">${t('receipt.receiptNo')}</span><span class="val">${tx.receiptNumber || '—'}</span></div>
+<div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
+<div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${benef ? `${benef.lastNameAr} ${benef.firstNameAr}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div></div>
+<div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
+<div class="row"><span class="lbl">${t('dashboard.source')}</span><span class="val">${tx.fundSource === 'banque' ? t('dashboard.bank') : t('dashboard.cash')}</span></div>
+${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.description')}</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
         'background:#fff0f0;color:#dc2626',
         `- ${formatCurrency(amount)}`, wordsAr, wordsFr,
-        'إمضاء المستفيد', 'ختم الجمعية',
-        association?.nameAr
+        t('receipt.beneficiarySignature'), t('receipt.stampSignature'),
+        association?.nameAr,
+        isLtr ? 'ltr' : 'rtl',
+        i18n.language
       )
     }
   }
@@ -455,30 +462,30 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
   // ---- Render ----
 
   return (
-    <div dir="rtl" className="space-y-6">
+    <div className="space-y-6">
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">الإدارة المالية</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('finance.title')}</h1>
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
-          title="إجمالي الرصيد البنكي"
+          title={t('finance.totalBankBalance')}
           value={formatCurrency(totalBankBalance)}
           icon={<Building2 size={24} />}
           color="bg-blue-500"
         />
         <StatCard
-          title="النقدية (الصندوق)"
+          title={t('finance.totalCash')}
           value={formatCurrency(totalCash)}
           icon={<Banknote size={24} />}
           color="bg-green-500"
         />
         <StatCard
-          title="إجمالي المعاملات"
+          title={t('finance.totalTransactions')}
           value={transactions.length}
-          subtitle={`${transactions.filter((t: Transaction) => t.type === 'credit').length} إيداع | ${transactions.filter((t: Transaction) => t.type === 'debit').length} سحب`}
+          subtitle={`${transactions.filter((t: Transaction) => t.type === 'credit').length} ${t('dashboard.deposit')} | ${transactions.filter((t: Transaction) => t.type === 'debit').length} ${t('dashboard.withdrawal')}`}
           icon={<ArrowUpCircle size={24} />}
           color="bg-purple-500"
         />
@@ -486,27 +493,27 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 
       {/* Bank Accounts Section */}
       <Card
-        titleAr="الحسابات البنكية"
+        titleAr={t('finance.bankAccounts')}
         action={
           <Button size="sm" onClick={handleOpenAddBank}>
             <Plus size={16} />
-            إضافة حساب
+            {t('finance.addBankAccount')}
           </Button>
         }
       >
         {bankAccounts.length === 0 ? (
-          <EmptyState message="لا توجد حسابات بنكية مسجّلة" icon={<Building2 size={48} />} />
+          <EmptyState message={t('finance.noBankAccounts', 'لا توجد حسابات بنكية مسجّلة')} icon={<Building2 size={48} />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">اسم البنك</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">رقم الحساب</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('finance.bankName')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('finance.accountNumber')}</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">RIB</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">IBAN</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الرصيد</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">إجراءات</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('finance.accountBalance')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -529,7 +536,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                         variant="ghost"
                         onClick={(e) => { e.stopPropagation(); handleOpenEditBank(account.id); }}
                       >
-                        تعديل
+                        {t('common.edit')}
                       </Button>
                     </td>
                   </tr>
@@ -542,7 +549,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 
       {/* Allocations Section */}
       <Card
-        titleAr="توزيع التبرعات"
+        titleAr={t('finance.donationDistribution')}
         action={
           <Button
             size="sm"
@@ -550,54 +557,54 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             onClick={() => setAllocFilterOpen(!allocFilterOpen)}
           >
             <Filter size={16} />
-            {allocFilterOpen ? 'إخفاء' : 'بحث متقدم'}
+            {allocFilterOpen ? t('common.close') : t('beneficiaries.advancedSearch')}
           </Button>
         }
       >
         {allocFilterOpen && (
           <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <Input labelAr="المتبرع" value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} placeholder="بحث..." />
-              <Input labelAr="المستفيد" value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} placeholder="بحث..." />
-              <SearchableSelect labelAr="الصندوق" value={allocCaisseId} onChange={setAllocCaisseId} options={caisses.map((c: any) => ({ value: c.id, label: c.nameAr }))} />
-              <Input labelAr="المبلغ من" value={allocMinAmount} onChange={(e) => setAllocMinAmount(e.target.value)} type="number" placeholder="0" />
-              <Input labelAr="المبلغ إلى" value={allocMaxAmount} onChange={(e) => setAllocMaxAmount(e.target.value)} type="number" placeholder="0" />
-              <SearchableSelect labelAr="المبلغ المتبقي" value={allocRemaining} onChange={setAllocRemaining} options={[
-                { value: '', label: 'الكل' },
-                { value: 'zero', label: 'مصرف بالكامل' },
-                { value: 'positive', label: 'متبقي' },
-                { value: 'distributed', label: 'تم الصرف' },
-                { value: 'not_distributed', label: 'لم يصرف بعد' },
+              <Input labelAr={t('dashboard.donor')} value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} placeholder={t('common.search')} />
+              <Input labelAr={t('dashboard.beneficiary')} value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} placeholder={t('common.search')} />
+              <SearchableSelect labelAr={t('dashboard.fund')} value={allocCaisseId} onChange={setAllocCaisseId} options={caisses.map((c: any) => ({ value: c.id, label: c.nameAr }))} />
+              <Input labelAr={t('medical.amountFrom')} value={allocMinAmount} onChange={(e) => setAllocMinAmount(e.target.value)} type="number" placeholder="0" />
+              <Input labelAr={t('medical.amountTo')} value={allocMaxAmount} onChange={(e) => setAllocMaxAmount(e.target.value)} type="number" placeholder="0" />
+              <SearchableSelect labelAr={t('finance.remainingAmount', 'المبلغ المتبقي')} value={allocRemaining} onChange={setAllocRemaining} options={[
+                { value: '', label: t('common.all') },
+                { value: 'zero', label: t('dashboard.fullyDisbursed') },
+                { value: 'positive', label: t('finance.remaining', 'متبqi') },
+                { value: 'distributed', label: t('finance.disbursed', 'تم الصرف') },
+                { value: 'not_distributed', label: t('finance.notDisbursed', 'لم يصرف بعد') },
               ]} />
-              <SearchableSelect labelAr="حالة التبرع الأصلي" value={allocStatus} onChange={setAllocStatus} options={[
-                { value: '', label: 'الكل' },
-                { value: 'pending', label: 'معلق' },
-                { value: 'completed', label: 'مكتمل' },
-                { value: 'cancelled', label: 'ملغي' },
+              <SearchableSelect labelAr={t('finance.originalDonationStatus', 'حالة التبرع الأصلي')} value={allocStatus} onChange={setAllocStatus} options={[
+                { value: '', label: t('common.all') },
+                { value: 'pending', label: t('dashboard.pending') },
+                { value: 'completed', label: t('dashboard.completed') },
+                { value: 'cancelled', label: t('dashboard.cancelled') },
               ]} />
-              <Input labelAr="ملاحظات" value={allocNotes} onChange={(e) => setAllocNotes(e.target.value)} placeholder="بحث..." />
+              <Input labelAr={t('common.notes')} value={allocNotes} onChange={(e) => setAllocNotes(e.target.value)} placeholder={t('common.search')} />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={applyAllocFilters}><Search className="w-4 h-4" /> بحث</Button>
-              <Button size="sm" variant="secondary" onClick={resetAllocFilters}>إعادة تعيين</Button>
+              <Button size="sm" onClick={applyAllocFilters}><Search className="w-4 h-4" /> {t('common.search')}</Button>
+              <Button size="sm" variant="secondary" onClick={resetAllocFilters}>{t('doctors.reset')}</Button>
             </div>
           </div>
         )}
         {filteredAllocations.length === 0 ? (
-          <EmptyState message="لا توجد توزيعات" icon={<HeartHandshake size={48} />} />
+          <EmptyState message={t('finance.noAllocations', 'لا توجد توزيعات')} icon={<HeartHandshake size={48} />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">رقم الوصل</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">المتبرع</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">المستفيد</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden md:table-cell">الصندوق</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">المبلغ</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">المتبقي</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">الحالة</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">التاريخ</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('dashboard.receiptNo')}</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('dashboard.donor')}</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('dashboard.beneficiary')}</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden md:table-cell">{t('dashboard.fund')}</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('common.amount')}</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('finance.remainingAmount', 'المتبقي')}</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('common.status')}</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('common.date')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -613,11 +620,11 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     <td className="py-3 px-4">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
                     <td className="py-3 px-4">{(() => {
                       const txStatus = a.creditTransaction?.status;
-                      if (txStatus === 'pending') return <Badge variant="warning">مرتبط بوعد</Badge>;
-                      if (txStatus === 'cancelled') return <Badge variant="danger">ملغي</Badge>;
-                      if (a.remainingAmount <= 0) return <Badge variant="success">مصرف بالكامل</Badge>;
-                      if (a.debitTransactionId) return <Badge variant="info">مصرف جزئياً</Badge>;
-                      return <Badge variant="info">نشط</Badge>;
+                      if (txStatus === 'pending') return <Badge variant="warning">{t('finance.pledged', 'مرتبط بوعد')}</Badge>;
+                      if (txStatus === 'cancelled') return <Badge variant="danger">{t('dashboard.cancelled')}</Badge>;
+                      if (a.remainingAmount <= 0) return <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>;
+                      if (a.debitTransactionId) return <Badge variant="info">{t('dashboard.partiallyDisbursed')}</Badge>;
+                      return <Badge variant="info">{t('dashboard.active')}</Badge>;
                     })()}</td>
                     <td className="py-3 px-4 text-gray-600">{formatDate(a.createdAt)}</td>
                   </tr>
@@ -630,35 +637,35 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
       </Card>
 
       {/* Allocation Detail Modal */}
-      <Modal isOpen={!!selectedAlloc} onClose={() => setSelectedAlloc(null)} title="تفاصيل التوزيع" size="md">
+      <Modal isOpen={!!selectedAlloc} onClose={() => setSelectedAlloc(null)} title={t('finance.allocationDetails', 'تفاصيل التوزيع')} size="md">
         {selectedAlloc && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المتبرع</span><span className="font-medium text-gray-900">{selectedAlloc.donor.lastNameAr} {selectedAlloc.donor.firstNameAr}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستفيد</span><span className="font-medium text-gray-900">{selectedAlloc.beneficiary.lastNameAr} {selectedAlloc.beneficiary.firstNameAr}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الصندوق</span><span className="font-medium text-gray-900">{(() => { const ac = caisses.find((c: any) => c.id === selectedAlloc.creditTransaction?.caisseId); return ac?.nameAr || '—'; })()}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المبلغ</span><span className="font-bold text-green-600">{formatCurrency(selectedAlloc.amount)}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المبلغ المتبقي</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : 'مصرف بالكامل'}</span></div>
-              {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">ملاحظات</span><span className="font-medium text-gray-900">{selectedAlloc.notes}</span></div>}
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">حالة التبرع الأصلي</span><span className="font-medium">{selectedAlloc.creditTransaction?.status === 'pending' ? <Badge variant="warning">معلق</Badge> : selectedAlloc.creditTransaction?.status === 'cancelled' ? <Badge variant="danger">ملغي</Badge> : <Badge variant="success">مكتمل</Badge>}</span></div>
-              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount > 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">تم الصرف</span><span className="font-medium text-amber-600">مصرف جزئياً</span></div>}
-              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount <= 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">تم الصرف</span><span className="font-medium text-green-600">مصرف بالكامل</span></div>}
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('dashboard.donor')}</span><span className="font-medium text-gray-900">{selectedAlloc.donor.lastNameAr} {selectedAlloc.donor.firstNameAr}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('dashboard.beneficiary')}</span><span className="font-medium text-gray-900">{selectedAlloc.beneficiary.lastNameAr} {selectedAlloc.beneficiary.firstNameAr}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('dashboard.fund')}</span><span className="font-medium text-gray-900">{(() => { const ac = caisses.find((c: any) => c.id === selectedAlloc.creditTransaction?.caisseId); return ac?.nameAr || '—'; })()}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('common.amount')}</span><span className="font-bold text-green-600">{formatCurrency(selectedAlloc.amount)}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.remainingAmount', 'المبلغ المتبقي')}</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : t('dashboard.fullyDisbursed')}</span></div>
+              {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('common.notes')}</span><span className="font-medium text-gray-900">{selectedAlloc.notes}</span></div>}
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.originalDonationStatus', 'حالة التبرع الأصلي')}</span><span className="font-medium">{selectedAlloc.creditTransaction?.status === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> : selectedAlloc.creditTransaction?.status === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> : <Badge variant="success">{t('dashboard.completed')}</Badge>}</span></div>
+              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount > 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.disbursed', 'تم الصرف')}</span><span className="font-medium text-amber-600">{t('dashboard.partiallyDisbursed')}</span></div>}
+              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount <= 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.disbursed', 'تم الصرف')}</span><span className="font-medium text-green-600">{t('dashboard.fullyDisbursed')}</span></div>}
             </div>
             <div className="flex justify-end">
-              <Button size="sm" variant="secondary" onClick={() => setSelectedAlloc(null)}>إغلاق</Button>
+              <Button size="sm" variant="secondary" onClick={() => setSelectedAlloc(null)}>{t('common.close')}</Button>
             </div>
           </div>
         )}
       </Modal>
 
       {/* Transaction Form */}
-      <Card titleAr="إضافة معاملة جديدة">
+      <Card titleAr={t('finance.newTransaction')}>
         <form onSubmit={handleSubmitTransaction} className="space-y-6">
           {/* Row 1: Type & Fund Source */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Transaction Type */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">نوع المعاملة</label>
+              <label className="block text-sm font-medium text-gray-700">{t('finance.transactionType', 'نوع المعاملة')}</label>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -670,7 +677,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   }`}
                 >
                   <ArrowUpCircle size={18} />
-                  إيداع (دائن)
+                  {t('finance.depositCredit')}
                 </button>
                 <button
                   type="button"
@@ -682,14 +689,14 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   }`}
                 >
                   <ArrowDownCircle size={18} />
-                  سحب (مدين)
+                  {t('finance.withdrawalDebit')}
                 </button>
               </div>
             </div>
 
             {/* Fund Source */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">مصدر التمويل</label>
+              <label className="block text-sm font-medium text-gray-700">{t('dashboard.source')}</label>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -701,7 +708,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   }`}
                 >
                   <Building2 size={18} />
-                  بنك
+                  {t('dashboard.bank')}
                 </button>
                 <button
                   type="button"
@@ -713,7 +720,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   }`}
                 >
                   <Banknote size={18} />
-                  نقدي (صندوق)
+                  {t('finance.cashFund')}
                 </button>
               </div>
             </div>
@@ -723,7 +730,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {txFundSource === 'banque' && (
               <SearchableSelect
-                labelAr="الحساب البنكي"
+                labelAr={t('finance.editBankAccount')}
                 value={txBankAccountId}
                 onChange={setTxBankAccountId}
                 options={bankAccounts.map((a: BankAccount) => ({
@@ -734,7 +741,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               />
             )}
             <SearchableSelect
-              labelAr="الصندوق (الكيس)"
+              labelAr={t('dashboard.fund')}
               value={txCaisseId}
               onChange={(val) => {
                 setTxCaisseId(val)
@@ -748,7 +755,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             />
             {subCategories.length > 0 && (
               <SearchableSelect
-                labelAr="الفئة الفرعية"
+                labelAr={t('medical.subCategory')}
                 value={txSubCategoryId}
                 onChange={setTxSubCategoryId}
                 options={subCategories.map((sc: { id: string; name: string; nameAr: string }) => ({
@@ -764,7 +771,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             {txType === 'credit' && (
               <>
                 <SearchableSelect
-                  labelAr="المتبرع (اختياري)"
+                  labelAr={`${t('dashboard.donor')} (${t('common.optional')})`}
                   value={txDonorId}
                   onChange={setTxDonorId}
                   options={donors.map((d: Donor) => ({
@@ -773,7 +780,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   }))}
                 />
                 <SearchableSelect
-                  labelAr="المستفيد (اختياري)"
+                  labelAr={`${t('dashboard.beneficiary')} (${t('common.optional')})`}
                   value={txBeneficiaryId}
                   onChange={setTxBeneficiaryId}
                   options={beneficiaries.map((b: Beneficiary) => ({
@@ -785,7 +792,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             )}
             {txType === 'debit' && (
               <SearchableSelect
-                labelAr="المستفيد (اختياري)"
+                labelAr={`${t('dashboard.beneficiary')} (${t('common.optional')})`}
                 value={txBeneficiaryId}
                 onChange={setTxBeneficiaryId}
                 options={beneficiaries.map((b: Beneficiary) => ({
@@ -796,11 +803,11 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             )}
           </div>
 
-          {/* Row 4: Amount & Date */}          {/* Row 4: Amount & Date */}
+          {/* Row 4: Amount & Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Input
-                labelAr="المبلغ (دج)"
+                labelAr={t('common.amount')}
                 type="number"
                 min="0"
                 step="0.01"
@@ -813,11 +820,11 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               {amountNum > 0 && (
                 <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1">
                   <p className="text-xs text-gray-500">
-                    <span className="font-medium">بالعربية:</span>{' '}
+                    <span className="font-medium">{t('doctors.arabicLabel')}:</span>{' '}
                     <span className="text-gray-800">{amountInWordsAr}</span>
                   </p>
                   <p className="text-xs text-gray-500" dir="ltr">
-                    <span className="font-medium">En fran&ccedil;ais:</span>{' '}
+                    <span className="font-medium">En français:</span>{' '}
                     <span className="text-gray-800">{amountInWordsFr}</span>
                   </p>
                 </div>
@@ -827,11 +834,11 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 
           {/* Description */}
           <TextArea
-            labelAr="الوصف"
+            labelAr={t('common.description')}
             value={txDescription}
             onChange={(e) => setTxDescription(e.target.value)}
             dir="rtl"
-            placeholder="وصف المعاملة..."
+            placeholder={t('finance.txDescriptionPlaceholder', 'وصف المعاملة...')}
           />
 
           {txError && (
@@ -849,10 +856,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 onChange={(e) => setTxPending(e.target.checked)}
                 className="w-4 h-4 text-amber-500 focus:ring-amber-500 rounded"
               />
-              <span className="text-sm text-gray-600">معاملة معلقة</span>
+              <span className="text-sm text-gray-600">{t('finance.pendingTx', 'معاملة معلقة')}</span>
             </label>
             <Button type="submit" disabled={txSubmitting || amountNum <= 0 || !txCaisseId}>
-              {txSubmitting ? 'جاري الحفظ...' : 'حفظ المعاملة'}
+              {txSubmitting ? t('common.saving') : t('finance.saveTransaction', 'حفظ المعاملة')}
             </Button>
           </div>
         </form>
@@ -860,7 +867,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 
       {/* Transaction History */}
       <Card
-        titleAr="سجل المعاملات"
+        titleAr={t('finance.transactionLog')}
         action={
           <Button
             size="sm"
@@ -868,7 +875,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             onClick={() => setFilterOpen(!filterOpen)}
           >
             <Filter size={16} />
-            {filterOpen ? 'إخفاء' : 'بحث متقدم'}
+            {filterOpen ? t('common.close') : t('beneficiaries.advancedSearch')}
           </Button>
         }
       >
@@ -885,7 +892,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 type="text"
                 value={filterSearchTerm}
                 onChange={(e) => setFilterSearchTerm(e.target.value)}
-                placeholder="بحث في الوصف أو رقم الوصل..."
+                placeholder={t('finance.searchPlaceholder', 'بحث في الوصف أو رقم الوصل...')}
                 className="w-full pr-10 pl-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 dir="rtl"
               />
@@ -893,41 +900,41 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Select
-                labelAr="النوع"
+                labelAr={t('common.status')}
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
                 options={[
-                  { value: 'credit', label: 'إيداع' },
-                  { value: 'debit', label: 'سحب' },
+                  { value: 'credit', label: t('finance.depositCredit') },
+                  { value: 'debit', label: t('finance.withdrawalDebit') },
                 ]}
               />
               <Select
-                labelAr="مصدر التمويل"
+                labelAr={t('dashboard.source')}
                 value={filterFundSource}
                 onChange={(e) => setFilterFundSource(e.target.value)}
                 options={[
-                  { value: 'banque', label: 'بنك' },
-                  { value: 'caisse_physique', label: 'نقدي' },
+                  { value: 'banque', label: t('dashboard.bank') },
+                  { value: 'caisse_physique', label: t('finance.cashFund') },
                 ]}
               />
               <Select
-                labelAr="الصندوق"
+                labelAr={t('dashboard.fund')}
                 value={filterCaisseId}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterCaisseId(e.target.value)}
                 options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))}
               />
               <Select
-                labelAr="الحالة"
+                labelAr={t('common.status')}
                 value={filterTxStatus}
                 onChange={(e) => setFilterTxStatus(e.target.value)}
                 options={[
-                  { value: 'completed', label: 'مكتمل' },
-                  { value: 'pending', label: 'معلق' },
-                  { value: 'cancelled', label: 'ملغي' },
+                  { value: 'completed', label: t('dashboard.completed') },
+                  { value: 'pending', label: t('dashboard.pending') },
+                  { value: 'cancelled', label: t('dashboard.cancelled') },
                 ]}
               />
               <Input
-                labelAr="من تاريخ"
+                labelAr={t('analytics.fromDate')}
                 type="date"
                 value={filterDateFrom}
                 onChange={(e) => setFilterDateFrom(e.target.value)}
@@ -935,7 +942,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 className="text-left"
               />
               <Input
-                labelAr="إلى تاريخ"
+                labelAr={t('analytics.toDate')}
                 type="date"
                 value={filterDateTo}
                 onChange={(e) => setFilterDateTo(e.target.value)}
@@ -943,7 +950,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 className="text-left"
               />
               <Input
-                labelAr="الحد الأدنى للمبلغ"
+                labelAr={t('medical.amountFrom')}
                 type="number"
                 min="0"
                 value={filterMinAmount}
@@ -952,7 +959,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                 className="text-left"
               />
               <Input
-                labelAr="الحد الأقصى للمبلغ"
+                labelAr={t('medical.amountTo')}
                 type="number"
                 min="0"
                 value={filterMaxAmount}
@@ -965,10 +972,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
             <div className="flex gap-3 pt-2">
               <Button size="sm" onClick={handleApplyFilter}>
                 <Search size={14} />
-                بحث
+                {t('common.search')}
               </Button>
               <Button size="sm" variant="secondary" onClick={handleResetFilter}>
-                إعادة تعيين
+                {t('doctors.reset')}
               </Button>
             </div>
           </div>
@@ -978,25 +985,25 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
         {transactionsLoading ? (
           <LoadingSpinner />
         ) : transactions.length === 0 ? (
-          <EmptyState message="لا توجد معاملات مسجّلة" icon={<Banknote size={48} />} />
+          <EmptyState message={t('dashboard.noTransactions')} icon={<Banknote size={48} />} />
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">التاريخ</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">رقم الوصل</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">النوع</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">الحالة</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">المصدر</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">المبلغ</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">المتبقي</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">المتبرع</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">المستفيد</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">الصندوق</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden lg:table-cell">الوصف</th>
-                    <th className="text-center py-3 px-3 font-medium text-gray-500">الإجراءات</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('common.date')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.receiptNo')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.type')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('common.status')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.source')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('common.amount')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('finance.remainingAmount', 'المتبقي')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.donor')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.beneficiary')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">{t('dashboard.fund')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden lg:table-cell">{t('receipt.description')}</th>
+                    <th className="text-center py-3 px-3 font-medium text-gray-500">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1016,39 +1023,39 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                         <td className="py-3 px-3 text-gray-500 font-mono text-xs" dir="ltr">{tx.receiptNumber || '—'}</td>
                         <td className="py-3 px-3">
                           {tx.type === 'credit' ? (
-                            <Badge variant="success">إيداع</Badge>
+                            <Badge variant="success">{t('dashboard.deposit')}</Badge>
                           ) : (
-                            <Badge variant="danger">سحب</Badge>
+                            <Badge variant="danger">{t('dashboard.withdrawal')}</Badge>
                           )}
                         </td>
                         <td className="py-3 px-3">
                           {(() => {
                             const rawStatus = tx.status || 'completed';
-                            if (rawStatus === 'pending') return <Badge variant="warning">معلق</Badge>;
-                            if (rawStatus === 'cancelled') return <Badge variant="danger">ملغي</Badge>;
+                            if (rawStatus === 'pending') return <Badge variant="warning">{t('dashboard.pending')}</Badge>;
+                            if (rawStatus === 'cancelled') return <Badge variant="danger">{t('dashboard.cancelled')}</Badge>;
                             // Completed — check if there's a remaining amount (partial)
                             const rem = (tx as any).remainingAmount;
                             if (rem !== null && typeof rem === 'number') {
                               if (tx.type === 'credit' && rem > 0 && rem < tx.amount) {
-                                return <Badge variant="info">مصرف جزئياً</Badge>;
+                                return <Badge variant="info">{t('dashboard.partiallyDisbursed')}</Badge>;
                               }
                               if (tx.type === 'debit' && rem > 0) {
-                                return <Badge variant="warning">مصرف جزئياً</Badge>;
+                                return <Badge variant="warning">{t('dashboard.partiallyDisbursed')}</Badge>;
                               }
                             }
-                            return <Badge variant="success">مكتمل</Badge>;
+                            return <Badge variant="success">{t('dashboard.completed')}</Badge>;
                           })()}
                         </td>
                         <td className="py-3 px-3 text-gray-600">
                           {tx.fundSource === 'banque' ? (
                             <span className="flex items-center gap-1">
                               <Building2 size={14} className="text-blue-500" />
-                              بنك
+                              {t('dashboard.bank')}
                             </span>
                           ) : (
                             <span className="flex items-center gap-1">
                               <Banknote size={14} className="text-amber-500" />
-                              نقدي
+                              {t('finance.cashFund')}
                             </span>
                           )}
                         </td>
@@ -1069,7 +1076,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                             // null = no allocation (credit without beneficiary)
                             if (rem === null || rem === undefined) return <span className="text-gray-300">—</span>;
                             if (rem > 0) return <Badge variant="warning">{formatCurrency(rem)}</Badge>;
-                            return <Badge variant="success">مصرف بالكامل</Badge>;
+                            return <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>;
                           })()}
                         </td>
                         <td className="py-3 px-3 text-gray-700">
@@ -1086,7 +1093,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                           <button
                             onClick={(e) => { e.stopPropagation(); handlePrintReceipt(tx); }}
                             className="p-1.5 text-gray-400 hover:text-primary-600 transition-colors"
-                            title={tx.type === 'credit' ? 'طباعة وصل التبرع' : 'طباعة وصل الصرف'}
+                            title={tx.type === 'credit' ? t('donors.printReceipt') : t('donors.printReceipt')}
                           >
                             <Printer size={16} />
                           </button>
@@ -1107,7 +1114,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => p - 1)}
                 >
-                  السابق
+                  {t('common.previous')}
                 </Button>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -1151,7 +1158,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => p + 1)}
                 >
-                  التالي
+                  {t('common.next')}
                 </Button>
               </div>
             )}
@@ -1169,29 +1176,29 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
       />
 
       {/* Bank Account Detail Modal */}
-      <Modal isOpen={!!detailBankAccount} onClose={() => setDetailBankAccount(null)} title="تفاصيل الحساب البنكي" size="md">
+      <Modal isOpen={!!detailBankAccount} onClose={() => setDetailBankAccount(null)} title={t('finance.bankAccountDetails', 'تفاصيل الحساب البنكي')} size="md">
         {detailBankAccount && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 bg-gray-50 rounded-lg p-4">
-              <div><p className="text-xs text-gray-500">اسم البنك</p><p className="font-semibold text-gray-900">{detailBankAccount.bankNameAr}</p></div>
-              <div><p className="text-xs text-gray-500">رقم الحساب</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.accountNumber}</p></div>
+              <div><p className="text-xs text-gray-500">{t('finance.bankName')}</p><p className="font-semibold text-gray-900">{detailBankAccount.bankNameAr}</p></div>
+              <div><p className="text-xs text-gray-500">{t('finance.accountNumber')}</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.accountNumber}</p></div>
               <div><p className="text-xs text-gray-500">RIB</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.rib}</p></div>
               <div><p className="text-xs text-gray-500">IBAN</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.iban}</p></div>
               <div><p className="text-xs text-gray-500">SWIFT</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.swift}</p></div>
-              <div><p className="text-xs text-gray-500">الرصيد</p><p className="font-bold text-lg text-green-600">{formatCurrency(detailBankAccount.balance)}</p></div>
+              <div><p className="text-xs text-gray-500">{t('finance.accountBalance')}</p><p className="font-bold text-lg text-green-600">{formatCurrency(detailBankAccount.balance)}</p></div>
             </div>
             <div className="flex justify-end gap-2">
               <Button size="sm" variant="primary" onClick={() => { handleOpenEditBank(detailBankAccount.id); setDetailBankAccount(null); }}>
-                <Edit size={14} /> تعديل
+                <Edit size={14} /> {t('common.edit')}
               </Button>
-              <Button size="sm" variant="secondary" onClick={() => setDetailBankAccount(null)}>إغلاق</Button>
+              <Button size="sm" variant="secondary" onClick={() => setDetailBankAccount(null)}>{t('common.close')}</Button>
             </div>
           </div>
         )}
       </Modal>
 
       {/* Transaction Detail Modal */}
-      <Modal isOpen={!!detailTx} onClose={() => setDetailTx(null)} title="تفاصيل المعاملة" size="lg">
+      <Modal isOpen={!!detailTx} onClose={() => setDetailTx(null)} title={t('dashboard.transactionDetails')} size="lg">
         {detailTx && (() => {
           const caisse = caisses.find((c: Caisse) => c.id === detailTx.caisseId)
           const bankAcc = bankAccounts.find((b: BankAccount) => b.id === detailTx.bankAccountId)
@@ -1200,8 +1207,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
           return (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
-                <div><p className="text-xs text-gray-500">النوع</p><p className="font-medium">{detailTx.type === 'credit' ? 'إيداع' : 'سحب'}</p></div>
-                <div><p className="text-xs text-gray-500">المبلغ</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(detailTx.amount)}</p></div>
+                <div><p className="text-xs text-gray-500">{t('dashboard.type')}</p><p className="font-medium">{detailTx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</p></div>
+                <div><p className="text-xs text-gray-500">{t('common.amount')}</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(detailTx.amount)}</p></div>
                 {(() => {
                   const rem = (detailTx as any).remainingAmount;
                   // Show remaining amount only for credit with allocation (non-null)
@@ -1209,47 +1216,47 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                     const consumed = detailTx.amount - rem;
                     return (
                       <>
-                        <div><p className="text-xs text-gray-500">المبلغ المصرف</p><p className="font-medium text-amber-600">{formatCurrency(consumed)}</p></div>
-                        <div><p className="text-xs text-gray-500">المبلغ المتبقي</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">مصرف بالكامل</Badge>}</p></div>
+                        <div><p className="text-xs text-gray-500">{t('finance.disbursed', 'المبلغ المصرف')}</p><p className="font-medium text-amber-600">{formatCurrency(consumed)}</p></div>
+                        <div><p className="text-xs text-gray-500">{t('finance.remainingAmount', 'المبلغ المتبقي')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
                       </>
                     );
                   }
                   // For debit with allocation
                   if (rem !== null && rem !== undefined && typeof rem === 'number' && detailTx.type === 'debit') {
                     return (
-                      <div><p className="text-xs text-gray-500">المبلغ المتبقي لاستكمال الصرف</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">مصرف بالكامل</Badge>}</p></div>
+                      <div><p className="text-xs text-gray-500">{t('finance.remainingDisbursement', 'المبلغ المتبقي لاستكمال الصرف')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
                     );
                   }
                   return null;
                 })()}
-                <div><p className="text-xs text-gray-500">الحالة</p><p className="font-medium">{(() => {
+                <div><p className="text-xs text-gray-500">{t('common.status')}</p><p className="font-medium">{(() => {
                   const s = detailTx.status || 'completed';
-                  if (s === 'pending') return <Badge variant="warning">معلق</Badge>;
-                  if (s === 'cancelled') return <Badge variant="danger">ملغي</Badge>;
+                  if (s === 'pending') return <Badge variant="warning">{t('dashboard.pending')}</Badge>;
+                  if (s === 'cancelled') return <Badge variant="danger">{t('dashboard.cancelled')}</Badge>;
                   const rem = (detailTx as any).remainingAmount;
                   if (rem !== null && typeof rem === 'number') {
                     if (detailTx.type === 'credit' && rem > 0 && rem < detailTx.amount) {
-                      return <Badge variant="info">مصرف جزئياً</Badge>;
+                      return <Badge variant="info">{t('dashboard.partiallyDisbursed')}</Badge>;
                     }
                     if (detailTx.type === 'debit' && rem > 0) {
-                      return <Badge variant="warning">مصرف جزئياً</Badge>;
+                      return <Badge variant="warning">{t('dashboard.partiallyDisbursed')}</Badge>;
                     }
                   }
-                  return <Badge variant="success">مكتمل</Badge>;
+                  return <Badge variant="success">{t('dashboard.completed')}</Badge>;
                 })()}</p></div>
-                <div><p className="text-xs text-gray-500">الصندوق</p><p className="font-medium text-gray-900">{caisse?.nameAr || '—'}</p></div>
-                <div><p className="text-xs text-gray-500">مصدر التمويل</p><p className="font-medium">{detailTx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</p></div>
-                {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-gray-500">الحساب البنكي</p><p className="font-medium">{bankAcc.bankNameAr}</p></div>}
-                {donor && <div><p className="text-xs text-gray-500">المتبرع</p><p className="font-medium">{donor.lastNameAr} {donor.firstNameAr}</p></div>}
-                {benef && <div><p className="text-xs text-gray-500">المستفيد</p><p className="font-medium">{benef.lastNameAr} {benef.firstNameAr}</p></div>}
-                {detailTx.descriptionAr && <div className="sm:col-span-2"><p className="text-xs text-gray-500">الوصف</p><p className="font-medium text-gray-900">{detailTx.descriptionAr || detailTx.description}</p></div>}
-                <div><p className="text-xs text-gray-500">رقم الوصل</p><p className="font-mono text-gray-900" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
-                <div><p className="text-xs text-gray-500">التاريخ</p><p className="font-medium text-gray-900">{formatDate(detailTx.date)}</p></div>
+                <div><p className="text-xs text-gray-500">{t('dashboard.fund')}</p><p className="font-medium text-gray-900">{caisse?.nameAr || '—'}</p></div>
+                <div><p className="text-xs text-gray-500">{t('dashboard.source')}</p><p className="font-medium">{detailTx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}</p></div>
+                {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-gray-500">{t('finance.bankAccounts')}</p><p className="font-medium">{bankAcc.bankNameAr}</p></div>}
+                {donor && <div><p className="text-xs text-gray-500">{t('dashboard.donor')}</p><p className="font-medium">{donor.lastNameAr} {donor.firstNameAr}</p></div>}
+                {benef && <div><p className="text-xs text-gray-500">{t('dashboard.beneficiary')}</p><p className="font-medium">{benef.lastNameAr} {benef.firstNameAr}</p></div>}
+                {detailTx.descriptionAr && <div className="sm:col-span-2"><p className="text-xs text-gray-500">{t('common.description')}</p><p className="font-medium text-gray-900">{detailTx.descriptionAr || detailTx.description}</p></div>}
+                <div><p className="text-xs text-gray-500">{t('dashboard.receiptNo')}</p><p className="font-mono text-gray-900" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
+                <div><p className="text-xs text-gray-500">{t('common.date')}</p><p className="font-medium text-gray-900">{formatDate(detailTx.date)}</p></div>
               </div>
               <div className="flex justify-end gap-2 flex-wrap">
                 {detailTx.type === 'credit' && (detailTx.status === 'completed' || !detailTx.status) && (
                   <Button size="sm" variant="success" onClick={() => { handlePrintReceipt(detailTx); setDetailTx(null); }}>
-                    <Printer size={14} /> طباعة الوصل
+                    <Printer size={14} /> {t('donors.printReceipt')}
                   </Button>
                 )}
                 {(detailTx.status || 'completed') === 'pending' && (
@@ -1261,10 +1268,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                       setConfirmingTxId(detailTx.id);
                       setConfirmTxAmount(defaultAmt);
                     }}>
-                      تأكيد المعاملة
+                      {t('finance.confirmTx', 'تأكيد المعاملة')}
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => handleCancelTransaction(detailTx.id)}>
-                      إلغاء المعاملة
+                      {t('finance.cancelTx', 'إلغاء المعاملة')}
                     </Button>
                   </>
                 )}
@@ -1280,7 +1287,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                           setConfirmingTxId(detailTx.id);
                           setConfirmTxAmount(String(rem));
                         }}>
-                          صرف المبلغ المتبقي ({formatCurrency(rem)})
+                          {t('finance.disburseRemaining', 'صرف المبلغ المتبقي')} ({formatCurrency(rem)})
                         </Button>
                       );
                     }
@@ -1289,7 +1296,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   }
                   return null;
                 })()}
-                <Button size="sm" variant="secondary" onClick={() => setDetailTx(null)}>إغلاق</Button>
+                <Button size="sm" variant="secondary" onClick={() => setDetailTx(null)}>{t('common.close')}</Button>
               </div>
             </div>
           )
@@ -1297,25 +1304,25 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
       </Modal>
 
       {/* Confirm Transaction Modal */}
-      <Modal isOpen={!!confirmingTxId} onClose={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }} title="تأكيد المعاملة" size="sm">
+      <Modal isOpen={!!confirmingTxId} onClose={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }} title={t('finance.confirmTx', 'تأكيد المعاملة')} size="sm">
         {confirmingTxId && detailTx && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">رقم الوصل</span><span className="font-mono" dir="ltr">{detailTx.receiptNumber || '—'}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">النوع</span><span>{detailTx.type === 'credit' ? 'إيداع' : 'سحب'}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">المبلغ الأصلي</span><span className="font-bold">{formatCurrency(detailTx.amount)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">{t('dashboard.receiptNo')}</span><span className="font-mono" dir="ltr">{detailTx.receiptNumber || '—'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">{t('dashboard.type')}</span><span>{detailTx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">{t('finance.originalAmount', 'المبلغ الأصلي')}</span><span className="font-bold">{formatCurrency(detailTx.amount)}</span></div>
               {(() => {
                 const rem = (detailTx as any).remainingAmount;
                 if (rem !== null && typeof rem === 'number' && rem > 0 && detailTx.type === 'credit') {
                   return (
-                    <div className="flex justify-between"><span className="text-gray-500">المبلغ المتبقي</span><span className="font-bold text-amber-600">{formatCurrency(rem)}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">{t('finance.remainingAmount', 'المبلغ المتبقي')}</span><span className="font-bold text-amber-600">{formatCurrency(rem)}</span></div>
                   );
                 }
                 return null;
               })()}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">أدخل المبلغ المراد تأكيده</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('finance.enterConfirmAmount', 'أدخل المبلغ المراد تأكيده')}</label>
               <input
                 type="number"
                 value={confirmTxAmount}
@@ -1339,13 +1346,13 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   return detailTx.amount;
                 })();
                 if (Number(confirmTxAmount) > maxVal) {
-                  return <p className="text-xs text-red-500 mt-1">المبلغ يتجاوز الحد المسموح به ({formatCurrency(maxVal)})</p>;
+                  return <p className="text-xs text-red-500 mt-1">{t('finance.amountExceedsLimit', 'المبلغ يتجاوز الحد المسموح به')} ({formatCurrency(maxVal)})</p>;
                 }
                 return null;
               })()}
             </div>
             <div className="flex gap-2 justify-end">
-              <Button size="sm" variant="secondary" onClick={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }}>إلغاء</Button>
+              <Button size="sm" variant="secondary" onClick={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }}>{t('common.cancel')}</Button>
               <Button size="sm" variant="primary" onClick={() => handleConfirmTransaction(confirmingTxId!)} disabled={!confirmTxAmount || Number(confirmTxAmount) <= 0 || (() => {
                 const maxVal = (() => {
                   const rem = (detailTx as any).remainingAmount;
@@ -1353,21 +1360,21 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
                   return detailTx.amount;
                 })();
                 return Number(confirmTxAmount) > maxVal;
-              })()}>تأكيد</Button>
+              })()}>{t('common.confirm')}</Button>
             </div>
           </div>
         )}
       </Modal>
 
       {/* Disburse Allocation Modal */}
-      <Modal isOpen={!!disbursingAllocId} onClose={() => { setDisbursingAllocId(null); setDisburseAmount(''); }} title="صرف المبلغ المتبقي" size="sm">
+      <Modal isOpen={!!disbursingAllocId} onClose={() => { setDisbursingAllocId(null); setDisburseAmount(''); }} title={t('finance.disburseRemaining', 'صرف المبلغ المتبقي')} size="sm">
         {disbursingAllocId && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">المبلغ المتبقي للصرف</span><span className="font-bold text-amber-600">{formatCurrency(Number(disburseAmount))}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">{t('finance.remainingDisbursement', 'المبلغ المتبقي للصرف')}</span><span className="font-bold text-amber-600">{formatCurrency(Number(disburseAmount))}</span></div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">أدخل المبلغ المراد صرفه</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('finance.enterDisburseAmount', 'أدخل المبلغ المراد صرفه')}</label>
               <input
                 type="number"
                 value={disburseAmount}
@@ -1382,8 +1389,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">البيان</span><spa
               )}
             </div>
             <div className="flex gap-2 justify-end">
-              <Button size="sm" variant="secondary" onClick={() => { setDisbursingAllocId(null); setDisburseAmount(''); }}>إلغاء</Button>
-              <Button size="sm" variant="primary" onClick={handleDisburseAllocation} disabled={!disburseAmount || Number(disburseAmount) <= 0}>تأكيد الصرف</Button>
+              <Button size="sm" variant="secondary" onClick={() => { setDisbursingAllocId(null); setDisburseAmount(''); }}>{t('common.cancel')}</Button>
+              <Button size="sm" variant="primary" onClick={handleDisburseAllocation} disabled={!disburseAmount || Number(disburseAmount) <= 0}>{t('common.confirm')}</Button>
             </div>
           </div>
         )}

@@ -193,7 +193,11 @@
     "filterGender": "Gender",
     "filterStatus": "Status",
     "filterMinChildren": "Minimum number of children",
-    "filterMaxAge": "Maximum beneficiary age"
+    "filterMaxAge": "Maximum beneficiary age",
+    "confirmDeleteAttribute": "Are you sure you want to delete this attribute?",
+    "attributeDeleteError": "This attribute cannot be deleted because it is used by some beneficiaries",
+    "confirmDeleteGrade": "Are you sure you want to delete this school grade?",
+    "confirmDeleteBeneficiary": "Are you sure you want to delete this beneficiary?"
   },
   "donors": {
     "title": "Donors",
@@ -277,7 +281,29 @@
     "manageAnalysis": "Manage analysis and medical examination types",
     "manageHospitals": "Manage hospitals and clinics",
     "nameAr": "Name (Arabic)",
-    "nameLatin": "Name (Latin)"
+    "nameLatin": "Name (Latin)",
+    "confirmDeleteReferral": "Are you sure you want to delete this medical referral?",
+    "confirmCancelReferral": "Are you sure you want to cancel this medical referral?",
+    "pendingAmount": "Doctor's rate",
+    "notice": "The Association disclaims all responsibility for any medical referral that does not bear the Association's stamp and the signature of the President of the Association; such a referral is considered invalid and unrecognized.",
+    "presidentSignature": "Association President Signature",
+    "assocStamp": "Association Stamp",
+    "childrenReferral": "Beneficiary Children",
+    "childrenReferralDesc": "Beneficiary Children (Optional)",
+    "beneficiaryRef": "Beneficiary Reference",
+    "amountFrom": "Amount From",
+    "amountTo": "Amount To",
+    "caisse": "Fund",
+    "subCategory": "Sub-category",
+    "cancelReferral": "Cancel Referral",
+    "noReferrals": "No medical referrals",
+    "searchPlaceholder": "Search by name, doctor, analysis type...",
+    "pendingAmountLabel": "Amount not yet specified",
+    "doctorAddress": "Doctor Address",
+    "doctorName": "Doctor",
+    "referralBeneficiaries": "Recent Beneficiaries (last 50)",
+    "noPreviousReferrals": "No previous referrals",
+    "loadingStats": "Loading stats..."
   },
   "doctors": {
     "title": "Doctors",

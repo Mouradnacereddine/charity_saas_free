@@ -12,7 +12,7 @@ import { api, doctorsApi, financeApi } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 
 export default function MedicalPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const { association } = useAuth();
   const { data: referrals = [] } = useMedicalReferrals();
@@ -234,7 +234,7 @@ export default function MedicalPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا التوجيه الطبي؟')) {
+    if (confirm(t('medical.confirmDeleteReferral'))) {
       await deleteMedicalReferral.mutateAsync(id);
     }
   };
@@ -242,8 +242,8 @@ export default function MedicalPage() {
   const handlePrint = (referral: MedicalReferral) => {
     const caisse = caisses.find((c: Caisse) => c.id === referral.caisseId)
     const subCat = caisse?.subCategories.find((s: SubCategory) => s.id === referral.subCategoryId)
-    const caisseRow = caisse ? `<span class="lbl">الصندوق</span><span class="val">${caisse.nameAr}</span>` : ''
-    const subCatRow = subCat ? `<span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span>` : ''
+    const caisseRow = caisse ? `<span class="lbl">${t('medical.caisse')}</span><span class="val">${caisse.nameAr}</span>` : ''
+    const subCatRow = subCat ? `<span class="lbl">${t('medical.subCategory')}</span><span class="val">${subCat.nameAr}</span>` : ''
 
     const childrenHtml = referral.children && Array.isArray(referral.children) && referral.children.length > 0
       ? referral.children.map((c: any) => {
@@ -254,22 +254,23 @@ export default function MedicalPage() {
               const age = calculateAge(c.dateOfBirth)
               ageDisplay = age?.displayAr || ''
             } else if (c.age) {
-              ageDisplay = `${c.age} سنة`
+              ageDisplay = `${c.age} ${t('receipt.age')}`
             }
           } catch { ageDisplay = '' }
-          const gender = c.gender === 'female' ? 'أنثى' : c.gender === 'male' ? 'ذكر' : ''
+          const gender = c.gender === 'female' ? t('common.female') : c.gender === 'male' ? t('common.male') : ''
           return `<div class="child-item"><span class="child-name">${nameAr}</span>${ageDisplay ? ` — ${ageDisplay}` : ''}${gender ? ` — ${gender}` : ''}</div>`
         }).join('')
       : ''
 
     const fullBeneficiary = beneficiaries.find((b: Beneficiary) => b.id === referral.beneficiaryId)
     const ageDisplay = fullBeneficiary ? calculateAge(fullBeneficiary.dateOfBirth).displayAr : ''
-    const genderDisplay = fullBeneficiary?.gender === 'female' ? 'أنثى' : fullBeneficiary?.gender === 'male' ? 'ذكر' : ''
+    const genderDisplay = fullBeneficiary?.gender === 'female' ? t('common.female') : fullBeneficiary?.gender === 'male' ? t('common.male') : ''
 
+    const isLtr = i18n.language !== 'ar';
     const MEDICAL_CSS = `
       @page { size: 148mm 210mm; margin: 15mm 12mm 10mm; }
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 10px; background: #fff; padding: 0; max-width: 124mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: ${isLtr ? 'ltr' : 'rtl'}; font-size: 10px; background: #fff; padding: 0; max-width: 124mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #2563eb; padding-bottom: 3px; margin-bottom: 6px; }
       .header .assoc { font-size: 13px; font-weight: bold; color: #2563eb; }
       .header .title { font-size: 11px; color: #1e40af; font-weight: 600; }
@@ -295,40 +296,40 @@ export default function MedicalPage() {
     const w = window.open('', '_blank')
     if (!w) return
     w.document.write(`
-<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title></title><style>${MEDICAL_CSS}</style>
+<!DOCTYPE html><html dir="${isLtr ? 'ltr' : 'rtl'}" lang="${i18n.language}"><head><meta charset="UTF-8"><title></title><style>${MEDICAL_CSS}</style>
 </head>
 <body>
   <div class="header">
-    <span class="assoc">🕌 ${association?.nameAr || 'الجمعية الخيرية'}</span>
-    <span class="title">توجيه طبي</span>
+    <span class="assoc">🕌 ${association?.nameAr || t('app.title')}</span>
+    <span class="title">${t('medical.title')}</span>
   </div>
   <div class="info-grid">
-    <div class="info-item"><span class="lbl">الرمز المرجعي</span><span class="val">${referral.reference || '—'}</span></div>
-    <div class="info-item"><span class="lbl">التاريخ</span><span class="val">${formatDate(referral.date)}</span></div>
-    <div class="info-item"><span class="lbl">المستفيد</span><span class="val">${referral.beneficiaryNameAr}</span></div>
-    <div class="info-item"><span class="lbl">رمز المستفيد</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
-    ${fullBeneficiary?.nationalCardNumber ? `<div class="info-item"><span class="lbl">رقم البطاقة الوطنية</span><span class="val">${fullBeneficiary.nationalCardNumber}</span></div>` : ''}
-    ${ageDisplay ? `<div class="info-item"><span class="lbl">العمر / الجنس</span><span class="val">${ageDisplay} — ${genderDisplay}</span></div>` : ''}
-    <div class="info-item"><span class="lbl">الطبيب</span><span class="val">${referral.doctorNameAr || (referral.doctor ? referral.doctor.lastNameAr + ' ' + referral.doctor.firstNameAr : '')}${referral.doctor?.specialty?.nameAr ? ` (${referral.doctor.specialty.nameAr})` : ''}</span></div>
-    ${referral.doctor?.address ? `<div class="info-item"><span class="lbl">عنوان الطبيب</span><span class="val">${referral.doctor.address}</span></div>` : ''}
-    ${referral.analysisTypeAr ? `<div class="info-item"><span class="lbl">التحليل / الفحص</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}
-    ${referral.hospitalAr ? `<div class="info-item"><span class="lbl">المستشفى / العيادة</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
+    <div class="info-item"><span class="lbl">${t('doctors.refCode')}</span><span class="val">${referral.reference || '—'}</span></div>
+    <div class="info-item"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(referral.date)}</span></div>
+    <div class="info-item"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${referral.beneficiaryNameAr}</span></div>
+    <div class="info-item"><span class="lbl">${t('medical.beneficiaryRef')}</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
+    ${fullBeneficiary?.nationalCardNumber ? `<div class="info-item"><span class="lbl">${t('receipt.idNumber')}</span><span class="val">${fullBeneficiary.nationalCardNumber}</span></div>` : ''}
+    ${ageDisplay ? `<div class="info-item"><span class="lbl">${t('receipt.age')} / ${t('receipt.gender')}</span><span class="val">${ageDisplay} — ${genderDisplay}</span></div>` : ''}
+    <div class="info-item"><span class="lbl">${t('medical.doctor')}</span><span class="val">${referral.doctorNameAr || (referral.doctor ? referral.doctor.lastNameAr + ' ' + referral.doctor.firstNameAr : '')}${referral.doctor?.specialty?.nameAr ? ` (${referral.doctor.specialty.nameAr})` : ''}</span></div>
+    ${referral.doctor?.address ? `<div class="info-item"><span class="lbl">${t('medical.doctorAddress')}</span><span class="val">${referral.doctor.address}</span></div>` : ''}
+    ${referral.analysisTypeAr ? `<div class="info-item"><span class="lbl">${t('medical.analysisType')}</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}
+    ${referral.hospitalAr ? `<div class="info-item"><span class="lbl">${t('medical.hospital')}</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
     ${caisseRow ? `<div class="info-item">${caisseRow}</div>` : ''}
     ${subCatRow ? `<div class="info-item">${subCatRow}</div>` : ''}
   </div>
-  ${childrenHtml ? `<div class="section-title">الأطفال المستفيدون</div><div class="children-grid">${childrenHtml}</div>` : ''}
-  ${referral.notes ? `<div class="section-title">ملاحظات</div><div class="info-item" style="width:100%"><span class="val">${referral.notes}</span></div>` : ''}
+  ${childrenHtml ? `<div class="section-title">${t('medical.childrenReferral')}</div><div class="children-grid">${childrenHtml}</div>` : ''}
+  ${referral.notes ? `<div class="section-title">${t('common.notes')}</div><div class="info-item" style="width:100%"><span class="val">${referral.notes}</span></div>` : ''}
   ${referral.amount > 0
     ? `<div class="amt"><div class="num">${formatCurrency(referral.amount)}</div><div class="words">${referral.amountInWordsAr && !referral.amountInWordsAr.match(/^\d/) ? referral.amountInWordsAr : numberToArabicWords(referral.amount)}</div></div>`
-    : `<div class="amt" style="background:#fef9e7"><div class="words" style="font-size:9px;color:#b8860b;font-weight:600">سعر الطبيب</div></div>`
+    : `<div class="amt" style="background:#fef9e7"><div class="words" style="font-size:9px;color:#b8860b;font-weight:600">${t('medical.pendingAmount')}</div></div>`
   }
   <div class="sign-section">
     <div class="sign-row">
-      <div class="sign-box"><span class="label">إمضاء رئيس الجمعية</span><div class="line"></div></div>
-      <div class="sign-box"><span class="label">ختم الجمعية</span><div class="line"></div></div>
+      <div class="sign-box"><span class="label">${t('medical.presidentSignature')}</span><div class="line"></div></div>
+      <div class="sign-box"><span class="label">${t('medical.assocStamp')}</span><div class="line"></div></div>
     </div>
   </div>
-  <div class="notice">الجمعية تتخلى من مسؤوليتها عن كل توجيه طبي لا يحمل ختم الجمعية و إمضاء رئيس الجمعية، يُعتبر هذا التوجيه غير صالح و غير معترف به.</div>
+  <div class="notice">${t('medical.notice')}</div>
   <script>window.print();window.close();</script>
 </body></html>
 `)
@@ -373,7 +374,7 @@ export default function MedicalPage() {
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="بحث بالاسم، الطبيب، نوع التحليل..."
+          placeholder={t('medical.searchPlaceholder')}
           className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           value={filterSearchTerm}
           onChange={(e) => setFilterSearchTerm(e.target.value)}
@@ -383,10 +384,10 @@ export default function MedicalPage() {
 
       {/* Advanced Filters */}
       {filterOpen && (
-        <Card titleAr="بحث متقدم">
+        <Card titleAr={t('beneficiaries.advancedSearch')}>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <SearchableSelect
-                labelAr="الصندوق"
+                labelAr={t('dashboard.fund')}
                 value={filterCaisseId}
                 onChange={setFilterCaisseId}
                 options={caisses.map((c: Caisse) => ({
@@ -395,7 +396,7 @@ export default function MedicalPage() {
                 }))}
               />
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">المبلغ من</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('medical.amountFrom')}</label>
                 <input
                   type="number" min="0" placeholder="0"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -403,7 +404,7 @@ export default function MedicalPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">المبلغ إلى</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('medical.amountTo')}</label>
                 <input
                   type="number" min="0" placeholder="0"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -411,56 +412,56 @@ export default function MedicalPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">من تاريخ</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('analytics.fromDate')}</label>
                 <input type="date"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">إلى تاريخ</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('analytics.toDate')}</label>
                 <input type="date"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)}
                 />
               </div>
               <SearchableSelect
-                labelAr="اسم الطبيب"
+                labelAr={t('medical.doctorName')}
                 value={filterDoctor}
                 onChange={setFilterDoctor}
                 options={allDoctors.map((d: any) => ({
                   value: `${d.lastNameAr} ${d.firstNameAr}`,
                   label: `${d.lastNameAr} ${d.firstNameAr}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''}`,
                 }))}
-                placeholder="اختر طبيب..."
+                placeholder={t('doctors.specialtyPlaceholder')}
               />
               <SearchableSelect
-                labelAr="نوع التحليل"
+                labelAr={t('medical.analysisType')}
                 value={filterAnalysis}
                 onChange={setFilterAnalysis}
                 options={analysisTypes.map((a: any) => ({
                   value: a.nameAr,
                   label: a.nameAr,
                 }))}
-                placeholder="اختر تحليل..."
+                placeholder={t('doctors.specialtyPlaceholder')}
               />
               <SearchableSelect
-                labelAr="التخصص الطبي"
+                labelAr={t('doctors.specialty')}
                 value={filterSpecialty}
                 onChange={setFilterSpecialty}
                 options={specialties.map((s: any) => ({
                   value: s.nameAr,
                   label: s.nameAr,
                 }))}
-                placeholder="اختر تخصص..."
+                placeholder={t('doctors.specialtyPlaceholder')}
               />
               <SearchableSelect
-                labelAr="الحالة"
+                labelAr={t('common.status')}
                 options={[
-                  { value: '', label: 'الكل' },
-                  { value: 'pending', label: 'قيد الانتظار' },
-                  { value: 'completed', label: 'مكتمل' },
-                  { value: 'cancelled', label: 'ملغي' },
+                  { value: '', label: t('common.all') },
+                  { value: 'pending', label: t('dashboard.pending') },
+                  { value: 'completed', label: t('dashboard.completed') },
+                  { value: 'cancelled', label: t('dashboard.cancelled') },
                 ]}
                 value={filterStatus}
                 onChange={setFilterStatus}
@@ -468,10 +469,10 @@ export default function MedicalPage() {
           </div>
           <div className="flex gap-2 mt-4">
             <Button size="sm" onClick={applyFilters}>
-              <Search className="w-4 h-4" /> بحث
+              <Search className="w-4 h-4" /> {t('common.search')}
             </Button>
             <Button size="sm" variant="secondary" onClick={resetFilters}>
-              إعادة تعيين
+              {t('doctors.reset')}
             </Button>
           </div>
         </Card>
@@ -479,22 +480,22 @@ export default function MedicalPage() {
 
       {/* Referrals Table */}
       {filteredReferrals.length === 0 ? (
-        <EmptyState message="لا توجد توجيهات طبية" icon={<Stethoscope className="w-12 h-12" />} />
+        <EmptyState message={t('medical.noReferrals')} icon={<Stethoscope className="w-12 h-12" />} />
       ) : (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">الرمز المرجعي</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">المستفيد</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">رقم البطاقة</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">الطبيب</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">نوع التحليل</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">المبلغ</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">الحالة</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">التاريخ</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">الإجراءات</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('doctors.refCode')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('medical.beneficiary')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">{t('receipt.idNumber')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">{t('medical.doctor')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">{t('medical.analysisType')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('common.amount')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">{t('common.status')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">{t('common.date')}</th>
+                  <th className="text-center py-3 px-4 text-gray-600 font-medium">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -507,15 +508,15 @@ export default function MedicalPage() {
                     <td className="py-3 px-4 hidden lg:table-cell font-mono text-xs" dir="ltr">{benef?.nationalCardNumber || '—'}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr || (referral.doctor ? `${referral.doctor.lastNameAr} ${referral.doctor.firstNameAr}` : '—')}</td>
                     <td className="py-3 px-4 hidden md:table-cell">{referral.analysisTypeAr || '—'}</td>
-                    <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary-600">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">لم يحدد المبلغ بعد</Badge>}</td>
+                    <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary-600">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">{t('medical.pendingAmountLabel')}</Badge>}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">
-                      {(referral.status || 'pending') === 'pending' ? <Badge variant="warning">قيد الانتظار</Badge> :
-                       (referral.status || 'pending') === 'completed' ? <Badge variant="success">مكتمل</Badge> :
-                       <Badge variant="danger">ملغي</Badge>}
+                      {(referral.status || 'pending') === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> :
+                       (referral.status || 'pending') === 'completed' ? <Badge variant="success">{t('dashboard.completed')}</Badge> :
+                       <Badge variant="danger">{t('dashboard.cancelled')}</Badge>}
                     </td>
                     <td className="py-3 px-4 text-gray-500 hidden sm:table-cell">{formatDate(referral.date)}</td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center justify-center gap-1">
                         <button onClick={(e) => { e.stopPropagation(); setShowDetailModal(referral); }} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded"><Eye className="w-4 h-4" /></button>
                         <button onClick={(e) => { e.stopPropagation(); handlePrint(referral); }} className="p-1.5 text-gray-400 hover:text-success-600 hover:bg-green-50 rounded"><Printer className="w-4 h-4" /></button>
                         <button onClick={(e) => { e.stopPropagation(); handleDelete(referral.id); }} className="p-1.5 text-gray-400 hover:text-danger-500 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
@@ -531,25 +532,25 @@ export default function MedicalPage() {
       )}
 
       {/* Add Referral Modal */}
-      <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); resetForm(); }} title="إضافة توجيه طبي" size="lg">
+      <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); resetForm(); }} title={t('medical.addReferral')} size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableSelect labelAr="المستفيد" value={beneficiaryId} onChange={setBeneficiaryId}
+            <SearchableSelect labelAr={t('medical.beneficiary')} value={beneficiaryId} onChange={setBeneficiaryId}
               options={beneficiaries.map((b: Beneficiary) => ({ value: b.id, label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})` }))} />
-            <SearchableSelect labelAr="الصندوق" value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
+            <SearchableSelect labelAr={t('dashboard.fund')} value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
               options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))} />
           </div>
           {selectedBeneficiary && (
             <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs flex gap-3 flex-wrap">
-              <span><span className="text-blue-600 font-medium">الصفة: </span><span className="text-gray-700">{ATTRIBUT_LABELS[selectedBeneficiary.attribut] || selectedBeneficiary.attribut}</span></span>
-              {selectedBeneficiary.gender && <span><span className="text-blue-600 font-medium">| الجنس: </span><span className="text-gray-700">{selectedBeneficiary.gender === 'female' ? 'أنثى' : 'ذكر'}</span></span>}
-              {selectedBeneficiary.nationalCardNumber && <span><span className="text-blue-600 font-medium">| رقم البطاقة: </span><span className="text-gray-700" dir="ltr">{selectedBeneficiary.nationalCardNumber}</span></span>}
+              <span><span className="text-blue-600 font-medium">{t('receipt.attribute')}: </span><span className="text-gray-700">{ATTRIBUT_LABELS[selectedBeneficiary.attribut] || selectedBeneficiary.attribut}</span></span>
+              {selectedBeneficiary.gender && <span><span className="text-blue-600 font-medium">| {t('receipt.gender')}: </span><span className="text-gray-700">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></span>}
+              {selectedBeneficiary.nationalCardNumber && <span><span className="text-blue-600 font-medium">| {t('receipt.idNumber')}: </span><span className="text-gray-700" dir="ltr">{selectedBeneficiary.nationalCardNumber}</span></span>}
             </div>
           )}
           {/* Children selection */}
           {selectedBeneficiary && (selectedBeneficiary.children || []).length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">الأطفال المستفيدون (اختياري)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('medical.childrenReferralDesc')}</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
                 {selectedBeneficiary.children.map((child: any, idx: number) => {
                   const childKey = child.id || `${child.firstNameAr} ${child.lastNameAr}_${idx}`;
@@ -560,7 +561,7 @@ export default function MedicalPage() {
                         className="w-4 h-4 text-primary-600 rounded" />
                       <span className="text-sm text-gray-800">{child.lastNameAr} {child.firstNameAr}</span>
                       {child.dateOfBirth && <span className="text-xs text-gray-400">({calculateAge(child.dateOfBirth).displayAr})</span>}
-                      <span className="text-xs text-gray-400">{child.gender === 'female' ? 'أنثى' : 'ذكر'}</span>
+                      <span className="text-xs text-gray-400">{child.gender === 'female' ? t('common.female') : t('common.male')}</span>
                     </label>
                   );
                 })}
@@ -571,29 +572,29 @@ export default function MedicalPage() {
             const sc = caisses.find((c: Caisse) => c.id === caisseId)
             const subs = sc?.subCategories || []
             if (subs.length === 0) return null
-            return <SearchableSelect labelAr="الفئة الفرعية" value={subCategoryId} onChange={setSubCategoryId}
+            return <SearchableSelect labelAr={t('medical.subCategory')} value={subCategoryId} onChange={setSubCategoryId}
               options={subs.map((s: SubCategory) => ({ value: s.id, label: s.nameAr }))} />
           })()}
           <div className="md:col-span-2">
-            <SearchableSelect labelAr="الطبيب" value={doctorId} onChange={setDoctorId}
+            <SearchableSelect labelAr={t('medical.doctor')} value={doctorId} onChange={setDoctorId}
               options={allDoctors.map((d: any) => ({
                 value: d.id,
                 label: `${d.lastNameAr} ${d.firstNameAr}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''} | ${d.phone}${d.address ? ' - ' + d.address : ''}`,
               }))}
-              placeholder="اختر طبيباً..." />
+              placeholder={t('doctors.specialtyPlaceholder')} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableSelect labelAr="نوع التحليل / الفحص" value={analysisTypeAr} onChange={(val) => { const a = analysisTypes.find((x: MedicalAnalysisType) => x.nameAr === val); setAnalysisTypeAr(val); setAnalysisType(a?.name || val); }}
-              options={analysisTypes.map((a: MedicalAnalysisType) => ({ value: a.nameAr, label: a.nameAr }))} placeholder="اختر تحليلاً..." />
-            <SearchableSelect labelAr="المستشفى / العيادة" value={hospitalAr} onChange={(val) => { const h = hospitals.find((x: MedicalHospital) => x.nameAr === val); setHospitalAr(val); setHospital(h?.name || val); }}
-              options={hospitals.map((h: MedicalHospital) => ({ value: h.nameAr, label: h.nameAr }))} placeholder="اختر مستشفى..." />
+            <SearchableSelect labelAr={t('medical.analysisType')} value={analysisTypeAr} onChange={(val) => { const a = analysisTypes.find((x: MedicalAnalysisType) => x.nameAr === val); setAnalysisTypeAr(val); setAnalysisType(a?.name || val); }}
+              options={analysisTypes.map((a: MedicalAnalysisType) => ({ value: a.nameAr, label: a.nameAr }))} placeholder={t('doctors.specialtyPlaceholder')} />
+            <SearchableSelect labelAr={t('medical.hospital')} value={hospitalAr} onChange={(val) => { const h = hospitals.find((x: MedicalHospital) => x.nameAr === val); setHospitalAr(val); setHospital(h?.name || val); }}
+              options={hospitals.map((h: MedicalHospital) => ({ value: h.nameAr, label: h.nameAr }))} placeholder={t('doctors.specialtyPlaceholder')} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Input labelAr="المبلغ (دج) — اختياري" type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
+              <Input labelAr={t('medical.amountOptional', 'المبلغ (دج) — اختياري')} type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
               {amount > 0 && <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(amount)}</p>}
             </div>
-            <Input labelAr="التاريخ" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <Input labelAr={t('common.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
             <input
@@ -604,19 +605,19 @@ export default function MedicalPage() {
               className="w-4 h-4 text-amber-500 rounded"
             />
             <label htmlFor="pendingStatus" className="text-sm text-amber-800 cursor-pointer">
-              توجيه طبي بدون دفع (سيتم تحديد المبلغ لاحقاً من قبل الطبيب)
+              {t('medical.noPaymentCheck')}
             </label>
           </div>
-          <TextArea labelAr="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <TextArea labelAr={t('common.notes')} value={notes} onChange={(e) => setNotes(e.target.value)} />
           <div className="flex gap-3 justify-end pt-4">
-            <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>إلغاء</Button>
-            <Button onClick={handleAddReferral} disabled={!beneficiaryId || !caisseId || !doctorId}>إضافة التوجيه</Button>
+            <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>{t('common.cancel')}</Button>
+            <Button onClick={handleAddReferral} disabled={!beneficiaryId || !caisseId || !doctorId}>{t('medical.addReferral')}</Button>
           </div>
         </div>
       </Modal>
 
       {/* Detail Modal */}
-      <Modal isOpen={!!showDetailModal} onClose={() => setShowDetailModal(null)} title="تفاصيل التوجيه الطبي" size="lg">
+      <Modal isOpen={!!showDetailModal} onClose={() => setShowDetailModal(null)} title={t('medical.referralDetails')} size="lg">
         {showDetailModal && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -638,13 +639,13 @@ export default function MedicalPage() {
               )}
               {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
                 <div className="border-t border-gray-200 pt-2 mt-1">
-                  <p className="text-xs text-gray-500 mb-2">تفاصيل الأطفال المستفيدين:</p>
+                  <p className="text-xs text-gray-500 mb-2">{t('medical.childrenReferral')}:</p>
                   <div className="space-y-1">
                     {showDetailModal.children.map((c: any, i: number) => (
                       <div key={i} className="flex items-center gap-3 text-sm bg-white rounded-lg px-3 py-2 border border-gray-100">
                         <span className="font-medium text-gray-900">{c.nameAr || c.name || c.id}</span>
-                        {c.age && <span className="text-xs text-gray-400">العمر: {c.age}</span>}
-                        <span className="text-xs text-gray-400">| {c.gender === 'female' ? 'أنثى' : c.gender === 'male' ? 'ذكر' : ''}</span>
+                        {c.age && <span className="text-xs text-gray-400">{t('receipt.age')}: {c.age}</span>}
+                        <span className="text-xs text-gray-400">| {c.gender === 'female' ? t('common.female') : t('common.male')}</span>
                       </div>
                     ))}
                   </div>
@@ -657,25 +658,25 @@ export default function MedicalPage() {
                 (showDetailModal.status || 'pending') === 'completed' ? 'bg-green-50 text-green-700 border border-green-200' :
                 'bg-red-50 text-red-700 border border-red-200'
               }`}>
-                {(showDetailModal.status || 'pending') === 'pending' ? '🟡 قيد الانتظار' :
-                 (showDetailModal.status || 'pending') === 'completed' ? '🟢 مكتمل' : '🔴 ملغي'}
+                {(showDetailModal.status || 'pending') === 'pending' ? `🟡 ${t('dashboard.pending')}` :
+                 (showDetailModal.status || 'pending') === 'completed' ? `🟢 ${t('dashboard.completed')}` : `🔴 ${t('dashboard.cancelled')}`}
               </div>
             </div>
             <div className="bg-primary-50 rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-primary-700">{showDetailModal.amount > 0 ? formatCurrency(showDetailModal.amount) : '—'}</p>
-              <p className="text-sm text-primary-600 mt-1">{showDetailModal.amount > 0 ? showDetailModal.amountInWordsAr : 'لم يحدد المبلغ بعد'}</p>
+              <p className="text-sm text-primary-600 mt-1">{showDetailModal.amount > 0 ? showDetailModal.amountInWordsAr : t('medical.pendingAmountLabel')}</p>
             </div>
             {showDetailModal.notes && (
-              <div><p className="text-xs text-gray-500">ملاحظات</p><p className="text-sm bg-gray-50 rounded-lg p-3">{showDetailModal.notes}</p></div>
+              <div><p className="text-xs text-gray-500">{t('common.notes')}</p><p className="text-sm bg-gray-50 rounded-lg p-3">{showDetailModal.notes}</p></div>
             )}
             <div className="flex justify-end gap-2">
               {(showDetailModal.status || 'pending') === 'pending' && (
                 <>
                   <Button size="sm" variant="primary" onClick={() => { setConfirmingId(showDetailModal.id); setConfirmAmount(''); }}>
-                    تأكيد التوجيه
+                    {t('medical.confirmReferral')}
                   </Button>
                   <Button size="sm" variant="danger" onClick={async () => {
-                    if (confirm('هل أنت متأكد من إلغاء هذا التوجيه الطبي؟')) {
+                    if (confirm(t('medical.confirmCancelReferral'))) {
                       try {
                         await api.put(`/medical/referrals/${showDetailModal.id}/cancel`);
                         queryClient.invalidateQueries({ queryKey: ['medical-referrals'] });
@@ -683,24 +684,24 @@ export default function MedicalPage() {
                         queryClient.invalidateQueries({ queryKey: ['dashboard'] });
                         setShowDetailModal(null);
                       } catch (err: any) {
-                        alert(err?.response?.data?.error || 'فشل في إلغاء التوجيه');
+                        alert(err?.response?.data?.error || t('common.error'));
                       }
                     }
                   }}>
-                    إلغاء
+                    {t('common.cancel')}
                   </Button>
                 </>
               )}
-              <Button size="sm" onClick={() => handlePrint(showDetailModal)} variant="success"><Printer className="w-4 h-4" /> طباعة التوجيه</Button>
+              <Button size="sm" onClick={() => handlePrint(showDetailModal)} variant="success"><Printer className="w-4 h-4" /> {t('medical.printReferral')}</Button>
             </div>
             {/* Confirm modal for entering doctor's amount */}
-            <Modal isOpen={confirmingId === showDetailModal.id} onClose={() => setConfirmingId(null)} title="تأكيد التوجيه الطبي" size="sm">
+            <Modal isOpen={confirmingId === showDetailModal.id} onClose={() => setConfirmingId(null)} title={t('medical.confirmReferral')} size="sm">
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">أدخل المبلغ الذي سجله الطبيب على الوصل:</p>
-                <Input labelAr="المبلغ (دج)" type="number" value={confirmAmount} onChange={(e) => setConfirmAmount(e.target.value)} min={0} />
+                <p className="text-sm text-gray-600">{t('medical.confirmAmount')}</p>
+                <Input labelAr={t('common.amount')} type="number" value={confirmAmount} onChange={(e) => setConfirmAmount(e.target.value)} min={0} />
                 {Number(confirmAmount) > 0 && <p className="text-xs text-gray-500">{numberToArabicWords(Number(confirmAmount))}</p>}
                 <div className="flex gap-2 justify-end">
-                  <Button variant="secondary" onClick={() => setConfirmingId(null)}>إلغاء</Button>
+                  <Button variant="secondary" onClick={() => setConfirmingId(null)}>{t('common.cancel')}</Button>
                   <Button onClick={async () => {
                     try {
                       await api.put(`/medical/referrals/${showDetailModal.id}/confirm`, { amount: Number(confirmAmount) || 0 });
@@ -710,9 +711,9 @@ export default function MedicalPage() {
                       setConfirmingId(null);
                       setShowDetailModal(null);
                     } catch (err: any) {
-                      alert(err?.response?.data?.error || 'فشل في تأكيد التوجيه');
+                      alert(err?.response?.data?.error || t('common.error'));
                     }
-                  }}>تأكيد</Button>
+                  }}>{t('common.confirm')}</Button>
                 </div>
               </div>
             </Modal>
@@ -731,12 +732,12 @@ export default function MedicalPage() {
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Stethoscope className="w-5 h-5 text-primary-600" />
-            أنواع التحاليل
+            {t('medical.analysisTypes')}
           </h3>
-          <p className="text-sm text-gray-500 mb-4">إدارة أنواع التحاليل والفحوصات الطبية</p>
+          <p className="text-sm text-gray-500 mb-4">{t('medical.manageAnalysis')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-            <Input labelAr="الاسم بالعربية" value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder="مثال: تحليل دم" />
-            <Input labelAr="الاسم باللاتينية" value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder="Ex: Analyse" dir="ltr" />
+            <Input labelAr={t('medical.nameAr')} value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder="مثال: تحليل دم" />
+            <Input labelAr={t('medical.nameLatin')} value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder="Ex: Analyse" dir="ltr" />
             <Button onClick={handleAddAnalysis} disabled={!newAnalysisAr.trim()}>إضافة</Button>
           </div>
           <Card>
@@ -781,12 +782,12 @@ export default function MedicalPage() {
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Settings className="w-5 h-5 text-primary-600" />
-            المستشفيات
+            {t('medical.hospitals')}
           </h3>
-          <p className="text-sm text-gray-500 mb-4">إدارة المستشفيات والعيادات</p>
+          <p className="text-sm text-gray-500 mb-4">{t('medical.manageHospitals')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-            <Input labelAr="الاسم بالعربية" value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder="مثال: مستشفى مصطفى باشا" />
-            <Input labelAr="الاسم باللاتينية" value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder="Ex: CHU" dir="ltr" />
+            <Input labelAr={t('medical.nameAr')} value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder="مثال: مستشفى مصطفى باشا" />
+            <Input labelAr={t('medical.nameLatin')} value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder="Ex: CHU" dir="ltr" />
             <Button onClick={handleAddHospital} disabled={!newHospAr.trim()}>إضافة</Button>
           </div>
           <Card>
@@ -835,16 +836,16 @@ export default function MedicalPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">التوجيه الطبي</h2>
-          <p className="text-sm text-gray-500 mt-1">إدارة التوجيهات الطبية للمستفيدين</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('medical.title')}</h2>
+          <p className="text-sm text-gray-500 mt-1">{t('medical.subtitle')}</p>
         </div>
         {activeTab === 'list' && (
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => setFilterOpen(!filterOpen)}>
-            <Filter className="w-4 h-4" /> بحث متقدم
+            <Filter className="w-4 h-4" /> {t('beneficiaries.advancedSearch')}
           </Button>
           <Button size="sm" onClick={() => setShowAddModal(true)}>
-            <Plus className="w-4 h-4" /> إضافة توجيه طبي
+            <Plus className="w-4 h-4" /> {t('medical.addReferral')}
           </Button>
         </div>
         )}
@@ -858,14 +859,14 @@ export default function MedicalPage() {
               activeTab === 'list' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}>
             <Stethoscope className="inline-block w-4 h-4 ml-2" />
-            التوجيه الطبي
+            {t('medical.tabReferrals')}
           </button>
           <button onClick={() => setActiveTab('settings')}
             className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
               activeTab === 'settings' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}>
             <Settings className="inline-block w-4 h-4 ml-2" />
-            إدارة التصنيفات
+            {t('medical.tabSettings')}
           </button>
         </nav>
       </div>

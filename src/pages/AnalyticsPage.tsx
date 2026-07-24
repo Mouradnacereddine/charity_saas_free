@@ -253,12 +253,12 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">التحليلات والتقارير المالية</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('analytics.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            نظرة تفصيلية ومؤشرات ذكية حول المداخيل والمصاريف وحالة السيولة في الصناديق.
+            {t('analytics.subtitle', 'نظرة تفصيلية ومؤشرات ذكية حول المداخيل والمصاريف وحالة السيولة في الصناديق.')}
           </p>
         </div>
       </div>
@@ -266,20 +266,20 @@ export default function AnalyticsPage() {
       <Card titleAr={t('analytics.periodFilter')} className="no-print">
         <div className="flex flex-col md:flex-row md:items-end gap-4">
           <div className="w-full md:w-1/4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">الفترة الزمنية</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('analytics.periodFilter')}</label>
             <select
               value={quickFilter}
               onChange={(e) => setQuickFilter(e.target.value as any)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
-              <option value="this_month">الشهر الحالي</option>
-              <option value="last_3_months">آخر 3 أشهر</option>
-              <option value="this_year">السنة الحالية</option>
-              <option value="custom">تاريخ مخصص</option>
+              <option value="this_month">{t('analytics.currentMonth')}</option>
+              <option value="last_3_months">{t('analytics.last3Months')}</option>
+              <option value="this_year">{t('analytics.currentYear')}</option>
+              <option value="custom">{t('analytics.customDate')}</option>
             </select>
           </div>
           <div className="w-full md:w-1/4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">من تاريخ</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('analytics.fromDate')}</label>
             <input
               type="date"
               value={startDate}
@@ -291,7 +291,7 @@ export default function AnalyticsPage() {
             />
           </div>
           <div className="w-full md:w-1/4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">إلى تاريخ</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('analytics.toDate')}</label>
             <input
               type="date"
               value={endDate}
@@ -309,34 +309,45 @@ export default function AnalyticsPage() {
                 const totalCredits = filteredTx.filter((t: any) => t.status !== 'cancelled' && t.type === 'credit').reduce((s: number, t: any) => s + t.amount, 0);
                 const totalDebits = filteredTx.filter((t: any) => t.status !== 'cancelled' && t.type === 'debit').reduce((s: number, t: any) => s + t.amount, 0);
                 const MONTHS = ['analytics.january','analytics.february','analytics.march','analytics.april','analytics.may','analytics.june','analytics.july','analytics.august','analytics.september','analytics.october','analytics.november','analytics.december'];
-                let bodyRows = '<div class="section-title">التطور الشهري</div>';
+                let bodyRows = `<div class="section-title">${t('analytics.byFund')}</div>`;
                 caisseBreakdown.forEach((c: any) => {
                   const sum = c.periodCredits + c.periodDebits;
                   const credPct = sum > 0 ? (c.periodCredits / sum) * 100 : 0;
                   bodyRows += `<div class="bar-row"><span class="bar-label">${c.nameAr}</span><div class="bar-track"><div class="bar-cred" style="width:${credPct}%"></div><div class="bar-deb" style="width:${100 - credPct}%"></div></div><span class="bar-amt">${formatCurrency(c.periodFlow)}</span></div>`;
                 });
-                bodyRows += '<div class="section-title">آخر العمليات</div><div class="section"><table class="data-table"><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>البيان</th><th>الصندوق</th></tr></thead><tbody>';
+                bodyRows += `<div class="section-title">${t('analytics.detailedLog')}</div><div class="section"><table class="data-table"><thead><tr><th>${t('common.date')}</th><th>${t('dashboard.type')}</th><th>${t('common.amount')}</th><th>${t('receipt.description')}</th><th>${t('dashboard.fund')}</th></tr></thead><tbody>`;
                 filteredTx.slice(0, 20).forEach((tx: any) => {
                   const caisse = caisses.find((c: any) => c.id === tx.caisseId);
-                  bodyRows += `<tr><td>${formatDate(tx.date)}</td><td>${tx.type === 'credit' ? 'إيداع' : 'سحب'}</td><td class="${tx.type === 'credit' ? 'credit' : 'debit'}">${formatCurrency(tx.amount)}</td><td>${tx.descriptionAr || '—'}</td><td>${caisse?.nameAr || '—'}</td></tr>`;
+                  bodyRows += `<tr><td>${formatDate(tx.date)}</td><td>${tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</td><td class="${tx.type === 'credit' ? 'credit' : 'debit'}">${formatCurrency(tx.amount)}</td><td>${tx.descriptionAr || '—'}</td><td>${caisse?.nameAr || '—'}</td></tr>`;
                 });
                 bodyRows += '</tbody></table></div>';
+                const isLtr = i18n.language !== 'ar';
                 printAnalyticsReport({
-                  assocNameAr: association?.nameAr || 'الجمعية الخيرية',
-                  title: 'التقرير المالي السنوي',
-                  periodLabel: quickFilter === 'this_month' ? 'الشهر الحالي' : quickFilter === 'last_3_months' ? 'آخر 3 أشهر' : quickFilter === 'this_year' ? 'السنة الحالية' : `${startDate} إلى ${endDate}`,
-                  dateLabel: new Date().toLocaleDateString('ar-DZ'),
+                  assocNameAr: association?.nameAr || t('app.title'),
+                  title: t('analytics.title'),
+                  periodLabel: quickFilter === 'this_month' ? t('analytics.currentMonth') : quickFilter === 'last_3_months' ? t('analytics.last3Months') : quickFilter === 'this_year' ? t('analytics.currentYear') : `${startDate} ${t('medical.toDate').toLowerCase()} ${endDate}`,
+                  dateLabel: new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-DZ' : i18n.language === 'fr' ? 'fr-DZ' : 'en-DZ'),
                   credits: formatCurrency(totalCredits),
                   debits: formatCurrency(totalDebits),
                   balance: formatCurrency(totalCredits - totalDebits),
                   ratio: `${totalCredits > 0 ? ((totalDebits / totalCredits) * 100).toFixed(1) : '0.0'}%`,
                   bodyRows,
+                  labels: {
+                    totalIncome: t('analytics.totalIncome'),
+                    totalExpenses: t('analytics.totalExpenses'),
+                    netFinancial: t('analytics.netFinancial'),
+                    expenseToIncome: t('analytics.expenseToIncome'),
+                    generatedBy: t('receipt.generatedBy'),
+                    printReport: t('receipt.printReport')
+                  },
+                  dir: isLtr ? 'ltr' : 'rtl',
+                  lang: i18n.language
                 });
               }}
               size="md"
               className="w-full md:w-auto"
             >
-              طباعة التقرير
+              {t('receipt.printReport')}
             </Button>
           </div>
         </div>
@@ -667,7 +678,7 @@ export default function AnalyticsPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            تجميع حسب الصناديق
+            {t('analytics.byFund')}
           </button>
           <button
             onClick={() => setActiveTab('subcategories')}
@@ -677,7 +688,7 @@ export default function AnalyticsPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            تجميع حسب التصنيفات الفرعية
+            {t('analytics.byCategory')}
           </button>
           <button
             onClick={() => setActiveTab('log')}
@@ -687,7 +698,7 @@ export default function AnalyticsPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            سجل العمليات التفصيلي
+            {t('analytics.detailedLog')}
           </button>
         </div>
 

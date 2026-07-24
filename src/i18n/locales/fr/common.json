@@ -193,7 +193,11 @@
     "filterGender": "Sexe",
     "filterStatus": "Statut",
     "filterMinChildren": "Nombre minimum d'enfants",
-    "filterMaxAge": "Âge maximum du bénéficiaire"
+    "filterMaxAge": "Âge maximum du bénéficiaire",
+    "confirmDeleteAttribute": "Êtes-vous sûr de vouloir supprimer cet attribut ?",
+    "attributeDeleteError": "Cet attribut ne peut pas être supprimé car il est utilisé par des bénéficiaires",
+    "confirmDeleteGrade": "Êtes-vous sûr de vouloir supprimer ce niveau scolaire ?",
+    "confirmDeleteBeneficiary": "Êtes-vous sûr de vouloir supprimer ce bénéficiaire ?"
   },
   "donors": {
     "title": "Donateurs",
@@ -277,7 +281,29 @@
     "manageAnalysis": "Gérer les types d'analyses et d'examens médicaux",
     "manageHospitals": "Gérer les hôpitaux et cliniques",
     "nameAr": "Nom (Arabe)",
-    "nameLatin": "Nom (Latin)"
+    "nameLatin": "Nom (Latin)",
+    "confirmDeleteReferral": "Êtes-vous sûr de vouloir supprimer cette orientation médicale ?",
+    "confirmCancelReferral": "Êtes-vous sûr de vouloir annuler cette orientation médicale ?",
+    "pendingAmount": "Tarif du médecin",
+    "notice": "L'Association décline toute responsabilité pour toute orientation médicale ne portant pas le cachet de l'Association et la signature du Président de l'Association ; une telle orientation est considérée comme invalide et non reconnue.",
+    "presidentSignature": "Signature du Président de l'Association",
+    "assocStamp": "Cachet de l'Association",
+    "childrenReferral": "Enfants bénéficiaires",
+    "childrenReferralDesc": "Enfants bénéficiaires (Optionnel)",
+    "beneficiaryRef": "Référence bénéficiaire",
+    "amountFrom": "Montant de",
+    "amountTo": "Montant à",
+    "caisse": "Caisse",
+    "subCategory": "Sous-catégorie",
+    "cancelReferral": "Annuler l'orientation",
+    "noReferrals": "Aucune orientation médicale",
+    "searchPlaceholder": "Rechercher par nom, médecin, type d'analyse...",
+    "pendingAmountLabel": "Montant non spécifié",
+    "doctorAddress": "Adresse du médecin",
+    "doctorName": "Médecin",
+    "referralBeneficiaries": "Derniers bénéficiaires (50 derniers)",
+    "noPreviousReferrals": "Aucune orientation précédente",
+    "loadingStats": "Chargement des statistiques..."
   },
   "doctors": {
     "title": "Médecins",

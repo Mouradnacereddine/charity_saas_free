@@ -193,7 +193,11 @@
     "filterGender": "الجنس",
     "filterStatus": "الحالة",
     "filterMinChildren": "الحد الأدنى لعدد الأطفال",
-    "filterMaxAge": "العمر الأقصى للمستفيد"
+    "filterMaxAge": "العمر الأقصى للمستفيد",
+    "confirmDeleteAttribute": "هل أنت متأكد من حذف هذه الصفة؟",
+    "attributeDeleteError": "لا يمكن حذف الصفة لأنها مستخدمة من قبل مستفيدين",
+    "confirmDeleteGrade": "هل أنت متأكد من حذف هذا المستوى؟",
+    "confirmDeleteBeneficiary": "هل أنت متأكد من حذف هذا المستفيد؟"
   },
   "donors": {
     "title": "المتبرعون",
@@ -278,7 +282,29 @@
     "manageAnalysis": "إدارة أنواع التحاليل والفحوصات الطبية",
     "manageHospitals": "إدارة المستشفيات والعيادات",
     "nameAr": "الاسم بالعربية",
-    "nameLatin": "الاسم باللاتينية"
+    "nameLatin": "الاسم باللاتينية",
+    "confirmDeleteReferral": "هل أنت متأكد من حذف هذا التوجيه الطبي؟",
+    "confirmCancelReferral": "هل أنت متأكد من إلغاء هذا التوجيه الطبي؟",
+    "pendingAmount": "سعر الطبيب",
+    "notice": "الجمعية تتخلى من مسؤوليتها عن كل توجيه طبي لا يحمل ختم الجمعية و إمضاء رئيس الجمعية، يُعتبر هذا التوجيه غير صالح و غير معترف به.",
+    "presidentSignature": "إمضاء رئيس الجمعية",
+    "assocStamp": "ختم الجمعية",
+    "childrenReferral": "الأطفال المستفيدون",
+    "childrenReferralDesc": "الأطفال المستفيدون (اختياري)",
+    "beneficiaryRef": "رمز المستفيد",
+    "amountFrom": "المبلغ من",
+    "amountTo": "المبلغ إلى",
+    "caisse": "الصندوق",
+    "subCategory": "الفئة الفرعية",
+    "cancelReferral": "إلغاء التوجيه",
+    "noReferrals": "لا توجد توجيهات طبية",
+    "searchPlaceholder": "بحث بالاسم، الطبيب، نوع التحليل...",
+    "pendingAmountLabel": "لم يحدد المبلغ بعد",
+    "doctorAddress": "عنوان الطبيب",
+    "doctorName": "الطبيب",
+    "referralBeneficiaries": "آخر المستفيدين (آخر 50)",
+    "noPreviousReferrals": "لا توجد توجيهات سابقة",
+    "loadingStats": "جاري تحميل الإحصائيات..."
   },
   "doctors": {
     "title": "الأطباء",
