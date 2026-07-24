@@ -97,6 +97,7 @@ export function Layout({
   };
 
   const roleLabel = userRole === 'admin' ? t('userMenu.systemAdmin') : userRole === 'treasurer' ? t('userMenu.treasurer') : t('userMenu.volunteer');
+  const isRtl = i18n.language === 'ar';
 
   return (
     <div className="flex h-dvh overflow-hidden">
@@ -111,13 +112,21 @@ export function Layout({
       {/* Sidebar — always full viewport height */}
       <aside
         className={`
-          fixed top-0 right-0 z-50 h-dvh bg-primary-900 text-white
-          transform transition-all duration-200 ease-in-out
+          fixed top-0 z-50 h-dvh bg-primary-900 text-white
+          transition-all duration-200 ease-in-out
           w-64 flex flex-col
           lg:translate-x-0 lg:sticky lg:z-auto
           ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}
-          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+          ${isRtl ? 'right-0' : 'left-0'}
         `}
+        style={{
+          transform: sidebarOpen
+            ? 'translateX(0)'
+            : isRtl
+              ? 'translateX(100%)'
+              : 'translateX(-100%)',
+          transition: 'transform 0.2s ease-in-out',
+        }}
       >
         <div className="flex items-center justify-between p-5 border-b border-primary-700">
           <div className="flex items-center gap-2 min-w-0">
