@@ -191,11 +191,11 @@ export default function InventoryPage() {
       </div>
 
       {activeTab === 'stock' ? (
-        <StockTab actionsRef={stockActions} t={t} i18n={i18n} statusLabels={STATUS_LABELS} />
+        <StockTab actionsRef={stockActions} statusLabels={STATUS_LABELS} />
       ) : activeTab === 'loans' ? (
-        <LoansTab actionsRef={loansActions} t={t} i18n={i18n} statusLabels={STATUS_LABELS} loanStatusLabels={loanStatusLabels} />
+        <LoansTab actionsRef={loansActions} statusLabels={STATUS_LABELS} loanStatusLabels={loanStatusLabels} />
       ) : (
-        <SettingsTab t={t} i18n={i18n} />
+        <SettingsTab />
       )}
     </div>
   )
@@ -205,7 +205,7 @@ export default function InventoryPage() {
 // SETTINGS TAB — Categories & Storage Locations
 // ============================================================
 
-function SettingsTab({ t, i18n }: { t: any; i18n: any }) {
+function SettingsTab() { const { t, i18n } = useTranslation();
   const { data: categories = [], isLoading: catsLoading } = useArticleCategories()
   const { data: locations = [], isLoading: locsLoading } = useStorageLocations()
   const { data: statuses = [], isLoading: stsLoading } = useArticleStatuses()
@@ -672,7 +672,7 @@ function SettingsTab({ t, i18n }: { t: any; i18n: any }) {
 // STOCK TAB
 // ============================================================
 
-function StockTab({ actionsRef, t, i18n, statusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; t: any; i18n: any; statusLabels: Record<string, string> }) {
+function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; statusLabels: Record<string, string> }) { const { t, i18n } = useTranslation();
   const { data: articles = [], isLoading: loading } = useArticles()
   const { data: categories = [] } = useArticleCategories()
   const { data: locations = [] } = useStorageLocations()
@@ -1008,7 +1008,7 @@ function StockTab({ actionsRef, t, i18n, statusLabels }: { actionsRef: React.Mut
 // LOANS TAB
 // ============================================================
 
-function LoansTab({ actionsRef, t, i18n, statusLabels, loanStatusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; t: any; i18n: any; statusLabels: Record<string, string>; loanStatusLabels: Record<string, string> }) {
+function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; statusLabels: Record<string, string>; loanStatusLabels: Record<string, string> }) { const { t, i18n } = useTranslation();
   const queryClient = useQueryClient()
   const { data: loans = [], isLoading: loading } = useLoans()
   const { data: articles = [] } = useArticles()
