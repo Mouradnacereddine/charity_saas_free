@@ -571,7 +571,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className={`text-xs font-medium ${c.periodFlow >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  تدفق الفترة الصافي: {c.periodFlow >= 0 ? '+' : ''}{formatCurrency(c.periodFlow)}
+                  {t('analytics.netPeriodFlow', 'تدفق الفترة الصافي')}: {c.periodFlow >= 0 ? '+' : ''}{formatCurrency(c.periodFlow)}
                 </div>
               </div>
             );
@@ -597,7 +597,7 @@ export default function AnalyticsPage() {
               <div className="flex gap-3 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-800">
                 <Info className="w-5 h-5 shrink-0 text-amber-500" />
                 <div>
-                  <h4 className="font-bold">ملاحظة: معدل نفقات متوسط</h4>
+                  <h4 className="font-bold">{t('analytics.averageNote', 'ملاحظة: معدل نفقات متوسط')}</h4>
                   <p className="mt-1 text-xs text-amber-700 leading-relaxed">
                     تبلغ نسبة الإنفاق مقارنة بالإيرادات{' '}
                     <span className="font-bold">{stats.ratio.toFixed(1)}%</span>. هذا المؤشر مقبول ولكنه يتطلب متابعة يقظة لضمان ألا تتجاوز المصاريف الحد المطلوب.
@@ -608,7 +608,7 @@ export default function AnalyticsPage() {
               <div className="flex gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-800">
                 <CheckCircle className="w-5 h-5 shrink-0 text-emerald-500" />
                 <div>
-                  <h4 className="font-bold">مؤشر ممتاز: توازن مالي إيجابي</h4>
+                  <h4 className="font-bold">{t('analytics.excellentIndicator', 'مؤشر ممتاز: توازن مالي إيجابي')}</h4>
                   <p className="mt-1 text-xs text-emerald-700 leading-relaxed">
                     معدل النفقات مستقر عند <span className="font-bold">{stats.ratio.toFixed(1)}%</span> من المداخيل. يعكس هذا هيكلاً مالياً ممتازاً وهو ما يسمح بتكوين احتياطي مستدام.
                   </p>
@@ -623,7 +623,7 @@ export default function AnalyticsPage() {
                 <div className="flex gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-800">
                   <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
                   <div>
-                    <h4 className="font-bold">عجز مالي في بعض الصناديق</h4>
+                    <h4 className="font-bold">{t('analytics.fundDeficit', 'عجز مالي في بعض الصناديق')}</h4>
                     <p className="mt-1 text-xs text-red-700 leading-relaxed">
                       الصناديق التالية تعاني من عجز مالي في معاملات هذه الفترة:{' '}
                       <span className="font-bold">{deficits.map((d) => d.nameAr).join('، ')}</span>. يرجى تسوية الحسابات المالية أو تحويل أرصدة لتغطية النفقات.
@@ -637,7 +637,7 @@ export default function AnalyticsPage() {
               <div className="flex gap-3 p-3 bg-orange-50 border border-orange-100 rounded-lg text-sm text-orange-800">
                 <AlertTriangle className="w-5 h-5 shrink-0 text-orange-500" />
                 <div>
-                  <h4 className="font-bold">تركيز عالي في مصادر التبرعات</h4>
+                  <h4 className="font-bold">{t('analytics.donorConcentration', 'تركيز عالي في مصادر التبرعات')}</h4>
                   <p className="mt-1 text-xs text-orange-700 leading-relaxed">
                     يساهم المتبرع <span className="font-bold">"{donorConcentration.nameAr}"</span> بأكثر من 50% من إجمالي المداخيل، بنسبة{' '}
                     <span className="font-bold">{donorConcentration.share.toFixed(1)}%</span> (مبلغ {formatCurrency(donorConcentration.amount)}). الاعتماد المفرط يمثل خطورة؛ نقترح تكثيف جهود تنويع مصادر الدعم المالي.
@@ -651,7 +651,7 @@ export default function AnalyticsPage() {
             <div className="flex gap-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800">
               <TrendingUp className="w-5 h-5 shrink-0 text-blue-500" />
               <div>
-                <h4 className="font-bold">هامش أمان الطوارئ الموصى به (20%)</h4>
+                <h4 className="font-bold">{t('analytics.safetyMargin', 'هامش أمان الطوارئ الموصى به (20%)')}</h4>
                 <p className="mt-1 text-xs text-blue-700 leading-relaxed">
                   توصي المعايير المالية بالاحتفاظ بهامش أمان يعادل <span className="font-bold">20%</span> من المقبوضات كاحتياطي طوارئ. لهاته الفترة، يجب الاحتفاظ بـ{' '}
                   <span className="font-bold text-gray-900">{formatCurrency(stats.credits * 0.2)}</span> كاحتياطي.
@@ -864,7 +864,7 @@ export default function AnalyticsPage() {
                 onChange={(e) => setLogSourceFilter(e.target.value)}
                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right font-medium"
               >
-                <option value="">كل مصادر التمويل</option>
+                <option value="">{t('analytics.allSources')}</option>
                 <option value="banque">{t('dashboard.bank')}</option>
                 <option value="caisse_physique">{t('finance.cashFund')}</option>
               </select>
