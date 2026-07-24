@@ -118,7 +118,7 @@ export default function DoctorsPage() {
     try {
       await deleteDoctor.mutateAsync(id);
     } catch (err: any) {
-      alert(err.response?.data?.error || t('common.deleteError'));
+      alert(err.response?.data?.error || t('common.error'));
     }
   };
 
@@ -157,7 +157,7 @@ export default function DoctorsPage() {
   };
   const handleDeleteSpecialty = async (id: string) => {
     if (!window.confirm(t('doctors.confirmDeleteSpecialty'))) return;
-    try { await deleteSpecialty.mutateAsync(id); } catch (err: any) { alert(err.response?.data?.error || t('common.deleteError')); }
+    try { await deleteSpecialty.mutateAsync(id); } catch (err: any) { alert(err.response?.data?.error || t('common.error')); }
   };
 
   // ---- Renderers ----
@@ -180,7 +180,7 @@ export default function DoctorsPage() {
               <Input labelAr={t('doctors.address')} value={filterAddress} onChange={(e) => setFilterAddress(e.target.value)} placeholder={t('doctors.searchAddressPlaceholder')} />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={applyFilters}><Search className="w-4 h-4" /> {t('doctors.search')}</Button>
+              <Button size="sm" onClick={applyFilters}><Search className="w-4 h-4" /> {t('common.search')}</Button>
               <Button size="sm" variant="secondary" onClick={resetFilters}>{t('doctors.reset')}</Button>
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function DoctorsPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('doctors.refCode')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('common.sectionName')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('doctors.sectionName')}</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">{t('doctors.specialty')}</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">{t('doctors.address')}</th>
                   <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">{t('doctors.phone')}</th>

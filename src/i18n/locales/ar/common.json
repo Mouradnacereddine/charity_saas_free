@@ -60,7 +60,8 @@
     "status": "الحالة",
     "date": "التاريخ",
     "amount": "المبلغ",
-    "done": "تم"
+    "done": "تم",
+    "error": "خطأ"
   },
   "settings": {
     "title": "إعدادات الجمعية",
@@ -269,6 +270,9 @@
     "hospital": "المستشفى / العيادة",
     "noPaymentCheck": "توجيه طبي بدون دفع (سيتم تحديد المبلغ لاحقاً من قبل الطبيب)",
     "confirmAmount": "أدخل المبلغ الذي سجله الطبيب على الوصل:",
+    "confirmDeleteAnalysis": "هل أنت متأكد من حذف هذا التحليل؟",
+    "confirmDeleteHospital": "هل أنت متأكد من حذف هذا المستشفى؟",
+    "genderDisplay": "الجنس",
     "analysisTypes": "أنواع التحاليل",
     "hospitals": "المستشفيات",
     "manageAnalysis": "إدارة أنواع التحاليل والفحوصات الطبية",
@@ -332,7 +336,16 @@
     "beneficiaryRef": "رمز المستفيد",
     "reset": "إعادة تعيين",
     "saveChanges": "حفظ التغييرات",
-    "deleteWarning": "هذا الإجراء لا يمكن التراجع عنه."
+    "deleteWarning": "هذا الإجراء لا يمكن التراجع عنه.",
+    "inProgress": "جاري...",
+    "deleteError": "فشل الحذف",
+    "sectionName": "الاسم",
+    "lastNameArPlaceholder": "مثال: بلقاسم",
+    "firstNameArPlaceholder": "مثال: أمينة",
+    "nameArPlaceholder": "مثال: طب عام",
+    "searchAddressPlaceholder": "بحث بالعنوان...",
+    "specialtyPlaceholder": "اختر تخصص...",
+    "addressPlaceholder": "مثال: 15 شارع الإخوة، الجزائر"
   },
   "users": {
     "title": "إدارة المستخدمين",
@@ -384,7 +397,12 @@
     "inviteLinkCopied": "تم نسخ رابط الدعوة",
     "registered": "تم التسجيل",
     "creating": "جاري الإنشاء...",
-    "createInviteLink": "إنشاء رابط الدعوة"
+    "createInviteLink": "إنشاء رابط الدعوة",
+    "inviteFailed": "فشل إنشاء الدعوة",
+    "downgradeToTreasurer": "تحويل إلى أمين المال",
+    "deleteUserHint": "حذف المستخدم",
+    "deleteInviteHint": "حذف الدعوة",
+    "createdDate": "تاريخ الإنشاء"
   },
   "analytics": {
     "title": "التحليلات والتقارير المالية",
@@ -396,6 +414,8 @@
     "totalExpenses": "إجمالي المدفوعات (المصاريف)",
     "netFinancial": "الصافي المالي للمرحلة",
     "expenseToIncome": "معدل المصاريف إلى المداخيل",
+    "depositCount": "عملية إيداع",
+    "withdrawalCount": "عملية سحب",
     "surplus": "فائض مالي",
     "deficit": "عجز في التدفق",
     "criticalSpending": "معدل إنفاق حرج",
@@ -422,7 +442,14 @@
     "september": "سبتمبر",
     "october": "أكتوبر",
     "november": "نوفمبر",
-    "december": "ديسمبر"
+    "december": "ديسمبر",
+    "periodFilter": "تصفية الفترة الزمنية",
+    "fromDate": "من تاريخ",
+    "toDate": "إلى تاريخ",
+    "monthlyEvolution": "التطور الشهري للمداخيل والمصاريف",
+    "fundingComparison": "مقارنة مصادر التمويل",
+    "flowDistribution": "توزيع التدفق المالي حسب الصناديق",
+    "smartAnalytics": "التحليلات الذكية والتوصيات الماليّة"
   },
   "receipt": {
     "title": "وصل تبرع",

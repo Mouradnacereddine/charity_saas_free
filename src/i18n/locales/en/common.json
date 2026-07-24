@@ -60,7 +60,8 @@
     "status": "Status",
     "date": "Date",
     "amount": "Amount",
-    "done": "Done"
+    "done": "Done",
+    "error": "Error"
   },
   "settings": {
     "title": "Association Settings",
@@ -269,6 +270,8 @@
     "hospital": "Hospital / Clinic",
     "noPaymentCheck": "Medical referral without payment (amount will be determined later by the doctor)",
     "confirmAmount": "Enter the amount recorded by the doctor on the receipt:",
+    "confirmDeleteAnalysis": "Are you sure you want to delete this analysis?",
+    "confirmDeleteHospital": "Are you sure you want to delete this hospital?",
     "analysisTypes": "Analysis Types",
     "hospitals": "Hospitals",
     "manageAnalysis": "Manage analysis and medical examination types",
@@ -332,7 +335,16 @@
     "beneficiaryRef": "Beneficiary Ref",
     "reset": "Reset",
     "saveChanges": "Save Changes",
-    "deleteWarning": "This action cannot be undone."
+    "deleteWarning": "This action cannot be undone.",
+    "inProgress": "In progress...",
+    "deleteError": "Delete failed",
+    "sectionName": "Name",
+    "lastNameArPlaceholder": "Ex: Belkacem",
+    "firstNameArPlaceholder": "Ex: Amina",
+    "nameArPlaceholder": "Ex: General Practitioner",
+    "searchAddressPlaceholder": "Search by address...",
+    "specialtyPlaceholder": "Choose a specialty...",
+    "addressPlaceholder": "Ex: 15 Freres Street, Algiers"
   },
   "users": {
     "title": "User Management",
@@ -384,7 +396,12 @@
     "inviteLinkCopied": "Invitation link copied",
     "registered": "Registered",
     "creating": "Creating...",
-    "createInviteLink": "Create Invitation Link"
+    "createInviteLink": "Create Invitation Link",
+    "inviteFailed": "Failed to create invitation",
+    "downgradeToTreasurer": "Downgrade to Treasurer",
+    "deleteUserHint": "Delete user",
+    "deleteInviteHint": "Delete invitation",
+    "createdDate": "Created Date"
   },
   "analytics": {
     "title": "Financial Analytics & Reports",
@@ -396,6 +413,8 @@
     "totalExpenses": "Total Expenses",
     "netFinancial": "Net Financial Position",
     "expenseToIncome": "Expense to Income Ratio",
+    "depositCount": "deposit transactions",
+    "withdrawalCount": "withdrawal transactions",
     "surplus": "Financial Surplus",
     "deficit": "Cash Flow Deficit",
     "criticalSpending": "Critical Spending Rate",
@@ -422,7 +441,14 @@
     "september": "September",
     "october": "October",
     "november": "November",
-    "december": "December"
+    "december": "December",
+    "periodFilter": "Period Filter",
+    "fromDate": "From Date",
+    "toDate": "To Date",
+    "monthlyEvolution": "Monthly Income/Expenses Evolution",
+    "fundingComparison": "Funding Source Comparison",
+    "flowDistribution": "Cash Flow Distribution by Fund",
+    "smartAnalytics": "Smart Analytics & Recommendations"
   },
   "receipt": {
     "title": "Donation Receipt",

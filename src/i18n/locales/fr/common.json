@@ -60,7 +60,8 @@
     "status": "Statut",
     "date": "Date",
     "amount": "Montant",
-    "done": "Terminé"
+    "done": "Terminé",
+    "error": "Erreur"
   },
   "settings": {
     "title": "Paramètres de l'association",
@@ -269,6 +270,8 @@
     "hospital": "Hôpital / Clinique",
     "noPaymentCheck": "Orientation médicale sans paiement (le montant sera déterminé ultérieurement par le médecin)",
     "confirmAmount": "Entrez le montant enregistré par le médecin sur le reçu :",
+    "confirmDeleteAnalysis": "Êtes-vous sûr de vouloir supprimer cette analyse ?",
+    "confirmDeleteHospital": "Êtes-vous sûr de vouloir supprimer cet hôpital ?",
     "analysisTypes": "Types d'analyses",
     "hospitals": "Hôpitaux",
     "manageAnalysis": "Gérer les types d'analyses et d'examens médicaux",
@@ -332,7 +335,16 @@
     "beneficiaryRef": "Réf. bénéficiaire",
     "reset": "Réinitialiser",
     "saveChanges": "Enregistrer les modifications",
-    "deleteWarning": "Cette action est irréversible."
+    "deleteWarning": "Cette action est irréversible.",
+    "inProgress": "En cours...",
+    "deleteError": "Échec de la suppression",
+    "sectionName": "Nom",
+    "lastNameArPlaceholder": "Ex: Belkacem",
+    "firstNameArPlaceholder": "Ex: Amina",
+    "nameArPlaceholder": "Ex: Généraliste",
+    "searchAddressPlaceholder": "Rechercher par adresse...",
+    "specialtyPlaceholder": "Choisir une spécialité...",
+    "addressPlaceholder": "Ex: 15 Rue des Frères, Alger"
   },
   "users": {
     "title": "Gestion des utilisateurs",
@@ -384,7 +396,12 @@
     "inviteLinkCopied": "Lien d'invitation copié",
     "registered": "Inscrit",
     "creating": "Création en cours...",
-    "createInviteLink": "Créer un lien d'invitation"
+    "createInviteLink": "Créer un lien d'invitation",
+    "inviteFailed": "Échec de la création de l'invitation",
+    "downgradeToTreasurer": "Rétrograder en trésorier",
+    "deleteUserHint": "Supprimer l'utilisateur",
+    "deleteInviteHint": "Supprimer l'invitation",
+    "createdDate": "Date de création"
   },
   "analytics": {
     "title": "Analyses financières et rapports",
@@ -396,6 +413,8 @@
     "totalExpenses": "Total des dépenses",
     "netFinancial": "Position financière nette",
     "expenseToIncome": "Ratio dépenses/revenus",
+    "depositCount": "opérations de dépôt",
+    "withdrawalCount": "opérations de retrait",
     "surplus": "Excédent financier",
     "deficit": "Déficit de trésorerie",
     "criticalSpending": "Taux de dépense critique",
@@ -422,7 +441,14 @@
     "september": "Septembre",
     "october": "Octobre",
     "november": "Novembre",
-    "december": "Décembre"
+    "december": "Décembre",
+    "periodFilter": "Filtre de période",
+    "fromDate": "Du",
+    "toDate": "Au",
+    "monthlyEvolution": "Évolution mensuelle des revenus/dépenses",
+    "fundingComparison": "Comparaison des sources de financement",
+    "flowDistribution": "Répartition des flux par caisse",
+    "smartAnalytics": "Analyses intelligentes et recommandations"
   },
   "receipt": {
     "title": "Reçu de don",

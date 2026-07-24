@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, StatCard, LoadingSpinner, Badge, Button } from '../components/common/UI';
 import { useTransactions } from '../hooks/useFinance';
 import { useDonors } from '../hooks/useDonors';
@@ -22,6 +23,7 @@ import {
 import type { Transaction, Caisse } from '../types';
 
 export default function AnalyticsPage() {
+  const { t, i18n } = useTranslation();
   const [quickFilter, setQuickFilter] = useState<'this_month' | 'last_3_months' | 'this_year' | 'custom'>('this_month');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -261,7 +263,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <Card titleAr="تصفية الفترة الزمنية" className="no-print">
+      <Card titleAr={t('analytics.periodFilter')} className="no-print">
         <div className="flex flex-col md:flex-row md:items-end gap-4">
           <div className="w-full md:w-1/4">
             <label className="block text-sm font-medium text-gray-700 mb-1">الفترة الزمنية</label>
@@ -306,7 +308,7 @@ export default function AnalyticsPage() {
               onClick={() => {
                 const totalCredits = filteredTx.filter((t: any) => t.status !== 'cancelled' && t.type === 'credit').reduce((s: number, t: any) => s + t.amount, 0);
                 const totalDebits = filteredTx.filter((t: any) => t.status !== 'cancelled' && t.type === 'debit').reduce((s: number, t: any) => s + t.amount, 0);
-                const monthsAr = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+                const MONTHS = ['analytics.january','analytics.february','analytics.march','analytics.april','analytics.may','analytics.june','analytics.july','analytics.august','analytics.september','analytics.october','analytics.november','analytics.december'];
                 let bodyRows = '<div class="section-title">التطور الشهري</div>';
                 caisseBreakdown.forEach((c: any) => {
                   const sum = c.periodCredits + c.periodDebits;
@@ -342,37 +344,37 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="إجمالي المقبوضات (المداخيل)"
+          title={t('analytics.totalIncome')}
           value={formatCurrency(stats.credits)}
           icon={<ArrowUpRight className="w-6 h-6" />}
           color="bg-emerald-500"
-          subtitle={`${filteredTx.filter((t) => t.type === 'credit').length} عملية إيداع`}
+          subtitle={`${filteredTx.filter((t) => t.type === 'credit').length} ${t('analytics.depositCount')}`}
         />
         <StatCard
-          title="إجمالي المدفوعات (المصاريف)"
+          title={t('analytics.totalExpenses')}
           value={formatCurrency(stats.debits)}
           icon={<ArrowDownRight className="w-6 h-6" />}
           color="bg-red-500"
-          subtitle={`${filteredTx.filter((t) => t.type === 'debit').length} عملية سحب`}
+          subtitle={`${filteredTx.filter((t) => t.type === 'debit').length} ${t('analytics.withdrawalCount')}`}
         />
         <StatCard
-          title="الصافي المالي للمرحلة"
+          title={t('analytics.netFinancial')}
           value={formatCurrency(stats.balance)}
           icon={<TrendingUp className="w-6 h-6" />}
           color={stats.balance >= 0 ? 'bg-blue-500' : 'bg-orange-500'}
-          subtitle={stats.balance >= 0 ? 'فائض مالي' : 'عجز في التدفق'}
+          subtitle={stats.balance >= 0 ? t('analytics.surplus') : t('analytics.deficit')}
         />
         <StatCard
-          title="معدل المصاريف إلى المداخيل"
+          title={t('analytics.expenseToIncome')}
           value={`${stats.ratio.toFixed(1)}%`}
           icon={<Percent className="w-6 h-6" />}
           color={stats.ratio > 85 ? 'bg-red-500' : stats.ratio > 50 ? 'bg-amber-500' : 'bg-emerald-500'}
-          subtitle={stats.ratio > 85 ? 'معدل إنفاق حرج' : stats.ratio > 50 ? 'معدل إنفاق متوسط' : 'معدل إنفاق ممتاز'}
+          subtitle={stats.ratio > 85 ? t('analytics.criticalSpending') : stats.ratio > 50 ? t('analytics.averageSpending') : t('analytics.excellentSpending')}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card titleAr="التطور الشهري للمداخيل والمصاريف" className="lg:col-span-2">
+        <Card titleAr={t('analytics.monthlyEvolution')} className="lg:col-span-2">
           {monthlyProgression.length === 0 ? (
             <div className="h-64 flex flex-col items-center justify-center text-gray-400">
               <Calendar className="w-12 h-12 mb-2 stroke-1" />
@@ -397,13 +399,13 @@ export default function AnalyticsPage() {
                   </thead>
                   <tbody>
                     {(() => {
-                      const monthsAr = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+                      const MONTHS = ['analytics.january','analytics.february','analytics.march','analytics.april','analytics.may','analytics.june','analytics.july','analytics.august','analytics.september','analytics.october','analytics.november','analytics.december'];
                       const rawMax = Math.max(...monthlyProgression.map(m => Math.max(m.credits, m.debits)), 1);
                       const barMax = Math.max(rawMax * 1.15, 1);
 
                       return monthlyProgression.map((item, idx) => {
                         const [yr, mo] = item.month.split('-');
-                        const monthName = monthsAr[parseInt(mo) - 1];
+                        const monthName = t(MONTHS[parseInt(mo) - 1]);
                         const credPct = Math.max(0, Math.min(100, (item.credits / barMax) * 100));
                         const debPct = Math.max(0, Math.min(100, (item.debits / barMax) * 100));
                         const credBarW = Math.max(credPct, item.credits > 0 ? 3 : 0);
@@ -445,7 +447,7 @@ export default function AnalyticsPage() {
           )}
         </Card>
 
-        <Card titleAr="مقارنة مصادر التمويل">
+        <Card titleAr={t('analytics.fundingComparison')}>
           <div className="space-y-6">
             <div className="flex flex-col items-center">
               <div className="relative w-48 h-48">
@@ -524,7 +526,7 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      <Card titleAr="توزيع التدفق المالي حسب الصناديق">
+      <Card titleAr={t('analytics.flowDistribution')}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {caisseBreakdown.map((c) => {
             const sum = c.periodCredits + c.periodDebits;
@@ -560,7 +562,7 @@ export default function AnalyticsPage() {
         </div>
       </Card>
 
-      <Card titleAr="التحليلات الذكية والتوصيات الماليّة">
+      <Card titleAr={t('analytics.smartAnalytics')}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             {stats.ratio > 85 ? (
@@ -655,7 +657,7 @@ export default function AnalyticsPage() {
         </div>
       </Card>
 
-      <Card titleAr="تفاصيل العمليات وحسابات الأستاذ">
+      <Card titleAr={t('analytics.detailedLog')}>
         <div className="flex border-b border-gray-200 mb-6 no-print">
           <button
             onClick={() => setActiveTab('caisses')}

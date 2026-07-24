@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { formatCurrency, formatDate, numberToArabicWords, calculateAge } from '../utils/helpers';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
@@ -11,6 +12,7 @@ import { api, doctorsApi, financeApi } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 
 export default function MedicalPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { association } = useAuth();
   const { data: referrals = [] } = useMedicalReferrals();
@@ -153,7 +155,7 @@ export default function MedicalPage() {
     setEditAnalysisId(null); setEditAnalysisAr(''); setEditAnalysisFr('')
   }
   const handleDeleteAnalysis = async (id: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا التحليل؟')) return
+    if (!window.confirm(t('medical.confirmDeleteAnalysis'))) return
     await deleteAnalysisMutation.mutateAsync(id)
   }
   const handleAddHospital = async () => {
@@ -167,7 +169,7 @@ export default function MedicalPage() {
     setEditHospId(null); setEditHospAr(''); setEditHospFr('')
   }
   const handleDeleteHospital = async (id: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا المستشفى؟')) return
+    if (!window.confirm(t('medical.confirmDeleteHospital'))) return
     await deleteHospitalMutation.mutateAsync(id)
   }
 
