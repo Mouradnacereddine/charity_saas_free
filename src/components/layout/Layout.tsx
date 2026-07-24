@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -21,20 +22,27 @@ import {
   Settings,
   TrendingUp,
   ChevronRight,
+  Languages,
 } from 'lucide-react';
 import { authApi } from '../../lib/api';
 import { useUIStore } from '../../stores/uiStore';
 
+const LANGUAGES = [
+  { code: 'ar', label: 'العربية' },
+  { code: 'en', label: 'English' },
+  { code: 'fr', label: 'Français' },
+];
+
 const navItems = [
-  { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-  { id: 'analytics', label: 'التحليلات والتقارير', icon: TrendingUp },
-  { id: 'finance', label: 'المالية', icon: Wallet },
-  { id: 'caisses', label: 'الصناديق', icon: FolderOpen },
-  { id: 'beneficiaries', label: 'المستفيدون', icon: Users },
-  { id: 'donors', label: 'المتبرعون', icon: HeartHandshake },
-  { id: 'inventory', label: 'المخزون', icon: Package },
-  { id: 'medical', label: 'التوجيه الطبي', icon: Stethoscope },
-  { id: 'doctors', label: 'الأطباء', icon: Stethoscope },
+  { id: 'dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  { id: 'analytics', labelKey: 'nav.analytics', icon: TrendingUp },
+  { id: 'finance', labelKey: 'nav.finance', icon: Wallet },
+  { id: 'caisses', labelKey: 'nav.caisses', icon: FolderOpen },
+  { id: 'beneficiaries', labelKey: 'nav.beneficiaries', icon: Users },
+  { id: 'donors', labelKey: 'nav.donors', icon: HeartHandshake },
+  { id: 'inventory', labelKey: 'nav.inventory', icon: Package },
+  { id: 'medical', labelKey: 'nav.medical', icon: Stethoscope },
+  { id: 'doctors', labelKey: 'nav.doctors', icon: Stethoscope },
 ];
 
 export function Layout({
@@ -60,6 +68,7 @@ export function Layout({
   isAdmin?: boolean;
   onLogout?: () => void;
 }) {
+  const { t, i18n } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
 
@@ -81,11 +90,13 @@ export function Layout({
       setShowSettingsModal(false);
       window.location.reload();
     } catch (err: any) {
-      setNameError(err.response?.data?.error || 'فشل تحديث الاسم');
+      setNameError(err.response?.data?.error || t('settings.error'));
     } finally {
       setSavingName(false);
     }
   };
+
+  const roleLabel = userRole === 'admin' ? t('userMenu.systemAdmin') : userRole === 'treasurer' ? t('userMenu.treasurer') : t('userMenu.volunteer');
 
   return (
     <div className="flex h-dvh overflow-hidden">
@@ -116,15 +127,15 @@ export function Layout({
               <span className="text-lg shrink-0">🕌</span>
             )}
             <h1 className={`text-lg font-bold truncate transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
-              {associationNameAr || 'جمعية خيرية'}
+              {associationNameAr || t('app.title')}
             </h1>
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={toggleSidebar}
               className="hidden lg:flex p-1.5 rounded-lg text-primary-300 hover:text-white hover:bg-primary-800 transition-colors"
-              aria-label={sidebarCollapsed ? 'توسيع القائمة' : 'طي القائمة'}
-              title={sidebarCollapsed ? 'توسيع القائمة' : 'طي القائمة'}
+              aria-label={sidebarCollapsed ? t('nav.toggleExpand') : t('nav.toggleCollapse')}
+              title={sidebarCollapsed ? t('nav.toggleExpand') : t('nav.toggleCollapse')}
             >
               <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? '' : 'rotate-180'}`} />
             </button>
@@ -146,7 +157,7 @@ export function Layout({
                   onNavigate(item.id);
                   setSidebarOpen(false);
                 }}
-                title={sidebarCollapsed ? item.label : undefined}
+                title={sidebarCollapsed ? t(item.labelKey) : undefined}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''
                 } ${
@@ -157,7 +168,7 @@ export function Layout({
               >
                 <item.icon className="w-5 h-5 shrink-0" />
                 <span className={`truncate transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
-                  {item.label}
+                  {t(item.labelKey)}
                 </span>
               </button>
             ))}
@@ -167,12 +178,12 @@ export function Layout({
         <div className="border-t border-primary-700 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex w-full items-center justify-center gap-3 px-3 py-3 hover:bg-primary-800 transition-colors"
-                title={userNameAr || 'مستخدم'}>
+                title={userNameAr || t('userMenu.defaultName')}>
                 <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold text-sm shrink-0">
                   {userNameAr?.charAt(0) || '?'}
                 </div>
                 <span className={`truncate text-sm text-primary-200 transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
-                  {userNameAr || 'مستخدم'}
+                  {userNameAr || t('userMenu.defaultName')}
                 </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -183,28 +194,46 @@ export function Layout({
               dir="rtl"
             >
               <div className="p-3 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900">{userNameAr || 'مستخدم'}</p>
-                <p className="text-xs text-gray-500">
-                  {userRole === 'admin' ? 'مدير النظام' : userRole === 'treasurer' ? 'أمين المال' : 'متطوع'}
-                </p>
+                <p className="text-sm font-medium text-gray-900">{userNameAr || t('userMenu.defaultName')}</p>
+                <p className="text-xs text-gray-500">{roleLabel}</p>
               </div>
               <div className="p-1">
                 {isAdmin && (
                   <DropdownMenuItem onClick={() => { onNavigate('users'); }}>
                     <UserCog className="w-4 h-4" />
-                    إدارة المستخدمين
+                    {t('userMenu.userManagement')}
                   </DropdownMenuItem>
                 )}
                 {isAdmin && (
                   <DropdownMenuItem onClick={() => { setShowSettingsModal(true); }}>
                     <Settings className="w-4 h-4" />
-                    إعدادات الجمعية
+                    {t('userMenu.associationSettings')}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={() => { onLogout?.(); }}>
                   <LogOut className="w-4 h-4" />
-                  تسجيل الخروج
+                  {t('userMenu.logout')}
                 </DropdownMenuItem>
+                <div className="border-t border-gray-100 my-1" />
+                <div className="px-3 py-1.5">
+                  <p className="text-xs text-gray-400 mb-1 flex items-center gap-1.5">
+                    <Languages className="w-3.5 h-3.5" />
+                    {i18n.language === 'ar' ? 'اللغة' : i18n.language === 'fr' ? 'Langue' : 'Language'}
+                  </p>
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => i18n.changeLanguage(lang.code)}
+                      className={`w-full text-right px-2 py-1 text-sm rounded-lg transition-colors ${
+                        i18n.language === lang.code
+                          ? 'bg-primary-50 text-primary-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -219,7 +248,7 @@ export function Layout({
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
-              aria-label="فتح القائمة"
+              aria-label={t('nav.toggleOpen')}
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -241,10 +270,10 @@ export function Layout({
             )}
           </div>
           <div className="text-center flex-1">
-            <span className="text-sm text-green-800 font-arabic">بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</span>
+            <span className="text-sm text-green-800 font-arabic">{t('app.bismillah')}</span>
           </div>
           <div className="text-xs sm:text-sm text-gray-500">
-            {new Date().toLocaleDateString('ar-DZ', {
+            {new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-DZ' : i18n.language === 'fr' ? 'fr-DZ' : 'en-DZ', {
               weekday: 'short',
               year: 'numeric',
               month: 'short',
@@ -261,10 +290,10 @@ export function Layout({
       {showSettingsModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">إعدادات الجمعية</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('settings.title')}</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">اسم الجمعية بالعربية *</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('settings.nameAr')}</label>
                 <input
                   type="text"
                   value={settingsNameAr}
@@ -275,7 +304,7 @@ export function Layout({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">اسم الجمعية بالفرنسية</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('settings.nameLatin')}</label>
                 <input
                   type="text"
                   value={settingsName}
@@ -293,14 +322,14 @@ export function Layout({
                   onClick={() => setShowSettingsModal(false)}
                   className="flex-1 py-2.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                 >
-                  إلغاء
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleUpdateName}
                   disabled={savingName || !settingsNameAr.trim()}
                   className="flex-1 py-2.5 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {savingName ? 'جاري الحفظ...' : 'حفظ'}
+                  {savingName ? t('common.saving') : t('common.save')}
                 </button>
               </div>
             </div>

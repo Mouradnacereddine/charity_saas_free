@@ -250,7 +250,7 @@ export default function CaissesPage() {
             placeholder="مثال: صندوق الزكاة"
           />
           <Input
-            labelAr="اسم الصندوق بالفرنسية (اختياري)"
+            labelAr="اسم الصندوق باللاتينية (اختياري)"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Caisse Zakat"
@@ -280,7 +280,7 @@ export default function CaissesPage() {
             onChange={(e) => setNameAr(e.target.value)}
           />
           <Input
-            labelAr="اسم الصندوق بالفرنسية (اختياري)"
+            labelAr="اسم الصندوق باللاتينية (اختياري)"
             value={name}
             onChange={(e) => setName(e.target.value)}
             dir="ltr"
@@ -310,7 +310,7 @@ export default function CaissesPage() {
             placeholder="مثال: تحاليل طبية"
           />
           <Input
-            labelAr="اسم الفئة بالفرنسية (اختياري)"
+            labelAr="اسم الفئة باللاتينية (اختياري)"
             value={subName}
             onChange={(e) => setSubName(e.target.value)}
             placeholder="Ex: Analyses médicales"
@@ -340,7 +340,7 @@ export default function CaissesPage() {
             onChange={(e) => setSubNameAr(e.target.value)}
           />
           <Input
-            labelAr="اسم الفئة بالفرنسية (اختياري)"
+            labelAr="اسم الفئة باللاتينية (اختياري)"
             value={subName}
             onChange={(e) => setSubName(e.target.value)}
             dir="ltr"

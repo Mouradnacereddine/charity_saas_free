@@ -422,7 +422,7 @@ export default function DoctorsPage() {
         <p className="text-sm text-gray-500 mb-4">إدارة تخصصات الأطباء</p>
         <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
           <Input labelAr="الاسم بالعربية" value={newSpecAr} onChange={(e) => setNewSpecAr(e.target.value)} placeholder="مثال: طب عام" />
-          <Input labelAr="الاسم بالفرنسية" value={newSpecFr} onChange={(e) => setNewSpecFr(e.target.value)} placeholder="Ex: Généraliste" dir="ltr" />
+          <Input labelAr="الاسم باللاتينية" value={newSpecFr} onChange={(e) => setNewSpecFr(e.target.value)} placeholder="Ex: Généraliste" dir="ltr" />
           <Button onClick={handleAddSpecialty} disabled={!newSpecAr.trim()}>إضافة</Button>
         </div>
         <Card>
@@ -431,7 +431,7 @@ export default function DoctorsPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">الأطباء</th>
                   <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>

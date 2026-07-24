@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'ghost';
@@ -82,7 +83,8 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
 }
 
-export function Select({ label, labelAr, options, error, className = '', ...props }: SelectProps) {
+export function Select({ label, labelAr, options, error, className = '', placeholder: placeholderProp, ...props }: SelectProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-1">
       {(label || labelAr) && (
@@ -94,7 +96,7 @@ export function Select({ label, labelAr, options, error, className = '', ...prop
         } ${className}`}
         {...props}
       >
-        <option value="">اختر...</option>
+        <option value="">{placeholderProp || t('common.select')}</option>
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
@@ -123,10 +125,11 @@ export function SearchableSelect({
   options,
   value,
   onChange,
-  placeholder = 'اختر...',
+  placeholder,
   error,
   required,
 }: SearchableSelectProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -165,7 +168,7 @@ export function SearchableSelect({
         }`}
       >
         <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
-          {selectedOption ? selectedOption.label : placeholder}
+          {selectedOption ? selectedOption.label : placeholder || t('common.select')}
         </span>
         <span className="text-gray-500 text-xs">▼</span>
       </button>
@@ -177,7 +180,7 @@ export function SearchableSelect({
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="بحث..."
+              placeholder={t('common.search')}
               className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
               autoFocus
             />
@@ -191,10 +194,10 @@ export function SearchableSelect({
               }}
               className="w-full text-right px-3 py-2 text-xs text-gray-400 hover:bg-gray-50 border-b border-gray-50"
             >
-              مسح الاختيار
+              {t('common.clear')}
             </button>
             {filteredOptions.length === 0 ? (
-              <p className="p-3 text-xs text-gray-400 text-center">لا توجد نتائج</p>
+              <p className="p-3 text-xs text-gray-400 text-center">{t('common.noResults')}</p>
             ) : (
               filteredOptions.map((opt) => (
                 <button

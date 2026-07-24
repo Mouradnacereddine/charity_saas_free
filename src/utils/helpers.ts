@@ -1,4 +1,5 @@
 import { differenceInYears, differenceInMonths } from 'date-fns';
+import i18n from '../i18n';
 
 /**
  * Calculate age from date of birth
@@ -155,8 +156,15 @@ export function numberToFrenchWords(amount: number): string {
 /**
  * Format currency
  */
+function getLocale(): string {
+  const lang = i18n.language;
+  if (lang === 'ar') return 'ar-DZ';
+  if (lang === 'fr') return 'fr-DZ';
+  return 'en-DZ';
+}
+
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('ar-DZ', {
+  return new Intl.NumberFormat(getLocale(), {
     style: 'currency',
     currency: 'DZD',
     maximumFractionDigits: 2,
@@ -168,7 +176,7 @@ export function formatCurrency(amount: number): string {
  */
 export function formatDate(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('ar-DZ', {
+  return new Intl.DateTimeFormat(getLocale(), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

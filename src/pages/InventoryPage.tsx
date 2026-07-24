@@ -374,7 +374,7 @@ function SettingsTab() {
           </div>
           <div className="flex-1">
             <Input
-              labelAr="الاسم بالفرنسية"
+              labelAr="الاسم باللاتينية"
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
               placeholder="مثال: Medical"
@@ -397,7 +397,7 @@ function SettingsTab() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالعربية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالفرنسية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم باللاتينية</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>
               </thead>
@@ -480,7 +480,7 @@ function SettingsTab() {
           </div>
           <div className="flex-1">
             <Input
-              labelAr="الاسم بالفرنسية"
+              labelAr="الاسم باللاتينية"
               value={newLocName}
               onChange={(e) => setNewLocName(e.target.value)}
               placeholder="مثال: Dépôt A - Rayon 1"
@@ -503,7 +503,7 @@ function SettingsTab() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالعربية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالفرنسية</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم باللاتينية</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                 </tr>
               </thead>
@@ -964,9 +964,9 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
               <div><p className="text-xs text-gray-500">الاسم بالعربية</p><p className="font-medium">{form.nameAr}</p></div>
-              <div><p className="text-xs text-gray-500">الاسم بالفرنسية</p><p className="font-medium">{form.name}</p></div>
+              <div><p className="text-xs text-gray-500">الاسم باللاتينية</p><p className="font-medium">{form.name}</p></div>
               {form.descriptionAr && <div><p className="text-xs text-gray-500">الوصف بالعربية</p><p className="font-medium">{form.descriptionAr}</p></div>}
-              {form.description && <div><p className="text-xs text-gray-500">الوصف بالفرنسية</p><p className="font-medium">{form.description}</p></div>}
+              {form.description && <div><p className="text-xs text-gray-500">الوصف باللاتينية</p><p className="font-medium">{form.description}</p></div>}
               <div><p className="text-xs text-gray-500">الفئة</p><p className="font-medium">{categories.find((c) => c.id === form.category)?.nameAr || '—'}</p></div>
               <div><p className="text-xs text-gray-500">الكمية</p><p className="font-medium">{form.quantity}</p></div>
               <div><SearchableSelect labelAr="مكان التخزين" value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required /></div>
@@ -984,7 +984,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input labelAr="الاسم بالعربية" value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} required />
-              <Input labelAr="الاسم بالفرنسية" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <Input labelAr="الاسم باللاتينية" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
               <SearchableSelect labelAr="الفئة" value={form.category} onChange={(val) => setForm({ ...form, category: val })} options={categoryOptions} required />
               <SearchableSelect labelAr="مكان التخزين" value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required />
               <Input labelAr="الكمية" type="number" min={0} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} required />

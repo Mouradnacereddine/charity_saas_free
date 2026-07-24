@@ -734,7 +734,7 @@ export default function MedicalPage() {
           <p className="text-sm text-gray-500 mb-4">إدارة أنواع التحاليل والفحوصات الطبية</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
             <Input labelAr="الاسم بالعربية" value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder="مثال: تحليل دم" />
-            <Input labelAr="الاسم بالفرنسية" value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder="Ex: Analyse" dir="ltr" />
+            <Input labelAr="الاسم باللاتينية" value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder="Ex: Analyse" dir="ltr" />
             <Button onClick={handleAddAnalysis} disabled={!newAnalysisAr.trim()}>إضافة</Button>
           </div>
           <Card>
@@ -743,7 +743,7 @@ export default function MedicalPage() {
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
                     <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                   </tr>
                 </thead>
@@ -784,7 +784,7 @@ export default function MedicalPage() {
           <p className="text-sm text-gray-500 mb-4">إدارة المستشفيات والعيادات</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
             <Input labelAr="الاسم بالعربية" value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder="مثال: مستشفى مصطفى باشا" />
-            <Input labelAr="الاسم بالفرنسية" value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder="Ex: CHU" dir="ltr" />
+            <Input labelAr="الاسم باللاتينية" value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder="Ex: CHU" dir="ltr" />
             <Button onClick={handleAddHospital} disabled={!newHospAr.trim()}>إضافة</Button>
           </div>
           <Card>
@@ -793,7 +793,7 @@ export default function MedicalPage() {
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
                     <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                   </tr>
                 </thead>

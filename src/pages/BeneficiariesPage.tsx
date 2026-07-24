@@ -1453,7 +1453,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
             <p className="text-sm text-gray-500 mb-4">إضافة وتعديل وحذف الصفات (الخصائص) للمستفيدين</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
               <Input labelAr="الاسم بالعربية" value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder="مثال: يتيم" />
-              <Input labelAr="الاسم بالفرنسية" value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder="Ex: orphelin" dir="ltr" />
+              <Input labelAr="الاسم باللاتينية" value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder="Ex: orphelin" dir="ltr" />
               <Button onClick={handleAddAttribut} disabled={!newAttrNameAr.trim()}>إضافة</Button>
             </div>
             <Card>
@@ -1462,7 +1462,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
                       <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                     </tr>
                   </thead>
@@ -1505,7 +1505,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
             <p className="text-sm text-gray-500 mb-4">إدارة المستويات الدراسية للأطفال</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
               <Input labelAr="الاسم بالعربية" value={newGradeNameAr} onChange={(e) => setNewGradeNameAr(e.target.value)} placeholder="مثال: السنة الأولى" />
-              <Input labelAr="الاسم بالفرنسية" value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder="Ex: CP1" dir="ltr" />
+              <Input labelAr="الاسم باللاتينية" value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder="Ex: CP1" dir="ltr" />
               <Button onClick={handleAddGrade} disabled={!newGradeNameAr.trim()}>إضافة</Button>
             </div>
             <Card>
@@ -1514,7 +1514,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">بالفرنسية</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
                       <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
                     </tr>
                   </thead>

@@ -186,7 +186,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">الاسم بالفرنسية</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">الاسم باللاتينية</label>
                 <input
                   type="text"
                   value={assocName}

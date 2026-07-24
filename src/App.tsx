@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/layout/Layout';
 import { useAuth } from './hooks/useAuth';
@@ -27,18 +28,18 @@ const queryClient = new QueryClient({
 });
 
 const PAGE_NAMES: Record<string, string> = {
-  login: 'تسجيل الدخول',
-  register: 'إنشاء حساب',
-  dashboard: 'لوحة التحكم',
-  finance: 'المالية',
-  caisses: 'الصناديق',
-  beneficiaries: 'المستفيدون',
-  donors: 'المتبرعون',
-  inventory: 'المخزون والإعارات',
-  medical: 'التوجيه الطبي',
-  doctors: 'الأطباء',
-  users: 'إدارة المستخدمين',
-  analytics: 'التحليلات والتقارير',
+  login: 'nav.login',
+  register: 'nav.register',
+  dashboard: 'nav.dashboard',
+  finance: 'nav.finance',
+  caisses: 'nav.caisses',
+  beneficiaries: 'nav.beneficiaries',
+  donors: 'nav.donors',
+  inventory: 'nav.inventory',
+  medical: 'nav.medical',
+  doctors: 'nav.doctors',
+  users: 'nav.users',
+  analytics: 'nav.analytics',
 };
 
 function AppContent() {
@@ -49,6 +50,13 @@ function AppContent() {
     return pageName && PAGE_NAMES[pageName] ? pageName : (localStorage.getItem('accessToken') ? 'dashboard' : 'login');
   });
   const { user, association, isAuthenticated, isAdmin, isTreasurer, isLoading, logout } = useAuth();
+  const { t, i18n } = useTranslation();
+
+  // Set html dir/lang based on selected language
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
 
   // Real-time sync across browser tabs and other users
   useSocketSync();
@@ -89,7 +97,7 @@ function AppContent() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">جاري تحميل النظام...</p>
+          <p className="text-gray-500 text-sm">{t('app.loading')}</p>
         </div>
       </div>
     );
@@ -102,8 +110,8 @@ function AppContent() {
   if (!isAuthenticated) return null;
 
   const breadcrumbs = [
-    { label: 'الرئيسية', page: 'dashboard' },
-    { label: PAGE_NAMES[activePage] || 'لوحة التحكم', page: activePage },
+    { label: t('app.home'), page: 'dashboard' },
+    { label: t(PAGE_NAMES[activePage] || 'nav.dashboard'), page: activePage },
   ];
 
   const renderPage = () => {

@@ -24,9 +24,8 @@
   --color-danger-600: #dc2626;
 }
 
-/* Arabic RTL base */
+/* RTL/LTR direction — controlled by dir attribute on <html> */
 html {
-  direction: rtl;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
