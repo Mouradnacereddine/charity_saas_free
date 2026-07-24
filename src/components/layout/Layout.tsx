@@ -88,7 +88,7 @@ export function Layout({
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-dvh overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -100,7 +100,7 @@ export function Layout({
       {/* Sidebar — always full viewport height */}
       <aside
         className={`
-          fixed top-0 right-0 z-50 h-screen bg-primary-900 text-white
+          fixed top-0 right-0 z-50 h-dvh bg-primary-900 text-white
           transform transition-all duration-200 ease-in-out
           w-64 flex flex-col
           lg:translate-x-0 lg:sticky lg:z-auto
@@ -166,18 +166,14 @@ export function Layout({
         {/* User section — avatar as dropdown trigger */}
         <div className="border-t border-primary-700 shrink-0">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="w-full flex items-center justify-center lg:justify-center gap-3 px-3 py-3 hover:bg-primary-800 transition-colors"
-                title={userNameAr || 'مستخدم'}
-              >
+            <DropdownMenuTrigger className="flex w-full items-center justify-center gap-3 px-3 py-3 hover:bg-primary-800 transition-colors"
+                title={userNameAr || 'مستخدم'}>
                 <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold text-sm shrink-0">
                   {userNameAr?.charAt(0) || '?'}
                 </div>
                 <span className={`truncate text-sm text-primary-200 transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
                   {userNameAr || 'مستخدم'}
                 </span>
-              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               side="top"
