@@ -504,7 +504,7 @@ export default function AnalyticsPage() {
               <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
-                    <span className="w-3 h-3 bg-primary-500 rounded-full" /> ال{t('dashboard.bank')} (Banque)
+                    <span className="w-3 h-3 bg-primary-500 rounded-full" /> {t('dashboard.bank')} (Banque)
                   </span>
                   <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance', 'رصيد الفترة الصافي')}</span>
                 </div>
@@ -520,7 +520,7 @@ export default function AnalyticsPage() {
               <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
-                    <span className="w-3 h-3 bg-amber-400 rounded-full" /> الصندوق ال{t('dashboard.cash')} (Cash)
+                    <span className="w-3 h-3 bg-amber-400 rounded-full" /> الصندوق {t('dashboard.cash')} (Cash)
                   </span>
                   <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance', 'رصيد الفترة الصافي')}</span>
                 </div>
@@ -859,8 +859,8 @@ export default function AnalyticsPage() {
                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right font-medium"
               >
                 <option value="">كل مصادر التمويل</option>
-                <option value="banque">ال{t('dashboard.bank')}</option>
-                <option value="caisse_physique">الصندوق ال{t('dashboard.cash')}</option>
+                <option value="banque">{t('dashboard.bank')}</option>
+                <option value="caisse_physique">الصندوق {t('dashboard.cash')}</option>
               </select>
             </div>
 
