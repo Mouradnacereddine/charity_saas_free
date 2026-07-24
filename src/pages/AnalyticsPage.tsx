@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { Card, StatCard, LoadingSpinner, Badge, Button } from '../components/common/UI';
 import { useTransactions } from '../hooks/useFinance';
 import { useDonors } from '../hooks/useDonors';
@@ -23,7 +24,10 @@ import {
 import type { Transaction, Caisse } from '../types';
 
 export default function AnalyticsPage() {
-  const { t, i18n } = useTranslation();
+  const { t: _t, i18n } = useTranslation();
+  const t = (...args: Parameters<typeof _t>) => {
+    try { return _t(...args); } catch { return i18n.t(...args); }
+  };
   const [quickFilter, setQuickFilter] = useState<'this_month' | 'last_3_months' | 'this_year' | 'custom'>('this_month');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
