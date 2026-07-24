@@ -2,6 +2,17 @@ import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+import i18n from '../i18n';
+import arCommon from '../i18n/locales/ar/common.json';
+
+// Initialize i18n for tests with actual Arabic translations
+i18n.init({
+  lng: 'ar',
+  fallbackLng: 'ar',
+  resources: {
+    ar: { common: arCommon },
+  },
+});
 
 // Cleanup after each test
 afterEach(() => {

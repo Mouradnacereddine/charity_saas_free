@@ -159,7 +159,7 @@ describe('inventoryStore', () => {
       ]);
 
       const loan = await db.loans.get(loanId);
-      expect(loan!.status).toBe('retourne');
+      expect(loan!.status).toBe('definitif');
       expect(loan!.actualReturnDate).toBeDefined();
 
       const article = await db.articles.get('art-ret');
