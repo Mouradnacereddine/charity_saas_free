@@ -249,7 +249,7 @@ export default function CaissesPage() {
             labelAr={t('caisses.nameAr')}
             value={nameAr}
             onChange={(e) => setNameAr(e.target.value)}
-            placeholder="مثال: صندوق الزكاة"
+            placeholder={t('caisses.nameArPlaceholder', 'مثال: صندوق الزكاة')}
           />
           <Input
             labelAr={t('caisses.nameLatin')}
@@ -309,7 +309,7 @@ export default function CaissesPage() {
             labelAr={t('caisses.categoryNameAr')}
             value={subNameAr}
             onChange={(e) => setSubNameAr(e.target.value)}
-            placeholder="مثال: تحاليل طبية"
+            placeholder={t('caisses.categoryNameArPlaceholder', 'مثال: تحاليل طبية')}
           />
           <Input
             labelAr={t('caisses.categoryNameLatin')}

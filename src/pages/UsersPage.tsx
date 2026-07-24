@@ -125,7 +125,7 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
             <p className="text-sm text-gray-600">{t('users.inviteUserDescription')}</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr={t('users.nameAr')} value={nameAr} onChange={(e) => setNameAr(e.target.value)} placeholder="مثال: أحمد" required />
+              <Input labelAr={t('users.nameAr')} value={nameAr} onChange={(e) => setNameAr(e.target.value)} placeholder={t('users.nameArPlaceholder', 'Ex: Ahmed')} required />
               <Input labelAr={t('users.nameLatin')} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Ahmed" dir="ltr" />
             </div>
 

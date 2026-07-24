@@ -178,7 +178,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
                   type="text"
                   value={assocNameAr}
                   onChange={(e) => setAssocNameAr(e.target.value)}
-                  placeholder="مثال: جمعية البركة الخيرية"
+                  placeholder={t('auth.nameArPlaceholder', 'Ex: Charity Association')}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-right"
                   dir="rtl"
                 />

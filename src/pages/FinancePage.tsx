@@ -385,7 +385,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       setTxSubCategoryId('')
       setTxPending(false)
     } catch (err: any) {
-      setTxError(err?.response?.data?.error || err?.message || t('finance.addFailed', 'فشل في إضافة المعاملة'))
+      setTxError(err?.response?.data?.error || err?.message || t('finance.addFailed'))
     } finally {
       setTxSubmitting(false)
     }
@@ -428,7 +428,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       setConfirmTxAmount('')
       setDetailTx(null)
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('finance.confirmFailed', 'فشل في تأكيد المعاملة'))
+      alert(err?.response?.data?.error || err?.message || t('finance.confirmFailed'))
     }
   }
 
@@ -438,7 +438,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       setCancellingTxId(null)
       setDetailTx(null)
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('finance.cancelFailed', 'فشل في إلغاء المعاملة'))
+      alert(err?.response?.data?.error || err?.message || t('finance.cancelFailed'))
     }
   }
 
@@ -455,7 +455,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       queryClient.invalidateQueries({ queryKey: ['caisses'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('finance.disburseFailed', 'فشل في صرف المبلغ'))
+      alert(err?.response?.data?.error || err?.message || t('finance.disburseFailed'))
     }
   }
 
@@ -502,7 +502,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
         }
       >
         {bankAccounts.length === 0 ? (
-          <EmptyState message={t('finance.noBankAccounts', 'لا توجد حسابات بنكية مسجّلة')} icon={<Building2 size={48} />} />
+          <EmptyState message={t('finance.noBankAccounts')} icon={<Building2 size={48} />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -569,14 +569,14 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
               <SearchableSelect labelAr={t('dashboard.fund')} value={allocCaisseId} onChange={setAllocCaisseId} options={caisses.map((c: any) => ({ value: c.id, label: c.nameAr }))} />
               <Input labelAr={t('medical.amountFrom')} value={allocMinAmount} onChange={(e) => setAllocMinAmount(e.target.value)} type="number" placeholder="0" />
               <Input labelAr={t('medical.amountTo')} value={allocMaxAmount} onChange={(e) => setAllocMaxAmount(e.target.value)} type="number" placeholder="0" />
-              <SearchableSelect labelAr={t('finance.remainingAmount', 'المبلغ المتبقي')} value={allocRemaining} onChange={setAllocRemaining} options={[
+              <SearchableSelect labelAr={t('finance.remainingAmount')} value={allocRemaining} onChange={setAllocRemaining} options={[
                 { value: '', label: t('common.all') },
                 { value: 'zero', label: t('dashboard.fullyDisbursed') },
                 { value: 'positive', label: t('finance.remaining', 'متبqi') },
-                { value: 'distributed', label: t('finance.disbursed', 'تم الصرف') },
-                { value: 'not_distributed', label: t('finance.notDisbursed', 'لم يصرف بعد') },
+                { value: 'distributed', label: t('finance.disbursed') },
+                { value: 'not_distributed', label: t('finance.notDisbursed') },
               ]} />
-              <SearchableSelect labelAr={t('finance.originalDonationStatus', 'حالة التبرع الأصلي')} value={allocStatus} onChange={setAllocStatus} options={[
+              <SearchableSelect labelAr={t('finance.originalDonationStatus')} value={allocStatus} onChange={setAllocStatus} options={[
                 { value: '', label: t('common.all') },
                 { value: 'pending', label: t('dashboard.pending') },
                 { value: 'completed', label: t('dashboard.completed') },
@@ -602,7 +602,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('dashboard.beneficiary')}</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden md:table-cell">{t('dashboard.fund')}</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('common.amount')}</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('finance.remainingAmount', 'المتبقي')}</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('finance.remainingAmount')}</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('common.status')}</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('common.date')}</th>
                 </tr>
@@ -637,7 +637,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       </Card>
 
       {/* Allocation Detail Modal */}
-      <Modal isOpen={!!selectedAlloc} onClose={() => setSelectedAlloc(null)} title={t('finance.allocationDetails', 'تفاصيل التوزيع')} size="md">
+      <Modal isOpen={!!selectedAlloc} onClose={() => setSelectedAlloc(null)} title={t('finance.allocationDetails')} size="md">
         {selectedAlloc && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -645,11 +645,11 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('dashboard.beneficiary')}</span><span className="font-medium text-gray-900">{selectedAlloc.beneficiary.lastNameAr} {selectedAlloc.beneficiary.firstNameAr}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('dashboard.fund')}</span><span className="font-medium text-gray-900">{(() => { const ac = caisses.find((c: any) => c.id === selectedAlloc.creditTransaction?.caisseId); return ac?.nameAr || '—'; })()}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('common.amount')}</span><span className="font-bold text-green-600">{formatCurrency(selectedAlloc.amount)}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.remainingAmount', 'المبلغ المتبقي')}</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : t('dashboard.fullyDisbursed')}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.remainingAmount')}</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : t('dashboard.fullyDisbursed')}</span></div>
               {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('common.notes')}</span><span className="font-medium text-gray-900">{selectedAlloc.notes}</span></div>}
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.originalDonationStatus', 'حالة التبرع الأصلي')}</span><span className="font-medium">{selectedAlloc.creditTransaction?.status === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> : selectedAlloc.creditTransaction?.status === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> : <Badge variant="success">{t('dashboard.completed')}</Badge>}</span></div>
-              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount > 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.disbursed', 'تم الصرف')}</span><span className="font-medium text-amber-600">{t('dashboard.partiallyDisbursed')}</span></div>}
-              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount <= 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.disbursed', 'تم الصرف')}</span><span className="font-medium text-green-600">{t('dashboard.fullyDisbursed')}</span></div>}
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.originalDonationStatus')}</span><span className="font-medium">{selectedAlloc.creditTransaction?.status === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> : selectedAlloc.creditTransaction?.status === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> : <Badge variant="success">{t('dashboard.completed')}</Badge>}</span></div>
+              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount > 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.disbursed')}</span><span className="font-medium text-amber-600">{t('dashboard.partiallyDisbursed')}</span></div>}
+              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount <= 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.disbursed')}</span><span className="font-medium text-green-600">{t('dashboard.fullyDisbursed')}</span></div>}
             </div>
             <div className="flex justify-end">
               <Button size="sm" variant="secondary" onClick={() => setSelectedAlloc(null)}>{t('common.close')}</Button>
@@ -838,7 +838,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
             value={txDescription}
             onChange={(e) => setTxDescription(e.target.value)}
             dir="rtl"
-            placeholder={t('finance.txDescriptionPlaceholder', 'وصف المعاملة...')}
+            placeholder={t('finance.txDescriptionPlaceholder')}
           />
 
           {txError && (
@@ -859,7 +859,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
               <span className="text-sm text-gray-600">{t('finance.pendingTx', 'معاملة معلقة')}</span>
             </label>
             <Button type="submit" disabled={txSubmitting || amountNum <= 0 || !txCaisseId}>
-              {txSubmitting ? t('common.saving') : t('finance.saveTransaction', 'حفظ المعاملة')}
+              {txSubmitting ? t('common.saving') : t('finance.saveTransaction')}
             </Button>
           </div>
         </form>
@@ -892,7 +892,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 type="text"
                 value={filterSearchTerm}
                 onChange={(e) => setFilterSearchTerm(e.target.value)}
-                placeholder={t('finance.searchPlaceholder', 'بحث في الوصف أو رقم الوصل...')}
+                placeholder={t('finance.searchPlaceholder')}
                 className="w-full pr-10 pl-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 dir="rtl"
               />
@@ -998,7 +998,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                     <th className="text-right py-3 px-3 font-medium text-gray-500">{t('common.status')}</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.source')}</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">{t('common.amount')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('finance.remainingAmount', 'المتبقي')}</th>
+                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('finance.remainingAmount')}</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.donor')}</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.beneficiary')}</th>
                     <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">{t('dashboard.fund')}</th>
@@ -1176,7 +1176,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       />
 
       {/* Bank Account Detail Modal */}
-      <Modal isOpen={!!detailBankAccount} onClose={() => setDetailBankAccount(null)} title={t('finance.bankAccountDetails', 'تفاصيل الحساب البنكي')} size="md">
+      <Modal isOpen={!!detailBankAccount} onClose={() => setDetailBankAccount(null)} title={t('finance.bankAccountDetails')} size="md">
         {detailBankAccount && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 bg-gray-50 rounded-lg p-4">
@@ -1217,7 +1217,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                     return (
                       <>
                         <div><p className="text-xs text-gray-500">{t('finance.disbursed', 'المبلغ المصرف')}</p><p className="font-medium text-amber-600">{formatCurrency(consumed)}</p></div>
-                        <div><p className="text-xs text-gray-500">{t('finance.remainingAmount', 'المبلغ المتبقي')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
+                        <div><p className="text-xs text-gray-500">{t('finance.remainingAmount')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
                       </>
                     );
                   }
@@ -1268,7 +1268,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                       setConfirmingTxId(detailTx.id);
                       setConfirmTxAmount(defaultAmt);
                     }}>
-                      {t('finance.confirmTx', 'تأكيد المعاملة')}
+                      {t('finance.confirmTx')}
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => handleCancelTransaction(detailTx.id)}>
                       {t('finance.cancelTx', 'إلغاء المعاملة')}
@@ -1287,7 +1287,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                           setConfirmingTxId(detailTx.id);
                           setConfirmTxAmount(String(rem));
                         }}>
-                          {t('finance.disburseRemaining', 'صرف المبلغ المتبقي')} ({formatCurrency(rem)})
+                          {t('finance.disburseRemaining')} ({formatCurrency(rem)})
                         </Button>
                       );
                     }
@@ -1304,7 +1304,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       </Modal>
 
       {/* Confirm Transaction Modal */}
-      <Modal isOpen={!!confirmingTxId} onClose={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }} title={t('finance.confirmTx', 'تأكيد المعاملة')} size="sm">
+      <Modal isOpen={!!confirmingTxId} onClose={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }} title={t('finance.confirmTx')} size="sm">
         {confirmingTxId && detailTx && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
@@ -1315,7 +1315,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 const rem = (detailTx as any).remainingAmount;
                 if (rem !== null && typeof rem === 'number' && rem > 0 && detailTx.type === 'credit') {
                   return (
-                    <div className="flex justify-between"><span className="text-gray-500">{t('finance.remainingAmount', 'المبلغ المتبقي')}</span><span className="font-bold text-amber-600">{formatCurrency(rem)}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">{t('finance.remainingAmount')}</span><span className="font-bold text-amber-600">{formatCurrency(rem)}</span></div>
                   );
                 }
                 return null;
@@ -1367,7 +1367,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       </Modal>
 
       {/* Disburse Allocation Modal */}
-      <Modal isOpen={!!disbursingAllocId} onClose={() => { setDisbursingAllocId(null); setDisburseAmount(''); }} title={t('finance.disburseRemaining', 'صرف المبلغ المتبقي')} size="sm">
+      <Modal isOpen={!!disbursingAllocId} onClose={() => { setDisbursingAllocId(null); setDisburseAmount(''); }} title={t('finance.disburseRemaining')} size="sm">
         {disbursingAllocId && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">

@@ -557,7 +557,7 @@ export default function AnalyticsPage() {
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                     c.actualBalance >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    رصيد فعلي: {formatCurrency(c.actualBalance)}
+                    {t('analytics.actualBalance', 'رصيد فعلي')}: {formatCurrency(c.actualBalance)}
                   </span>
                 </div>
                 <div className="space-y-1">
@@ -665,8 +665,8 @@ export default function AnalyticsPage() {
                 <h4 className="font-bold">{t('analytics.velocity', 'مؤشر سرعة تدفق المعاملات')}</h4>
                 <p className="mt-1 text-xs text-purple-700 leading-relaxed">
                   تم تسجيل <span className="font-bold">{velocity.total}</span> عملية مالية خلال{' '}
-                  <span className="font-bold">{velocity.days} يوماً</span>، بمعدل{' '}
-                  <span className="font-bold">{velocity.avgPerDay} عملية/يوم</span>. حركة التدفق المالي نشطة وتتطلب مطابقة مستمرة للأوصال والتأكيد على المعاملات المعلقة.
+                  <span className="font-bold">{velocity.days} {t('analytics.days', 'يوماً')}</span>، بمعدل{' '}
+                  <span className="font-bold">{velocity.avgPerDay} {t('analytics.operationsPerDay', 'عملية/يوم')}</span>. حركة التدفق المالي نشطة وتتطلب مطابقة مستمرة للأوصال والتأكيد على المعاملات المعلقة.
                 </p>
               </div>
             </div>
@@ -718,10 +718,10 @@ export default function AnalyticsPage() {
                     <span className="text-xs text-gray-400">({group.caisse?.reference || '—'})</span>
                   </div>
                   <div className="flex gap-4 text-xs font-semibold">
-                    <span className="text-emerald-600">إجمالي المداخيل: +{formatCurrency(group.credits)}</span>
-                    <span className="text-red-600">إجمالي المصاريف: -{formatCurrency(group.debits)}</span>
+                    <span className="text-emerald-600">{t('analytics.totalIncome')}: +{formatCurrency(group.credits)}</span>
+                    <span className="text-red-600">{t('analytics.totalExpenses')}: -{formatCurrency(group.debits)}</span>
                     <span className={group.credits - group.debits >= 0 ? 'text-emerald-700' : 'text-red-700'}>
-                      الصافي: {formatCurrency(group.credits - group.debits)}
+                      {t('analytics.netFinancial')}: {formatCurrency(group.credits - group.debits)}
                     </span>
                   </div>
                 </div>
@@ -729,13 +729,13 @@ export default function AnalyticsPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-gray-200 bg-gray-50/50 text-right">
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">التاريخ</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">النوع</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">التصنيف الفرعي</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">البيان/الوصف</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">رقم الوصل</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">المصدر</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">المبلغ</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logDate')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logType')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logSubcategory')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logDescription')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logReceiptNo')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logSource')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logAmount')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -744,7 +744,7 @@ export default function AnalyticsPage() {
                           <td className="py-2 px-4 text-gray-500">{formatDate(tx.date)}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.type === 'credit' ? 'success' : 'danger'}>
-                              {tx.type === 'credit' ? 'إيداع' : 'سحب'}
+                              {tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}
                             </Badge>
                           </td>
                           <td className="py-2 px-4 text-gray-600">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
@@ -774,14 +774,14 @@ export default function AnalyticsPage() {
               <div key={idx} className="border border-gray-100 rounded-lg overflow-hidden bg-white">
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <span className="text-gray-800 font-bold text-sm">التصنيف الفرعي: {group.subNameAr}</span>
+                    <span className="text-gray-800 font-bold text-sm">{t('analytics.logSubcategory')}: {group.subNameAr}</span>
                     <span className="text-xs text-gray-400 mr-2">({group.caisseNameAr})</span>
                   </div>
                   <div className="flex gap-4 text-xs font-semibold">
-                    <span className="text-emerald-600">إجمالي المداخيل: +{formatCurrency(group.credits)}</span>
-                    <span className="text-red-600">إجمالي المصاريف: -{formatCurrency(group.debits)}</span>
+                    <span className="text-emerald-600">{t('analytics.totalIncome')}: +{formatCurrency(group.credits)}</span>
+                    <span className="text-red-600">{t('analytics.totalExpenses')}: -{formatCurrency(group.debits)}</span>
                     <span className={group.credits - group.debits >= 0 ? 'text-emerald-700' : 'text-red-700'}>
-                      الصافي: {formatCurrency(group.credits - group.debits)}
+                      {t('analytics.netFinancial')}: {formatCurrency(group.credits - group.debits)}
                     </span>
                   </div>
                 </div>
@@ -789,12 +789,12 @@ export default function AnalyticsPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-gray-200 bg-gray-50/50 text-right">
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">التاريخ</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">النوع</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">البيان/الوصف</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">رقم الوصل</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">المصدر</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">المبلغ</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logDate')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logType')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logDescription')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logReceiptNo')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logSource')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logAmount')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -803,7 +803,7 @@ export default function AnalyticsPage() {
                           <td className="py-2 px-4 text-gray-500">{formatDate(tx.date)}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.type === 'credit' ? 'success' : 'danger'}>
-                              {tx.type === 'credit' ? 'إيداع' : 'سحب'}
+                              {tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}
                             </Badge>
                           </td>
                           <td className="py-2 px-4 text-gray-700 font-medium">{tx.descriptionAr}</td>
@@ -832,7 +832,7 @@ export default function AnalyticsPage() {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="بحث في البيان أو رقم الوصل..."
+                  placeholder={t('analytics.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pr-8 pl-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right"
@@ -845,7 +845,7 @@ export default function AnalyticsPage() {
                 onChange={(e) => setLogCaisseFilter(e.target.value)}
                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right font-medium"
               >
-                <option value="">كل الصناديق</option>
+                <option value="">{t('analytics.filterAllFunds')}</option>
                 {caisses.map((c) => (
                   <option key={c.id} value={c.id}>{c.nameAr}</option>
                 ))}
@@ -855,9 +855,9 @@ export default function AnalyticsPage() {
                 onChange={(e) => setLogTypeFilter(e.target.value)}
                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right font-medium"
               >
-                <option value="">كل أنواع العمليات</option>
-                <option value="credit">الإيداعات فقط</option>
-                <option value="debit">السحوبات فقط</option>
+                <option value="">{t('analytics.filterAllOperations')}</option>
+                <option value="credit">{t('analytics.filterCreditOnly')}</option>
+                <option value="debit">{t('analytics.filterDebitOnly')}</option>
               </select>
               <select
                 value={logSourceFilter}
@@ -877,16 +877,16 @@ export default function AnalyticsPage() {
               return (
                 <div className="flex flex-wrap gap-4 px-4 py-3 bg-gray-50 rounded-lg border border-gray-100 mb-3 text-sm">
                   <span className="text-emerald-700 font-semibold">
-                    إجمالي الإيداعات: +{formatCurrency(totalCredits)}
+                    {t('analytics.totalIncome')}: +{formatCurrency(totalCredits)}
                   </span>
                   <span className="text-red-700 font-semibold">
-                    إجمالي السحوبات: -{formatCurrency(totalDebits)}
+                    {t('analytics.totalExpenses')}: -{formatCurrency(totalDebits)}
                   </span>
                   <span className={`font-semibold ${totalCredits - totalDebits >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                    الصافي: {totalCredits - totalDebits >= 0 ? '+' : ''}{formatCurrency(totalCredits - totalDebits)}
+                    {t('analytics.netFinancial')}: {totalCredits - totalDebits >= 0 ? '+' : ''}{formatCurrency(totalCredits - totalDebits)}
                   </span>
                   <span className="text-gray-500 text-xs mr-auto">
-                    ({logTx.length} عملية)
+                    ({logTx.length} {t('analytics.operations', 'عملية')})
                   </span>
                 </div>
               );
@@ -896,20 +896,20 @@ export default function AnalyticsPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50 text-right">
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">النوع</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">رقم الوصل</th>
+                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logType')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logReceiptNo')}</th>
                     <th className="py-2.5 px-4 font-semibold text-gray-600">{t("dashboard.fund")}</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">التصنيف الفرعي</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">البيان/الوصف</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">التاريخ</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">المصدر</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">المبلغ</th>
+                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logSubcategory')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logDescription')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logDate')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logSource')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logAmount')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {logTx.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-6 text-center text-gray-400">لا توجد عمليات تطابق البحث والتصفية</td>
+                      <td colSpan={8} className="py-6 text-center text-gray-400">{t('analytics.noOperationsFound', 'لا توجد عمليات تطابق البحث والتصفية')}</td>
                     </tr>
                   ) : (
                     logTx.map((tx) => {
@@ -918,7 +918,7 @@ export default function AnalyticsPage() {
                         <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50">
                           <td className="py-2 px-4">
                             <Badge variant={tx.type === 'credit' ? 'success' : 'danger'}>
-                              {tx.type === 'credit' ? 'إيداع' : 'سحب'}
+                              {tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}
                             </Badge>
                           </td>
                           <td className="py-2 px-4 text-gray-500 font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>

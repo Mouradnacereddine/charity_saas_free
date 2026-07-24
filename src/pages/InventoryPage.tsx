@@ -124,7 +124,7 @@ export default function InventoryPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('inventory.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {activeTab === 'stock' ? t('inventory.subtitleStock', 'إدارة المواد والمخزون') : activeTab === 'loans' ? t('inventory.subtitleLoans', 'إدارة الإعارات والمرتجعات') : t('inventory.subtitleSettings', 'إدارة التصنيفات والمواقع')}
+            {activeTab === 'stock' ? t('inventory.subtitleStock') : activeTab === 'loans' ? t('inventory.subtitleLoans') : t('inventory.subtitleSettings')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -370,7 +370,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
               labelAr={t('inventory.nameAr')}
               value={newCatNameAr}
               onChange={(e) => setNewCatNameAr(e.target.value)}
-              placeholder={t('inventory.nameArPlaceholder', 'مثال: طبي')}
+              placeholder={t('inventory.nameArPlaceholder')}
             />
           </div>
           <div className="flex-1">
@@ -391,7 +391,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
 
         {/* Table */}
         {categories.length === 0 ? (
-          <EmptyState message={t('inventory.noCategories', 'لا توجد تصنيفات بعد')} icon={<FolderTree className="w-12 h-12" />} />
+          <EmptyState message={t('inventory.noCategories')} icon={<FolderTree className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -476,7 +476,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
               labelAr={t('inventory.nameAr')}
               value={newLocNameAr}
               onChange={(e) => setNewLocNameAr(e.target.value)}
-              placeholder={t('inventory.locationPlaceholder', 'مثال: المستودع أ - الرف 1')}
+              placeholder={t('inventory.locationPlaceholder')}
             />
           </div>
           <div className="flex-1">
@@ -497,7 +497,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
 
         {/* Table */}
         {locations.length === 0 ? (
-          <EmptyState message={t('inventory.noLocations', 'لا توجد مواقع تخزين بعد')} icon={<MapPin className="w-12 h-12" />} />
+          <EmptyState message={t('inventory.noLocations')} icon={<MapPin className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -574,7 +574,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
       </Card>
 
       {/* ========== Article Statuses Section ========== */}
-      <Card titleAr={t("inventory.addStatus", "الحالات")}>
+      <Card titleAr={t("inventory.addStatus")}>
         {/* Add form — single field */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
@@ -598,7 +598,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
 
         {/* Table */}
         {statuses.length === 0 ? (
-          <EmptyState message={t('inventory.noStatuses', 'لا توجد حالات بعد')} icon={<CheckCircle className="w-12 h-12" />} />
+          <EmptyState message={t('inventory.noStatuses')} icon={<CheckCircle className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -769,7 +769,7 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
     setFormError('')
     // Client-side validation before sending
     if (!form.storageLocation) {
-      setFormError(t('inventory.selectLocation', 'يرجى اختيار مكان التخزين'))
+      setFormError(t('inventory.selectLocation'))
       return
     }
     const data = {
@@ -798,7 +798,7 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
       setForm(EMPTY_ARTICLE_FORM)
       setEditingArticle(null)
     } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || t('inventory.addFailed', 'فشل في إضافة المقال')
+      const msg = err?.response?.data?.error || err?.message || t('inventory.addFailed')
       setFormError(msg)
     }
   }
@@ -827,7 +827,7 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
   const typeOptions = [
     { value: '', label: t('common.all') },
     { value: 'permanent', label: t('inventory.final') },
-    { value: 'returnable', label: t('inventory.returnable', 'قابل للإرجاع') },
+    { value: 'returnable', label: t('inventory.returnable') },
   ]
 
   if (loading) return <LoadingSpinner />
@@ -900,14 +900,14 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
       {/* Articles table */}
       <Card>
         {filtered.length === 0 ? (
-          <EmptyState message={t('inventory.noArticles', 'لا توجد مقالات في المخزون')} icon={<Package className="w-12 h-12" />} />
+          <EmptyState message={t('inventory.noArticles')} icon={<Package className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.refCode')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.sectionName', 'الاسم')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.sectionName')}</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">{t('inventory.category')}</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.quantity')}</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.available')}</th>
@@ -1244,7 +1244,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
   const handleRemoveItem = async (articleId: string) => {
     if (!selectedLoan) return
-    if (!window.confirm(t('inventory.confirmRemoveItemFromLoan', 'هل أنت متأكد من إزالة هذا المقال من الإعارة؟'))) return
+    if (!window.confirm(t('inventory.confirmRemoveItemFromLoan'))) return
 
     await removeItemFromLoan.mutateAsync({ id: selectedLoan.id, articleId })
     await queryClient.invalidateQueries({ queryKey: ['loans'] })
@@ -1259,7 +1259,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
   const handleMarkDefinitive = async () => {
     if (!selectedLoan) return
-    if (!window.confirm(t('inventory.confirmMakeDefinitive', 'هل أنت متأكد من تحويل هذه الإعارة إلى نهائية؟'))) return
+    if (!window.confirm(t('inventory.confirmMakeDefinitive'))) return
 
     await markLoanDefinitive.mutateAsync(selectedLoan.id)
     await queryClient.invalidateQueries({ queryKey: ['loans'] })
@@ -1284,16 +1284,16 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
         <div class="row"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${loan.beneficiaryNameAr}</span></div>
         <div class="row"><span class="lbl">${t('medical.beneficiaryRef')}</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
         <div class="row"><span class="lbl">{t('common.status')}</span><span class="val">${statusLabel}</span></div>
-        <div class="row"><span class="lbl">${t('inventory.loanDate', 'تاريخ الإعارة')}</span><span class="val">${formatDate(loan.loanDate)}</span></div>
-        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl">${t('inventory.expectedReturnDate', 'تاريخ الإرجاع المتوقع')}</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
-        ${loan.actualReturnDate ? `<div class="row"><span class="lbl">${t('inventory.actualReturnDate', 'تاريخ الإرجاع الفعلي')}</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
+        <div class="row"><span class="lbl">${t('inventory.loanDate')}</span><span class="val">${formatDate(loan.loanDate)}</span></div>
+        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl">${t('inventory.expectedReturnDate')}</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
+        ${loan.actualReturnDate ? `<div class="row"><span class="lbl">${t('inventory.actualReturnDate')}</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
        </div>
        <div class="col">
         ${itemsHtml}
        </div>`,
       loan.status === 'definitif' ? 'color:#dc2626' : loan.status === 'retourne' ? 'color:#16a34a' : 'color:#2563eb',
       loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0).toString(),
-      `{t('inventory.totalSummary', 'المجموع')}: ${loan.items.length} {t('inventory.articles')} — ${loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)} {t('inventory.pieces', 'قطعة')} — ${statusLabel}`,
+      `{t('inventory.totalSummary')}: ${loan.items.length} {t('inventory.articles')} — ${loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)} {t('inventory.pieces')} — ${statusLabel}`,
       '',
       t('receipt.beneficiarySign'),
       t('receipt.stampSignature'),
@@ -1366,7 +1366,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       {/* Loans table */}
       <Card>
         {filteredLoans.length === 0 ? (
-          <EmptyState message={t("inventory.noLoans", "لا توجد إعارات")} icon={<ArrowLeftRight className="w-12 h-12" />} />
+          <EmptyState message={t("inventory.noLoans")} icon={<ArrowLeftRight className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1375,13 +1375,13 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.refCode')}</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.beneficiary')}</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500 hidden lg:table-cell">{t('medical.beneficiaryRef')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.quantity', 'المقالات')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.returnedItems', 'المُرتجع')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">{t('finance.remainingAmount', 'المتبقي')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.quantity')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.returnedItems')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">{t('finance.remainingAmount')}</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.status')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.loanDate', 'تاريخ الإعارة')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.expectedReturnDate', 'تاريخ الإرجاع المتوقع')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.actualReturnDate', 'تاريخ الإرجاع الفعلي')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.loanDate')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.expectedReturnDate')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.actualReturnDate')}</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                 </tr>
               </thead>
@@ -1396,7 +1396,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                       {loan.beneficiaryReference || '—'}
                     </td>
                     <td className="py-3 px-4 text-gray-600">
-                      {loan.items.map((item) => item.articleNameAr).filter(Boolean).join('، ') || `(${loan.items.length} مقالات)`}
+                      {loan.items.map((item) => item.articleNameAr).filter(Boolean).join('، ') || `(${loan.items.length} ${t('inventory.articles')})`}
                     </td>
                     <td className="py-3 px-4 text-gray-600">
                       {loan.items.map((item) => item.returnedQuantity || 0).reduce((a, b) => a + b, 0) || '—'}
@@ -1420,7 +1420,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                       <button
                         onClick={(e) => { e.stopPropagation(); openLoanDetail(loan); }}
                         className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
-                        title={t("common.details", "التفاصيل")}
+                        title={t("common.details")}
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -1459,7 +1459,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
           {/* Dynamic items list */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">{t('inventory.quantity', 'المقالات')}</label>
+              <label className="block text-sm font-medium text-gray-700">{t('inventory.quantity')}</label>
               <Button size="sm" variant="secondary" onClick={addLoanItemRow}>
                 <Plus className="w-3 h-3" />
 {t("inventory.addArticle")}
@@ -1476,7 +1476,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   onChange={(val) => updateLoanItemRow(index, 'articleId', val)}
                   options={availableArticles.map((a: Article) => ({
                     value: a.id,
-                    label: `${a.nameAr} (متاح: ${a.availableQuantity})`,
+                    label: `${a.nameAr} (${t('inventory.available')}: ${a.availableQuantity})`,
                   }))}
                 />
                 <Input
@@ -1492,7 +1492,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   onChange={(e) => updateLoanItemRow(index, 'quantity', parseInt(e.target.value) || 1)}
                 />
                 <SearchableSelect
-                  labelAr={t("inventory.loanStatusAtLoan", "الحالة عند الإعارة")}
+                  labelAr={t("inventory.loanStatusAtLoan")}
                   value={item.conditionOnLoan}
                   onChange={(val) => updateLoanItemRow(index, 'conditionOnLoan', val)}
                   options={
@@ -1550,7 +1550,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   <p className="text-xs text-gray-500" dir="ltr">{t('medical.beneficiaryRef')}: {selectedLoan.beneficiaryReference || '—'}</p>
                 </div>
                 <div className="text-left">
-                  <span className="text-xs text-gray-500">{t("inventory.loanRefCode", "الرمز المرجعي للإعارة")}</span>
+                  <span className="text-xs text-gray-500">{t("inventory.loanRefCode")}</span>
                   <p className="text-sm font-bold text-primary-700" dir="ltr">{selectedLoan.reference || '—'}</p>
                   <div className="mt-1">
                     <Badge variant={LOAN_STATUS_VARIANTS[selectedLoan.status] || 'default'}>
@@ -1572,13 +1572,13 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
             {/* Items list */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('inventory.quantity', 'المقالات')}</h4>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('inventory.quantity')}</h4>
               <div className="flex flex-wrap gap-2 mb-3 text-xs text-gray-500">
                 {selectedLoan.items.map((item) => {
                   const art = articles.find((a: Article) => a.id === item.articleId)
                   return art ? (
                     <span key={item.articleId} className="bg-gray-50 px-2 py-1 rounded">
-                      {art.nameAr}: المخزون {art.quantity} | المتاح {art.availableQuantity}
+                      {art.nameAr}: {t('inventory.quantity')} {art.quantity} | {t('inventory.available')} {art.availableQuantity}
                     </span>
                   ) : null
                 })}
@@ -1589,10 +1589,10 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                     <tr className="border-b border-gray-200">
                       <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.category')}</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.quantity')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.returnedItems', 'المُرتجع')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('finance.remainingAmount', 'المتبقي')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.loanStatusAtLoan', 'الحالة عند الإعارة')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.loanStatusAtReturn', 'الحالة عند الإرجاع')}</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.returnedItems')}</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('finance.remainingAmount')}</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.loanStatusAtLoan')}</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.loanStatusAtReturn')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1657,7 +1657,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                         <p className="text-xs text-gray-400">{t('finance.remainingAmount')}: {remaining}</p>
                       </div>
                       <Input
-                        labelAr={t("inventory.returnedQuantity", "الكمية المُرتجعة")}
+                        labelAr={t("inventory.returnedQuantity")}
                         type="number"
                         min={0}
                         max={remaining}
@@ -1667,7 +1667,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                         }
                       />
                       <SearchableSelect
-                        labelAr={t("inventory.loanStatusAtReturn", "الحالة عند الإرجاع")}
+                        labelAr={t("inventory.loanStatusAtReturn")}
                         value={entry.condition}
                         onChange={(val) => updateReturnEntry(index, 'condition', val)}
                         options={
@@ -1698,7 +1698,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             {/* Add Item to Loan Form */}
             {showAddItemForm && (
               <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-                <h4 className="text-sm font-semibold text-gray-700">{t("inventory.addArticleToLoan", "إضافة مقال إلى الإعارة")}</h4>
+                <h4 className="text-sm font-semibold text-gray-700">{t("inventory.addArticleToLoan")}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <SearchableSelect
                     labelAr={t("inventory.category")}
@@ -1706,7 +1706,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                     onChange={setNewItemArticleId}
                     options={availableArticles.map((a: Article) => ({
                       value: a.id,
-                      label: `${a.nameAr} (متاح: ${a.availableQuantity})`,
+                      label: `${a.nameAr} (${t('inventory.available')}: ${a.availableQuantity})`,
                     }))}
                   />
                   <Input
@@ -1755,7 +1755,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             {/* Print button */}
             <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
               <Button size="sm" variant="secondary" onClick={() => handlePrintLoan(selectedLoan)}>
-                <Printer className="w-4 h-4" /> طباعة تفاصيل الإعارة
+                <Printer className="w-4 h-4" /> {t('inventory.loanDetails')}
               </Button>
             </div>
           </div>

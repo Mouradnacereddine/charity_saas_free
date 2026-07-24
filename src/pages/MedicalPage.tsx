@@ -591,7 +591,7 @@ export default function MedicalPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Input labelAr={t('medical.amountOptional', 'المبلغ (دج) — اختياري')} type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
+              <Input labelAr={t('medical.amountOptional')} type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
               {amount > 0 && <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(amount)}</p>}
             </div>
             <Input labelAr={t('common.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -736,7 +736,7 @@ export default function MedicalPage() {
           </h3>
           <p className="text-sm text-gray-500 mb-4">{t('medical.manageAnalysis')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-            <Input labelAr={t('medical.nameAr')} value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder="مثال: تحليل دم" />
+            <Input labelAr={t('medical.nameAr')} value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder={t('medical.analysisPlaceholder')} />
             <Input labelAr={t('medical.nameLatin')} value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder="Ex: Analyse" dir="ltr" />
             <Button onClick={handleAddAnalysis} disabled={!newAnalysisAr.trim()}>{t('common.add')}</Button>
           </div>
@@ -786,7 +786,7 @@ export default function MedicalPage() {
           </h3>
           <p className="text-sm text-gray-500 mb-4">{t('medical.manageHospitals')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-            <Input labelAr={t('medical.nameAr')} value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder="مثال: مستشفى مصطفى باشا" />
+            <Input labelAr={t('medical.nameAr')} value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} />
             <Input labelAr={t('medical.nameLatin')} value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder="Ex: CHU" dir="ltr" />
             <Button onClick={handleAddHospital} disabled={!newHospAr.trim()}>{t('common.add')}</Button>
           </div>
