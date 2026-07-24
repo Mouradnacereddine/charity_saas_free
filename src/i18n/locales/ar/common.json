@@ -59,7 +59,8 @@
     "female": "أنثى",
     "status": "الحالة",
     "date": "التاريخ",
-    "amount": "المبلغ"
+    "amount": "المبلغ",
+    "done": "تم"
   },
   "settings": {
     "title": "إعدادات الجمعية",
@@ -297,7 +298,28 @@
     "nameLatin": "الاسم باللاتينية",
     "specialty": "التخصص",
     "address": "العنوان",
-    "notes": "ملاحظات"
+    "notes": "ملاحظات",
+    "addDoctor": "إضافة طبيب",
+    "addTitle": "إضافة طبيب جديد",
+    "editTitle": "تعديل طبيب",
+    "confirmDelete": "هل أنت متأكد من حذف هذا الطبيب؟",
+    "confirmDeleteSpecialty": "هل أنت متأكد من حذف هذا التخصص؟",
+    "advancedSearch": "بحث متقدم",
+    "empty": "لا يوجد أطباء بعد",
+    "searchPlaceholder": "بحث باسم الطبيب، رقم الهاتف...",
+    "patientCount": "عدد المرضى",
+    "addDate": "تاريخ الإضافة",
+    "sectionName": "الاسم",
+    "arabicLabel": "بالعربية",
+    "latinLabel": "باللاتينية",
+    "doctorCount": "عدد الأطباء",
+    "noSpecialties": "لا توجد تخصصات بعد",
+    "patientStatsDesc": "عدد المرات التي تم فيها توجيه مرضى إلى هذا الطبيب",
+    "last7Days": "آخر 7 أيام",
+    "last12Months": "آخر 12 شهراً",
+    "recentBeneficiaries": "آخر المستفيدين (آخر 50)",
+    "noPreviousReferrals": "لا توجد توجيهات سابقة",
+    "loadingStats": "جاري تحميل الإحصائيات..."
   },
   "users": {
     "title": "إدارة المستخدمين",

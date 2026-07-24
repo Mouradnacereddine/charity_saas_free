@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { authApi } from '../lib/api';
 import { CheckCircle, LogIn, UserPlus } from 'lucide-react';
 
@@ -11,6 +12,7 @@ declare global {
 }
 
 export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
+  const { t, i18n } = useTranslation();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [inviteInfo, setInviteInfo] = useState<{
@@ -39,7 +41,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       setCheckingInvite(true);
       authApi.inviteDetails(token)
         .then(res => setInviteInfo(res.data))
-        .catch(err => setError(err.response?.data?.error || 'رمز الدعوة غير صالح'))
+        .catch(err => setError(err.response?.data?.error || t('auth.inviteCodeInvalid')))
         .finally(() => setCheckingInvite(false));
     }
     setCheckingAccount(false);
@@ -61,7 +63,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
         renderAttempted.current = true;
         window.google.accounts.id.renderButton(googleBtnRef.current, {
           theme: 'outline', size: 'large', width: 300,
-          text: 'signin_with', locale: 'ar',
+          text: 'signin_with', locale: i18n.language === 'ar' ? 'ar' : i18n.language,
         });
       }
     };
@@ -77,20 +79,17 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       script.onload = loadGoogle;
       document.head.appendChild(script);
     }
-  }, []);
+  }, [i18n.language]);
 
   const handleGoogleCredential = async (response: any) => {
     setLoading(true);
     setError('');
 
-    // Read the invite token directly from the URL hash in real time to avoid stale closure bugs
     const hash = window.location.hash;
     const match = hash.match(/[?&]invite=([^&]+)/);
     const currentInviteToken = match ? decodeURIComponent(match[1]) : null;
 
     try {
-      // First try login — if user exists, this succeeds
-      // If user doesn't exist, server returns 404 → show name form
       const res = await authApi.googleLogin({
         credential: response.credential,
         inviteToken: currentInviteToken || undefined,
@@ -102,12 +101,11 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
     } catch (err: any) {
       const hasInviteInUrl = window.location.hash.includes('invite=');
       if (err.response?.status === 404 && !hasInviteInUrl) {
-        // User doesn't exist and not an invite flow → show association name form
         pendingCredential.current = response.credential;
         setShowAssocForm(true);
         setError('');
       } else {
-        setError(err.response?.data?.error || 'فشل تسجيل الدخول بواسطة Google');
+        setError(err.response?.data?.error || t('auth.googleLoginFailed'));
       }
     } finally {
       setLoading(false);
@@ -130,7 +128,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       localStorage.setItem('refreshToken', res.data.refreshToken);
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'فشل إنشاء الجمعية');
+      setError(err.response?.data?.error || t('auth.createAssociationFailed'));
     } finally {
       setLoading(false);
     }
@@ -143,8 +141,8 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">🕌</div>
-          <h1 className="text-3xl font-bold text-primary-700">جمعية خيرية</h1>
-          <p className="text-gray-500 mt-2">نظام إدارة شامل</p>
+          <h1 className="text-3xl font-bold text-primary-700">{t('app.title')}</h1>
+          <p className="text-gray-500 mt-2">{t('app.subtitle')}</p>
         </div>
 
         {/* Invite info banner */}
@@ -153,10 +151,10 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
             <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
             <div>
               <p className="text-sm font-medium text-green-800">
-                دعوة للانضمام إلى: {inviteInfo.associationNameAr}
+                {t('auth.inviteBanner')} {inviteInfo.associationNameAr}
               </p>
               <p className="text-xs text-green-600 mt-1">
-                {inviteInfo.role === 'treasurer' ? 'أمين المال' : 'متطوع'}
+                {inviteInfo.role === 'treasurer' ? t('userMenu.treasurer') : t('userMenu.volunteer')}
               </p>
             </div>
           </div>
@@ -171,11 +169,11 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
               </div>
             </div>
             <p className="text-sm font-medium text-gray-700 text-center mb-4">
-              أنت مستخدم جديد — أدخل اسم الجمعية
+              {t('auth.newUserTitle')}
             </p>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">الاسم بالعربية *</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('auth.assocNameAr')}</label>
                 <input
                   type="text"
                   value={assocNameAr}
@@ -186,7 +184,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">الاسم باللاتينية</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('auth.assocNameLatin')}</label>
                 <input
                   type="text"
                   value={assocName}
@@ -201,7 +199,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
                 disabled={loading || !assocNameAr.trim()}
                 className="w-full py-2.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? 'جاري إنشاء الجمعية...' : 'إنشاء الجمعية'}
+                {loading ? t('auth.creating') : t('auth.createAssociation')}
               </button>
             </div>
           </div>
@@ -215,7 +213,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
                       <UserPlus className="w-6 h-6 text-green-600" />
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">قم بتسجيل الدخول باستخدام Google للانضمام إلى الجمعية</p>
+                  <p className="text-sm text-gray-600">{t('auth.loginGoogle')}</p>
                 </>
               ) : (
                 <>
@@ -225,10 +223,10 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
                     </div>
                   </div>
                   <p className="text-sm text-gray-600">
-                    قم بتسجيل الدخول باستخدام حساب Google
+                    {t('auth.loginGoogleButton')}
                   </p>
                   <p className="text-xs text-gray-400 mt-2">
-                    إذا كان لديك حساب بالفعل، سيتم تسجيل الدخول مباشرة.
+                    {t('auth.loginInfo')}
                   </p>
                 </>
               )}
@@ -246,7 +244,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
 
             {(loading || checkingInvite) && (
               <p className="text-center text-sm text-gray-500 mb-4">
-                {checkingInvite ? 'جاري التحقق من رمز الدعوة...' : 'جاري تسجيل الدخول...'}
+                {checkingInvite ? t('auth.checkingInvite') : t('auth.loggingIn')}
               </p>
             )}
           </>
@@ -255,4 +253,3 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
     </div>
   );
 }
-

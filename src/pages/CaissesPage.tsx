@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, Modal, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { formatCurrency, generateId, generateReceiptNumber } from '../utils/helpers';
 import { Plus, Edit, Trash2, FolderOpen, Tag } from 'lucide-react';
@@ -11,6 +12,7 @@ const generateCaisseReference = () => {
 };
 
 export default function CaissesPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: caisses = [], isLoading } = useQuery({
@@ -61,7 +63,7 @@ export default function CaissesPage() {
   };
 
   const handleDeleteCaisse = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا الصندوق؟')) {
+    if (confirm(t('caisses.deleteFundConfirm'))) {
       await deleteMutation.mutateAsync(id);
     }
   };
@@ -103,7 +105,7 @@ export default function CaissesPage() {
   };
 
   const handleDeleteSubCategory = async (caisseId: string, subCatId: string) => {
-    if (confirm('هل أنت متأكد من حذف هذه الفئة الفرعية؟')) {
+    if (confirm(t('caisses.deleteCategoryConfirm'))) {
       const caisse = caisses.find((c: Caisse) => c.id === caisseId);
       if (!caisse) return;
       const updatedSubs = (caisse.subCategories || []).filter((s: SubCategory) => s.id !== subCatId);
@@ -133,18 +135,18 @@ export default function CaissesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">إدارة الصناديق</h2>
-          <p className="text-sm text-gray-500 mt-1">إنشاء وتعديل وحذف الصناديق والفئات الفرعية</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('caisses.title')}</h2>
+          <p className="text-sm text-gray-500 mt-1">{t('caisses.subtitle')}</p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4" />
-          إضافة صندوق
+          {t('caisses.addFund')}
         </Button>
       </div>
 
       {/* Caisses Grid */}
       {caisses.length === 0 ? (
-        <EmptyState message="لا توجد صناديق بعد" icon={<FolderOpen className="w-12 h-12" />} />
+        <EmptyState message={t('caisses.noFunds')} icon={<FolderOpen className="w-12 h-12" />} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {caisses.map((caisse: Caisse) => (
@@ -181,7 +183,7 @@ export default function CaissesPage() {
 
               {/* Balance */}
               <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                <p className="text-xs text-gray-500 mb-1">الرصيد</p>
+                <p className="text-xs text-gray-500 mb-1">{t('caisses.balance')}</p>
                 <p className={`text-lg font-bold ${caisse.balance >= 0 ? 'text-success-600' : 'text-danger-500'}`}>
                   {formatCurrency(caisse.balance)}
                 </p>
@@ -190,17 +192,17 @@ export default function CaissesPage() {
               {/* Sub-categories */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-700">الفئات الفرعية</p>
+                  <p className="text-sm font-medium text-gray-700">{t('caisses.subCategories')}</p>
                   <button
                     onClick={() => setShowSubCatModal(caisse.id)}
                     className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" />
-                    إضافة
+                    {t('common.add')}
                   </button>
                 </div>
                 {(caisse.subCategories || []).length === 0 ? (
-                  <p className="text-xs text-gray-400">لا توجد فئات فرعية</p>
+                  <p className="text-xs text-gray-400">{t('caisses.noFunds')}</p>
                 ) : (
                   <div className="space-y-1.5">
                     {caisse.subCategories.map((sub: SubCategory) => (
@@ -240,17 +242,17 @@ export default function CaissesPage() {
       <Modal
         isOpen={showAddModal}
         onClose={() => { setShowAddModal(false); setName(''); setNameAr(''); }}
-        title="إضافة صندوق جديد"
+        title={t('caisses.addFundTitle')}
       >
         <div className="space-y-4">
           <Input
-            labelAr="اسم الصندوق بالعربية"
+            labelAr={t('caisses.nameAr')}
             value={nameAr}
             onChange={(e) => setNameAr(e.target.value)}
             placeholder="مثال: صندوق الزكاة"
           />
           <Input
-            labelAr="اسم الصندوق باللاتينية (اختياري)"
+            labelAr={t('caisses.nameLatin')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Caisse Zakat"
@@ -258,10 +260,10 @@ export default function CaissesPage() {
           />
           <div className="flex gap-3 justify-end">
             <Button variant="secondary" onClick={() => { setShowAddModal(false); setName(''); setNameAr(''); }}>
-              إلغاء
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleAddCaisse} disabled={!nameAr.trim()}>
-              إضافة
+              {t('common.add')}
             </Button>
           </div>
         </div>
@@ -271,26 +273,26 @@ export default function CaissesPage() {
       <Modal
         isOpen={!!editCaisse}
         onClose={() => { setEditCaisse(null); setName(''); setNameAr(''); }}
-        title="تعديل الصندوق"
+        title={t('caisses.editFundTitle')}
       >
         <div className="space-y-4">
           <Input
-            labelAr="اسم الصندوق بالعربية"
+            labelAr={t('caisses.nameAr')}
             value={nameAr}
             onChange={(e) => setNameAr(e.target.value)}
           />
           <Input
-            labelAr="اسم الصندوق باللاتينية (اختياري)"
+            labelAr={t('caisses.nameLatin')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             dir="ltr"
           />
           <div className="flex gap-3 justify-end">
             <Button variant="secondary" onClick={() => { setEditCaisse(null); setName(''); setNameAr(''); }}>
-              إلغاء
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleUpdateCaisse} disabled={!nameAr.trim()}>
-              حفظ التعديلات
+              {t('caisses.saveChanges')}
             </Button>
           </div>
         </div>
@@ -300,17 +302,17 @@ export default function CaissesPage() {
       <Modal
         isOpen={!!showSubCatModal}
         onClose={() => { setShowSubCatModal(null); setSubName(''); setSubNameAr(''); }}
-        title="إضافة فئة فرعية"
+        title={t('caisses.addCategoryTitle')}
       >
         <div className="space-y-4">
           <Input
-            labelAr="اسم الفئة بالعربية"
+            labelAr={t('caisses.categoryNameAr')}
             value={subNameAr}
             onChange={(e) => setSubNameAr(e.target.value)}
             placeholder="مثال: تحاليل طبية"
           />
           <Input
-            labelAr="اسم الفئة باللاتينية (اختياري)"
+            labelAr={t('caisses.categoryNameLatin')}
             value={subName}
             onChange={(e) => setSubName(e.target.value)}
             placeholder="Ex: Analyses médicales"
@@ -318,10 +320,10 @@ export default function CaissesPage() {
           />
           <div className="flex gap-3 justify-end">
             <Button variant="secondary" onClick={() => { setShowSubCatModal(null); setSubName(''); setSubNameAr(''); }}>
-              إلغاء
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleAddSubCategory} disabled={!subNameAr.trim()}>
-              إضافة
+              {t('common.add')}
             </Button>
           </div>
         </div>
@@ -331,26 +333,26 @@ export default function CaissesPage() {
       <Modal
         isOpen={!!editSubCat}
         onClose={() => { setEditSubCat(null); setSubName(''); setSubNameAr(''); }}
-        title="تعديل الفئة الفرعية"
+        title={t('caisses.editCategoryTitle')}
       >
         <div className="space-y-4">
           <Input
-            labelAr="اسم الفئة بالعربية"
+            labelAr={t('caisses.categoryNameAr')}
             value={subNameAr}
             onChange={(e) => setSubNameAr(e.target.value)}
           />
           <Input
-            labelAr="اسم الفئة باللاتينية (اختياري)"
+            labelAr={t('caisses.categoryNameLatin')}
             value={subName}
             onChange={(e) => setSubName(e.target.value)}
             dir="ltr"
           />
           <div className="flex gap-3 justify-end">
             <Button variant="secondary" onClick={() => { setEditSubCat(null); setSubName(''); setSubNameAr(''); }}>
-              إلغاء
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleUpdateSubCategory} disabled={!subNameAr.trim()}>
-              حفظ التعديلات
+              {t('caisses.saveChanges')}
             </Button>
           </div>
         </div>

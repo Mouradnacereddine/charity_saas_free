@@ -59,7 +59,8 @@
     "female": "Féminin",
     "status": "Statut",
     "date": "Date",
-    "amount": "Montant"
+    "amount": "Montant",
+    "done": "Terminé"
   },
   "settings": {
     "title": "Paramètres de l'association",
@@ -297,7 +298,28 @@
     "nameLatin": "Nom (Latin)",
     "specialty": "Spécialité",
     "address": "Adresse",
-    "notes": "Notes"
+    "notes": "Notes",
+    "addDoctor": "Ajouter un médecin",
+    "addTitle": "Ajouter un nouveau médecin",
+    "editTitle": "Modifier le médecin",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce médecin ?",
+    "confirmDeleteSpecialty": "Êtes-vous sûr de vouloir supprimer cette spécialité ?",
+    "advancedSearch": "Recherche avancée",
+    "empty": "Aucun médecin pour le moment",
+    "searchPlaceholder": "Rechercher par nom, téléphone...",
+    "patientCount": "Nombre de patients",
+    "addDate": "Date d'ajout",
+    "sectionName": "Nom",
+    "arabicLabel": "Arabe",
+    "latinLabel": "Latin",
+    "doctorCount": "Nombre de médecins",
+    "noSpecialties": "Aucune spécialité pour le moment",
+    "patientStatsDesc": "Nombre de fois où des patients ont été orientés vers ce médecin",
+    "last7Days": "7 derniers jours",
+    "last12Months": "12 derniers mois",
+    "recentBeneficiaries": "Derniers bénéficiaires (50 derniers)",
+    "noPreviousReferrals": "Aucune orientation précédente",
+    "loadingStats": "Chargement des statistiques..."
   },
   "users": {
     "title": "Gestion des utilisateurs",

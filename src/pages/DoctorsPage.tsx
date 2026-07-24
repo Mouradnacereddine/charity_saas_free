@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { formatDate } from '../utils/helpers';
 import { Plus, Search, Filter, Eye, Edit, Trash2, Stethoscope, Settings, Phone, Mail, MapPin, Activity, Calendar } from 'lucide-react';
@@ -7,7 +8,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { doctorsApi } from '../lib/api';
 import { useDoctors, useCreateDoctor, useUpdateDoctor, useDeleteDoctor, useDoctorStats, useDoctorSpecialties, useCreateDoctorSpecialty, useUpdateDoctorSpecialty, useDeleteDoctorSpecialty } from '../hooks/useDoctors';
 
+const MONTH_KEYS = ['analytics.january','analytics.february','analytics.march','analytics.april','analytics.may','analytics.june','analytics.july','analytics.august','analytics.september','analytics.october','analytics.november','analytics.december'];
+
 export default function DoctorsPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: doctors = [], isLoading } = useDoctors();
   const { data: specialties = [] } = useDoctorSpecialties();
@@ -51,6 +55,8 @@ export default function DoctorsPage() {
   // Stats detail
   const [statsDoctorId, setStatsDoctorId] = useState<string | null>(null);
   const { data: doctorStats } = useDoctorStats(statsDoctorId || '');
+
+  const monthNames = MONTH_KEYS.map(k => t(k));
 
   const resetForm = () => {
     setFirstNameAr('');
@@ -108,11 +114,11 @@ export default function DoctorsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا الطبيب؟')) return;
+    if (!window.confirm(t('doctors.confirmDelete'))) return;
     try {
       await deleteDoctor.mutateAsync(id);
     } catch (err: any) {
-      alert(err.response?.data?.error || 'فشل الحذف');
+      alert(err.response?.data?.error || t('common.deleteError'));
     }
   };
 
@@ -150,8 +156,8 @@ export default function DoctorsPage() {
     setEditSpecId(null); setEditSpecAr(''); setEditSpecFr('');
   };
   const handleDeleteSpecialty = async (id: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا التخصص؟')) return;
-    try { await deleteSpecialty.mutateAsync(id); } catch (err: any) { alert(err.response?.data?.error || 'فشل الحذف'); }
+    if (!window.confirm(t('doctors.confirmDeleteSpecialty'))) return;
+    try { await deleteSpecialty.mutateAsync(id); } catch (err: any) { alert(err.response?.data?.error || t('common.deleteError')); }
   };
 
   // ---- Renderers ----
@@ -159,44 +165,44 @@ export default function DoctorsPage() {
     <>
       <div className="relative">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input type="text" placeholder="بحث باسم الطبيب، رقم الهاتف..."
+        <input type="text" placeholder={t('doctors.searchPlaceholder')}
           className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           value={filterSearchTerm} onChange={(e) => setFilterSearchTerm(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }} />
       </div>
 
       {filterOpen && (
-        <Card titleAr="بحث متقدم">
+        <Card titleAr={t('doctors.advancedSearch')}>
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <SearchableSelect labelAr="التخصص" value={filterSpecialtyId} onChange={setFilterSpecialtyId}
+              <SearchableSelect labelAr={t('doctors.specialty')} value={filterSpecialtyId} onChange={setFilterSpecialtyId}
                 options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.nameAr }))} />
-              <Input labelAr="العنوان" value={filterAddress} onChange={(e) => setFilterAddress(e.target.value)} placeholder="بحث بالعنوان..." />
+              <Input labelAr={t('doctors.address')} value={filterAddress} onChange={(e) => setFilterAddress(e.target.value)} placeholder={t('doctors.searchAddressPlaceholder')} />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={applyFilters}><Search className="w-4 h-4" /> بحث</Button>
-              <Button size="sm" variant="secondary" onClick={resetFilters}>إعادة تعيين</Button>
+              <Button size="sm" onClick={applyFilters}><Search className="w-4 h-4" /> {t('doctors.search')}</Button>
+              <Button size="sm" variant="secondary" onClick={resetFilters}>{t('doctors.reset')}</Button>
             </div>
           </div>
         </Card>
       )}
 
       {isLoading ? <LoadingSpinner /> : filteredDoctors.length === 0 ? (
-        <EmptyState message="لا يوجد أطباء بعد" icon={<Stethoscope className="w-12 h-12" />} />
+        <EmptyState message={t('doctors.empty')} icon={<Stethoscope className="w-12 h-12" />} />
       ) : (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">الرمز المرجعي</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">الاسم</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">التخصص</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">العنوان</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">الهاتف</th>
-                  <th className="text-center py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">عدد المرضى</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">تاريخ الإضافة</th>
-                  <th className="text-center py-3 px-4 text-gray-600 font-medium">الإجراءات</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('doctors.refCode')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('common.sectionName')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">{t('doctors.specialty')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">{t('doctors.address')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">{t('doctors.phone')}</th>
+                  <th className="text-center py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">{t('doctors.patientCount')}</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">{t('doctors.addDate')}</th>
+                  <th className="text-center py-3 px-4 text-gray-600 font-medium">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -238,43 +244,43 @@ export default function DoctorsPage() {
 
       {/* Add/Edit Modal */}
       <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); resetForm(); }}
-        title={editingId ? 'تعديل طبيب' : 'إضافة طبيب جديد'} size="lg">
+        title={editingId ? t('doctors.editTitle') : t('doctors.addTitle')} size="lg">
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">الاسم</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('doctors.sectionName')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr="الاسم الأخير بالعربية" value={lastNameAr} onChange={(e) => setLastNameAr(e.target.value)} placeholder="مثال: بلقاسم" required />
-              <Input labelAr="الاسم الأول بالعربية" value={firstNameAr} onChange={(e) => setFirstNameAr(e.target.value)} placeholder="مثال: أمينة" required />
+              <Input labelAr={t('doctors.lastNameAr')} value={lastNameAr} onChange={(e) => setLastNameAr(e.target.value)} placeholder={t('doctors.lastNameArPlaceholder')} required />
+              <Input labelAr={t('doctors.firstNameAr')} value={firstNameAr} onChange={(e) => setFirstNameAr(e.target.value)} placeholder={t('doctors.firstNameArPlaceholder')} required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-              <Input labelAr="الاسم الأخير باللاتينية" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Ex: Belkacem" dir="ltr" />
-              <Input labelAr="الاسم الأول باللاتينية" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ex: Amina" dir="ltr" />
+              <Input labelAr={t('doctors.lastNameLatin')} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Ex: Belkacem" dir="ltr" />
+              <Input labelAr={t('doctors.firstNameLatin')} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ex: Amina" dir="ltr" />
             </div>
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">معلومات الاتصال</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('doctors.contactInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr="رقم الهاتف" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05XX XX XX XX" dir="ltr" required />
-              <Input labelAr="البريد الإلكتروني" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="doctor@example.com" dir="ltr" />
+              <Input labelAr={t('doctors.phone')} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05XX XX XX XX" dir="ltr" required />
+              <Input labelAr={t('doctors.email')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="doctor@example.com" dir="ltr" />
             </div>
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">معلومات إضافية</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('doctors.additionalInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SearchableSelect labelAr="التخصص" value={specialtyId} onChange={setSpecialtyId}
+              <SearchableSelect labelAr={t('doctors.specialty')} value={specialtyId} onChange={setSpecialtyId}
                 options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.nameAr }))}
-                placeholder="اختر تخصص..." />
-              <Input labelAr="العنوان" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="مثال: 15 شارع الإخوة، الجزائر" />
+                placeholder={t('doctors.specialtyPlaceholder')} />
+              <Input labelAr={t('doctors.address')} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t('doctors.addressPlaceholder')} />
             </div>
-            <TextArea labelAr="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <TextArea labelAr={t('common.notes')} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
           <div className="flex gap-3 justify-end border-t border-gray-100 pt-4">
-            <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>إلغاء</Button>
+            <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>{t('common.cancel')}</Button>
             <Button onClick={handleSave} disabled={!lastNameAr.trim() || !phone.trim() || createDoctor.isPending || updateDoctor.isPending}>
-              {editingId ? 'تحديث' : 'إضافة'}
+              {editingId ? t('common.update') : t('common.add')}
             </Button>
           </div>
         </div>
@@ -286,36 +292,36 @@ export default function DoctorsPage() {
         {showDetailModal && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500">الرمز المرجعي</span><span className="font-medium" dir="ltr">{showDetailModal.reference}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500">الاسم الكامل</span><span className="font-medium">{showDetailModal.lastNameAr} {showDetailModal.firstNameAr}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500"><Phone className="inline w-3 h-3 ml-1" />الهاتف</span><span className="font-medium" dir="ltr">{showDetailModal.phone}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500"><Mail className="inline w-3 h-3 ml-1" />البريد</span><span className="font-medium" dir="ltr">{showDetailModal.email || '—'}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500">التخصص</span><span className="font-medium">{showDetailModal.specialty?.nameAr || '—'}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500"><MapPin className="inline w-3 h-3 ml-1" />العنوان</span><span className="font-medium">{showDetailModal.address || '—'}</span></div>
+              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500">{t('doctors.refCode')}</span><span className="font-medium" dir="ltr">{showDetailModal.reference}</span></div>
+              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500">{t('doctors.fullName')}</span><span className="font-medium">{showDetailModal.lastNameAr} {showDetailModal.firstNameAr}</span></div>
+              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500"><Phone className="inline w-3 h-3 ml-1" />{t('doctors.phone')}</span><span className="font-medium" dir="ltr">{showDetailModal.phone}</span></div>
+              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500"><Mail className="inline w-3 h-3 ml-1" />{t('doctors.email')}</span><span className="font-medium" dir="ltr">{showDetailModal.email || '—'}</span></div>
+              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500">{t('doctors.specialty')}</span><span className="font-medium">{showDetailModal.specialty?.nameAr || '—'}</span></div>
+              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500"><MapPin className="inline w-3 h-3 ml-1" />{t('doctors.address')}</span><span className="font-medium">{showDetailModal.address || '—'}</span></div>
             </div>
-            {showDetailModal.notes && <div className="bg-gray-50 rounded-lg p-3 text-sm"><span className="text-gray-500">ملاحظات</span><p className="mt-1">{showDetailModal.notes}</p></div>}
+            {showDetailModal.notes && <div className="bg-gray-50 rounded-lg p-3 text-sm"><span className="text-gray-500">{t('common.notes')}</span><p className="mt-1">{showDetailModal.notes}</p></div>}
 
             {/* Stats section */}
             <div className="border-t border-gray-200 pt-4">
               <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary-600" /> إحصائيات المرضى
+                <Activity className="w-4 h-4 text-primary-600" /> {t('doctors.patientStats')}
               </h4>
-              <p className="text-xs text-gray-400 mb-3">عدد المرات التي تم فيها توجيه مرضى إلى هذا الطبيب</p>
+              <p className="text-xs text-gray-400 mb-3">{t('doctors.patientStatsDesc')}</p>
               {doctorStats ? (
                 <>
                   {/* Summary boxes */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                    <StatBox label="الإجمالي" value={doctorStats.totalReferrals} color="text-primary-600" />
-                    <StatBox label="هذا الشهر" value={doctorStats.referralsThisMonth} color="text-green-600" />
-                    <StatBox label="هذا الأسبوع" value={doctorStats.referralsThisWeek} color="text-amber-600" />
-                    <StatBox label="آخر توجيه" value={doctorStats.lastReferral ? formatDate(doctorStats.lastReferral) : '—'} color="text-gray-600" />
+                    <StatBox label={t('doctors.total')} value={doctorStats.totalReferrals} color="text-primary-600" />
+                    <StatBox label={t('doctors.thisMonth')} value={doctorStats.referralsThisMonth} color="text-green-600" />
+                    <StatBox label={t('doctors.thisWeek')} value={doctorStats.referralsThisWeek} color="text-amber-600" />
+                    <StatBox label={t('doctors.lastReferral')} value={doctorStats.lastReferral ? formatDate(doctorStats.lastReferral) : '—'} color="text-gray-600" />
                   </div>
 
                   {/* Daily breakdown */}
                   {doctorStats.referralsByDay && doctorStats.referralsByDay.length > 0 && (
                     <div className="bg-gray-50 rounded-lg p-3 mb-3">
                       <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> آخر 7 أيام
+                        <Calendar className="w-3 h-3" /> {t('doctors.last7Days')}
                       </p>
                       <div className="flex items-end gap-1 h-16">
                         {doctorStats.referralsByDay.map((d: { day: string; count: number }) => {
@@ -337,14 +343,13 @@ export default function DoctorsPage() {
                   {doctorStats.referralsByMonth && doctorStats.referralsByMonth.length > 0 && (
                     <div className="bg-gray-50 rounded-lg p-3 mb-3">
                       <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> آخر 12 شهراً
+                        <Calendar className="w-3 h-3" /> {t('doctors.last12Months')}
                       </p>
                       <div className="space-y-1">
                         {doctorStats.referralsByMonth.slice().reverse().map((m: { month: string; count: number }) => {
                           const y = m.month.slice(0,4);
                           const mo = parseInt(m.month.slice(5), 10);
-                          const names = ['جانفي','فيفري','مارس','أفريل','ماي','جوان','جويلية','أوت','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-                          const label = `${names[mo-1]} ${y}`;
+                          const label = `${monthNames[mo-1]} ${y}`;
                           const max = Math.max(...doctorStats.referralsByMonth.map((x: any) => x.count), 1);
                           const pct = Math.round((m.count / max) * 100);
                           return (
@@ -364,16 +369,16 @@ export default function DoctorsPage() {
                   {/* Beneficiary history table */}
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-                      <Activity className="w-3 h-3" /> آخر المستفيدين (آخر 50)
+                      <Activity className="w-3 h-3" /> {t('doctors.recentBeneficiaries')}
                     </p>
                     <div className="max-h-48 overflow-y-auto">
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="border-b border-gray-200">
-                            <th className="text-right py-1 px-2 font-medium text-gray-500">التاريخ</th>
-                            <th className="text-right py-1 px-2 font-medium text-gray-500">المستفيد</th>
-                            <th className="text-right py-1 px-2 font-medium text-gray-500">رمز المستفيد</th>
-                            <th className="text-center py-1 px-2 font-medium text-gray-500">الحالة</th>
+                            <th className="text-right py-1 px-2 font-medium text-gray-500">{t('common.date')}</th>
+                            <th className="text-right py-1 px-2 font-medium text-gray-500">{t('doctors.beneficiary')}</th>
+                            <th className="text-right py-1 px-2 font-medium text-gray-500">{t('doctors.beneficiaryRef')}</th>
+                            <th className="text-center py-1 px-2 font-medium text-gray-500">{t('common.status')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -384,27 +389,27 @@ export default function DoctorsPage() {
                               <td className="py-1 px-2 text-gray-500 font-mono" dir="ltr">{r.beneficiary?.reference || '—'}</td>
                               <td className="py-1 px-2 text-center">
                                 <Badge variant={r.status === 'completed' ? 'success' : r.status === 'pending' ? 'warning' : 'danger'}>
-                                  {r.status === 'completed' ? 'مكتمل' : r.status === 'pending' ? 'معلق' : 'ملغي'}
+                                  {r.status === 'completed' ? t('dashboard.completed') : r.status === 'pending' ? t('dashboard.pending') : t('dashboard.cancelled')}
                                 </Badge>
                               </td>
                             </tr>
                           ))}
                           {(!doctorStats.referralBeneficiaries || doctorStats.referralBeneficiaries.length === 0) && (
-                            <tr><td colSpan={4} className="py-2 text-center text-gray-400">لا توجد توجيهات سابقة</td></tr>
+                            <tr><td colSpan={4} className="py-2 text-center text-gray-400">{t('doctors.noPreviousReferrals')}</td></tr>
                           )}
-                        </tbody>
+                          </tbody>
                       </table>
                     </div>
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-gray-400">جاري تحميل الإحصائيات...</p>
+                <p className="text-sm text-gray-400">{t('doctors.loadingStats')}</p>
               )}
             </div>
 
             <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
-              <Button size="sm" variant="secondary" onClick={() => setShowDetailModal(null)}>إغلاق</Button>
-              <Button size="sm" onClick={() => { const d = showDetailModal; setShowDetailModal(null); openEditForm(d); }}>تعديل</Button>
+              <Button size="sm" variant="secondary" onClick={() => setShowDetailModal(null)}>{t('common.close')}</Button>
+              <Button size="sm" onClick={() => { const d = showDetailModal; setShowDetailModal(null); openEditForm(d); }}>{t('common.edit')}</Button>
             </div>
           </div>
         )}
@@ -417,28 +422,28 @@ export default function DoctorsPage() {
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Settings className="w-5 h-5 text-primary-600" />
-          التخصصات
+          {t('doctors.specialties')}
         </h3>
-        <p className="text-sm text-gray-500 mb-4">إدارة تخصصات الأطباء</p>
+        <p className="text-sm text-gray-500 mb-4">{t('doctors.manageSpecialties')}</p>
         <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-          <Input labelAr="الاسم بالعربية" value={newSpecAr} onChange={(e) => setNewSpecAr(e.target.value)} placeholder="مثال: طب عام" />
-          <Input labelAr="الاسم باللاتينية" value={newSpecFr} onChange={(e) => setNewSpecFr(e.target.value)} placeholder="Ex: Généraliste" dir="ltr" />
-          <Button onClick={handleAddSpecialty} disabled={!newSpecAr.trim()}>إضافة</Button>
+          <Input labelAr={t('doctors.nameAr')} value={newSpecAr} onChange={(e) => setNewSpecAr(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} />
+          <Input labelAr={t('doctors.nameLatin')} value={newSpecFr} onChange={(e) => setNewSpecFr(e.target.value)} placeholder="Ex: Généraliste" dir="ltr" />
+          <Button onClick={handleAddSpecialty} disabled={!newSpecAr.trim()}>{t('common.add')}</Button>
         </div>
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">الأطباء</th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('doctors.arabicLabel')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('doctors.latinLabel')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">{t('doctors.doctorCount')}</th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {specialties.length === 0 ? (
-                  <tr><td colSpan={4} className="py-8 text-center text-gray-400">لا توجد تخصصات بعد</td></tr>
+                  <tr><td colSpan={4} className="py-8 text-center text-gray-400">{t('doctors.noSpecialties')}</td></tr>
                 ) : specialties.map((s: DoctorSpecialty) => (
                   <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
                     {editSpecId === s.id ? (
@@ -447,8 +452,8 @@ export default function DoctorsPage() {
                         <td className="py-2 px-4"><input value={editSpecFr} onChange={(e) => setEditSpecFr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
                         <td className="py-2 px-4 hidden sm:table-cell" />
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
-                          <Button size="sm" onClick={handleUpdateSpecialty}>حفظ</Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditSpecId(null)}>إلغاء</Button>
+                          <Button size="sm" onClick={handleUpdateSpecialty}>{t('common.save')}</Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditSpecId(null)}>{t('common.cancel')}</Button>
                         </td>
                       </>
                     ) : (
@@ -476,16 +481,16 @@ export default function DoctorsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">الأطباء</h2>
-          <p className="text-sm text-gray-500 mt-1">إدارة الأطباء وبياناتهم</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('doctors.title')}</h2>
+          <p className="text-sm text-gray-500 mt-1">{t('doctors.subtitle')}</p>
         </div>
         {activeTab === 'list' && (
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => setFilterOpen(!filterOpen)}>
-              <Filter className="w-4 h-4" /> بحث متقدم
+              <Filter className="w-4 h-4" /> {t('doctors.advancedSearch')}
             </Button>
             <Button size="sm" onClick={openAddForm}>
-              <Plus className="w-4 h-4" /> إضافة طبيب
+              <Plus className="w-4 h-4" /> {t('doctors.addDoctor')}
             </Button>
           </div>
         )}
@@ -498,14 +503,14 @@ export default function DoctorsPage() {
               activeTab === 'list' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}>
             <Stethoscope className="inline-block w-4 h-4 ml-2" />
-            الأطباء
+            {t('doctors.tabDoctors')}
           </button>
           <button onClick={() => setActiveTab('settings')}
             className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
               activeTab === 'settings' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}>
             <Settings className="inline-block w-4 h-4 ml-2" />
-            إدارة التصنيفات
+            {t('doctors.tabSettings')}
           </button>
         </nav>
       </div>

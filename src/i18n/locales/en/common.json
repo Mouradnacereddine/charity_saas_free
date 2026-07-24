@@ -59,7 +59,8 @@
     "female": "Female",
     "status": "Status",
     "date": "Date",
-    "amount": "Amount"
+    "amount": "Amount",
+    "done": "Done"
   },
   "settings": {
     "title": "Association Settings",
@@ -297,7 +298,28 @@
     "nameLatin": "Name (Latin)",
     "specialty": "Specialty",
     "address": "Address",
-    "notes": "Notes"
+    "notes": "Notes",
+    "addDoctor": "Add Doctor",
+    "addTitle": "Add New Doctor",
+    "editTitle": "Edit Doctor",
+    "confirmDelete": "Are you sure you want to delete this doctor?",
+    "confirmDeleteSpecialty": "Are you sure you want to delete this specialty?",
+    "advancedSearch": "Advanced Search",
+    "empty": "No doctors yet",
+    "searchPlaceholder": "Search by doctor name, phone...",
+    "patientCount": "Patient Count",
+    "addDate": "Added Date",
+    "sectionName": "Name",
+    "arabicLabel": "Arabic",
+    "latinLabel": "Latin",
+    "doctorCount": "Doctors Count",
+    "noSpecialties": "No specialties yet",
+    "patientStatsDesc": "Number of times patients were referred to this doctor",
+    "last7Days": "Last 7 Days",
+    "last12Months": "Last 12 Months",
+    "recentBeneficiaries": "Recent Beneficiaries (last 50)",
+    "noPreviousReferrals": "No previous referrals",
+    "loadingStats": "Loading stats..."
   },
   "users": {
     "title": "User Management",
