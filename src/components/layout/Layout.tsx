@@ -118,15 +118,13 @@ export function Layout({
           lg:translate-x-0 lg:sticky lg:z-auto
           ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}
           ${isRtl ? 'right-0' : 'left-0'}
-        `}
-        style={{
-          transform: sidebarOpen
-            ? 'translateX(0)'
+          ${sidebarOpen
+            ? 'translate-x-0'
             : isRtl
-              ? 'translateX(100%)'
-              : 'translateX(-100%)',
-          transition: 'transform 0.2s ease-in-out',
-        }}
+              ? 'translate-x-full'
+              : '-translate-x-full'
+          }
+        `}
       >
         <div className="flex items-center justify-between p-5 border-b border-primary-700">
           <div className="flex items-center gap-2 min-w-0">
