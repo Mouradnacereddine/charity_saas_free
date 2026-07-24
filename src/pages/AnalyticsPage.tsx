@@ -184,9 +184,9 @@ export default function AnalyticsPage() {
   }, [filteredTx, startDate, endDate]);
 
   const getSubCategoryNameAr = (caisseId: string, subId?: string) => {
-    if (!subId) return 'عام';
+    if (!subId) return t('common.general', 'عام');
     const caisse = caisses.find((c) => c.id === caisseId);
-    if (!caisse) return 'عام';
+    if (!caisse) return t('common.general', 'عام');
     const sub = caisse.subCategories?.find((s) => s.id === subId);
     return sub ? sub.nameAr : 'عام';
   };
@@ -325,7 +325,7 @@ export default function AnalyticsPage() {
                 printAnalyticsReport({
                   assocNameAr: association?.nameAr || t('app.title'),
                   title: t('analytics.title'),
-                  periodLabel: quickFilter === 'this_month' ? t('analytics.currentMonth') : quickFilter === 'last_3_months' ? t('analytics.last3Months') : quickFilter === 'this_year' ? t('analytics.currentYear') : `${startDate} ${t('medical.toDate').toLowerCase()} ${endDate}`,
+                  periodLabel:  quickFilter === 'this_month' ? t('analytics.currentMonth') : quickFilter === 'last_3_months' ? t('analytics.last3Months') : quickFilter === 'this_year' ? t('analytics.currentYear') : `${startDate} ${t('medical.toDate').toLowerCase()} ${endDate}`,
                   dateLabel: new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-DZ' : i18n.language === 'fr' ? 'fr-DZ' : 'en-DZ'),
                   credits: formatCurrency(totalCredits),
                   debits: formatCurrency(totalDebits),
@@ -402,8 +402,8 @@ export default function AnalyticsPage() {
                 <table className="w-full text-xs border-collapse" dir="ltr">
                   <thead className="sticky top-0 bg-white z-10">
                     <tr className="border-b border-gray-200">
-                      <th className="text-right py-2 px-2 font-semibold text-gray-500 w-24">الشهر</th>
-                      <th className="text-right py-2 px-2 font-semibold text-gray-500 w-20">المداخيل</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-500 w-24">{t('analytics.month')}</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-500 w-20">{t('analytics.income')}</th>
                       <th className="py-2 px-2 w-1/2 min-w-[200px]"></th>
                       <th className="text-left py-2 px-2 font-semibold text-gray-500 w-20">المصاريف</th>
                     </tr>

@@ -35,25 +35,11 @@ import { useBeneficiaries } from '../hooks/useBeneficiaries'
 
 // ---- Constants ----
 
-const STATUS_LABELS: Record<string, string> = {
-  disponible: 'متاح',
-  prete: 'مُعار',
-  endommage: 'تالف',
-  hors_service: 'خارج الخدمة',
-}
-
 const STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'danger' | 'default' | 'info'> = {
   disponible: 'success',
   prete: 'info',
   endommage: 'warning',
   hors_service: 'danger',
-}
-
-const LOAN_STATUS_LABELS: Record<string, string> = {
-  en_cours: 'جاري',
-  partiellement_retourne: 'مرتجع جزئياً',
-  retourne: 'نهائي',
-  definitif: 'نهائي',
 }
 
 const LOAN_STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'danger' | 'default' | 'info'> = {
@@ -112,7 +98,20 @@ function getDefaultFrenchName(arName: string): string {
 // ---- Component ----
 
 export default function InventoryPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const STATUS_LABELS: Record<string, string> = {
+    disponible: t('inventory.available_status'),
+    prete: t('inventory.onLoan'),
+    endommage: t('inventory.damaged'),
+    hors_service: t('inventory.outOfService'),
+  }
+
+  const LOAN_STATUS_LABELS: Record<string, string> = {
+    en_cours: t('inventory.ongoing'),
+    partiellement_retourne: t('inventory.partiallyReturned'),
+    retourne: t('inventory.final'),
+    definitif: t('inventory.final'),
+  }
   const { association } = useAuth()
   const [activeTab, setActiveTab] = useState<'stock' | 'loans' | 'settings'>('stock')
   const stockActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
@@ -123,29 +122,29 @@ export default function InventoryPage() {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">إدارة المخزون والإعارات</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('inventory.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {activeTab === 'stock' ? 'إدارة المواد والمخزون' : activeTab === 'loans' ? 'إدارة الإعارات والمرتجعات' : 'إدارة التصنيفات والمواقع'}
+            {activeTab === 'stock' ? t('inventory.subtitleStock', 'إدارة المواد والمخزون') : activeTab === 'loans' ? t('inventory.subtitleLoans', 'إدارة الإعارات والمرتجعات') : t('inventory.subtitleSettings', 'إدارة التصنيفات والمواقع')}
           </p>
         </div>
         <div className="flex gap-2">
           {activeTab === 'stock' && (
             <>
               <Button variant="secondary" size="sm" onClick={() => stockActions.current.toggleFilter()}>
-                <Filter className="w-4 h-4" /> بحث متقدم
+                <Filter className="w-4 h-4" /> {t('inventory.advancedSearch')}
               </Button>
               <Button size="sm" onClick={() => stockActions.current.addItem()}>
-                <Plus className="w-4 h-4" /> إضافة مقال
+                <Plus className="w-4 h-4" /> {t('inventory.addArticle')}
               </Button>
             </>
           )}
           {activeTab === 'loans' && (
             <>
               <Button variant="secondary" size="sm" onClick={() => loansActions.current.toggleFilter()}>
-                <Filter className="w-4 h-4" /> بحث متقدم
+                <Filter className="w-4 h-4" /> {t('inventory.advancedSearch')}
               </Button>
               <Button size="sm" onClick={() => loansActions.current.addItem()}>
-                <Plus className="w-4 h-4" /> إنشاء إعارة
+                <Plus className="w-4 h-4" /> {t('inventory.newLoan')}
               </Button>
             </>
           )}
@@ -164,7 +163,7 @@ export default function InventoryPage() {
             }`}
           >
             <Package className="inline-block w-4 h-4 ml-2" />
-            المخزون
+            {t('inventory.tabStock')}
           </button>
           <button
             onClick={() => setActiveTab('loans')}
@@ -175,7 +174,7 @@ export default function InventoryPage() {
             }`}
           >
             <ArrowLeftRight className="inline-block w-4 h-4 ml-2" />
-            الإعارات
+            {t('inventory.tabLoans')}
           </button>
           <button
             onClick={() => setActiveTab('settings')}
@@ -186,17 +185,17 @@ export default function InventoryPage() {
             }`}
           >
             <Settings className="inline-block w-4 h-4 ml-2" />
-            إدارة التصنيفات
+            {t('inventory.tabSettings')}
           </button>
         </nav>
       </div>
 
       {activeTab === 'stock' ? (
-        <StockTab actionsRef={stockActions} />
+        <StockTab actionsRef={stockActions} t={t} i18n={i18n} />
       ) : activeTab === 'loans' ? (
-        <LoansTab actionsRef={loansActions} />
+        <LoansTab actionsRef={loansActions} t={t} i18n={i18n} />
       ) : (
-        <SettingsTab />
+        <SettingsTab t={t} i18n={i18n} />
       )}
     </div>
   )
@@ -206,7 +205,7 @@ export default function InventoryPage() {
 // SETTINGS TAB — Categories & Storage Locations
 // ============================================================
 
-function SettingsTab() {
+function SettingsTab({ t, i18n }: { t: any; i18n: any }) {
   const { data: categories = [], isLoading: catsLoading } = useArticleCategories()
   const { data: locations = [], isLoading: locsLoading } = useStorageLocations()
   const { data: statuses = [], isLoading: stsLoading } = useArticleStatuses()
@@ -258,7 +257,7 @@ function SettingsTab() {
   }
 
   const handleDeleteCategory = async (id: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا التصنيف؟')) return
+    if (!window.confirm(t('inventory.confirmDeleteCategory'))) return
     await deleteCat.mutateAsync(id)
   }
 
@@ -292,7 +291,7 @@ function SettingsTab() {
   }
 
   const handleDeleteLocation = async (id: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا الموقع؟')) return
+    if (!window.confirm(t('inventory.confirmDeleteLocation'))) return
     await deleteLoc.mutateAsync(id)
   }
 
@@ -328,7 +327,7 @@ function SettingsTab() {
   }
 
   const handleDeleteStatus = async (id: string) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذه الحالة؟')) return
+    if (!window.confirm(t('inventory.confirmDeleteStatus'))) return
     await deleteSts.mutateAsync(id)
   }
 
@@ -363,23 +362,23 @@ function SettingsTab() {
   return (
     <div className="space-y-8">
       {/* ========== Article Categories Section ========== */}
-      <Card titleAr="تصنيفات المقالات">
+      <Card titleAr={t("inventory.addCategory")}>
         {/* Add form */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
-              labelAr="الاسم بالعربية"
+              labelAr={t('inventory.nameAr')}
               value={newCatNameAr}
               onChange={(e) => setNewCatNameAr(e.target.value)}
-              placeholder="مثال: طبي"
+              placeholder={t('inventory.nameArPlaceholder', 'مثال: طبي')}
             />
           </div>
           <div className="flex-1">
             <Input
-              labelAr="الاسم باللاتينية"
+              labelAr={t('inventory.nameLatin')}
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
-              placeholder="مثال: Medical"
+              placeholder="Ex: Medical"
             />
           </div>
           <div className="flex items-end">
@@ -392,15 +391,15 @@ function SettingsTab() {
 
         {/* Table */}
         {categories.length === 0 ? (
-          <EmptyState message="لا توجد تصنيفات بعد" icon={<FolderTree className="w-12 h-12" />} />
+          <EmptyState message={t('inventory.noCategories', 'لا توجد تصنيفات بعد')} icon={<FolderTree className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالعربية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم باللاتينية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.nameAr')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.nameLatin')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -445,14 +444,14 @@ function SettingsTab() {
                             <button
                               onClick={() => startEditCategory(cat)}
                               className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
-                              title="تعديل"
+                              title={t('common.edit')}
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteCategory(cat.id)}
                               className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
-                              title="حذف"
+                              title={t('common.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -469,23 +468,23 @@ function SettingsTab() {
       </Card>
 
       {/* ========== Storage Locations Section ========== */}
-      <Card titleAr="مواقع التخزين">
+      <Card titleAr={t("inventory.addLocation")}>
         {/* Add form */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
-              labelAr="الاسم بالعربية"
+              labelAr={t('inventory.nameAr')}
               value={newLocNameAr}
               onChange={(e) => setNewLocNameAr(e.target.value)}
-              placeholder="مثال: المستودع أ - الرف 1"
+              placeholder={t('inventory.locationPlaceholder', 'مثال: المستودع أ - الرف 1')}
             />
           </div>
           <div className="flex-1">
             <Input
-              labelAr="الاسم باللاتينية"
+              labelAr={t('inventory.nameLatin')}
               value={newLocName}
               onChange={(e) => setNewLocName(e.target.value)}
-              placeholder="مثال: Dépôt A - Rayon 1"
+              placeholder="Ex: Dépôt A - Rayon 1"
             />
           </div>
           <div className="flex items-end">
@@ -498,15 +497,15 @@ function SettingsTab() {
 
         {/* Table */}
         {locations.length === 0 ? (
-          <EmptyState message="لا توجد مواقع تخزين بعد" icon={<MapPin className="w-12 h-12" />} />
+          <EmptyState message={t('inventory.noLocations', 'لا توجد مواقع تخزين بعد')} icon={<MapPin className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم بالعربية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم باللاتينية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.nameAr')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.nameLatin')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -551,14 +550,14 @@ function SettingsTab() {
                             <button
                               onClick={() => startEditLocation(loc)}
                               className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
-                              title="تعديل"
+                              title={t('common.edit')}
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteLocation(loc.id)}
                               className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
-                              title="حذف"
+                              title={t('common.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -575,38 +574,38 @@ function SettingsTab() {
       </Card>
 
       {/* ========== Article Statuses Section ========== */}
-      <Card titleAr="الحالات">
+      <Card titleAr={t("inventory.addStatus", "الحالات")}>
         {/* Add form — single field */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
-              labelAr="الحالة"
+              labelAr={t('common.status')}
               value={newStsNameAr}
               onChange={(e) => {
                 setNewStsNameAr(e.target.value)
                 setNewStsName(e.target.value)
               }}
-              placeholder="مثال: très bon état"
+              placeholder="Ex: très bon état"
               required
             />
           </div>
           <div className="flex items-end">
             <Button onClick={handleAddStatus} disabled={!newStsNameAr.trim()}>
-              <Plus className="w-4 h-4" /> إضافة
+              <Plus className="w-4 h-4" />{t('common.add')}
             </Button>
           </div>
         </div>
 
         {/* Table */}
         {statuses.length === 0 ? (
-          <EmptyState message="لا توجد حالات بعد" icon={<CheckCircle className="w-12 h-12" />} />
+          <EmptyState message={t('inventory.noStatuses', 'لا توجد حالات بعد')} icon={<CheckCircle className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.status')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -642,14 +641,14 @@ function SettingsTab() {
                             <button
                               onClick={() => startEditStatus(sts)}
                               className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
-                              title="تعديل"
+                              title={t('common.edit')}
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteStatus(sts.id)}
                               className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
-                              title="حذف"
+                              title={t('common.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -673,7 +672,7 @@ function SettingsTab() {
 // STOCK TAB
 // ============================================================
 
-function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }> }) {
+function StockTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; t: any; i18n: any }) {
   const { data: articles = [], isLoading: loading } = useArticles()
   const { data: categories = [] } = useArticleCategories()
   const { data: locations = [] } = useStorageLocations()
@@ -770,7 +769,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
     setFormError('')
     // Client-side validation before sending
     if (!form.storageLocation) {
-      setFormError('يرجى اختيار مكان التخزين')
+      setFormError(t('inventory.selectLocation', 'يرجى اختيار مكان التخزين'))
       return
     }
     const data = {
@@ -805,7 +804,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   }
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('هل أنت متأكد من حذف هذا المقال؟')) {
+    if (window.confirm(t('inventory.confirmDeleteArticle'))) {
       await deleteArticle.mutateAsync(id)
     }
   }
@@ -821,14 +820,14 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   }))
 
   const statusOptions = [
-    { value: '', label: 'الكل' },
+    { value: '', label: t('common.all') },
     ...statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.nameAr })),
   ]
 
   const typeOptions = [
-    { value: '', label: 'الكل' },
-    { value: 'permanent', label: 'نهائي' },
-    { value: 'returnable', label: 'قابل للإرجاع' },
+    { value: '', label: t('common.all') },
+    { value: 'permanent', label: t('inventory.final') },
+    { value: 'returnable', label: t('inventory.returnable', 'قابل للإرجاع') },
   ]
 
   if (loading) return <LoadingSpinner />
@@ -840,7 +839,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="بحث عن مقال..."
+          placeholder={t('inventory.searchArticle')}
           value={filterSearchTerm}
           onChange={(e) => setFilterSearchTerm(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') applyStockFilters(); }}
@@ -850,41 +849,41 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
       {/* Filters */}
       {filterOpen && (
-        <Card titleAr="بحث متقدم">
+        <Card titleAr={t("inventory.advancedSearch")}>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <SearchableSelect
-              labelAr="الفئة"
+              labelAr={t('inventory.category')}
               value={filterCategory}
               onChange={setFilterCategory}
               options={[
-                { value: '', label: 'الكل' },
+                { value: '', label: t('common.all') },
                 ...categoryOptions,
               ]}
-              placeholder="الكل"
+              placeholder={t('common.all')}
             />
             <SearchableSelect
-              labelAr="الحالة"
+              labelAr={t('common.status')}
               value={filterStatus}
               onChange={setFilterStatus}
               options={statusOptions}
-              placeholder="الكل"
+              placeholder={t('common.all')}
             />
             <SearchableSelect
-              labelAr="مكان التخزين"
+              labelAr={t('inventory.storageLocation')}
               value={filterStorage}
               onChange={setFilterStorage}
               options={[
-                { value: '', label: 'الكل' },
+                { value: '', label: t('common.all') },
                 ...locationOptions,
               ]}
-              placeholder="الكل"
+              placeholder={t('common.all')}
             />
             <SearchableSelect
-              labelAr="النوع"
+              labelAr={t('dashboard.type')}
               value={filterType}
               onChange={setFilterType}
               options={typeOptions}
-              placeholder="الكل"
+              placeholder={t('common.all')}
             />
           </div>
           <div className="flex gap-2 mt-4">
@@ -901,20 +900,20 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       {/* Articles table */}
       <Card>
         {filtered.length === 0 ? (
-          <EmptyState message="لا توجد مقالات في المخزون" icon={<Package className="w-12 h-12" />} />
+          <EmptyState message={t('inventory.noArticles', 'لا توجد مقالات في المخزون')} icon={<Package className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الرمز المرجعي</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الاسم</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">الفئة</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الكمية</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">المتاح</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">مكان التخزين</th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.refCode')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.sectionName', 'الاسم')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">{t('inventory.category')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.quantity')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.available')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.status')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">{t('inventory.storageLocation')}</th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -941,7 +940,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                       <button
                         onClick={(e) => { e.stopPropagation(); openEdit(article); }}
                         className="p-1.5 text-gray-400 hover:text-primary-600 transition-colors"
-                        title="تعديل"
+                        title={t('common.edit')}
                       >
                         <Edit size={16} />
                       </button>
@@ -965,38 +964,38 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           /* ---- EDIT MODE: only storageLocation, status, notes are editable ---- */
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
-              <div><p className="text-xs text-gray-500">الاسم بالعربية</p><p className="font-medium">{form.nameAr}</p></div>
-              <div><p className="text-xs text-gray-500">الاسم باللاتينية</p><p className="font-medium">{form.name}</p></div>
-              {form.descriptionAr && <div><p className="text-xs text-gray-500">الوصف بالعربية</p><p className="font-medium">{form.descriptionAr}</p></div>}
-              {form.description && <div><p className="text-xs text-gray-500">الوصف باللاتينية</p><p className="font-medium">{form.description}</p></div>}
-              <div><p className="text-xs text-gray-500">الفئة</p><p className="font-medium">{categories.find((c) => c.id === form.category)?.nameAr || '—'}</p></div>
-              <div><p className="text-xs text-gray-500">الكمية</p><p className="font-medium">{form.quantity}</p></div>
-              <div><SearchableSelect labelAr="مكان التخزين" value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required /></div>
-              <div><SearchableSelect labelAr="الحالة" value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} /></div>
+              <div><p className="text-xs text-gray-500">{t('inventory.nameAr')}</p><p className="font-medium">{form.nameAr}</p></div>
+              <div><p className="text-xs text-gray-500">{t('inventory.nameLatin')}</p><p className="font-medium">{form.name}</p></div>
+              {form.descriptionAr && <div><p className="text-xs text-gray-500">{t('doctors.arabicLabel')}</p><p className="font-medium">{form.descriptionAr}</p></div>}
+              {form.description && <div><p className="text-xs text-gray-500">{t('inventory.descriptionLatin')}</p><p className="font-medium">{form.description}</p></div>}
+              <div><p className="text-xs text-gray-500">{t('inventory.category')}</p><p className="font-medium">{categories.find((c) => c.id === form.category)?.nameAr || '—'}</p></div>
+              <div><p className="text-xs text-gray-500">{t('inventory.quantity')}</p><p className="font-medium">{form.quantity}</p></div>
+              <div><SearchableSelect labelAr={t('inventory.storageLocation')} value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required /></div>
+              <div><SearchableSelect labelAr={t('common.status')} value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} /></div>
             </div>
-            <TextArea labelAr="ملاحظات" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            <TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             {formError && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{formError}</div>}
             <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => setShowModal(false)}>إلغاء</Button>
-              <Button onClick={handleSubmit}>تحديث</Button>
+              <Button variant="secondary" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
+              <Button onClick={handleSubmit}>{t('common.update')}</Button>
             </div>
           </div>
         ) : (
           /* ---- CREATE MODE: all fields editable ---- */
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr="الاسم بالعربية" value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} required />
-              <Input labelAr="الاسم باللاتينية" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-              <SearchableSelect labelAr="الفئة" value={form.category} onChange={(val) => setForm({ ...form, category: val })} options={categoryOptions} required />
-              <SearchableSelect labelAr="مكان التخزين" value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required />
-              <Input labelAr="الكمية" type="number" min={0} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} required />
-              <SearchableSelect labelAr="الحالة" value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} />
-              <div className="md:col-span-2"><TextArea labelAr="ملاحظات" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+              <Input labelAr={t('inventory.nameAr')} value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} required />
+              <Input labelAr={t('inventory.nameLatin')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <SearchableSelect labelAr={t('inventory.category')} value={form.category} onChange={(val) => setForm({ ...form, category: val })} options={categoryOptions} required />
+              <SearchableSelect labelAr={t('inventory.storageLocation')} value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required />
+              <Input labelAr={t('inventory.quantity')} type="number" min={0} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} required />
+              <SearchableSelect labelAr={t('common.status')} value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} />
+              <div className="md:col-span-2"><TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
             {formError && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 mt-4">{formError}</div>}
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="secondary" onClick={() => setShowModal(false)}>إلغاء</Button>
-              <Button onClick={handleSubmit} disabled={!form.nameAr || !form.name || !form.category}>إضافة</Button>
+              <Button variant="secondary" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
+              <Button onClick={handleSubmit} disabled={!form.nameAr || !form.name || !form.category}>{t('common.add')}</Button>
             </div>
           </div>
         )}
@@ -1009,7 +1008,7 @@ function StockTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 // LOANS TAB
 // ============================================================
 
-function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }> }) {
+function LoansTab({ actionsRef, t, i18n }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; t: any; i18n: any }) {
   const queryClient = useQueryClient()
   const { data: loans = [], isLoading: loading } = useLoans()
   const { data: articles = [] } = useArticles()
@@ -1093,10 +1092,10 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
   }))
 
   const loanStatusOptions = [
-    { value: '', label: 'الكل' },
-    { value: 'en_cours', label: 'جاري' },
-    { value: 'partiellement_retourne', label: 'مرتجع جزئياً' },
-    { value: 'definitif', label: 'نهائي' },
+    { value: '', label: t('common.all') },
+    { value: 'en_cours', label: t('inventory.ongoing') },
+    { value: 'partiellement_retourne', label: t('inventory.partiallyReturned') },
+    { value: 'definitif', label: t('inventory.final') },
   ]
 
   // ---- Create Loan ----
@@ -1245,7 +1244,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
   const handleRemoveItem = async (articleId: string) => {
     if (!selectedLoan) return
-    if (!window.confirm('هل أنت متأكد من إزالة هذا المقال من الإعارة؟')) return
+    if (!window.confirm(t('inventory.confirmRemoveItemFromLoan', 'هل أنت متأكد من إزالة هذا المقال من الإعارة؟'))) return
 
     await removeItemFromLoan.mutateAsync({ id: selectedLoan.id, articleId })
     await queryClient.invalidateQueries({ queryKey: ['loans'] })
@@ -1260,7 +1259,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
   const handleMarkDefinitive = async () => {
     if (!selectedLoan) return
-    if (!window.confirm('هل أنت متأكد من تحويل هذه الإعارة إلى نهائية؟ لن تُسترجع المقالات.')) return
+    if (!window.confirm(t('inventory.confirmMakeDefinitive', 'هل أنت متأكد من تحويل هذه الإعارة إلى نهائية؟'))) return
 
     await markLoanDefinitive.mutateAsync(selectedLoan.id)
     await queryClient.invalidateQueries({ queryKey: ['loans'] })
@@ -1272,22 +1271,22 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
   const handlePrintLoan = (loan: Loan) => {
     const itemsHtml = loan.items.map((item: any) =>
-      `<div class="row"><span class="lbl">المقال</span><span class="val">${item.articleNameAr} <i>×${item.quantity}</i></span></div>`
+      `<div class="row"><span class="lbl">${t('inventory.category')}</span><span class="val">${item.articleNameAr} <i>×${item.quantity}</i></span></div>`
     ).join('')
 
     const statusLabel = LOAN_STATUS_LABELS[loan.status] || loan.status
 
     printReceipt(
-      'تفاصيل الإعارة',
+      t('inventory.loanDetails'),
       'Détail du Prêt',
       `<div class="col">
-        <div class="row"><span class="lbl">الرمز المرجعي</span><span class="val">${loan.reference || '—'}</span></div>
-        <div class="row"><span class="lbl">المستفيد</span><span class="val">${loan.beneficiaryNameAr}</span></div>
-        <div class="row"><span class="lbl">رمز المستفيد</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
-        <div class="row"><span class="lbl">الحالة</span><span class="val">${statusLabel}</span></div>
-        <div class="row"><span class="lbl">تاريخ الإعارة</span><span class="val">${formatDate(loan.loanDate)}</span></div>
-        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl">تاريخ الإرجاع المتوقع</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
-        ${loan.actualReturnDate ? `<div class="row"><span class="lbl">تاريخ الإرجاع الفعلي</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
+        <div class="row"><span class="lbl">{t('inventory.refCode')}</span><span class="val">${loan.reference || '—'}</span></div>
+        <div class="row"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${loan.beneficiaryNameAr}</span></div>
+        <div class="row"><span class="lbl">${t('medical.beneficiaryRef')}</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
+        <div class="row"><span class="lbl">{t('common.status')}</span><span class="val">${statusLabel}</span></div>
+        <div class="row"><span class="lbl">${t('inventory.loanDate', 'تاريخ الإعارة')}</span><span class="val">${formatDate(loan.loanDate)}</span></div>
+        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl">${t('inventory.expectedReturnDate', 'تاريخ الإرجاع المتوقع')}</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
+        ${loan.actualReturnDate ? `<div class="row"><span class="lbl">${t('inventory.actualReturnDate', 'تاريخ الإرجاع الفعلي')}</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
        </div>
        <div class="col">
         ${itemsHtml}
@@ -1311,7 +1310,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="بحث عن إعارة..."
+          placeholder={t('inventory.searchLoan')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') applyLoanFilters(); }}
@@ -1321,33 +1320,33 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
       {/* Filters */}
       {filterOpen && (
-        <Card titleAr="بحث متقدم">
+        <Card titleAr={t("inventory.advancedSearch")}>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <SearchableSelect
-              labelAr="الحالة"
+              labelAr={t('common.status')}
               value={filterStatus}
               onChange={setFilterStatus}
               options={loanStatusOptions}
-              placeholder="الكل"
+              placeholder={t('common.all')}
             />
             <SearchableSelect
-              labelAr="المستفيد"
+              labelAr={t('medical.beneficiary')}
               value={filterBeneficiary}
               onChange={setFilterBeneficiary}
               options={[
-                { value: '', label: 'الكل' },
+                { value: '', label: t('common.all') },
                 ...beneficiaryOptions,
               ]}
-              placeholder="الكل"
+              placeholder={t('common.all')}
             />
             <Input
-              labelAr="من تاريخ"
+              labelAr={t('analytics.fromDate')}
               type="date"
               value={filterDateFrom}
               onChange={(e) => setFilterDateFrom(e.target.value)}
             />
             <Input
-              labelAr="إلى تاريخ"
+              labelAr={t('analytics.toDate')}
               type="date"
               value={filterDateTo}
               onChange={(e) => setFilterDateTo(e.target.value)}
@@ -1367,23 +1366,23 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       {/* Loans table */}
       <Card>
         {filteredLoans.length === 0 ? (
-          <EmptyState message="لا توجد إعارات" icon={<ArrowLeftRight className="w-12 h-12" />} />
+          <EmptyState message={t("inventory.noLoans", "لا توجد إعارات")} icon={<ArrowLeftRight className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">رمز المرجعي</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">المستفيد</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden lg:table-cell">رمز المستفيد</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">المقالات</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">المُرتجع</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">المتبقي</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الحالة</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">تاريخ الإعارة</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">تاريخ الإرجاع المتوقع</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">تاريخ الإرجاع الفعلي</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.refCode')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.beneficiary')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden lg:table-cell">{t('medical.beneficiaryRef')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.quantity', 'المقالات')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.returnedItems', 'المُرتجع')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">{t('finance.remainingAmount', 'المتبقي')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.status')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.loanDate', 'تاريخ الإعارة')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.expectedReturnDate', 'تاريخ الإرجاع المتوقع')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.actualReturnDate', 'تاريخ الإرجاع الفعلي')}</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1438,13 +1437,13 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       <Modal
         isOpen={showCreateModal}
         onClose={() => { setShowCreateModal(false); setSelectedBeneficiaryId(''); setLoanItems([]); setExpectedReturnDate(''); setLoanNotes(''); }}
-        title="إنشاء إعارة جديدة"
+        title={t("inventory.newLoan")}
         size="xl"
       >
         <div className="space-y-6">
           {/* Beneficiary selector */}
           <SearchableSelect
-            labelAr="المستفيد"
+            labelAr={t('medical.beneficiary')}
             value={selectedBeneficiaryId}
             onChange={(val) => {
               setSelectedBeneficiaryId(val)
@@ -1460,7 +1459,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
           {/* Dynamic items list */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">المقالات</label>
+              <label className="block text-sm font-medium text-gray-700">{t('inventory.quantity', 'المقالات')}</label>
               <Button size="sm" variant="secondary" onClick={addLoanItemRow}>
                 <Plus className="w-3 h-3" />
                 إضافة مقال
@@ -1481,7 +1480,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   }))}
                 />
                 <Input
-                  labelAr="الكمية"
+                  labelAr={t('inventory.quantity')}
                   type="number"
                   min={1}
                   max={
@@ -1514,7 +1513,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
           {/* Notes */}
           <TextArea
-            labelAr="ملاحظات"
+            labelAr={t('common.notes')}
             value={loanNotes}
             onChange={(e) => setLoanNotes(e.target.value)}
           />
@@ -1537,7 +1536,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
       <Modal
         isOpen={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        title="تفاصيل الإعارة"
+        title={t("inventory.loanDetails")}
         size="xl"
       >
         {selectedLoan && (
@@ -1573,7 +1572,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
 
             {/* Items list */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">المقالات</h4>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('inventory.quantity', 'المقالات')}</h4>
               <div className="flex flex-wrap gap-2 mb-3 text-xs text-gray-500">
                 {selectedLoan.items.map((item) => {
                   const art = articles.find((a: Article) => a.id === item.articleId)
@@ -1589,9 +1588,9 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-right py-2 px-3 font-medium text-gray-500">المقال</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">الكمية</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">المُرتجع</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">المتبقي</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.quantity')}</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.returnedItems', 'المُرتجع')}</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('finance.remainingAmount', 'المتبقي')}</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">الحالة عند الإعارة</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-500">الحالة عند الإرجاع</th>
                     </tr>
@@ -1711,7 +1710,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     }))}
                   />
                   <Input
-                    labelAr="الكمية"
+                    labelAr={t('inventory.quantity')}
                     type="number"
                     min={1}
                     max={
@@ -1723,7 +1722,7 @@ function LoansTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleF
                     onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)}
                   />
                   <SearchableSelect
-                    labelAr="الحالة"
+                    labelAr={t('common.status')}
                     value={newItemCondition}
                     onChange={(val) => setNewItemCondition(val)}
                     options={

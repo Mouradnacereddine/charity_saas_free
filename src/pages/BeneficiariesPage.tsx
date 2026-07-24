@@ -549,7 +549,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">الأطفال (${b.children.length})</div>
         <table class="data-table">
-          <thead><tr><th>الاسم</th><th>الجنس</th><th>العمر</th><th>الحالة الصحية</th><th>المستوى الدراسي</th></tr></thead>
+          <thead><tr><th>{t('beneficiaries.sectionName')}</th><th>{t('beneficiaries.filterGender')}</th><th>{t('receipt.age')}</th><th>{t('common.status')}</th><th>{t('beneficiaries.schoolGrade')}</th></tr></thead>
           <tbody>${b.children.map((ch: any) => `
             <tr>
               <td>${ch.lastNameAr} ${ch.firstNameAr}</td>
@@ -592,7 +592,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">المبالغ المصروفة (${debits.length})</div>
         <table class="data-table">
-          <thead><tr><th>التاريخ</th><th>المبلغ</th><th>المصدر</th><th>الصندوق</th><th>الحالة</th><th>الوصف</th></tr></thead>
+          <thead><tr><th>التاريخ</th><th>المبلغ</th><th>المصدر</th><th>{t('dashboard.fund')}</th><th>الحالة</th><th>الوصف</th></tr></thead>
           <tbody>${debits.map((tx: any) => {
             const c = caisses.find((c: any) => c.id === tx.caisseId)
             const s = (tx.status || 'completed') === 'pending' ? 'معلق' : (tx.status || 'completed') === 'cancelled' ? 'ملغي' : 'مكتمل'
@@ -612,7 +612,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">التوجيه الطبي (${referrals.length})</div>
         <table class="data-table">
-          <thead><tr><th>التاريخ</th><th>الطبيب</th><th>المبلغ</th><th>التحليل</th><th>المستشفى</th><th>الأطفال</th></tr></thead>
+          <thead><tr><th>التاريخ</th><th>الطبيب</th><th>المبلغ</th><th>التحليل</th><th>المستشفى</th><th>{t('beneficiaries.children')}</th></tr></thead>
           <tbody>${referrals.map((ref: any) => {
             const childrenNames = ref.children && Array.isArray(ref.children) && ref.children.length > 0
               ? ref.children.map((c: any) => c.nameAr).join(', ')
@@ -667,12 +667,12 @@ export default function BeneficiariesPage() {
             <div class="item"><span class="lbl">الاسم بالعربية</span><span class="val">${b.lastNameAr} ${b.firstNameAr}</span></div>
             <div class="item"><span class="lbl">الاسم باللاتينية</span><span class="val">${b.firstName} ${b.lastName}</span></div>
             <div class="item"><span class="lbl">رقم البطاقة الوطنية</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
-            <div class="item"><span class="lbl">الهاتف</span><span class="val">${b.phone}</span></div>
+            <div class="item"><span class="lbl">{t('receipt.phone')}</span><span class="val">${b.phone}</span></div>
             <div class="item"><span class="lbl">تاريخ الميلاد</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${calculateAge(b.dateOfBirth).displayAr})` : '—'}</span></div>
-            <div class="item"><span class="lbl">الصفة</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
-            <div class="item"><span class="lbl">الجنس</span><span class="val">${b.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
+            <div class="item"><span class="lbl">{t('beneficiaries.filterAttribute')}</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
+            <div class="item"><span class="lbl">{t('beneficiaries.filterGender')}</span><span class="val">${b.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
             <div class="item"><span class="lbl">العنوان</span><span class="val">${b.addressAr || '—'}</span></div>
-            <div class="item"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
+            <div class="item"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
             ${b.situationAr ? `<div class="item"><span class="lbl">الحالة</span><span class="val">${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}</span></div>` : ''}
             ${b.notes ? `<div class="item"><span class="lbl" style="min-width:140px">ملاحظات</span><span class="val">${b.notes}</span></div>` : ''}
           </div>
@@ -731,7 +731,7 @@ export default function BeneficiariesPage() {
 
       {/* ---- Advanced Filters (collapsible) ---- */}
       {showFilters && (
-        <Card titleAr="بحث متقدم">
+        <Card titleAr={t("beneficiaries.advancedSearch")}>
           {/* Filter tabs */}
           <div className="flex gap-1 mb-4 border-b border-gray-200">
             <button
@@ -762,39 +762,39 @@ export default function BeneficiariesPage() {
           {filterTab === 'beneficiary' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <SearchableSelect
-                labelAr="الصفة"
+                labelAr={t('beneficiaries.filterAttribute')}
                 options={attributOptions}
                 value={filterAttribut}
                 onChange={(val) => setFilterAttribut(val)}
                 required={false}
               />
               <SearchableSelect
-                labelAr="الصندوق"
+                labelAr={t('beneficiaries.filterFund')}
                 options={caisseOptions}
                 value={filterCaisseId}
                 onChange={(val) => setFilterCaisseId(val)}
               />
               <SearchableSelect
-                labelAr="الجنس"
+                labelAr={t('beneficiaries.filterGender')}
                 options={[{ value: '', label: 'الكل' }, { value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
                 value={filterGender}
                 onChange={(val) => setFilterGender(val)}
               />
               <SearchableSelect
-                labelAr="الحالة"
+                labelAr={t('common.status')}
                 options={[{ value: '', label: 'الكل' }, ...HEALTH_STATUS_OPTIONS]}
                 value={filterSituation}
                 onChange={(val) => setFilterSituation(val)}
               />
               <Input
-                labelAr="الحد الأدنى لعدد الأطفال"
+                labelAr={t('beneficiaries.filterMinChildren')}
                 type="number"
                 min="0"
                 value={filterMinChildren}
                 onChange={(e) => setFilterMinChildren(e.target.value)}
               />
               <Input
-                labelAr="العمر الأقصى للمستفيد"
+                labelAr={t('beneficiaries.filterMaxAge')}
                 type="number"
                 min="0"
                 value={filterMaxAge}
@@ -887,13 +887,13 @@ export default function BeneficiariesPage() {
                 <tr className="border-b border-gray-200 text-gray-500">
                   <th className="py-3 px-4 text-right font-medium w-8"></th>
                   <th className="py-3 px-4 text-right font-medium">الرمز المرجعي</th>
-                  <th className="py-3 px-4 text-right font-medium">الاسم</th>
+                  <th className="py-3 px-4 text-right font-medium">{t('beneficiaries.sectionName')}</th>
                   <th className="py-3 px-4 text-right font-medium hidden md:table-cell">رقم البطاقة الوطنية</th>
-                  <th className="py-3 px-4 text-right font-medium hidden lg:table-cell">الهاتف</th>
-                  <th className="py-3 px-4 text-right font-medium">الصفة</th>
-                  <th className="py-3 px-4 text-right font-medium hidden sm:table-cell">العمر</th>
+                  <th className="py-3 px-4 text-right font-medium hidden lg:table-cell">{t('receipt.phone')}</th>
+                  <th className="py-3 px-4 text-right font-medium">{t('beneficiaries.filterAttribute')}</th>
+                  <th className="py-3 px-4 text-right font-medium hidden sm:table-cell">{t('receipt.age')}</th>
                   <th className="py-3 px-4 text-right font-medium">عدد الأطفال</th>
-                  <th className="py-3 px-4 text-right font-medium hidden lg:table-cell">الصندوق</th>
+                  <th className="py-3 px-4 text-right font-medium hidden lg:table-cell">{t('dashboard.fund')}</th>
                   <th className="py-3 px-4 text-center font-medium">الإجراءات</th>
                 </tr>
               </thead>
@@ -974,11 +974,11 @@ export default function BeneficiariesPage() {
                               <table className="w-full text-xs">
                                 <thead>
                                   <tr className="bg-gray-100 text-gray-600">
-                                    <th className="py-2 px-3 text-right font-medium">الاسم</th>
-                                    <th className="py-2 px-3 text-right font-medium">الجنس</th>
-                                    <th className="py-2 px-3 text-right font-medium">العمر</th>
-                                    <th className="py-2 px-3 text-right font-medium">الحالة الصحية</th>
-                                    <th className="py-2 px-3 text-right font-medium">المستوى الدراسي</th>
+                                    <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.sectionName')}</th>
+                                    <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.filterGender')}</th>
+                                    <th className="py-2 px-3 text-right font-medium">{t('receipt.age')}</th>
+                                    <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
+                                    <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.schoolGrade')}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -1016,11 +1016,11 @@ export default function BeneficiariesPage() {
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
           {/* Names */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">الاسم</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('beneficiaries.sectionName')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr="الاسم بالعربية" value={form.firstNameAr} onChange={(e) => handleFormChange('firstNameAr', e.target.value)} required />
+              <Input labelAr={t('beneficiaries.nameAr')} value={form.firstNameAr} onChange={(e) => handleFormChange('firstNameAr', e.target.value)} required />
               <Input labelAr="اللقب بالعربية" value={form.lastNameAr} onChange={(e) => handleFormChange('lastNameAr', e.target.value)} required />
-              <Input labelAr="الاسم باللاتينية" value={form.firstName} onChange={(e) => handleFormChange('firstName', e.target.value)} dir="ltr" required />
+              <Input labelAr={t('beneficiaries.nameLatin')} value={form.firstName} onChange={(e) => handleFormChange('firstName', e.target.value)} dir="ltr" required />
               <Input labelAr="اللقب باللاتينية" value={form.lastName} onChange={(e) => handleFormChange('lastName', e.target.value)} dir="ltr" required />
             </div>
           </div>
@@ -1038,10 +1038,10 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">المعلومات الشخصية</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input labelAr="رقم البطاقة الوطنية" value={form.nationalCardNumber} onChange={(e) => handleFormChange('nationalCardNumber', e.target.value)} required />
-              <Input labelAr="رقم الهاتف" value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value)} dir="ltr" required />
+              <Input labelAr={t('receipt.idNumber')} value={form.nationalCardNumber} onChange={(e) => handleFormChange('nationalCardNumber', e.target.value)} required />
+              <Input labelAr={t('receipt.phone')} value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value)} dir="ltr" required />
               <div className="space-y-1">
-                <Input labelAr="تاريخ الميلاد" type="date" value={form.dateOfBirth} onChange={(e) => handleFormChange('dateOfBirth', e.target.value)} required />
+                <Input labelAr={t('receipt.birthDate')} type="date" value={form.dateOfBirth} onChange={(e) => handleFormChange('dateOfBirth', e.target.value)} required />
                 {form.dateOfBirth && (
                   <p className="text-xs text-gray-500">العمر: {calculateAge(form.dateOfBirth).displayAr}</p>
                 )}
@@ -1054,14 +1054,14 @@ export default function BeneficiariesPage() {
             <h4 className="text-sm font-semibold text-gray-700 mb-3">التصنيف</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <SearchableSelect
-                labelAr="الصفة"
+                labelAr={t('beneficiaries.filterAttribute')}
                 options={attributOptions}
                 value={form.attribut}
                 onChange={(val) => handleFormChange('attribut', val)}
                 required
               />
               <SearchableSelect
-                labelAr="الجنس"
+                labelAr={t('beneficiaries.filterGender')}
                 options={[{ value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
                 value={form.gender || 'male'}
                 onChange={(val) => handleFormChange('gender', val)}
@@ -1078,7 +1078,7 @@ export default function BeneficiariesPage() {
             <h4 className="text-sm font-semibold text-gray-700 mb-3">الحالة</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SearchableSelect
-                labelAr="الحالة"
+                labelAr={t('common.status')}
                 options={HEALTH_STATUS_OPTIONS}
                 value={form.situationAr}
                 onChange={(val) => handleFormChange('situationAr', val)}
@@ -1090,7 +1090,7 @@ export default function BeneficiariesPage() {
           {/* Children */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-gray-700">الأطفال</h4>
+              <h4 className="text-sm font-semibold text-gray-700">{t('beneficiaries.children')}</h4>
               <Button size="sm" variant="secondary" onClick={addChild}>
                 <Plus className="w-4 h-4" /> إضافة طفل
               </Button>
@@ -1104,9 +1104,9 @@ export default function BeneficiariesPage() {
                       <button onClick={() => removeChild(index)} className="text-xs text-red-500 hover:text-red-700">✕ إزالة</button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Input labelAr="الاسم بالعربية" value={child.firstNameAr} onChange={(e) => updateChild(index, 'firstNameAr', e.target.value)} />
+                      <Input labelAr={t('beneficiaries.nameAr')} value={child.firstNameAr} onChange={(e) => updateChild(index, 'firstNameAr', e.target.value)} />
                       <Input labelAr="اللقب بالعربية" value={child.lastNameAr} onChange={(e) => updateChild(index, 'lastNameAr', e.target.value)} />
-                      <Input labelAr="تاريخ الميلاد" type="date" value={child.dateOfBirth} onChange={(e) => updateChild(index, 'dateOfBirth', e.target.value)} />
+                      <Input labelAr={t('receipt.birthDate')} type="date" value={child.dateOfBirth} onChange={(e) => updateChild(index, 'dateOfBirth', e.target.value)} />
                       <SearchableSelect
                         labelAr="جنس الطفل"
                         options={[{ value: 'male', label: 'ذكر' }, { value: 'female', label: 'أنثى' }]}
@@ -1136,7 +1136,7 @@ export default function BeneficiariesPage() {
           </div>
 
           {/* Notes */}
-          <TextArea labelAr="ملاحظات" value={form.notes} onChange={(e) => handleFormChange('notes', e.target.value)} />
+          <TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => handleFormChange('notes', e.target.value)} />
 
           <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
             <Button variant="secondary" onClick={closeFormModal}>إلغاء</Button>
@@ -1156,13 +1156,13 @@ export default function BeneficiariesPage() {
                 <div className="flex justify-between"><span className="text-gray-500">الاسم بالعربية</span><span className="font-medium text-gray-900">{selectedBeneficiary.lastNameAr} {selectedBeneficiary.firstNameAr}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">الاسم باللاتينية</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.firstName} {selectedBeneficiary.lastName}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">رقم البطاقة الوطنية</span><span className="font-medium text-gray-900">{selectedBeneficiary.nationalCardNumber}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">الهاتف</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.phone}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">{t('receipt.phone')}</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.phone}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">تاريخ الميلاد</span><span className="font-medium text-gray-900">{selectedBeneficiary.dateOfBirth ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${calculateAge(selectedBeneficiary.dateOfBirth).displayAr})` : '—'}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">الصفة</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
-                <div className="flex justify-between"><span className="text-gray-500">الجنس</span><span className="font-medium text-gray-900">{selectedBeneficiary.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.filterAttribute')}</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
+                <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.filterGender')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">العنوان بالعربية</span><span className="font-medium text-gray-900">{selectedBeneficiary.addressAr || '—'}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">العنوان باللاتينية</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.address || '—'}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">الصندوق</span><span className="font-medium text-gray-900">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-gray-500 mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">{t('dashboard.fund')}</span><span className="font-medium text-gray-900">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-gray-500 mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
                 {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between"><span className="text-gray-500">باسم من</span><span className="font-medium text-gray-900">{selectedBeneficiary.onBehalfOfName}</span></div>}
                 {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">الحالة</span><span className="font-medium text-gray-900">{HEALTH_STATUS_LABELS[selectedBeneficiary.situationAr] || selectedBeneficiary.situationAr}{selectedBeneficiary.situation && <span className="text-gray-400 mr-2" dir="ltr">({selectedBeneficiary.situation})</span>}</span></div>}
                 {selectedBeneficiary.notes && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">ملاحظات</span><span className="font-medium text-gray-900">{selectedBeneficiary.notes}</span></div>}
@@ -1176,11 +1176,11 @@ export default function BeneficiariesPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="py-2 px-3 text-right font-medium">الاسم</th>
-                        <th className="py-2 px-3 text-right font-medium">الجنس</th>
-                        <th className="py-2 px-3 text-right font-medium">العمر</th>
-                        <th className="py-2 px-3 text-right font-medium">الحالة الصحية</th>
-                        <th className="py-2 px-3 text-right font-medium">المستوى الدراسي</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.sectionName')}</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.filterGender')}</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('receipt.age')}</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.schoolGrade')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1261,7 +1261,7 @@ export default function BeneficiariesPage() {
                         <th className="py-2 px-3 text-right font-medium">التاريخ</th>
                         <th className="py-2 px-3 text-right font-medium">المبلغ</th>
                         <th className="py-2 px-3 text-right font-medium">مصدر التمويل</th>
-                        <th className="py-2 px-3 text-right font-medium">الصندوق</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('dashboard.fund')}</th>
                         <th className="py-2 px-3 text-right font-medium">الحالة</th>
                         <th className="py-2 px-3 text-right font-medium">الوصف</th>
                         <th className="py-2 px-3 text-right font-medium">الإجراءات</th>
@@ -1295,7 +1295,7 @@ export default function BeneficiariesPage() {
                                   `<div class="col"><div class="row"><span class="lbl">رقم العملية</span><span class="val">${tx.id.slice(0, 8) || '—'}</span></div>
 <div class="row"><span class="lbl">التاريخ</span><span class="val">${formatDate(tx.date)}</span></div>
 <div class="row"><span class="lbl">المستفيد</span><span class="val">${selectedBeneficiary?.lastNameAr || ''} ${selectedBeneficiary?.firstNameAr || ''}</span></div></div>
-<div class="col"><div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse?.nameAr || '—'}</span></div>
+<div class="col"><div class="row"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}</span></div>
 <div class="row"><span class="lbl">المصدر</span><span class="val">${tx.fundSource === 'banque' ? 'بنك' : 'صندوق نقدي'}</span></div>
 ${tx.descriptionAr ? `<div class="row"><span class="lbl">الوصف</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
                                   'background:#fff0f0;color:#dc2626',
@@ -1336,7 +1336,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">الوصف</span><span 
                         <th className="py-2 px-3 text-right font-medium">الطبيب</th>
                         <th className="py-2 px-3 text-right font-medium">المبلغ</th>
                         <th className="py-2 px-3 text-right font-medium">الحالة</th>
-                        <th className="py-2 px-3 text-right font-medium">الصندوق</th>
+                        <th className="py-2 px-3 text-right font-medium">{t('dashboard.fund')}</th>
                         <th className="py-2 px-3 text-right font-medium">التحليل</th>
                         <th className="py-2 px-3 text-right font-medium">المستشفى</th>
                         <th className="py-2 px-3 text-right font-medium">الإجراءات</th>
@@ -1364,7 +1364,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">الوصف</span><span 
                                 e.stopPropagation();
                                 const caisse = caisses.find((c: any) => c.id === ref.caisseId)
                                 const subCat = caisse?.subCategories.find((s: any) => s.id === ref.subCategoryId)
-                                const caisseRow = caisse ? `<div class="row"><span class="lbl">الصندوق</span><span class="val">${caisse.nameAr}</span></div>` : ''
+                                const caisseRow = caisse ? `<div class="row"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse.nameAr}</span></div>` : ''
                                 const subCatRow = subCat ? `<div class="row"><span class="lbl">الفئة الفرعية</span><span class="val">${subCat.nameAr}</span></div>` : ''
                                 const childrenHtml = ref.children && Array.isArray(ref.children) && ref.children.length > 0
                                   ? `<div class="row"><span class="lbl">الأطفال المستفيدون</span><span class="val">${ref.children.map((c: any) => c.nameAr || c.name).join(', ')}</span></div>`
@@ -1434,7 +1434,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
       {/* ---- Header ---- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">المستفيدون</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('beneficiaries.tabList')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             إدارة المستفيدين وبياناتهم — إجمالي: {displayBeneficiaries.length}{widowFilterActive ? ' (الأكثر أطفالاً — طبقاً للفلاتر المطبقة)' : ''}
           </p>
@@ -1475,8 +1475,8 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
             </h3>
             <p className="text-sm text-gray-500 mb-4">إضافة وتعديل وحذف الصفات (الخصائص) للمستفيدين</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-              <Input labelAr="الاسم بالعربية" value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder="مثال: يتيم" />
-              <Input labelAr="الاسم باللاتينية" value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder="Ex: orphelin" dir="ltr" />
+              <Input labelAr={t('beneficiaries.nameAr')} value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder="مثال: يتيم" />
+              <Input labelAr={t('beneficiaries.nameLatin')} value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder="Ex: orphelin" dir="ltr" />
               <Button onClick={handleAddAttribut} disabled={!newAttrNameAr.trim()}>إضافة</Button>
             </div>
             <Card>
@@ -1527,8 +1527,8 @@ ${ref.notes ? `<div class="row"><span class="lbl">ملاحظات</span><span cla
             </h3>
             <p className="text-sm text-gray-500 mb-4">إدارة المستويات الدراسية للأطفال</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-              <Input labelAr="الاسم بالعربية" value={newGradeNameAr} onChange={(e) => setNewGradeNameAr(e.target.value)} placeholder="مثال: السنة الأولى" />
-              <Input labelAr="الاسم باللاتينية" value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder="Ex: CP1" dir="ltr" />
+              <Input labelAr={t('beneficiaries.nameAr')} value={newGradeNameAr} onChange={(e) => setNewGradeNameAr(e.target.value)} placeholder="مثال: السنة الأولى" />
+              <Input labelAr={t('beneficiaries.nameLatin')} value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder="Ex: CP1" dir="ltr" />
               <Button onClick={handleAddGrade} disabled={!newGradeNameAr.trim()}>إضافة</Button>
             </div>
             <Card>

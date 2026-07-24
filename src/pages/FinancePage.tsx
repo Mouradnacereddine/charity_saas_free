@@ -385,7 +385,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       setTxSubCategoryId('')
       setTxPending(false)
     } catch (err: any) {
-      setTxError(err?.response?.data?.error || err?.message || 'فشل في إضافة المعاملة')
+      setTxError(err?.response?.data?.error || err?.message || t('finance.addFailed', 'فشل في إضافة المعاملة'))
     } finally {
       setTxSubmitting(false)
     }
@@ -428,7 +428,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       setConfirmTxAmount('')
       setDetailTx(null)
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || 'فشل في تأكيد المعاملة')
+      alert(err?.response?.data?.error || err?.message || t('finance.confirmFailed', 'فشل في تأكيد المعاملة'))
     }
   }
 
@@ -438,7 +438,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       setCancellingTxId(null)
       setDetailTx(null)
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || 'فشل في إلغاء المعاملة')
+      alert(err?.response?.data?.error || err?.message || t('finance.cancelFailed', 'فشل في إلغاء المعاملة'))
     }
   }
 
@@ -455,7 +455,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       queryClient.invalidateQueries({ queryKey: ['caisses'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || 'فشل في صرف المبلغ')
+      alert(err?.response?.data?.error || err?.message || t('finance.disburseFailed', 'فشل في صرف المبلغ'))
     }
   }
 
