@@ -1,7 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import i18n from '../i18n';
+import i18nInstance from '../i18n';
 import { Card, StatCard, LoadingSpinner, Badge, Button } from '../components/common/UI';
+
+// Use i18nInstance.t directly instead of the hook-based t to avoid
+// "t is not a function" errors during React Query re-renders (react-i18next#1950)
+const t = (key: string, fallback?: string) => {
+  try { return i18nInstance.t(key, fallback); }
+  catch { return fallback || key; }
+};
 import { useTransactions } from '../hooks/useFinance';
 import { useDonors } from '../hooks/useDonors';
 import { useAuth } from '../hooks/useAuth';
@@ -24,7 +30,6 @@ import {
 import type { Transaction, Caisse } from '../types';
 
 export default function AnalyticsPage() {
-  const { t, i18n } = useTranslation();
   const [quickFilter, setQuickFilter] = useState<'this_month' | 'last_3_months' | 'this_year' | 'custom'>('this_month');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -322,12 +327,12 @@ export default function AnalyticsPage() {
                   bodyRows += `<tr><td>${formatDate(tx.date)}</td><td>${tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</td><td class="${tx.type === 'credit' ? 'credit' : 'debit'}">${formatCurrency(tx.amount)}</td><td>${tx.descriptionAr || '—'}</td><td>${caisse?.nameAr || '—'}</td></tr>`;
                 });
                 bodyRows += '</tbody></table></div>';
-                const isLtr = i18n.language !== 'ar';
+                const isLtr = i18nInstance.language !== 'ar';
                 printAnalyticsReport({
                   assocNameAr: association?.nameAr || t('app.title'),
                   title: t('analytics.title'),
                   periodLabel:  quickFilter === 'this_month' ? t('analytics.currentMonth') : quickFilter === 'last_3_months' ? t('analytics.last3Months') : quickFilter === 'this_year' ? t('analytics.currentYear') : `${startDate} ${t('medical.toDate').toLowerCase()} ${endDate}`,
-                  dateLabel: new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-DZ' : i18n.language === 'fr' ? 'fr-DZ' : 'en-DZ'),
+                  dateLabel: new Date().toLocaleDateString(i18nInstance.language === 'ar' ? 'ar-DZ' : i18nInstance.language === 'fr' ? 'fr-DZ' : 'en-DZ'),
                   credits: formatCurrency(totalCredits),
                   debits: formatCurrency(totalDebits),
                   balance: formatCurrency(totalCredits - totalDebits),
@@ -342,7 +347,7 @@ export default function AnalyticsPage() {
                     printReport: t('receipt.printReport')
                   },
                   dir: isLtr ? 'ltr' : 'rtl',
-                  lang: i18n.language
+                  lang: i18nInstance.language
                 });
               }}
               size="md"
