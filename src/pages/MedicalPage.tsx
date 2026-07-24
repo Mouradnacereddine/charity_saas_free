@@ -621,19 +621,19 @@ export default function MedicalPage() {
         {showDetailModal && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الرمز المرجعي</span><span className="font-semibold text-primary-700" dir="ltr">{showDetailModal.reference || '—'}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستفيد</span><span className="font-medium text-gray-900">{showDetailModal.beneficiaryNameAr} <span dir="ltr" className="text-xs text-gray-400">({showDetailModal.beneficiaryReference || ''})</span></span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.referenceLabel')}</span><span className="font-semibold text-primary-700" dir="ltr">{showDetailModal.reference || '—'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.beneficiaryLabel')}</span><span className="font-medium text-gray-900">{showDetailModal.beneficiaryNameAr} <span dir="ltr" className="text-xs text-gray-400">({showDetailModal.beneficiaryReference || ''})</span></span></div>
               {(() => {
                 const b = beneficiaries.find((b: Beneficiary) => b.id === showDetailModal.beneficiaryId);
-                return b?.nationalCardNumber ? <div className="flex justify-between items-center"><span className="text-xs text-gray-500">رقم البطاقة الوطنية</span><span className="font-medium text-gray-900" dir="ltr">{b.nationalCardNumber}</span></div> : null;
+                return b?.nationalCardNumber ? <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.nationalCardLabel')}</span><span className="font-medium text-gray-900" dir="ltr">{b.nationalCardNumber}</span></div> : null;
               })()}
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">الطبيب</span><span className="font-medium text-gray-900">{showDetailModal.doctorNameAr || (showDetailModal.doctor ? `${showDetailModal.doctor.lastNameAr} ${showDetailModal.doctor.firstNameAr}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-gray-400 mr-2">({showDetailModal.doctor.specialty.nameAr})</span> : ''}</span></div>
-              {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">نوع التحليل</span><span className="font-medium text-gray-900">{showDetailModal.analysisTypeAr}</span></div>}
-              {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">المستشفى</span><span className="font-medium text-gray-900">{showDetailModal.hospitalAr}</span></div>}
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">التاريخ</span><span className="font-medium text-gray-900">{formatDate(showDetailModal.date)}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.doctor')}</span><span className="font-medium text-gray-900">{showDetailModal.doctorNameAr || (showDetailModal.doctor ? `${showDetailModal.doctor.lastNameAr} ${showDetailModal.doctor.firstNameAr}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-gray-400 mr-2">({showDetailModal.doctor.specialty.nameAr})</span> : ''}</span></div>
+              {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.analysisType')}</span><span className="font-medium text-gray-900">{showDetailModal.analysisTypeAr}</span></div>}
+              {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.hospital')}</span><span className="font-medium text-gray-900">{showDetailModal.hospitalAr}</span></div>}
+              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('common.date')}</span><span className="font-medium text-gray-900">{formatDate(showDetailModal.date)}</span></div>
               {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">الأطفال المستفيدون</span>
+                  <span className="text-xs text-gray-500">{t('medical.referralChildrenLabel')}</span>
                   <span className="font-medium text-gray-900 text-left">{showDetailModal.children.map((c: any) => c.nameAr || c.name || c.id).join('، ')}</span>
                 </div>
               )}
@@ -745,9 +745,9 @@ export default function MedicalPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.tableArabic')}</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.tableLatin')}</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-500">{t('medical.tableActions')}</th>
                   </tr>
                 </thead>
                 <tbody>{analysisTypes.map((a: MedicalAnalysisType) => (
@@ -795,9 +795,9 @@ export default function MedicalPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">بالعربية</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">باللاتينية</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-500">الإجراءات</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.tableArabic')}</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.tableLatin')}</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-500">{t('medical.tableActions')}</th>
                   </tr>
                 </thead>
                 <tbody>{hospitals.map((h: MedicalHospital) => (

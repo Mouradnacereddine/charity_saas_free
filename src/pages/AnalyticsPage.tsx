@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import i18nInstance from '../i18n';
 import { Card, StatCard, LoadingSpinner, Badge, Button } from '../components/common/UI';
+import { Trans } from 'react-i18next';
 
 // Use i18nInstance.t directly instead of the hook-based t to avoid
 // "t is not a function" errors during React Query re-renders (react-i18next#1950)
@@ -190,9 +191,9 @@ export default function AnalyticsPage() {
   }, [filteredTx, startDate, endDate]);
 
   const getSubCategoryNameAr = (caisseId: string, subId?: string) => {
-    if (!subId) return t('common.general', 'عام');
+    if (!subId) return t('common.general');
     const caisse = caisses.find((c) => c.id === caisseId);
-    if (!caisse) return t('common.general', 'عام');
+    if (!caisse) return t('common.general');
     const sub = caisse.subCategories?.find((s) => s.id === subId);
     return sub ? sub.nameAr : 'عام';
   };
@@ -264,7 +265,7 @@ export default function AnalyticsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('analytics.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {t('analytics.subtitle', 'نظرة تفصيلية ومؤشرات ذكية حول المداخيل والمصاريف وحالة السيولة في الصناديق.')}
+            {t('analytics.subtitle')}
           </p>
         </div>
       </div>
@@ -395,7 +396,7 @@ export default function AnalyticsPage() {
           {monthlyProgression.length === 0 ? (
             <div className="h-64 flex flex-col items-center justify-center text-gray-400">
               <Calendar className="w-12 h-12 mb-2 stroke-1" />
-              <p className="text-sm">{t('analytics.noChartData', 'لا توجد بيانات لعرض المخطط البياني في هذه الفترة')}</p>
+              <p className="text-sm">{t('analytics.noChartData')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -491,12 +492,12 @@ export default function AnalyticsPage() {
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                   {(() => {
                     const totalFunding = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                    if (totalFunding <= 0) return <><span className="text-xs text-gray-400">{t('analytics.noIncome', 'لا توجد مداخيل')}</span></>;
+                    if (totalFunding <= 0) return <><span className="text-xs text-gray-400">{t('analytics.noIncome')}</span></>;
                     const bankPct = ((fundSourceBreakdown.bank.credits / totalFunding) * 100).toFixed(0);
                     const cashPct = ((fundSourceBreakdown.cash.credits / totalFunding) * 100).toFixed(0);
                     return (
                       <>
-                        <span className="text-xs text-gray-400 mb-1">{t('analytics.fundingSources', 'مصادر التمويل')}</span>
+                        <span className="text-xs text-gray-400 mb-1">{t('analytics.fundingSources')}</span>
                         <span className="text-sm font-semibold text-primary-600">🔵 {t('dashboard.bank')} {bankPct}%</span>
                         <span className="text-sm font-semibold text-amber-500">🟠 {t('dashboard.cash')} {cashPct}%</span>
                       </>
@@ -512,7 +513,7 @@ export default function AnalyticsPage() {
                   <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
                     <span className="w-3 h-3 bg-primary-500 rounded-full" /> {t('dashboard.bank')} (Banque)
                   </span>
-                  <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance', 'رصيد الفترة الصافي')}</span>
+                  <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance')}</span>
                 </div>
                 <div className="flex justify-between text-xs mt-2">
                   <span className="text-emerald-600">{t('analytics.income')}: {formatCurrency(fundSourceBreakdown.bank.credits)}</span>
@@ -528,7 +529,7 @@ export default function AnalyticsPage() {
                   <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
                     <span className="w-3 h-3 bg-amber-400 rounded-full" /> {t('finance.cashFund')} (Cash)
                   </span>
-                  <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance', 'رصيد الفترة الصافي')}</span>
+                  <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance')}</span>
                 </div>
                 <div className="flex justify-between text-xs mt-2">
                   <span className="text-emerald-600">{t('analytics.income')}: {formatCurrency(fundSourceBreakdown.cash.credits)}</span>
@@ -586,10 +587,11 @@ export default function AnalyticsPage() {
               <div className="flex gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-800">
                 <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
                 <div>
-                  <h4 className="font-bold">{t('analytics.criticalAlert', 'تنبيه: معدل نفقات حرج جداً')}</h4>
+                  <h4 className="font-bold">{t('analytics.criticalAlert')}</h4>
                   <p className="mt-1 text-xs text-red-700 leading-relaxed">
-                    نسبة نفقات الفترة مقارنة بالمداخيل تتجاوز عتبة الأمان 85% حيث بلغت{' '}
-                    <span className="font-bold">{stats.ratio.toFixed(1)}%</span>. يُخشى أن تتعرض الجمعية لشح في السيولة. ننصح بترشيد النفقات التشغيلية.
+                    <Trans i18nKey="analytics.criticalText" values={{ ratio: stats.ratio.toFixed(1) }}>
+                      {'ratio'}%
+                    </Trans>
                   </p>
                 </div>
               </div>
@@ -597,10 +599,11 @@ export default function AnalyticsPage() {
               <div className="flex gap-3 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-800">
                 <Info className="w-5 h-5 shrink-0 text-amber-500" />
                 <div>
-                  <h4 className="font-bold">{t('analytics.averageNote', 'ملاحظة: معدل نفقات متوسط')}</h4>
+                  <h4 className="font-bold">{t('analytics.averageNote')}</h4>
                   <p className="mt-1 text-xs text-amber-700 leading-relaxed">
-                    تبلغ نسبة الإنفاق مقارنة بالإيرادات{' '}
-                    <span className="font-bold">{stats.ratio.toFixed(1)}%</span>. هذا المؤشر مقبول ولكنه يتطلب متابعة يقظة لضمان ألا تتجاوز المصاريف الحد المطلوب.
+                    <Trans i18nKey="analytics.averageText" values={{ ratio: stats.ratio.toFixed(1) }}>
+                      {'ratio'}%
+                    </Trans>
                   </p>
                 </div>
               </div>
@@ -608,9 +611,11 @@ export default function AnalyticsPage() {
               <div className="flex gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-800">
                 <CheckCircle className="w-5 h-5 shrink-0 text-emerald-500" />
                 <div>
-                  <h4 className="font-bold">{t('analytics.excellentIndicator', 'مؤشر ممتاز: توازن مالي إيجابي')}</h4>
+                  <h4 className="font-bold">{t('analytics.excellentIndicator')}</h4>
                   <p className="mt-1 text-xs text-emerald-700 leading-relaxed">
-                    معدل النفقات مستقر عند <span className="font-bold">{stats.ratio.toFixed(1)}%</span> من المداخيل. يعكس هذا هيكلاً مالياً ممتازاً وهو ما يسمح بتكوين احتياطي مستدام.
+                    <Trans i18nKey="analytics.excellentText" values={{ ratio: stats.ratio.toFixed(1) }}>
+                      {'ratio'}%
+                    </Trans>
                   </p>
                 </div>
               </div>
@@ -623,10 +628,11 @@ export default function AnalyticsPage() {
                 <div className="flex gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-800">
                   <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
                   <div>
-                    <h4 className="font-bold">{t('analytics.fundDeficit', 'عجز مالي في بعض الصناديق')}</h4>
+                    <h4 className="font-bold">{t('analytics.fundDeficit')}</h4>
                     <p className="mt-1 text-xs text-red-700 leading-relaxed">
-                      الصناديق التالية تعاني من عجز مالي في معاملات هذه الفترة:{' '}
-                      <span className="font-bold">{deficits.map((d) => d.nameAr).join('، ')}</span>. يرجى تسوية الحسابات المالية أو تحويل أرصدة لتغطية النفقات.
+                      <Trans i18nKey="analytics.deficitText" values={{ funds: deficits.map((d) => d.nameAr).join('، ') }}>
+                        {'funds'}
+                      </Trans>
                     </p>
                   </div>
                 </div>
@@ -637,10 +643,15 @@ export default function AnalyticsPage() {
               <div className="flex gap-3 p-3 bg-orange-50 border border-orange-100 rounded-lg text-sm text-orange-800">
                 <AlertTriangle className="w-5 h-5 shrink-0 text-orange-500" />
                 <div>
-                  <h4 className="font-bold">{t('analytics.donorConcentration', 'تركيز عالي في مصادر التبرعات')}</h4>
+                  <h4 className="font-bold">{t('analytics.donorConcentration')}</h4>
                   <p className="mt-1 text-xs text-orange-700 leading-relaxed">
-                    يساهم المتبرع <span className="font-bold">"{donorConcentration.nameAr}"</span> بأكثر من 50% من إجمالي المداخيل، بنسبة{' '}
-                    <span className="font-bold">{donorConcentration.share.toFixed(1)}%</span> (مبلغ {formatCurrency(donorConcentration.amount)}). الاعتماد المفرط يمثل خطورة؛ نقترح تكثيف جهود تنويع مصادر الدعم المالي.
+                    <Trans i18nKey="analytics.donorRiskText" values={{
+                      donor: donorConcentration.nameAr,
+                      share: donorConcentration.share.toFixed(1),
+                      amount: formatCurrency(donorConcentration.amount)
+                    }}>
+                      {'donor'} {'share'}% {'amount'}
+                    </Trans>
                   </p>
                 </div>
               </div>
@@ -651,10 +662,13 @@ export default function AnalyticsPage() {
             <div className="flex gap-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800">
               <TrendingUp className="w-5 h-5 shrink-0 text-blue-500" />
               <div>
-                <h4 className="font-bold">{t('analytics.safetyMargin', 'هامش أمان الطوارئ الموصى به (20%)')}</h4>
+                <h4 className="font-bold">{t('analytics.safetyMargin')}</h4>
                 <p className="mt-1 text-xs text-blue-700 leading-relaxed">
-                  توصي المعايير المالية بالاحتفاظ بهامش أمان يعادل <span className="font-bold">20%</span> من المقبوضات كاحتياطي طوارئ. لهاته الفترة، يجب الاحتفاظ بـ{' '}
-                  <span className="font-bold text-gray-900">{formatCurrency(stats.credits * 0.2)}</span> كاحتياطي.
+                  <Trans i18nKey="analytics.safetyMarginText" values={{
+                    reserve: formatCurrency(stats.credits * 0.2)
+                  }}>
+                    {'reserve'}
+                  </Trans>
                 </p>
               </div>
             </div>
@@ -662,11 +676,15 @@ export default function AnalyticsPage() {
             <div className="flex gap-3 p-3 bg-purple-50 border border-purple-100 rounded-lg text-sm text-purple-800">
               <Activity className="w-5 h-5 shrink-0 text-purple-500" />
               <div>
-                <h4 className="font-bold">{t('analytics.velocity', 'مؤشر سرعة تدفق المعاملات')}</h4>
+                <h4 className="font-bold">{t('analytics.velocity')}</h4>
                 <p className="mt-1 text-xs text-purple-700 leading-relaxed">
-                  تم تسجيل <span className="font-bold">{velocity.total}</span> عملية مالية خلال{' '}
-                  <span className="font-bold">{velocity.days} {t('analytics.days', 'يوماً')}</span>، بمعدل{' '}
-                  <span className="font-bold">{velocity.avgPerDay} {t('analytics.operationsPerDay', 'عملية/يوم')}</span>. حركة التدفق المالي نشطة وتتطلب مطابقة مستمرة للأوصال والتأكيد على المعاملات المعلقة.
+                  <Trans i18nKey="analytics.velocityText" values={{
+                    total: velocity.total,
+                    days: velocity.days,
+                    avgPerDay: velocity.avgPerDay
+                  }}>
+                    {'total'} {'days'} {'avgPerDay'}
+                  </Trans>
                 </p>
               </div>
             </div>
@@ -886,7 +904,7 @@ export default function AnalyticsPage() {
                     {t('analytics.netFinancial')}: {totalCredits - totalDebits >= 0 ? '+' : ''}{formatCurrency(totalCredits - totalDebits)}
                   </span>
                   <span className="text-gray-500 text-xs mr-auto">
-                    ({logTx.length} {t('analytics.operations', 'عملية')})
+                    ({logTx.length} {t('analytics.operations')})
                   </span>
                 </div>
               );
@@ -909,7 +927,7 @@ export default function AnalyticsPage() {
                 <tbody>
                   {logTx.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-6 text-center text-gray-400">{t('analytics.noOperationsFound', 'لا توجد عمليات تطابق البحث والتصفية')}</td>
+                      <td colSpan={8} className="py-6 text-center text-gray-400">{t('analytics.noOperationsFound')}</td>
                     </tr>
                   ) : (
                     logTx.map((tx) => {

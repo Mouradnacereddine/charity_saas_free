@@ -110,21 +110,21 @@ export function printBeneficiaryCard(params: {
   dir?: 'ltr' | 'rtl';
 }) {
   const l = params.labels || {
-    title: 'بطاقة مستفيد',
-    personalInfo: 'المعلومات الشخصية',
-    nameAr: 'الاسم بالعربية',
-    attribut: 'الصفة',
-    birthDate: 'تاريخ الميلاد',
-    idNumber: 'رقم البطاقة الوطنية',
-    fund: 'الصندوق',
-    nameLatin: 'الاسم باللاتينية',
-    gender: 'الجنس',
-    age: 'العمر',
-    phone: 'الهاتف',
-    status: 'الحالة',
-    beneficiarySignature: 'توقيع المستفيد',
-    stampSignature: 'ختم الجمعية',
-    print: 'طباعة'
+    title: "بطاقة مستفيد",
+    personalInfo: "المعلومات الشخصية",
+    nameAr: "الاسم بالعربية",
+    attribut: "الصفة",
+    birthDate: "تاريخ الميلاد",
+    idNumber: "رقم البطاقة الوطنية",
+    fund: "الصندوق",
+    nameLatin: "الاسم باللاتينية",
+    gender: "الجنس",
+    age: "العمر",
+    phone: "الهاتف",
+    status: "الحالة",
+    beneficiarySignature: "توقيع المستفيد",
+    stampSignature: "ختم الجمعية",
+    print: "طباعة"
   };
   const d = params.dir || 'rtl';
   const ln = params.lang || 'ar';

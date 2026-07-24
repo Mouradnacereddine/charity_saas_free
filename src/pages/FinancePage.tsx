@@ -572,7 +572,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
               <SearchableSelect labelAr={t('finance.remainingAmount')} value={allocRemaining} onChange={setAllocRemaining} options={[
                 { value: '', label: t('common.all') },
                 { value: 'zero', label: t('dashboard.fullyDisbursed') },
-                { value: 'positive', label: t('finance.remaining', 'متبqi') },
+                { value: 'positive', label: t('finance.remaining') },
                 { value: 'distributed', label: t('finance.disbursed') },
                 { value: 'not_distributed', label: t('finance.notDisbursed') },
               ]} />
@@ -591,7 +591,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
           </div>
         )}
         {filteredAllocations.length === 0 ? (
-          <EmptyState message={t('finance.noAllocations', 'لا توجد توزيعات')} icon={<HeartHandshake size={48} />} />
+          <EmptyState message={t('finance.noAllocations')} icon={<HeartHandshake size={48} />} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -620,7 +620,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                     <td className="py-3 px-4">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
                     <td className="py-3 px-4">{(() => {
                       const txStatus = a.creditTransaction?.status;
-                      if (txStatus === 'pending') return <Badge variant="warning">{t('finance.pledged', 'مرتبط بوعد')}</Badge>;
+                      if (txStatus === 'pending') return <Badge variant="warning">{t('finance.pledged')}</Badge>;
                       if (txStatus === 'cancelled') return <Badge variant="danger">{t('dashboard.cancelled')}</Badge>;
                       if (a.remainingAmount <= 0) return <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>;
                       if (a.debitTransactionId) return <Badge variant="info">{t('dashboard.partiallyDisbursed')}</Badge>;
@@ -665,7 +665,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Transaction Type */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">{t('finance.transactionType', 'نوع المعاملة')}</label>
+              <label className="block text-sm font-medium text-gray-700">{t('finance.transactionType')}</label>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -856,7 +856,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 onChange={(e) => setTxPending(e.target.checked)}
                 className="w-4 h-4 text-amber-500 focus:ring-amber-500 rounded"
               />
-              <span className="text-sm text-gray-600">{t('finance.pendingTx', 'معاملة معلقة')}</span>
+              <span className="text-sm text-gray-600">{t('finance.pendingTx')}</span>
             </label>
             <Button type="submit" disabled={txSubmitting || amountNum <= 0 || !txCaisseId}>
               {txSubmitting ? t('common.saving') : t('finance.saveTransaction')}
@@ -1224,7 +1224,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                   // For debit with allocation
                   if (rem !== null && rem !== undefined && typeof rem === 'number' && detailTx.type === 'debit') {
                     return (
-                      <div><p className="text-xs text-gray-500">{t('finance.remainingDisbursement', 'المبلغ المتبقي لاستكمال الصرف')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
+                      <div><p className="text-xs text-gray-500">{t('finance.remainingDisbursement')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
                     );
                   }
                   return null;
@@ -1271,7 +1271,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                       {t('finance.confirmTx')}
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => handleCancelTransaction(detailTx.id)}>
-                      {t('finance.cancelTx', 'إلغاء المعاملة')}
+                      {t('finance.cancelTx')}
                     </Button>
                   </>
                 )}
@@ -1322,7 +1322,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
               })()}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('finance.enterConfirmAmount', 'أدخل المبلغ المراد تأكيده')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('finance.enterConfirmAmount')}</label>
               <input
                 type="number"
                 value={confirmTxAmount}
@@ -1371,10 +1371,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
         {disbursingAllocId && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">{t('finance.remainingDisbursement', 'المبلغ المتبقي للصرف')}</span><span className="font-bold text-amber-600">{formatCurrency(Number(disburseAmount))}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">{t('finance.remainingDisbursement')}</span><span className="font-bold text-amber-600">{formatCurrency(Number(disburseAmount))}</span></div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('finance.enterDisburseAmount', 'أدخل المبلغ المراد صرفه')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('finance.enterDisburseAmount')}</label>
               <input
                 type="number"
                 value={disburseAmount}
