@@ -490,10 +490,10 @@ export default function AnalyticsPage() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                   {(() => {
-                    const t = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                    if (t <= 0) return <><span className="text-xs text-gray-400">لا توجد مداخيل</span></>;
-                    const bankPct = ((fundSourceBreakdown.bank.credits / t) * 100).toFixed(0);
-                    const cashPct = ((fundSourceBreakdown.cash.credits / t) * 100).toFixed(0);
+                    const totalFunding = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
+                    if (totalFunding <= 0) return <><span className="text-xs text-gray-400">{t('analytics.noIncome', 'لا توجد مداخيل')}</span></>;
+                    const bankPct = ((fundSourceBreakdown.bank.credits / totalFunding) * 100).toFixed(0);
+                    const cashPct = ((fundSourceBreakdown.cash.credits / totalFunding) * 100).toFixed(0);
                     return (
                       <>
                         <span className="text-xs text-gray-400 mb-1">{t('analytics.fundingSources', 'مصادر التمويل')}</span>
