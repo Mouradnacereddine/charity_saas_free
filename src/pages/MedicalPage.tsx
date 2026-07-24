@@ -234,7 +234,7 @@ export default function MedicalPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm(t('medical.confirmDeleteReferral'))) {
+    if (window.confirm(t('medical.confirmDeleteReferral'))) {
       await deleteMedicalReferral.mutateAsync(id);
     }
   };
@@ -676,7 +676,7 @@ export default function MedicalPage() {
                     {t('medical.confirmReferral')}
                   </Button>
                   <Button size="sm" variant="danger" onClick={async () => {
-                    if (confirm(t('medical.confirmCancelReferral'))) {
+                    if (window.confirm(t('medical.confirmCancelReferral'))) {
                       try {
                         await api.put(`/medical/referrals/${showDetailModal.id}/cancel`);
                         queryClient.invalidateQueries({ queryKey: ['medical-referrals'] });

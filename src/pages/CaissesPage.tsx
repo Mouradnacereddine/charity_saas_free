@@ -63,7 +63,7 @@ export default function CaissesPage() {
   };
 
   const handleDeleteCaisse = async (id: string) => {
-    if (confirm(t('caisses.deleteFundConfirm'))) {
+    if (window.confirm(t('caisses.deleteFundConfirm'))) {
       await deleteMutation.mutateAsync(id);
     }
   };
@@ -105,7 +105,7 @@ export default function CaissesPage() {
   };
 
   const handleDeleteSubCategory = async (caisseId: string, subCatId: string) => {
-    if (confirm(t('caisses.deleteCategoryConfirm'))) {
+    if (window.confirm(t('caisses.deleteCategoryConfirm'))) {
       const caisse = caisses.find((c: Caisse) => c.id === caisseId);
       if (!caisse) return;
       const updatedSubs = (caisse.subCategories || []).filter((s: SubCategory) => s.id !== subCatId);
