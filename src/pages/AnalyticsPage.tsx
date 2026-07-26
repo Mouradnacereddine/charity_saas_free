@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import i18nInstance from '../i18n';
 import { Card, StatCard, LoadingSpinner, Badge, Button } from '../components/common/UI';
+import { SmartText } from '../components/common/SmartText';
 
 // Use i18nInstance.t directly instead of the hook-based t to avoid
 // "t is not a function" errors during React Query re-renders (react-i18next#1950)
@@ -590,11 +591,10 @@ export default function AnalyticsPage() {
                 <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
                 <div>
                   <h4 className="font-bold">{t('analytics.criticalAlert')}</h4>
-                  <p
+                  <SmartText
+                    i18nKey="analytics.criticalText"
+                    values={{ ratio: stats.ratio.toFixed(1) }}
                     className="mt-1 text-xs text-red-700 leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: t('analytics.criticalText', { ratio: stats.ratio.toFixed(1) }),
-                    }}
                   />
                 </div>
               </div>
@@ -603,11 +603,10 @@ export default function AnalyticsPage() {
                 <Info className="w-5 h-5 shrink-0 text-amber-500" />
                 <div>
                   <h4 className="font-bold">{t('analytics.averageNote')}</h4>
-                  <p
+                  <SmartText
+                    i18nKey="analytics.averageText"
+                    values={{ ratio: stats.ratio.toFixed(1) }}
                     className="mt-1 text-xs text-amber-700 leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: t('analytics.averageText', { ratio: stats.ratio.toFixed(1) }),
-                    }}
                   />
                 </div>
               </div>
@@ -616,11 +615,10 @@ export default function AnalyticsPage() {
                 <CheckCircle className="w-5 h-5 shrink-0 text-emerald-500" />
                 <div>
                   <h4 className="font-bold">{t('analytics.excellentIndicator')}</h4>
-                  <p
+                  <SmartText
+                    i18nKey="analytics.excellentText"
+                    values={{ ratio: stats.ratio.toFixed(1) }}
                     className="mt-1 text-xs text-emerald-700 leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: t('analytics.excellentText', { ratio: stats.ratio.toFixed(1) }),
-                    }}
                   />
                 </div>
               </div>
@@ -634,11 +632,10 @@ export default function AnalyticsPage() {
                   <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
                   <div>
                     <h4 className="font-bold">{t('analytics.fundDeficit')}</h4>
-                    <p
+                    <SmartText
+                      i18nKey="analytics.deficitText"
+                      values={{ funds: deficits.map((d) => d.nameAr).join('، ') }}
                       className="mt-1 text-xs text-red-700 leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: t('analytics.deficitText', { funds: deficits.map((d) => d.nameAr).join('، ') }),
-                      }}
                     />
                   </div>
                 </div>
@@ -650,15 +647,14 @@ export default function AnalyticsPage() {
                 <AlertTriangle className="w-5 h-5 shrink-0 text-orange-500" />
                 <div>
                   <h4 className="font-bold">{t('analytics.donorConcentration')}</h4>
-                  <p
-                    className="mt-1 text-xs text-orange-700 leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: t('analytics.donorRiskText', {
-                        donor: donorConcentration.nameAr,
-                        share: donorConcentration.share.toFixed(1),
-                        amount: formatCurrency(donorConcentration.amount),
-                      }),
+                  <SmartText
+                    i18nKey="analytics.donorRiskText"
+                    values={{
+                      donor: donorConcentration.nameAr,
+                      share: donorConcentration.share.toFixed(1),
+                      amount: formatCurrency(donorConcentration.amount),
                     }}
+                    className="mt-1 text-xs text-orange-700 leading-relaxed"
                   />
                 </div>
               </div>
@@ -670,13 +666,10 @@ export default function AnalyticsPage() {
               <TrendingUp className="w-5 h-5 shrink-0 text-blue-500" />
               <div>
                 <h4 className="font-bold">{t('analytics.safetyMargin')}</h4>
-                <p
+                <SmartText
+                  i18nKey="analytics.safetyMarginText"
+                  values={{ reserve: formatCurrency(stats.credits * 0.2) }}
                   className="mt-1 text-xs text-blue-700 leading-relaxed"
-                  dangerouslySetInnerHTML={{
-                    __html: t('analytics.safetyMarginText', {
-                      reserve: formatCurrency(stats.credits * 0.2),
-                    }),
-                  }}
                 />
               </div>
             </div>
@@ -685,15 +678,14 @@ export default function AnalyticsPage() {
               <Activity className="w-5 h-5 shrink-0 text-purple-500" />
               <div>
                 <h4 className="font-bold">{t('analytics.velocity')}</h4>
-                <p
-                  className="mt-1 text-xs text-purple-700 leading-relaxed"
-                  dangerouslySetInnerHTML={{
-                    __html: t('analytics.velocityText', {
-                      total: velocity.total,
-                      days: velocity.days,
-                      avgPerDay: velocity.avgPerDay,
-                    }),
+                <SmartText
+                  i18nKey="analytics.velocityText"
+                  values={{
+                    total: velocity.total,
+                    days: velocity.days,
+                    avgPerDay: velocity.avgPerDay,
                   }}
+                  className="mt-1 text-xs text-purple-700 leading-relaxed"
                 />
               </div>
             </div>
