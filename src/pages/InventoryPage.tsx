@@ -122,8 +122,8 @@ export default function InventoryPage() {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('inventory.title')}</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">{t('inventory.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {activeTab === 'stock' ? t('inventory.subtitleStock') : activeTab === 'loans' ? t('inventory.subtitleLoans') : t('inventory.subtitleSettings')}
           </p>
         </div>
@@ -152,14 +152,14 @@ export default function InventoryPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="flex gap-2 sm:gap-4">
           <button
             onClick={() => setActiveTab('stock')}
             className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
               activeTab === 'stock'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             <Package className="inline-block w-4 h-4 ml-2" />
@@ -169,8 +169,8 @@ export default function InventoryPage() {
             onClick={() => setActiveTab('loans')}
             className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
               activeTab === 'loans'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             <ArrowLeftRight className="inline-block w-4 h-4 ml-2" />
@@ -180,8 +180,8 @@ export default function InventoryPage() {
             onClick={() => setActiveTab('settings')}
             className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
               activeTab === 'settings'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             <Settings className="inline-block w-4 h-4 ml-2" />
@@ -396,15 +396,15 @@ function SettingsTab() { const { t, i18n } = useTranslation();
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.nameAr')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.nameLatin')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.nameAr')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.nameLatin')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {categories.map((cat: ArticleCategory) => (
-                  <tr key={cat.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={cat.id} className="border-b border-border hover:bg-muted">
                     {editCatId === cat.id ? (
                       <>
                         <td className="py-3 px-4">
@@ -412,7 +412,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                             type="text"
                             value={editCatNameAr}
                             onChange={(e) => setEditCatNameAr(e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                             autoFocus
                           />
                         </td>
@@ -421,7 +421,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                             type="text"
                             value={editCatName}
                             onChange={(e) => setEditCatName(e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                           />
                         </td>
                         <td className="py-3 px-4">
@@ -437,20 +437,20 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-gray-900">{cat.nameAr}</td>
-                        <td className="py-3 px-4 text-gray-600">{cat.name || '—'}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{cat.nameAr}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{cat.name || '—'}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => startEditCategory(cat)}
-                              className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                              className="p-1 text-muted-foreground/70 hover:text-primary transition-colors"
                               title={t('common.edit')}
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteCategory(cat.id)}
-                              className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
+                              className="p-1 text-muted-foreground/70 hover:text-danger-600 transition-colors"
                               title={t('common.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -502,15 +502,15 @@ function SettingsTab() { const { t, i18n } = useTranslation();
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.nameAr')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.nameLatin')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.nameAr')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.nameLatin')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {locations.map((loc: StorageLocation) => (
-                  <tr key={loc.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={loc.id} className="border-b border-border hover:bg-muted">
                     {editLocId === loc.id ? (
                       <>
                         <td className="py-3 px-4">
@@ -518,7 +518,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                             type="text"
                             value={editLocNameAr}
                             onChange={(e) => setEditLocNameAr(e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                             autoFocus
                           />
                         </td>
@@ -527,7 +527,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                             type="text"
                             value={editLocName}
                             onChange={(e) => setEditLocName(e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                           />
                         </td>
                         <td className="py-3 px-4">
@@ -543,20 +543,20 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-gray-900">{loc.nameAr}</td>
-                        <td className="py-3 px-4 text-gray-600">{loc.name || '—'}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{loc.nameAr}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{loc.name || '—'}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => startEditLocation(loc)}
-                              className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                              className="p-1 text-muted-foreground/70 hover:text-primary transition-colors"
                               title={t('common.edit')}
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteLocation(loc.id)}
-                              className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
+                              className="p-1 text-muted-foreground/70 hover:text-danger-600 transition-colors"
                               title={t('common.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -603,14 +603,14 @@ function SettingsTab() { const { t, i18n } = useTranslation();
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.status')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.status')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {statuses.map((sts: ArticleStatus) => (
-                  <tr key={sts.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={sts.id} className="border-b border-border hover:bg-muted">
                     {editStsId === sts.id ? (
                       <>
                         <td className="py-3 px-4">
@@ -618,7 +618,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                             type="text"
                             value={editStsNameAr}
                             onChange={(e) => setEditStsNameAr(e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                             autoFocus
                           />
                         </td>
@@ -635,19 +635,19 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-gray-900">{sts.nameAr}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{sts.nameAr}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => startEditStatus(sts)}
-                              className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                              className="p-1 text-muted-foreground/70 hover:text-primary transition-colors"
                               title={t('common.edit')}
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteStatus(sts.id)}
-                              className="p-1 text-gray-400 hover:text-danger-600 transition-colors"
+                              className="p-1 text-muted-foreground/70 hover:text-danger-600 transition-colors"
                               title={t('common.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -836,14 +836,14 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
     <>
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
         <input
           type="text"
           placeholder={t('inventory.searchArticle')}
           value={filterSearchTerm}
           onChange={(e) => setFilterSearchTerm(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') applyStockFilters(); }}
-          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
@@ -905,41 +905,41 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.refCode')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.sectionName')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">{t('inventory.category')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.quantity')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.available')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.status')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">{t('inventory.storageLocation')}</th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.refCode')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.sectionName')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">{t('inventory.category')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.available')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.status')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">{t('inventory.storageLocation')}</th>
+                  <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((article: Article) => (
-                  <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => openEdit(article)}>
-                    <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
+                  <tr key={article.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => openEdit(article)}>
+                    <td className="py-3 px-4 font-semibold text-primary" dir="ltr">
                       {article.reference || '—'}
                     </td>
-                    <td className="py-3 px-4 font-medium text-gray-900">{article.nameAr}</td>
-                    <td className="py-3 px-4 text-gray-600 hidden sm:table-cell">
+                    <td className="py-3 px-4 font-medium text-foreground">{article.nameAr}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
                       {getCategoryNameAr(article.category, categories)}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{article.quantity}</td>
-                    <td className="py-3 px-4 text-gray-600">{article.availableQuantity}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{article.quantity}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{article.availableQuantity}</td>
                     <td className="py-3 px-4">
                       <Badge variant="default">
                         {(article as any).statusModel?.nameAr || statusLabels[article.status] || article.status}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-gray-600 hidden md:table-cell">
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">
                       {getStorageNameAr(article.storageLocation, locations)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button
                         onClick={(e) => { e.stopPropagation(); openEdit(article); }}
-                        className="p-1.5 text-gray-400 hover:text-primary-600 transition-colors"
+                        className="p-1.5 text-muted-foreground/70 hover:text-primary transition-colors"
                         title={t('common.edit')}
                       >
                         <Edit size={16} />
@@ -963,18 +963,18 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
         {editingArticle ? (
           /* ---- EDIT MODE: only storageLocation, status, notes are editable ---- */
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
-              <div><p className="text-xs text-gray-500">{t('inventory.nameAr')}</p><p className="font-medium">{form.nameAr}</p></div>
-              <div><p className="text-xs text-gray-500">{t('inventory.nameLatin')}</p><p className="font-medium">{form.name}</p></div>
-              {form.descriptionAr && <div><p className="text-xs text-gray-500">{t('doctors.arabicLabel')}</p><p className="font-medium">{form.descriptionAr}</p></div>}
-              {form.description && <div><p className="text-xs text-gray-500">{t('inventory.descriptionLatin')}</p><p className="font-medium">{form.description}</p></div>}
-              <div><p className="text-xs text-gray-500">{t('inventory.category')}</p><p className="font-medium">{categories.find((c) => c.id === form.category)?.nameAr || '—'}</p></div>
-              <div><p className="text-xs text-gray-500">{t('inventory.quantity')}</p><p className="font-medium">{form.quantity}</p></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted rounded-lg p-4">
+              <div><p className="text-xs text-muted-foreground">{t('inventory.nameAr')}</p><p className="font-medium">{form.nameAr}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('inventory.nameLatin')}</p><p className="font-medium">{form.name}</p></div>
+              {form.descriptionAr && <div><p className="text-xs text-muted-foreground">{t('doctors.arabicLabel')}</p><p className="font-medium">{form.descriptionAr}</p></div>}
+              {form.description && <div><p className="text-xs text-muted-foreground">{t('inventory.descriptionLatin')}</p><p className="font-medium">{form.description}</p></div>}
+              <div><p className="text-xs text-muted-foreground">{t('inventory.category')}</p><p className="font-medium">{categories.find((c) => c.id === form.category)?.nameAr || '—'}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('inventory.quantity')}</p><p className="font-medium">{form.quantity}</p></div>
               <div><SearchableSelect labelAr={t('inventory.storageLocation')} value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required /></div>
               <div><SearchableSelect labelAr={t('common.status')} value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} /></div>
             </div>
             <TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-            {formError && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{formError}</div>}
+            {formError && <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-3">{formError}</div>}
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
               <Button onClick={handleSubmit}>{t('common.update')}</Button>
@@ -992,7 +992,7 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
               <SearchableSelect labelAr={t('common.status')} value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} />
               <div className="md:col-span-2"><TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
-            {formError && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 mt-4">{formError}</div>}
+            {formError && <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-3 mt-4">{formError}</div>}
             <div className="flex justify-end gap-3 mt-6">
               <Button variant="secondary" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
               <Button onClick={handleSubmit} disabled={!form.nameAr || !form.name || !form.category}>{t('common.add')}</Button>
@@ -1307,14 +1307,14 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
     <>
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
         <input
           type="text"
           placeholder={t('inventory.searchLoan')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') applyLoanFilters(); }}
-          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
@@ -1371,37 +1371,37 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.refCode')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.beneficiary')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden lg:table-cell">{t('medical.beneficiaryRef')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.quantity')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.returnedItems')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">{t('finance.remainingAmount')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.status')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.loanDate')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.expectedReturnDate')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('inventory.actualReturnDate')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.refCode')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.beneficiary')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden lg:table-cell">{t('medical.beneficiaryRef')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.returnedItems')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">{t('finance.remainingAmount')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.status')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.loanDate')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.actualReturnDate')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredLoans.map((loan: Loan) => (
-                  <tr key={loan.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => openLoanDetail(loan)}>
-                    <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">
+                  <tr key={loan.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => openLoanDetail(loan)}>
+                    <td className="py-3 px-4 font-semibold text-primary" dir="ltr">
                       {loan.reference || '—'}
                     </td>
-                    <td className="py-3 px-4 font-medium text-gray-900">{loan.beneficiaryNameAr}</td>
-                    <td className="py-3 px-4 text-gray-600 hidden lg:table-cell" dir="ltr">
+                    <td className="py-3 px-4 font-medium text-foreground">{loan.beneficiaryNameAr}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell" dir="ltr">
                       {loan.beneficiaryReference || '—'}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">
+                    <td className="py-3 px-4 text-muted-foreground">
                       {loan.items.map((item) => item.articleNameAr).filter(Boolean).join('، ') || `(${loan.items.length} ${t('inventory.articles')})`}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">
+                    <td className="py-3 px-4 text-muted-foreground">
                       {loan.items.map((item) => item.returnedQuantity || 0).reduce((a, b) => a + b, 0) || '—'}
                     </td>
-                    <td className="py-3 px-4 text-gray-600 hidden md:table-cell">
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">
                       {loan.items.map((item) => item.quantity - (item.returnedQuantity || 0)).reduce((a, b) => a + b, 0)}
                     </td>
                     <td className="py-3 px-4">
@@ -1409,17 +1409,17 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                         {loanStatusLabels[loan.status] || loan.status}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{formatDate(loan.loanDate)}</td>
-                    <td className="py-3 px-4 text-gray-600">
+                    <td className="py-3 px-4 text-muted-foreground">{formatDate(loan.loanDate)}</td>
+                    <td className="py-3 px-4 text-muted-foreground">
                       {loan.expectedReturnDate ? formatDate(loan.expectedReturnDate) : '—'}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">
+                    <td className="py-3 px-4 text-muted-foreground">
                       {loan.actualReturnDate ? formatDate(loan.actualReturnDate) : '—'}
                     </td>
                     <td className="py-3 px-4">
                       <button
                         onClick={(e) => { e.stopPropagation(); openLoanDetail(loan); }}
-                        className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                        className="p-1 text-muted-foreground/70 hover:text-primary transition-colors"
                         title={t("common.details")}
                       >
                         <Eye className="w-4 h-4" />
@@ -1459,17 +1459,17 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
           {/* Dynamic items list */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">{t('inventory.quantity')}</label>
+              <label className="block text-sm font-medium text-foreground">{t('inventory.quantity')}</label>
               <Button size="sm" variant="secondary" onClick={addLoanItemRow}>
                 <Plus className="w-3 h-3" />
 {t("inventory.addArticle")}
               </Button>
             </div>
             {loanItems.length === 0 && (
-              <p className="text-sm text-gray-400">{t('inventory.noArticles')}</p>
+              <p className="text-sm text-muted-foreground/70">{t('inventory.noArticles')}</p>
             )}
             {loanItems.map((item: { articleId: string; quantity: number; conditionOnLoan: string }, index: number) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-gray-50 rounded-lg">
+              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-muted rounded-lg">
                 <SearchableSelect
                   labelAr={t("inventory.category")}
                   value={item.articleId}
@@ -1542,16 +1542,16 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
         {selectedLoan && (
           <div className="space-y-6">
             {/* Beneficiary info */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+            <div className="bg-muted rounded-lg p-4 space-y-2">
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700">{t("medical.beneficiary")}</h4>
-                  <p className="text-sm text-gray-900">{selectedLoan.beneficiaryNameAr}</p>
-                  <p className="text-xs text-gray-500" dir="ltr">{t('medical.beneficiaryRef')}: {selectedLoan.beneficiaryReference || '—'}</p>
+                  <h4 className="text-sm font-semibold text-foreground">{t("medical.beneficiary")}</h4>
+                  <p className="text-sm text-foreground">{selectedLoan.beneficiaryNameAr}</p>
+                  <p className="text-xs text-muted-foreground" dir="ltr">{t('medical.beneficiaryRef')}: {selectedLoan.beneficiaryReference || '—'}</p>
                 </div>
                 <div className="text-left">
-                  <span className="text-xs text-gray-500">{t("inventory.loanRefCode")}</span>
-                  <p className="text-sm font-bold text-primary-700" dir="ltr">{selectedLoan.reference || '—'}</p>
+                  <span className="text-xs text-muted-foreground">{t("inventory.loanRefCode")}</span>
+                  <p className="text-sm font-bold text-primary" dir="ltr">{selectedLoan.reference || '—'}</p>
                   <div className="mt-1">
                     <Badge variant={LOAN_STATUS_VARIANTS[selectedLoan.status] || 'default'}>
                       {loanStatusLabels[selectedLoan.status] || selectedLoan.status}
@@ -1559,7 +1559,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span>{t('inventory.loanDate')}: {formatDate(selectedLoan.loanDate)}</span>
                 {selectedLoan.expectedReturnDate && (
                   <span>{t('inventory.expectedReturnDate')}: {formatDate(selectedLoan.expectedReturnDate)}</span>
@@ -1572,12 +1572,12 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
             {/* Items list */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('inventory.quantity')}</h4>
-              <div className="flex flex-wrap gap-2 mb-3 text-xs text-gray-500">
+              <h4 className="text-sm font-semibold text-foreground mb-3">{t('inventory.quantity')}</h4>
+              <div className="flex flex-wrap gap-2 mb-3 text-xs text-muted-foreground">
                 {selectedLoan.items.map((item) => {
                   const art = articles.find((a: Article) => a.id === item.articleId)
                   return art ? (
-                    <span key={item.articleId} className="bg-gray-50 px-2 py-1 rounded">
+                    <span key={item.articleId} className="bg-muted px-2 py-1 rounded">
                       {art.nameAr}: {t('inventory.quantity')} {art.quantity} | {t('inventory.available')} {art.availableQuantity}
                     </span>
                   ) : null
@@ -1586,36 +1586,36 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.category')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.quantity')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.returnedItems')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('finance.remainingAmount')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.loanStatusAtLoan')}</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-500">{t('inventory.loanStatusAtReturn')}</th>
+                    <tr className="border-b border-border">
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.category')}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.returnedItems')}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('finance.remainingAmount')}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.loanStatusAtLoan')}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.loanStatusAtReturn')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedLoan.items.map((item) => (
-                      <tr key={item.articleId} className="border-b border-gray-100">
-                        <td className="py-2 px-3 text-gray-900">{item.articleNameAr}</td>
-                        <td className="py-2 px-3 text-gray-600">{item.quantity}</td>
+                      <tr key={item.articleId} className="border-b border-border">
+                        <td className="py-2 px-3 text-foreground">{item.articleNameAr}</td>
+                        <td className="py-2 px-3 text-muted-foreground">{item.quantity}</td>
                         <td className="py-2 px-3">
                           <span
                             className={
                               item.returnedQuantity >= item.quantity
-                                ? 'text-green-600 font-medium'
+                                ? 'text-success font-medium'
                                 : item.returnedQuantity > 0
-                                ? 'text-yellow-600 font-medium'
-                                : 'text-gray-600'
+                                ? 'text-warning font-medium'
+                                : 'text-muted-foreground'
                             }
                           >
                             {item.returnedQuantity}
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-gray-600">{item.quantity - item.returnedQuantity}</td>
-                        <td className="py-2 px-3 text-gray-600">{item.conditionOnLoan || '—'}</td>
-                        <td className="py-2 px-3 text-gray-600">{item.conditionOnReturn || '—'}</td>
+                        <td className="py-2 px-3 text-muted-foreground">{item.quantity - item.returnedQuantity}</td>
+                        <td className="py-2 px-3 text-muted-foreground">{item.conditionOnLoan || '—'}</td>
+                        <td className="py-2 px-3 text-muted-foreground">{item.conditionOnReturn || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1643,18 +1643,18 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
             {/* Return Items Form */}
             {showReturnForm && (
-              <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-                <h4 className="text-sm font-semibold text-gray-700">{t("inventory.returnItems")}</h4>
+              <div className="border border-border rounded-lg p-4 space-y-4">
+                <h4 className="text-sm font-semibold text-foreground">{t("inventory.returnItems")}</h4>
                 {returnEntries.map((entry: { articleId: string; quantity: number; condition: string }, index: number) => {
                   const loanItem = selectedLoan.items.find((i) => i.articleId === entry.articleId)
                   if (!loanItem) return null
                   const remaining = loanItem.quantity - loanItem.returnedQuantity
                   return (
-                    <div key={entry.articleId} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div key={entry.articleId} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-muted rounded-lg">
                       <div className="space-y-1">
-                        <label className="block text-xs font-medium text-gray-500">{t('inventory.category')}</label>
-                        <p className="text-sm font-medium text-gray-900">{loanItem.articleNameAr}</p>
-                        <p className="text-xs text-gray-400">{t('finance.remainingAmount')}: {remaining}</p>
+                        <label className="block text-xs font-medium text-muted-foreground">{t('inventory.category')}</label>
+                        <p className="text-sm font-medium text-foreground">{loanItem.articleNameAr}</p>
+                        <p className="text-xs text-muted-foreground/70">{t('finance.remainingAmount')}: {remaining}</p>
                       </div>
                       <Input
                         labelAr={t("inventory.returnedQuantity")}
@@ -1697,8 +1697,8 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
             {/* Add Item to Loan Form */}
             {showAddItemForm && (
-              <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-                <h4 className="text-sm font-semibold text-gray-700">{t("inventory.addArticleToLoan")}</h4>
+              <div className="border border-border rounded-lg p-4 space-y-4">
+                <h4 className="text-sm font-semibold text-foreground">{t("inventory.addArticleToLoan")}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <SearchableSelect
                     labelAr={t("inventory.category")}
@@ -1746,14 +1746,14 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
             {/* Notes */}
             {selectedLoan.notes && (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-1">{t('common.notes')}</h4>
-                <p className="text-sm text-gray-600">{selectedLoan.notes}</p>
+              <div className="bg-muted rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-foreground mb-1">{t('common.notes')}</h4>
+                <p className="text-sm text-muted-foreground">{selectedLoan.notes}</p>
               </div>
             )}
 
             {/* Print button */}
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
+            <div className="flex justify-end gap-2 pt-4 border-t border-border">
               <Button size="sm" variant="secondary" onClick={() => handlePrintLoan(selectedLoan)}>
                 <Printer className="w-4 h-4" /> {t('inventory.loanDetails')}
               </Button>

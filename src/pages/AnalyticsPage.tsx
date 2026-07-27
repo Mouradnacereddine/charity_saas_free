@@ -1,13 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import i18nInstance from '../i18n';
 import { Card, StatCard, LoadingSpinner, Badge, Button } from '../components/common/UI';
-import { Trans } from 'react-i18next';
+import { SmartText } from '../components/common/SmartText';
 
 // Use i18nInstance.t directly instead of the hook-based t to avoid
 // "t is not a function" errors during React Query re-renders (react-i18next#1950)
-const t = (key: string, fallback?: string) => {
-  try { return i18nInstance.t(key, fallback); }
-  catch { return fallback || key; }
+const t = (key: string, options?: Record<string, any> | string) => {
+  try { return i18nInstance.t(key, options); }
+  catch {
+    if (typeof options === 'string') return options;
+    return key;
+  }
 };
 import { useTransactions } from '../hooks/useFinance';
 import { useDonors } from '../hooks/useDonors';
@@ -263,8 +266,8 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('analytics.title')}</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">{t('analytics.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {t('analytics.subtitle')}
           </p>
         </div>
@@ -273,11 +276,11 @@ export default function AnalyticsPage() {
       <Card titleAr={t('analytics.periodFilter')} className="no-print">
         <div className="flex flex-col md:flex-row md:items-end gap-4">
           <div className="w-full md:w-1/4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('analytics.periodFilter')}</label>
+            <label className="block text-sm font-medium text-foreground mb-1">{t('analytics.periodFilter')}</label>
             <select
               value={quickFilter}
               onChange={(e) => setQuickFilter(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="this_month">{t('analytics.currentMonth')}</option>
               <option value="last_3_months">{t('analytics.last3Months')}</option>
@@ -286,7 +289,7 @@ export default function AnalyticsPage() {
             </select>
           </div>
           <div className="w-full md:w-1/4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('analytics.fromDate')}</label>
+            <label className="block text-sm font-medium text-foreground mb-1">{t('analytics.fromDate')}</label>
             <input
               type="date"
               value={startDate}
@@ -294,11 +297,11 @@ export default function AnalyticsPage() {
                 setStartDate(e.target.value);
                 setQuickFilter('custom');
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div className="w-full md:w-1/4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('analytics.toDate')}</label>
+            <label className="block text-sm font-medium text-foreground mb-1">{t('analytics.toDate')}</label>
             <input
               type="date"
               value={endDate}
@@ -306,7 +309,7 @@ export default function AnalyticsPage() {
                 setEndDate(e.target.value);
                 setQuickFilter('custom');
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div className="md:mr-auto flex gap-2 w-full md:w-auto">
@@ -365,54 +368,62 @@ export default function AnalyticsPage() {
           title={t('analytics.totalIncome')}
           value={formatCurrency(stats.credits)}
           icon={<ArrowUpRight className="w-6 h-6" />}
-          color="bg-emerald-500"
+          color="bg-primary"
           subtitle={`${filteredTx.filter((t) => t.type === 'credit').length} ${t('analytics.depositCount')}`}
         />
         <StatCard
           title={t('analytics.totalExpenses')}
           value={formatCurrency(stats.debits)}
           icon={<ArrowDownRight className="w-6 h-6" />}
-          color="bg-red-500"
+          color="bg-destructive"
           subtitle={`${filteredTx.filter((t) => t.type === 'debit').length} ${t('analytics.withdrawalCount')}`}
         />
         <StatCard
           title={t('analytics.netFinancial')}
           value={formatCurrency(stats.balance)}
           icon={<TrendingUp className="w-6 h-6" />}
-          color={stats.balance >= 0 ? 'bg-blue-500' : 'bg-orange-500'}
+          color="bg-primary"
           subtitle={stats.balance >= 0 ? t('analytics.surplus') : t('analytics.deficit')}
         />
         <StatCard
           title={t('analytics.expenseToIncome')}
           value={`${stats.ratio.toFixed(1)}%`}
           icon={<Percent className="w-6 h-6" />}
-          color={stats.ratio > 85 ? 'bg-red-500' : stats.ratio > 50 ? 'bg-amber-500' : 'bg-emerald-500'}
-          subtitle={stats.ratio > 85 ? t('analytics.criticalSpending') : stats.ratio > 50 ? t('analytics.averageSpending') : t('analytics.excellentSpending')}
+          color="bg-primary"
+          subtitle={
+            stats.credits === 0
+              ? t('common.noOperations')
+              : stats.ratio > 85
+                ? t('analytics.criticalSpending')
+                : stats.ratio > 50
+                  ? t('analytics.averageSpending')
+                  : t('analytics.excellentSpending')
+          }
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card titleAr={t('analytics.monthlyEvolution')} className="lg:col-span-2">
           {monthlyProgression.length === 0 ? (
-            <div className="h-64 flex flex-col items-center justify-center text-gray-400">
+            <div className="h-64 flex flex-col items-center justify-center text-muted-foreground/70">
               <Calendar className="w-12 h-12 mb-2 stroke-1" />
               <p className="text-sm">{t('analytics.noChartData')}</p>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="flex gap-4 text-xs font-semibold justify-end">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-500 rounded-sm" /> {t('analytics.income')}</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-red-500 rounded-sm" /> {t('analytics.expenses')}</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-success rounded-sm" /> {t('analytics.income')}</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-destructive rounded-sm" /> {t('analytics.expenses')}</span>
               </div>
               {/* Table-based bar chart: never overlaps, always readable */}
               <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '420px' }}>
                 <table className="w-full text-xs border-collapse" dir="ltr">
-                  <thead className="sticky top-0 bg-white z-10">
-                    <tr className="border-b border-gray-200">
-                      <th className="text-right py-2 px-2 font-semibold text-gray-500 w-24">{t('analytics.month')}</th>
-                      <th className="text-right py-2 px-2 font-semibold text-gray-500 w-20">{t('analytics.income')}</th>
+                  <thead className="sticky top-0 bg-card z-10">
+                    <tr className="border-b border-border">
+                      <th className="text-start py-2 px-2 font-semibold text-muted-foreground w-24">{t('analytics.month')}</th>
+                      <th className="text-start py-2 px-2 font-semibold text-muted-foreground w-20">{t('analytics.income')}</th>
                       <th className="py-2 px-2 w-1/2 min-w-[200px]"></th>
-                      <th className="text-left py-2 px-2 font-semibold text-gray-500 w-20">{t('analytics.expenses')}</th>
+                      <th className="text-left py-2 px-2 font-semibold text-muted-foreground w-20">{t('analytics.expenses')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -430,11 +441,11 @@ export default function AnalyticsPage() {
                         const debBarW = Math.max(debPct, item.debits > 0 ? 3 : 0);
 
                         return (
-                          <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                            <td className="py-2.5 px-2 text-gray-700 font-medium text-right whitespace-nowrap">
+                          <tr key={idx} className="border-b border-border hover:bg-muted transition-colors">
+                            <td className="py-2.5 px-2 text-foreground font-medium text-start whitespace-nowrap">
                               {monthName} {yr}
                             </td>
-                            <td className="py-2.5 px-2 text-emerald-600 font-semibold text-right whitespace-nowrap" title={formatCurrency(item.credits)}>
+                            <td className="py-2.5 px-2 text-success-foreground font-semibold text-start whitespace-nowrap" title={formatCurrency(item.credits)}>
                               {item.credits >= 1000000
                                 ? (item.credits / 1000000).toFixed(1) + 'M'
                                 : item.credits >= 1000
@@ -443,11 +454,11 @@ export default function AnalyticsPage() {
                             </td>
                             <td className="py-2.5 px-1">
                               <div className="flex items-center gap-0.5" style={{ minHeight: '18px' }}>
-                                <div className="h-3 bg-emerald-500 rounded-sm transition-all" style={{ width: credBarW + '%', minWidth: item.credits > 0 ? '3px' : '0' }} />
-                                <div className="h-3 bg-red-500 rounded-sm transition-all" style={{ width: debBarW + '%', minWidth: item.debits > 0 ? '3px' : '0' }} />
+                                <div className="h-3 bg-success rounded-sm transition-all" style={{ width: credBarW + '%', minWidth: item.credits > 0 ? '3px' : '0' }} />
+                                <div className="h-3 bg-destructive rounded-sm transition-all" style={{ width: debBarW + '%', minWidth: item.debits > 0 ? '3px' : '0' }} />
                               </div>
                             </td>
-                            <td className="py-2.5 px-2 text-red-600 font-semibold text-left whitespace-nowrap" title={formatCurrency(item.debits)}>
+                            <td className="py-2.5 px-2 text-destructive font-semibold text-left whitespace-nowrap" title={formatCurrency(item.debits)}>
                               {item.debits >= 1000000
                                 ? (item.debits / 1000000).toFixed(1) + 'M'
                                 : item.debits >= 1000
@@ -492,14 +503,14 @@ export default function AnalyticsPage() {
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                   {(() => {
                     const totalFunding = fundSourceBreakdown.bank.credits + fundSourceBreakdown.cash.credits;
-                    if (totalFunding <= 0) return <><span className="text-xs text-gray-400">{t('analytics.noIncome')}</span></>;
+                    if (totalFunding <= 0) return <><span className="text-xs text-muted-foreground/70">{t('analytics.noIncome')}</span></>;
                     const bankPct = ((fundSourceBreakdown.bank.credits / totalFunding) * 100).toFixed(0);
                     const cashPct = ((fundSourceBreakdown.cash.credits / totalFunding) * 100).toFixed(0);
                     return (
                       <>
-                        <span className="text-xs text-gray-400 mb-1">{t('analytics.fundingSources')}</span>
-                        <span className="text-sm font-semibold text-primary-600">🔵 {t('dashboard.bank')} {bankPct}%</span>
-                        <span className="text-sm font-semibold text-amber-500">🟠 {t('dashboard.cash')} {cashPct}%</span>
+                        <span className="text-xs text-muted-foreground/70 mb-1">{t('analytics.fundingSources')}</span>
+                        <span className="text-sm font-semibold text-primary">🔵 {t('dashboard.bank')} {bankPct}%</span>
+                        <span className="text-sm font-semibold text-warning-foreground">🟠 {t('dashboard.cash')} {cashPct}%</span>
                       </>
                     );
                   })()}
@@ -508,34 +519,34 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+              <div className="p-3 bg-accent border border-accent/30 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
+                  <span className="font-semibold text-foreground text-sm flex items-center gap-1">
                     <span className="w-3 h-3 bg-primary-500 rounded-full" /> {t('dashboard.bank')} (Banque)
                   </span>
-                  <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance')}</span>
+                  <span className="text-xs text-muted-foreground">{t('analytics.netPeriodBalance')}</span>
                 </div>
                 <div className="flex justify-between text-xs mt-2">
-                  <span className="text-emerald-600">{t('analytics.income')}: {formatCurrency(fundSourceBreakdown.bank.credits)}</span>
-                  <span className="text-red-600">{t('analytics.expenses')}: {formatCurrency(fundSourceBreakdown.bank.debits)}</span>
+                  <span className="text-success-foreground">{t('analytics.income')}: {formatCurrency(fundSourceBreakdown.bank.credits)}</span>
+                  <span className="text-destructive">{t('analytics.expenses')}: {formatCurrency(fundSourceBreakdown.bank.debits)}</span>
                 </div>
-                <div className="text-left font-bold text-sm text-gray-900 border-t border-blue-100/50 mt-1.5 pt-1" dir="ltr">
+                <div className="text-left font-bold text-sm text-foreground border-t border-accent/30/50 mt-1.5 pt-1" dir="ltr">
                   {formatCurrency(fundSourceBreakdown.bank.net)}
                 </div>
               </div>
 
-              <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
+              <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-semibold text-gray-800 text-sm flex items-center gap-1">
-                    <span className="w-3 h-3 bg-amber-400 rounded-full" /> {t('finance.cashFund')} (Cash)
+                  <span className="font-semibold text-foreground text-sm flex items-center gap-1">
+                    <span className="w-3 h-3 bg-warning rounded-full" /> {t('finance.cashFund')} (Cash)
                   </span>
-                  <span className="text-xs text-gray-500">{t('analytics.netPeriodBalance')}</span>
+                  <span className="text-xs text-muted-foreground">{t('analytics.netPeriodBalance')}</span>
                 </div>
                 <div className="flex justify-between text-xs mt-2">
-                  <span className="text-emerald-600">{t('analytics.income')}: {formatCurrency(fundSourceBreakdown.cash.credits)}</span>
-                  <span className="text-red-600">{t('analytics.expenses')}: {formatCurrency(fundSourceBreakdown.cash.debits)}</span>
+                  <span className="text-success-foreground">{t('analytics.income')}: {formatCurrency(fundSourceBreakdown.cash.credits)}</span>
+                  <span className="text-destructive">{t('analytics.expenses')}: {formatCurrency(fundSourceBreakdown.cash.debits)}</span>
                 </div>
-                <div className="text-left font-bold text-sm text-gray-900 border-t border-amber-100/50 mt-1.5 pt-1" dir="ltr">
+                <div className="text-left font-bold text-sm text-foreground border-t border-warning/30/50 mt-1.5 pt-1" dir="ltr">
                   {formatCurrency(fundSourceBreakdown.cash.net)}
                 </div>
               </div>
@@ -552,26 +563,26 @@ export default function AnalyticsPage() {
             const debPercent = sum > 0 ? (c.periodDebits / sum) * 100 : 0;
 
             return (
-              <div key={c.id} className="p-4 bg-gray-50 border border-gray-100 rounded-xl space-y-3">
+              <div key={c.id} className="p-4 bg-muted border border-border rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
-                  <span className="font-bold text-gray-900">{c.nameAr}</span>
+                  <span className="font-bold text-foreground">{c.nameAr}</span>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    c.actualBalance >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                    c.actualBalance >= 0 ? 'bg-success/10 text-success-foreground' : 'bg-destructive/10 text-destructive'
                   }`}>
                     {t('analytics.actualBalance', 'رصيد فعلي')}: {formatCurrency(c.actualBalance)}
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden flex">
-                    <div className="bg-emerald-500 h-full" style={{ width: `${credPercent}%` }} />
-                    <div className="bg-red-500 h-full" style={{ width: `${debPercent}%` }} />
+                  <div className="h-2 w-full bg-muted/80 rounded-full overflow-hidden flex">
+                    <div className="bg-success h-full" style={{ width: `${credPercent}%` }} />
+                    <div className="bg-destructive h-full" style={{ width: `${debPercent}%` }} />
                   </div>
-                  <div className="flex justify-between text-[10px] text-gray-400">
+                  <div className="flex justify-between text-[10px] text-muted-foreground/70">
                     <span>{t('analytics.periodIncome', 'مداخيل الفترة')}: {formatCurrency(c.periodCredits)}</span>
                     <span>{t('analytics.periodExpenses', 'مصاريف الفترة')}: {formatCurrency(c.periodDebits)}</span>
                   </div>
                 </div>
-                <div className={`text-xs font-medium ${c.periodFlow >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <div className={`text-xs font-medium ${c.periodFlow >= 0 ? 'text-success-foreground' : 'text-destructive'}`}>
                   {t('analytics.netPeriodFlow', 'تدفق الفترة الصافي')}: {c.periodFlow >= 0 ? '+' : ''}{formatCurrency(c.periodFlow)}
                 </div>
               </div>
@@ -584,39 +595,39 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             {stats.ratio > 85 ? (
-              <div className="flex gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-800">
-                <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
+              <div className="flex gap-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm text-destructive">
+                <AlertTriangle className="w-5 h-5 shrink-0 text-destructive" />
                 <div>
                   <h4 className="font-bold">{t('analytics.criticalAlert')}</h4>
-                  <p className="mt-1 text-xs text-red-700 leading-relaxed">
-                    <Trans i18nKey="analytics.criticalText" values={{ ratio: stats.ratio.toFixed(1) }}>
-                      {'ratio'}%
-                    </Trans>
-                  </p>
+                  <SmartText
+                    i18nKey="analytics.criticalText"
+                    values={{ ratio: stats.ratio.toFixed(1) }}
+                    className="mt-1 text-xs text-destructive leading-relaxed"
+                  />
                 </div>
               </div>
             ) : stats.ratio > 50 ? (
-              <div className="flex gap-3 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-800">
-                <Info className="w-5 h-5 shrink-0 text-amber-500" />
+              <div className="flex gap-3 p-3 bg-warning/10 border border-warning/30 rounded-lg text-sm text-warning-foreground">
+                <Info className="w-5 h-5 shrink-0 text-warning-foreground" />
                 <div>
                   <h4 className="font-bold">{t('analytics.averageNote')}</h4>
-                  <p className="mt-1 text-xs text-amber-700 leading-relaxed">
-                    <Trans i18nKey="analytics.averageText" values={{ ratio: stats.ratio.toFixed(1) }}>
-                      {'ratio'}%
-                    </Trans>
-                  </p>
+                  <SmartText
+                    i18nKey="analytics.averageText"
+                    values={{ ratio: stats.ratio.toFixed(1) }}
+                    className="mt-1 text-xs text-warning-foreground leading-relaxed"
+                  />
                 </div>
               </div>
             ) : (
-              <div className="flex gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-800">
-                <CheckCircle className="w-5 h-5 shrink-0 text-emerald-500" />
+              <div className="flex gap-3 p-3 bg-success/10 border border-success/30 rounded-lg text-sm text-success-foreground">
+                <CheckCircle className="w-5 h-5 shrink-0 text-success" />
                 <div>
                   <h4 className="font-bold">{t('analytics.excellentIndicator')}</h4>
-                  <p className="mt-1 text-xs text-emerald-700 leading-relaxed">
-                    <Trans i18nKey="analytics.excellentText" values={{ ratio: stats.ratio.toFixed(1) }}>
-                      {'ratio'}%
-                    </Trans>
-                  </p>
+                  <SmartText
+                    i18nKey="analytics.excellentText"
+                    values={{ ratio: stats.ratio.toFixed(1) }}
+                    className="mt-1 text-xs text-success-foreground leading-relaxed"
+                  />
                 </div>
               </div>
             )}
@@ -625,67 +636,65 @@ export default function AnalyticsPage() {
               const deficits = caisseBreakdown.filter((c) => c.periodFlow < 0);
               if (deficits.length === 0) return null;
               return (
-                <div className="flex gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-800">
-                  <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
+                <div className="flex gap-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm text-destructive">
+                  <AlertTriangle className="w-5 h-5 shrink-0 text-destructive" />
                   <div>
                     <h4 className="font-bold">{t('analytics.fundDeficit')}</h4>
-                    <p className="mt-1 text-xs text-red-700 leading-relaxed">
-                      <Trans i18nKey="analytics.deficitText" values={{ funds: deficits.map((d) => d.nameAr).join('، ') }}>
-                        {'funds'}
-                      </Trans>
-                    </p>
+                    <SmartText
+                      i18nKey="analytics.deficitText"
+                      values={{ funds: deficits.map((d) => d.nameAr).join('، ') }}
+                      className="mt-1 text-xs text-destructive leading-relaxed"
+                    />
                   </div>
                 </div>
               );
             })()}
 
             {donorConcentration.isRisk && (
-              <div className="flex gap-3 p-3 bg-orange-50 border border-orange-100 rounded-lg text-sm text-orange-800">
-                <AlertTriangle className="w-5 h-5 shrink-0 text-orange-500" />
+              <div className="flex gap-3 p-3 bg-warning/10 border border-warning/30 rounded-lg text-sm text-warning-foreground">
+                <AlertTriangle className="w-5 h-5 shrink-0 text-warning" />
                 <div>
                   <h4 className="font-bold">{t('analytics.donorConcentration')}</h4>
-                  <p className="mt-1 text-xs text-orange-700 leading-relaxed">
-                    <Trans i18nKey="analytics.donorRiskText" values={{
+                  <SmartText
+                    i18nKey="analytics.donorRiskText"
+                    values={{
                       donor: donorConcentration.nameAr,
                       share: donorConcentration.share.toFixed(1),
-                      amount: formatCurrency(donorConcentration.amount)
-                    }}>
-                      {'donor'} {'share'}% {'amount'}
-                    </Trans>
-                  </p>
+                      amount: formatCurrency(donorConcentration.amount),
+                    }}
+                    className="mt-1 text-xs text-warning-foreground leading-relaxed"
+                  />
                 </div>
               </div>
             )}
           </div>
 
           <div className="space-y-3">
-            <div className="flex gap-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800">
-              <TrendingUp className="w-5 h-5 shrink-0 text-blue-500" />
+            <div className="flex gap-3 p-3 bg-accent border border-accent/30 rounded-lg text-sm text-accent-foreground">
+              <TrendingUp className="w-5 h-5 shrink-0 text-accent-foreground" />
               <div>
                 <h4 className="font-bold">{t('analytics.safetyMargin')}</h4>
-                <p className="mt-1 text-xs text-blue-700 leading-relaxed">
-                  <Trans i18nKey="analytics.safetyMarginText" values={{
-                    reserve: formatCurrency(stats.credits * 0.2)
-                  }}>
-                    {'reserve'}
-                  </Trans>
-                </p>
+                <SmartText
+                  i18nKey="analytics.safetyMarginText"
+                  values={{ reserve: formatCurrency(stats.credits * 0.2) }}
+                  className="mt-1 text-xs text-accent-foreground leading-relaxed"
+                />
               </div>
             </div>
 
-            <div className="flex gap-3 p-3 bg-purple-50 border border-purple-100 rounded-lg text-sm text-purple-800">
-              <Activity className="w-5 h-5 shrink-0 text-purple-500" />
+            <div className="flex gap-3 p-3 bg-accent border border-accent/30 rounded-lg text-sm text-accent-foreground">
+              <Activity className="w-5 h-5 shrink-0 text-accent-foreground" />
               <div>
                 <h4 className="font-bold">{t('analytics.velocity')}</h4>
-                <p className="mt-1 text-xs text-purple-700 leading-relaxed">
-                  <Trans i18nKey="analytics.velocityText" values={{
+                <SmartText
+                  i18nKey="analytics.velocityText"
+                  values={{
                     total: velocity.total,
                     days: velocity.days,
-                    avgPerDay: velocity.avgPerDay
-                  }}>
-                    {'total'} {'days'} {'avgPerDay'}
-                  </Trans>
-                </p>
+                    avgPerDay: velocity.avgPerDay,
+                  }}
+                  className="mt-1 text-xs text-accent-foreground leading-relaxed"
+                />
               </div>
             </div>
           </div>
@@ -693,13 +702,13 @@ export default function AnalyticsPage() {
       </Card>
 
       <Card titleAr={t('analytics.detailedLog')}>
-        <div className="flex border-b border-gray-200 mb-6 no-print">
+        <div className="flex border-b border-border mb-6 no-print">
           <button
             onClick={() => setActiveTab('caisses')}
             className={`pb-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
               activeTab === 'caisses'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             {t('analytics.byFund')}
@@ -708,8 +717,8 @@ export default function AnalyticsPage() {
             onClick={() => setActiveTab('subcategories')}
             className={`pb-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
               activeTab === 'subcategories'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             {t('analytics.byCategory')}
@@ -718,8 +727,8 @@ export default function AnalyticsPage() {
             onClick={() => setActiveTab('log')}
             className={`pb-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
               activeTab === 'log'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             {t('analytics.detailedLog')}
@@ -729,16 +738,16 @@ export default function AnalyticsPage() {
         {activeTab === 'caisses' && (
           <div className="space-y-6">
             {groupedByCaisse.map((group) => (
-              <div key={group.caisse?.id || 'unknown'} className="border border-gray-100 rounded-lg overflow-hidden bg-white">
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div key={group.caisse?.id || 'unknown'} className="border border-border rounded-lg overflow-hidden bg-card">
+                <div className="bg-muted px-4 py-3 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-700 font-bold text-base">{group.caisse?.nameAr || t('caisses.noFunds')}</span>
-                    <span className="text-xs text-gray-400">({group.caisse?.reference || '—'})</span>
+                    <span className="text-foreground font-bold text-base">{group.caisse?.nameAr || t('caisses.noFunds')}</span>
+                    <span className="text-xs text-muted-foreground/70">({group.caisse?.reference || '—'})</span>
                   </div>
                   <div className="flex gap-4 text-xs font-semibold">
-                    <span className="text-emerald-600">{t('analytics.totalIncome')}: +{formatCurrency(group.credits)}</span>
-                    <span className="text-red-600">{t('analytics.totalExpenses')}: -{formatCurrency(group.debits)}</span>
-                    <span className={group.credits - group.debits >= 0 ? 'text-emerald-700' : 'text-red-700'}>
+                    <span className="text-success-foreground">{t('analytics.totalIncome')}: +{formatCurrency(group.credits)}</span>
+                    <span className="text-destructive">{t('analytics.totalExpenses')}: -{formatCurrency(group.debits)}</span>
+                    <span className={group.credits - group.debits >= 0 ? 'text-success-foreground' : 'text-destructive'}>
                       {t('analytics.netFinancial')}: {formatCurrency(group.credits - group.debits)}
                     </span>
                   </div>
@@ -746,34 +755,34 @@ export default function AnalyticsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50/50 text-right">
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logDate')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logType')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logSubcategory')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logDescription')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logReceiptNo')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logSource')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logAmount')}</th>
+                      <tr className="border-b border-border bg-muted/50 text-start">
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logDate')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logType')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logSubcategory')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logDescription')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logReceiptNo')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logSource')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logAmount')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {group.txs.map((tx) => (
-                        <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50">
-                          <td className="py-2 px-4 text-gray-500">{formatDate(tx.date)}</td>
+                        <tr key={tx.id} className="border-b border-border hover:bg-muted">
+                          <td className="py-2 px-4 text-muted-foreground">{formatDate(tx.date)}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.type === 'credit' ? 'success' : 'danger'}>
                               {tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}
                             </Badge>
                           </td>
-                          <td className="py-2 px-4 text-gray-600">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
-                          <td className="py-2 px-4 text-gray-700 font-medium">{tx.descriptionAr}</td>
-                          <td className="py-2 px-4 text-gray-500 font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
+                          <td className="py-2 px-4 text-muted-foreground">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{tx.descriptionAr}</td>
+                          <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
                               {tx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}
                             </Badge>
                           </td>
-                          <td className={`py-2 px-4 font-bold text-left ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-600'}`}>
+                          <td className={`py-2 px-4 font-bold text-left ${tx.type === 'credit' ? 'text-success-foreground' : 'text-destructive'}`}>
                             {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
                           </td>
                         </tr>
@@ -789,16 +798,16 @@ export default function AnalyticsPage() {
         {activeTab === 'subcategories' && (
           <div className="space-y-6">
             {groupedBySubcategory.map((group, idx) => (
-              <div key={idx} className="border border-gray-100 rounded-lg overflow-hidden bg-white">
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div key={idx} className="border border-border rounded-lg overflow-hidden bg-card">
+                <div className="bg-muted px-4 py-3 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <span className="text-gray-800 font-bold text-sm">{t('analytics.logSubcategory')}: {group.subNameAr}</span>
-                    <span className="text-xs text-gray-400 mr-2">({group.caisseNameAr})</span>
+                    <span className="text-foreground font-bold text-sm">{t('analytics.logSubcategory')}: {group.subNameAr}</span>
+                    <span className="text-xs text-muted-foreground/70 mr-2">({group.caisseNameAr})</span>
                   </div>
                   <div className="flex gap-4 text-xs font-semibold">
-                    <span className="text-emerald-600">{t('analytics.totalIncome')}: +{formatCurrency(group.credits)}</span>
-                    <span className="text-red-600">{t('analytics.totalExpenses')}: -{formatCurrency(group.debits)}</span>
-                    <span className={group.credits - group.debits >= 0 ? 'text-emerald-700' : 'text-red-700'}>
+                    <span className="text-success-foreground">{t('analytics.totalIncome')}: +{formatCurrency(group.credits)}</span>
+                    <span className="text-destructive">{t('analytics.totalExpenses')}: -{formatCurrency(group.debits)}</span>
+                    <span className={group.credits - group.debits >= 0 ? 'text-success-foreground' : 'text-destructive'}>
                       {t('analytics.netFinancial')}: {formatCurrency(group.credits - group.debits)}
                     </span>
                   </div>
@@ -806,32 +815,32 @@ export default function AnalyticsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50/50 text-right">
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logDate')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logType')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logDescription')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logReceiptNo')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logSource')}</th>
-                        <th className="py-2.5 px-4 font-semibold text-gray-500">{t('analytics.logAmount')}</th>
+                      <tr className="border-b border-border bg-muted/50 text-start">
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logDate')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logType')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logDescription')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logReceiptNo')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logSource')}</th>
+                        <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logAmount')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {group.txs.map((tx) => (
-                        <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50">
-                          <td className="py-2 px-4 text-gray-500">{formatDate(tx.date)}</td>
+                        <tr key={tx.id} className="border-b border-border hover:bg-muted">
+                          <td className="py-2 px-4 text-muted-foreground">{formatDate(tx.date)}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.type === 'credit' ? 'success' : 'danger'}>
                               {tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}
                             </Badge>
                           </td>
-                          <td className="py-2 px-4 text-gray-700 font-medium">{tx.descriptionAr}</td>
-                          <td className="py-2 px-4 text-gray-500 font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{tx.descriptionAr}</td>
+                          <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
                               {tx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}
                             </Badge>
                           </td>
-                          <td className={`py-2 px-4 font-bold text-left ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-600'}`}>
+                          <td className={`py-2 px-4 font-bold text-left ${tx.type === 'credit' ? 'text-success-foreground' : 'text-destructive'}`}>
                             {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
                           </td>
                         </tr>
@@ -853,15 +862,15 @@ export default function AnalyticsPage() {
                   placeholder={t('analytics.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pr-8 pl-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right"
+                  className="w-full pr-8 pl-3 py-1.5 border border-border rounded-lg text-xs bg-card focus:outline-none focus:ring-1 focus:ring-ring text-start"
                   dir="rtl"
                 />
-                <Search className="absolute right-2.5 top-2 w-4 h-4 text-gray-400" />
+                <Search className="absolute right-2.5 top-2 w-4 h-4 text-muted-foreground/70" />
               </div>
               <select
                 value={logCaisseFilter}
                 onChange={(e) => setLogCaisseFilter(e.target.value)}
-                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right font-medium"
+                className="w-full px-3 py-1.5 border border-border rounded-lg text-xs bg-card focus:outline-none focus:ring-1 focus:ring-ring text-start font-medium"
               >
                 <option value="">{t('analytics.filterAllFunds')}</option>
                 {caisses.map((c) => (
@@ -871,7 +880,7 @@ export default function AnalyticsPage() {
               <select
                 value={logTypeFilter}
                 onChange={(e) => setLogTypeFilter(e.target.value)}
-                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right font-medium"
+                className="w-full px-3 py-1.5 border border-border rounded-lg text-xs bg-card focus:outline-none focus:ring-1 focus:ring-ring text-start font-medium"
               >
                 <option value="">{t('analytics.filterAllOperations')}</option>
                 <option value="credit">{t('analytics.filterCreditOnly')}</option>
@@ -880,7 +889,7 @@ export default function AnalyticsPage() {
               <select
                 value={logSourceFilter}
                 onChange={(e) => setLogSourceFilter(e.target.value)}
-                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 text-right font-medium"
+                className="w-full px-3 py-1.5 border border-border rounded-lg text-xs bg-card focus:outline-none focus:ring-1 focus:ring-ring text-start font-medium"
               >
                 <option value="">{t('analytics.allSources')}</option>
                 <option value="banque">{t('dashboard.bank')}</option>
@@ -893,17 +902,17 @@ export default function AnalyticsPage() {
               const totalCredits = logTx.filter(tx => tx.status !== 'cancelled' && tx.type === 'credit').reduce((s, tx) => s + tx.amount, 0);
               const totalDebits = logTx.filter(tx => tx.status !== 'cancelled' && tx.type === 'debit').reduce((s, tx) => s + tx.amount, 0);
               return (
-                <div className="flex flex-wrap gap-4 px-4 py-3 bg-gray-50 rounded-lg border border-gray-100 mb-3 text-sm">
-                  <span className="text-emerald-700 font-semibold">
+                <div className="flex flex-wrap gap-4 px-4 py-3 bg-muted rounded-lg border border-border mb-3 text-sm">
+                  <span className="text-success-foreground font-semibold">
                     {t('analytics.totalIncome')}: +{formatCurrency(totalCredits)}
                   </span>
-                  <span className="text-red-700 font-semibold">
+                  <span className="text-destructive font-semibold">
                     {t('analytics.totalExpenses')}: -{formatCurrency(totalDebits)}
                   </span>
-                  <span className={`font-semibold ${totalCredits - totalDebits >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                  <span className={`font-semibold ${totalCredits - totalDebits >= 0 ? 'text-success-foreground' : 'text-destructive'}`}>
                     {t('analytics.netFinancial')}: {totalCredits - totalDebits >= 0 ? '+' : ''}{formatCurrency(totalCredits - totalDebits)}
                   </span>
-                  <span className="text-gray-500 text-xs mr-auto">
+                  <span className="text-muted-foreground text-xs mr-auto">
                     ({logTx.length} {t('analytics.operations')})
                   </span>
                 </div>
@@ -913,43 +922,43 @@ export default function AnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50/50 text-right">
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logType')}</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logReceiptNo')}</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t("dashboard.fund")}</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logSubcategory')}</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logDescription')}</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logDate')}</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logSource')}</th>
-                    <th className="py-2.5 px-4 font-semibold text-gray-600">{t('analytics.logAmount')}</th>
+                  <tr className="border-b border-border bg-muted/50 text-start">
+                    <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logType')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logReceiptNo')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t("dashboard.fund")}</th>
+                    <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logSubcategory')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logDescription')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logDate')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logSource')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-muted-foreground">{t('analytics.logAmount')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {logTx.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-6 text-center text-gray-400">{t('analytics.noOperationsFound')}</td>
+                      <td colSpan={8} className="py-6 text-center text-muted-foreground/70">{t('analytics.noOperationsFound')}</td>
                     </tr>
                   ) : (
                     logTx.map((tx) => {
                       const caisse = caisses.find((c) => c.id === tx.caisseId);
                       return (
-                        <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50">
+                        <tr key={tx.id} className="border-b border-border hover:bg-muted">
                           <td className="py-2 px-4">
                             <Badge variant={tx.type === 'credit' ? 'success' : 'danger'}>
                               {tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}
                             </Badge>
                           </td>
-                          <td className="py-2 px-4 text-gray-500 font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
-                          <td className="py-2 px-4 text-gray-800 font-medium">{caisse ? caisse.nameAr : '—'}</td>
-                          <td className="py-2 px-4 text-gray-500">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
-                          <td className="py-2 px-4 text-gray-700">{tx.descriptionAr}</td>
-                          <td className="py-2 px-4 text-gray-500">{formatDate(tx.date)}</td>
+                          <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{caisse ? caisse.nameAr : '—'}</td>
+                          <td className="py-2 px-4 text-muted-foreground">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
+                          <td className="py-2 px-4 text-foreground">{tx.descriptionAr}</td>
+                          <td className="py-2 px-4 text-muted-foreground">{formatDate(tx.date)}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
                               {tx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}
                             </Badge>
                           </td>
-                          <td className={`py-2 px-4 font-bold text-left ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-600'}`}>
+                          <td className={`py-2 px-4 font-bold text-left ${tx.type === 'credit' ? 'text-success-foreground' : 'text-destructive'}`}>
                             {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
                           </td>
                         </tr>

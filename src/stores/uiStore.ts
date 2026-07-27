@@ -1,5 +1,15 @@
 import { create } from 'zustand';
 
+// Theme sombre retiré : interface clean et unique, palette unique (claire).
+// On purge toute classe .dark résiduelle et la valeur localStorage.
+
+if (typeof document !== 'undefined') {
+  document.documentElement.classList.remove('dark');
+}
+if (typeof window !== 'undefined') {
+  try { window.localStorage.removeItem('theme'); } catch {}
+}
+
 interface UIStore {
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;

@@ -30,11 +30,9 @@ describe('Layout', () => {
 
   it('highlights the active page', () => {
     render(<Layout {...defaultProps} activePage="finance">Content</Layout>)
-    // "المالية" appears in both the sidebar nav button and the top header h2
     const financeElements = screen.getAllByText('المالية')
-    // The sidebar nav button for the active page gets bg-primary-700
     const activeNavButton = financeElements.find(el =>
-      el.closest('button')?.className.includes('bg-primary-700')
+      el.closest('button')?.className.includes('bg-sidebar-accent')
     )
     expect(activeNavButton).toBeDefined()
   })

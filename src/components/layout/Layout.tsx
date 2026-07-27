@@ -22,7 +22,7 @@ import {
   Settings,
   TrendingUp,
   ChevronRight,
-  Languages,
+  Globe,
 } from 'lucide-react';
 import { authApi } from '../../lib/api';
 import { useUIStore } from '../../stores/uiStore';
@@ -81,6 +81,10 @@ export function Layout({
   useEffect(() => {
     setSettingsNameAr(associationNameAr || '');
   }, [associationNameAr]);
+
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+  }, [i18n.language]);
   const handleUpdateName = async () => {
     if (!settingsNameAr.trim()) return;
     setSavingName(true);
@@ -112,7 +116,7 @@ export function Layout({
       {/* Sidebar — always full viewport height */}
       <aside
         className={`
-          fixed top-0 z-50 h-dvh bg-primary-900 text-white
+          fixed top-0 z-50 h-dvh bg-sidebar text-sidebar-foreground
           transition-all duration-200 ease-in-out
           w-64 flex flex-col
           lg:translate-x-0 lg:sticky lg:z-auto
@@ -126,7 +130,7 @@ export function Layout({
           }
         `}
       >
-        <div className="flex items-center justify-between p-5 border-b border-primary-700">
+        <div className="flex items-center justify-between p-5 border-b border-sidebar-border">
           <div className="flex items-center gap-2 min-w-0">
             {associationLogoUrl ? (
               <img src={associationLogoUrl} alt="logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
@@ -140,7 +144,7 @@ export function Layout({
           <div className="flex items-center gap-1">
             <button
               onClick={toggleSidebar}
-              className="hidden lg:flex p-1.5 rounded-lg text-primary-300 hover:text-white hover:bg-primary-800 transition-colors"
+              className="hidden lg:flex p-1.5 rounded-lg text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
               aria-label={sidebarCollapsed ? t('nav.toggleExpand') : t('nav.toggleCollapse')}
               title={sidebarCollapsed ? t('nav.toggleExpand') : t('nav.toggleCollapse')}
             >
@@ -148,7 +152,7 @@ export function Layout({
             </button>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1 text-primary-300 hover:text-white"
+              className="lg:hidden p-1 text-muted-foreground hover:text-sidebar-foreground"
             >
               <X className="w-5 h-5" />
             </button>
@@ -169,8 +173,8 @@ export function Layout({
                   sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''
                 } ${
                   activePage === item.id
-                    ? 'bg-primary-700 text-white shadow-sm'
-                    : 'text-primary-200 hover:bg-primary-800 hover:text-white'
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 }`}
               >
                 <item.icon className="w-5 h-5 shrink-0" />
@@ -182,14 +186,14 @@ export function Layout({
         </nav>
 
         {/* User section — avatar as dropdown trigger */}
-        <div className="border-t border-primary-700 shrink-0">
+        <div className="border-t border-sidebar-border shrink-0">
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex w-full items-center justify-center gap-3 px-3 py-3 hover:bg-primary-800 transition-colors"
+            <DropdownMenuTrigger className="flex w-full items-center justify-center gap-3 px-3 py-3 hover:bg-sidebar-accent transition-colors"
                 title={userNameAr || t('userMenu.defaultName')}>
-                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold text-sm shrink-0">
+                <div className="w-8 h-8 bg-sidebar-accent text-sidebar-accent-foreground rounded-full flex items-center justify-center font-bold text-sm shrink-0">
                   {userNameAr?.charAt(0) || '?'}
                 </div>
-                <span className={`truncate text-sm text-primary-200 transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
+                <span className={`truncate text-sm text-muted-foreground transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
                   {userNameAr || t('userMenu.defaultName')}
                 </span>
             </DropdownMenuTrigger>
@@ -200,9 +204,9 @@ export function Layout({
               className="min-w-[240px]"
               dir="rtl"
             >
-              <div className="p-3 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900">{userNameAr || t('userMenu.defaultName')}</p>
-                <p className="text-xs text-gray-500">{roleLabel}</p>
+              <div className="p-3 border-b border-border">
+                <p className="text-sm font-medium text-foreground">{userNameAr || t('userMenu.defaultName')}</p>
+                <p className="text-xs text-muted-foreground">{roleLabel}</p>
               </div>
               <div className="p-1">
                 {isAdmin && (
@@ -221,26 +225,6 @@ export function Layout({
                   <LogOut className="w-4 h-4" />
                   {t('userMenu.logout')}
                 </DropdownMenuItem>
-                <div className="border-t border-gray-100 my-1" />
-                <div className="px-3 py-1.5">
-                  <p className="text-xs text-gray-400 mb-1 flex items-center gap-1.5">
-                    <Languages className="w-3.5 h-3.5" />
-                    {i18n.language === 'ar' ? 'اللغة' : i18n.language === 'fr' ? 'Langue' : 'Language'}
-                  </p>
-                  {LANGUAGES.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => i18n.changeLanguage(lang.code)}
-                      className={`w-full text-right px-2 py-1 text-sm rounded-lg transition-colors ${
-                        i18n.language === lang.code
-                          ? 'bg-primary-50 text-primary-700 font-medium'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {lang.label}
-                    </button>
-                  ))}
-                </div>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -250,26 +234,26 @@ export function Layout({
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Sticky header */}
-        <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 no-print">
+        <header className="sticky top-0 z-30 bg-background shadow-sm border-b border-border px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 no-print">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
+              className="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted active:bg-muted/70"
               aria-label={t('nav.toggleOpen')}
             >
               <Menu className="w-6 h-6" />
             </button>
             {breadcrumbs && (
-              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500" dir="rtl">
+              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground" dir="rtl">
                 {breadcrumbs.map((crumb, i) => (
                   <span key={`bc-${i}`} className="flex items-center gap-1.5">
-                    {i > 0 && <ChevronLeft className="w-3 h-3 text-gray-300" />}
+                    {i > 0 && <ChevronLeft className="w-3 h-3 text-border" />}
                     {i < breadcrumbs.length - 1 ? (
-                      <button onClick={() => onNavigate(crumb.page)} className="hover:text-primary-600 transition-colors">
+                      <button onClick={() => onNavigate(crumb.page)} className="hover:text-primary transition-colors">
                         {crumb.label}
                       </button>
                     ) : (
-                      <span className="text-gray-900 font-medium">{crumb.label}</span>
+                      <span className="text-foreground font-medium">{crumb.label}</span>
                     )}
                   </span>
                 ))}
@@ -277,15 +261,37 @@ export function Layout({
             )}
           </div>
           <div className="text-center flex-1">
-            <span className="text-sm text-green-800 font-arabic">{t('app.bismillah')}</span>
+            <span className="text-sm text-[var(--success)] font-arabic">{t('app.bismillah')}</span>
           </div>
-          <div className="text-xs sm:text-sm text-gray-500">
-            {new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-DZ' : i18n.language === 'fr' ? 'fr-DZ' : 'en-DZ', {
-              weekday: 'short',
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            })}
+          <div className="flex items-center gap-2">
+            {/* Sélecteur de langue — isolé du menu utilisateur */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-sm"
+                  aria-label={t('language.label', 'Langue')}>
+                <Globe className="w-4 h-4" />
+                <span className="font-medium uppercase">{i18n.language}</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="bottom" align="end" sideOffset={6} className="min-w-[140px]">
+                {LANGUAGES.map((lang) => (
+                  <DropdownMenuItem
+                    key={lang.code}
+                    onClick={() => i18n.changeLanguage(lang.code)}
+                    className={`gap-2 ${i18n.language === lang.code ? 'bg-primary/10 text-primary font-medium' : ''}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${i18n.language === lang.code ? 'bg-primary' : 'bg-border'}`} />
+                    <span>{lang.label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <div className="text-xs sm:text-sm text-muted-foreground">
+              {new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-DZ' : i18n.language === 'fr' ? 'fr-DZ' : 'en-DZ', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+              })}
+            </div>
           </div>
         </header>
 
@@ -296,45 +302,45 @@ export function Layout({
       {/* Settings modal */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('settings.title')}</h3>
+          <div className="bg-card text-card-foreground rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-foreground mb-4">{t('settings.title')}</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{t('settings.nameAr')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('settings.nameAr')}</label>
                 <input
                   type="text"
                   value={settingsNameAr}
                   onChange={(e) => setSettingsNameAr(e.target.value)}
                   placeholder={t('auth.nameArPlaceholder', 'مثال: جمعية البركة الخيرية')}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-right"
+                  className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring text-right"
                   dir="rtl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{t('settings.nameLatin')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('settings.nameLatin')}</label>
                 <input
                   type="text"
                   value={settingsName}
                   onChange={(e) => setSettingsName(e.target.value)}
                   placeholder="Ex: Association El-Baraka"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                   dir="ltr"
                 />
               </div>
               {nameError && (
-                <p className="text-xs text-red-500">{nameError}</p>
+                <p className="text-xs text-destructive">{nameError}</p>
               )}
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setShowSettingsModal(false)}
-                  className="flex-1 py-2.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 py-2.5 text-sm text-secondary-foreground bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
                 >
                   {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleUpdateName}
                   disabled={savingName || !settingsNameAr.trim()}
-                  className="flex-1 py-2.5 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 py-2.5 text-sm text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {savingName ? t('common.saving') : t('common.save')}
                 </button>
