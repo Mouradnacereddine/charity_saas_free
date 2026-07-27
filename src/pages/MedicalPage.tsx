@@ -737,7 +737,7 @@ export default function MedicalPage() {
           <p className="text-sm text-muted-foreground mb-4">{t('medical.manageAnalysis')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
             <Input labelAr={t('medical.nameAr')} value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder={t('medical.analysisPlaceholder')} />
-            <Input labelAr={t('medical.nameLatin')} value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder="Ex: Analyse" dir="ltr" />
+            <Input labelAr={t('medical.nameLatin')} value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder={t('medical.analysisPlaceholder')} dir="ltr" />
             <Button onClick={handleAddAnalysis} disabled={!newAnalysisAr.trim()}>{t('common.add')}</Button>
           </div>
           <Card>
@@ -787,7 +787,7 @@ export default function MedicalPage() {
           <p className="text-sm text-muted-foreground mb-4">{t('medical.manageHospitals')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
             <Input labelAr={t('medical.nameAr')} value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} />
-            <Input labelAr={t('medical.nameLatin')} value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder="Ex: CHU" dir="ltr" />
+            <Input labelAr={t('medical.nameLatin')} value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} dir="ltr" />
             <Button onClick={handleAddHospital} disabled={!newHospAr.trim()}>{t('common.add')}</Button>
           </div>
           <Card>

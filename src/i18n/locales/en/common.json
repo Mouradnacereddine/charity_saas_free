@@ -83,7 +83,15 @@
     "googleLoginFailed": "Google login failed",
     "createAssociationFailed": "Failed to create association",
     "checkingInvite": "Checking invitation code...",
-    "loggingIn": "Logging in..."
+    "loggingIn": "Logging in...",
+    "nameArPlaceholder": "Ex: Mohammed",
+    "assocNamePlaceholder": "Ex: Charity Association"
+  },
+  "language": {
+    "label": "Language",
+    "ar": "العربية",
+    "en": "English",
+    "fr": "Français"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -181,7 +189,10 @@
     "pledged": "Pledged",
     "transactionType": "Transaction Type",
     "pendingTx": "Pending Transaction",
-    "remainingDisbursement": "Remaining amount to disburse"
+    "remainingDisbursement": "Remaining amount to disburse",
+    "rib": "RIB",
+    "iban": "IBAN",
+    "swift": "SWIFT"
   },
   "beneficiaries": {
     "title": "Beneficiaries",
@@ -334,7 +345,10 @@
     "receiptTitle": "Donation Receipt",
     "printReceipt": "Print Receipt",
     "donorSignature": "Donor's Signature",
-    "stampSignature": "Association Stamp and Official's Signature"
+    "stampSignature": "Association Stamp and Official's Signature",
+    "lastNameArPlaceholder": "Ex: Ben Issa",
+    "firstNameArPlaceholder": "Ex: Mohamed",
+    "addressPlaceholder": "Ex: Algiers"
   },
   "inventory": {
     "title": "Inventory & Loans Management",
@@ -582,7 +596,8 @@
     "downgradeToTreasurer": "Downgrade to Treasurer",
     "deleteUserHint": "Delete user",
     "deleteInviteHint": "Delete invitation",
-    "createdDate": "Created Date"
+    "createdDate": "Created Date",
+    "nameArPlaceholder": "Ex: Ahmed"
   },
   "analytics": {
     "title": "Financial Analytics & Reports",

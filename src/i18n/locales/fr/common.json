@@ -83,7 +83,15 @@
     "googleLoginFailed": "Échec de la connexion Google",
     "createAssociationFailed": "Échec de la création de l'association",
     "checkingInvite": "Vérification du code d'invitation...",
-    "loggingIn": "Connexion en cours..."
+    "loggingIn": "Connexion en cours...",
+    "nameArPlaceholder": "Ex: Mohammed",
+    "assocNamePlaceholder": "Ex: Association El-Baraka"
+  },
+  "language": {
+    "label": "Langue",
+    "ar": "العربية",
+    "en": "English",
+    "fr": "Français"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -181,7 +189,10 @@
     "pledged": "Lié à une promesse",
     "transactionType": "Type de transaction",
     "pendingTx": "Transaction en attente",
-    "remainingDisbursement": "Montant restant à débourser"
+    "remainingDisbursement": "Montant restant à débourser",
+    "rib": "RIB",
+    "iban": "IBAN",
+    "swift": "SWIFT"
   },
   "beneficiaries": {
     "title": "Bénéficiaires",
@@ -334,7 +345,10 @@
     "receiptTitle": "Reçu de don",
     "printReceipt": "Imprimer le reçu",
     "donorSignature": "Signature du donateur",
-    "stampSignature": "Cachet de l'association et signature du responsable"
+    "stampSignature": "Cachet de l'association et signature du responsable",
+    "lastNameArPlaceholder": "Ex: Ben Issa",
+    "firstNameArPlaceholder": "Ex: Mohamed",
+    "addressPlaceholder": "Ex: Alger"
   },
   "inventory": {
     "title": "Gestion du stock et des prêts",
@@ -582,7 +596,8 @@
     "downgradeToTreasurer": "Rétrograder en trésorier",
     "deleteUserHint": "Supprimer l'utilisateur",
     "deleteInviteHint": "Supprimer l'invitation",
-    "createdDate": "Date de création"
+    "createdDate": "Date de création",
+    "nameArPlaceholder": "Ex: Ahmed"
   },
   "analytics": {
     "title": "Analyses financières et rapports",

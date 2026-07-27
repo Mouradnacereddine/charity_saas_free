@@ -178,7 +178,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
                   type="text"
                   value={assocNameAr}
                   onChange={(e) => setAssocNameAr(e.target.value)}
-                  placeholder={t('auth.nameArPlaceholder', 'Ex: Charity Association')}
+                  placeholder={t('auth.nameArPlaceholder')}
                   className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring text-start"
                   dir="rtl"
                 />
@@ -189,7 +189,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
                   type="text"
                   value={assocName}
                   onChange={(e) => setAssocName(e.target.value)}
-                  placeholder="Ex: Association El-Baraka"
+                  placeholder={t('auth.assocNamePlaceholder') || 'Ex: Association El-Baraka'}
                   className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                   dir="ltr"
                 />

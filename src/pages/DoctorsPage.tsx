@@ -253,8 +253,8 @@ export default function DoctorsPage() {
               <Input labelAr={t('doctors.firstNameAr')} value={firstNameAr} onChange={(e) => setFirstNameAr(e.target.value)} placeholder={t('doctors.firstNameArPlaceholder')} required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-              <Input labelAr={t('doctors.lastNameLatin')} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Ex: Belkacem" dir="ltr" />
-              <Input labelAr={t('doctors.firstNameLatin')} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ex: Amina" dir="ltr" />
+              <Input labelAr={t('doctors.lastNameLatin')} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder={t('doctors.lastNameArPlaceholder')} dir="ltr" />
+              <Input labelAr={t('doctors.firstNameLatin')} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder={t('doctors.firstNameArPlaceholder')} dir="ltr" />
             </div>
           </div>
 
@@ -427,7 +427,7 @@ export default function DoctorsPage() {
         <p className="text-sm text-muted-foreground mb-4">{t('doctors.manageSpecialties')}</p>
         <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
           <Input labelAr={t('doctors.nameAr')} value={newSpecAr} onChange={(e) => setNewSpecAr(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} />
-          <Input labelAr={t('doctors.nameLatin')} value={newSpecFr} onChange={(e) => setNewSpecFr(e.target.value)} placeholder="Ex: Généraliste" dir="ltr" />
+          <Input labelAr={t('doctors.nameLatin')} value={newSpecFr} onChange={(e) => setNewSpecFr(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} dir="ltr" />
           <Button onClick={handleAddSpecialty} disabled={!newSpecAr.trim()}>{t('common.add')}</Button>
         </div>
         <Card>

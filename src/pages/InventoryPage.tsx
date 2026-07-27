@@ -378,7 +378,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
               labelAr={t('inventory.nameLatin')}
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
-              placeholder="Ex: Medical"
+              placeholder={t('inventory.nameArPlaceholder')}
             />
           </div>
           <div className="flex items-end">
@@ -484,7 +484,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
               labelAr={t('inventory.nameLatin')}
               value={newLocName}
               onChange={(e) => setNewLocName(e.target.value)}
-              placeholder="Ex: Dépôt A - Rayon 1"
+              placeholder={t('inventory.locationPlaceholder')}
             />
           </div>
           <div className="flex items-end">
@@ -585,7 +585,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                 setNewStsNameAr(e.target.value)
                 setNewStsName(e.target.value)
               }}
-              placeholder="Ex: très bon état"
+              placeholder={t('inventory.nameArPlaceholder')}
               required
             />
           </div>

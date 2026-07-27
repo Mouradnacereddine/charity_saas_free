@@ -83,7 +83,15 @@
     "googleLoginFailed": "فشل تسجيل الدخول بواسطة Google",
     "createAssociationFailed": "فشل إنشاء الجمعية",
     "checkingInvite": "جاري التحقق من رمز الدعوة...",
-    "loggingIn": "جاري تسجيل الدخول..."
+    "loggingIn": "جاري تسجيل الدخول...",
+    "nameArPlaceholder": "مثال: محمد",
+    "assocNamePlaceholder": "مثال: جمعية البركة الخيرية"
+  },
+  "language": {
+    "label": "اللغة",
+    "ar": "العربية",
+    "en": "English",
+    "fr": "Français"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -181,7 +189,10 @@
     "pledged": "مرتبط بوعد",
     "transactionType": "نوع المعاملة",
     "pendingTx": "معاملة معلقة",
-    "remainingDisbursement": "المبلغ المتبقي لاستكمال الصرف"
+    "remainingDisbursement": "المبلغ المتبقي لاستكمال الصرف",
+    "rib": "RIB",
+    "iban": "IBAN",
+    "swift": "SWIFT"
   },
   "beneficiaries": {
     "title": "المستفيدون",
@@ -334,7 +345,10 @@
     "receiptTitle": "وصل التبرع",
     "printReceipt": "طباعة الوصل",
     "donorSignature": "توقيع المتبرع",
-    "stampSignature": "ختم الجمعية وتوقيع المسؤول"
+    "stampSignature": "ختم الجمعية وتوقيع المسؤول",
+    "lastNameArPlaceholder": "مثال: بن عيسى",
+    "firstNameArPlaceholder": "مثال: محمد",
+    "addressPlaceholder": "مثال: الجزائر"
   },
   "inventory": {
     "title": "إدارة المخزون والإعارات",
@@ -582,7 +596,8 @@
     "downgradeToTreasurer": "تحويل إلى أمين المال",
     "deleteUserHint": "حذف المستخدم",
     "deleteInviteHint": "حذف الدعوة",
-    "createdDate": "تاريخ الإنشاء"
+    "createdDate": "تاريخ الإنشاء",
+    "nameArPlaceholder": "مثال: أحمد"
   },
   "analytics": {
     "title": "التحليلات والتقارير المالية",

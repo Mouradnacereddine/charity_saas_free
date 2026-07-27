@@ -79,7 +79,7 @@ function BankAccountModal({
           className="text-left"
         />
         <Input
-          labelAr="RIB"
+          labelAr={t('finance.rib')}
           value={form.rib}
           onChange={(e) => setForm({ ...form, rib: e.target.value })}
           required
@@ -87,7 +87,7 @@ function BankAccountModal({
           className="text-left"
         />
         <Input
-          labelAr="IBAN"
+          labelAr={t('finance.iban')}
           value={form.iban}
           onChange={(e) => setForm({ ...form, iban: e.target.value })}
           required
@@ -95,7 +95,7 @@ function BankAccountModal({
           className="text-left"
         />
         <Input
-          labelAr="SWIFT"
+          labelAr={t('finance.swift')}
           value={form.swift}
           onChange={(e) => setForm({ ...form, swift: e.target.value })}
           required
@@ -510,8 +510,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 <tr className="border-b border-border">
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('finance.bankName')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('finance.accountNumber')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">RIB</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">IBAN</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">{t('finance.rib')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">{t('finance.iban')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('finance.accountBalance')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
@@ -1182,9 +1182,9 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
             <div className="grid grid-cols-1 gap-4 bg-muted rounded-lg p-4">
               <div><p className="text-xs text-muted-foreground">{t('finance.bankName')}</p><p className="font-semibold text-foreground">{detailBankAccount.bankNameAr}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('finance.accountNumber')}</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.accountNumber}</p></div>
-              <div><p className="text-xs text-muted-foreground">RIB</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.rib}</p></div>
-              <div><p className="text-xs text-muted-foreground">IBAN</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.iban}</p></div>
-              <div><p className="text-xs text-muted-foreground">SWIFT</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.swift}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('finance.rib')}</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.rib}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('finance.iban')}</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.iban}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('finance.swift')}</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.swift}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('finance.accountBalance')}</p><p className="font-bold text-lg text-success">{formatCurrency(detailBankAccount.balance)}</p></div>
             </div>
             <div className="flex justify-end gap-2">

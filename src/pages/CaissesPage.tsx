@@ -255,7 +255,7 @@ export default function CaissesPage() {
             labelAr={t('caisses.nameLatin')}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: Caisse Zakat"
+            placeholder={t('caisses.nameArPlaceholder')}
             dir="ltr"
           />
           <div className="flex gap-3 justify-end">
@@ -315,7 +315,7 @@ export default function CaissesPage() {
             labelAr={t('caisses.categoryNameLatin')}
             value={subName}
             onChange={(e) => setSubName(e.target.value)}
-            placeholder="Ex: Analyses médicales"
+            placeholder={t('caisses.categoryNameArPlaceholder')}
             dir="ltr"
           />
           <div className="flex gap-3 justify-end">

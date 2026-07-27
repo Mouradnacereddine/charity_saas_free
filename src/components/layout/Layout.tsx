@@ -267,7 +267,7 @@ export function Layout({
             {/* Sélecteur de langue — isolé du menu utilisateur */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-sm"
-                  aria-label={t('language.label', 'Langue')}>
+                  aria-label={t('language.label')}>
                 <Globe className="w-4 h-4" />
                 <span className="font-medium uppercase">{i18n.language}</span>
               </DropdownMenuTrigger>
@@ -311,7 +311,7 @@ export function Layout({
                   type="text"
                   value={settingsNameAr}
                   onChange={(e) => setSettingsNameAr(e.target.value)}
-                  placeholder={t('auth.nameArPlaceholder', 'مثال: جمعية البركة الخيرية')}
+                  placeholder={t('auth.nameArPlaceholder')}
                   className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring text-right"
                   dir="rtl"
                 />
@@ -322,7 +322,7 @@ export function Layout({
                   type="text"
                   value={settingsName}
                   onChange={(e) => setSettingsName(e.target.value)}
-                  placeholder="Ex: Association El-Baraka"
+                  placeholder={t('auth.nameArPlaceholder')}
                   className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                   dir="ltr"
                 />
