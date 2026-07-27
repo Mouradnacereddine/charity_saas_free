@@ -1,5 +1,6 @@
 import { differenceInYears, differenceInMonths } from 'date-fns';
 import i18n from '../i18n';
+import { translateSystemLabel } from './system-labels';
 
 /**
  * Calculate age from date of birth
@@ -243,12 +244,13 @@ export function generateMedicalReferralReference(): string {
 
 /**
  * Choisit la description dans la bonne langue selon la langue active.
- * Affiche descriptionAr pour l'arabe, description pour les autres langues.
+ * Affiche descriptionAr pour l'arabe, description (traduite si libellé système)
+ * pour le français et l'anglais.
  */
 export function localizedDesc(description?: string, descriptionAr?: string): string {
   const lang = i18n.language;
   if (lang === 'ar') return descriptionAr || description || '';
-  return description || descriptionAr || '';
+  return translateSystemLabel(description || descriptionAr || '', lang) || '';
 }
 
 /**
