@@ -831,8 +831,12 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error: any) {
-    console.error('Google auth error:', error);
-    res.status(500).json({ error: 'Google authentication failed' });
+    console.error('Google auth error:', error?.message || error, error?.stack || '');
+    console.error('Request body:', JSON.stringify(req.body));
+    res.status(500).json({
+      error: 'Google authentication failed',
+      detail: error?.message || 'Unknown error',
+    });
   }
 });
 
