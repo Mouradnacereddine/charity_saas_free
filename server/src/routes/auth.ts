@@ -1,11 +1,14 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import prisma from '../lib/prisma';
 import { generateAccessToken, generateRefreshToken } from '../lib/jwt';
 import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth';
 import { config } from '../config';
 import crypto from 'crypto';
+
+const googleAuthClient = new OAuth2Client();
 const router = Router();
 
 // ========================================================================
@@ -683,34 +686,22 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Verify Google token using Google's tokeninfo endpoint
+    // Verify Google ID token using google-auth-library
     let payload: any;
     try {
-      const verifyRes = await fetch(
-        `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${encodeURIComponent(credential)}`,
-        { method: 'GET' }
-      );
-      if (!verifyRes.ok) {
-        const errText = await verifyRes.text().catch(() => '');
-        console.error('Google tokeninfo rejected:', verifyRes.status, errText);
-        res.status(400).json({ error: 'رمز Google غير صالح' });
-        return;
-      }
-      payload = await verifyRes.json();
-    } catch (verifyErr) {
-      console.error('Google token verification failed:', verifyErr);
-      res.status(400).json({ error: 'فشل التحقق من رمز Google' });
+      const ticket = await googleAuthClient.verifyIdToken({
+        idToken: credential,
+        audience: config.googleClientId,
+      });
+      payload = ticket.getPayload();
+    } catch (verifyErr: any) {
+      console.error('Google token verification failed:', verifyErr?.message || verifyErr);
+      res.status(400).json({ error: 'رمز Google غير صالح' });
       return;
     }
 
     if (!payload || !payload.email) {
       res.status(400).json({ error: 'Invalid Google token payload' });
-      return;
-    }
-
-    // Verify the token is meant for our app
-    if (payload.aud !== config.googleClientId) {
-      res.status(400).json({ error: 'Token audience mismatch' });
       return;
     }
 
