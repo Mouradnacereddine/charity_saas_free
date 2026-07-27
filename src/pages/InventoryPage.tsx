@@ -1587,6 +1587,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.article')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.category')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.returnedItems')}</th>
@@ -1598,7 +1599,8 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   <tbody>
                     {selectedLoan.items.map((item) => (
                       <tr key={item.articleId} className="border-b border-border">
-                        <td className="py-2 px-3 text-foreground">{item.articleNameAr}</td>
+                        <td className="py-2 px-3 text-foreground">{item.articleNameAr || item.articleName}</td>
+                        <td className="py-2 px-3 text-muted-foreground">{item.categoryNameAr || item.categoryName || '—'}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.quantity}</td>
                         <td className="py-2 px-3">
                           <span

@@ -277,6 +277,8 @@ export interface LoanItem {
   articleId: string;
   articleName: string;
   articleNameAr: string;
+  categoryName?: string;
+  categoryNameAr?: string;
   quantity: number;
   returnedQuantity: number;
   conditionOnLoan: string;

@@ -23,10 +23,13 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Enrichir les items avec les noms d'articles depuis la base
+    // Enrichir les items avec les noms d'articles + catégories depuis la base
     const allArticles = await prisma.article.findMany({
       where: { associationId },
-      select: { id: true, name: true, nameAr: true },
+      select: {
+        id: true, name: true, nameAr: true,
+        category: { select: { id: true, name: true, nameAr: true } },
+      },
     });
     const articleMap = new Map(allArticles.map((a) => [a.id, a]));
 
@@ -38,6 +41,8 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
           ...item,
           articleName: article?.name || '',
           articleNameAr: article?.nameAr || '',
+          categoryName: article?.category?.name || '',
+          categoryNameAr: article?.category?.nameAr || '',
         };
       }),
       beneficiaryName: l.beneficiary ? `${l.beneficiary.firstName} ${l.beneficiary.lastName}` : '',
