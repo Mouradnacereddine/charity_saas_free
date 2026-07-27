@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { formatCurrency, formatDate, numberToArabicWords, calculateAge } from '../utils/helpers';
+import { formatCurrency, formatDate, numberToArabicWords, numberToWords, calculateAge } from '../utils/helpers';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import type { MedicalReferral, Beneficiary, Caisse, MedicalAnalysisType, MedicalHospital, SubCategory } from '../types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -592,7 +592,7 @@ export default function MedicalPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Input labelAr={t('medical.amountOptional')} type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
-              {amount > 0 && <p className="text-xs text-muted-foreground mt-1">{numberToArabicWords(amount)}</p>}
+              {amount > 0 && <p className="text-xs text-muted-foreground mt-1">{numberToWords(amount)}</p>}
             </div>
             <Input labelAr={t('common.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
@@ -664,7 +664,7 @@ export default function MedicalPage() {
             </div>
             <div className="bg-primary/10 rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-primary">{showDetailModal.amount > 0 ? formatCurrency(showDetailModal.amount) : '—'}</p>
-              <p className="text-sm text-primary mt-1">{showDetailModal.amount > 0 ? showDetailModal.amountInWordsAr : t('medical.pendingAmountLabel')}</p>
+              <p className="text-sm text-primary mt-1">{showDetailModal.amount > 0 ? numberToWords(showDetailModal.amount) : t('medical.pendingAmountLabel')}</p>
             </div>
             {showDetailModal.notes && (
               <div><p className="text-xs text-muted-foreground">{t('common.notes')}</p><p className="text-sm bg-muted rounded-lg p-3">{showDetailModal.notes}</p></div>
@@ -699,7 +699,7 @@ export default function MedicalPage() {
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">{t('medical.confirmAmount')}</p>
                 <Input labelAr={t('common.amount')} type="number" value={confirmAmount} onChange={(e) => setConfirmAmount(e.target.value)} min={0} />
-                {Number(confirmAmount) > 0 && <p className="text-xs text-muted-foreground">{numberToArabicWords(Number(confirmAmount))}</p>}
+                {Number(confirmAmount) > 0 && <p className="text-xs text-muted-foreground">{numberToWords(Number(confirmAmount))}</p>}
                 <div className="flex gap-2 justify-end">
                   <Button variant="secondary" onClick={() => setConfirmingId(null)}>{t('common.cancel')}</Button>
                   <Button onClick={async () => {

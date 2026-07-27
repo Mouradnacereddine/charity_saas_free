@@ -252,6 +252,18 @@ export function localizedDesc(description?: string, descriptionAr?: string): str
 }
 
 /**
+ * Convert number to words in the active language.
+ * Arabic → numberToArabicWords, French → numberToFrenchWords,
+ * English → "{n} DZD" (fallback latin).
+ */
+export function numberToWords(n: number): string {
+  const lang = i18n.language;
+  if (lang === 'ar') return numberToArabicWords(n);
+  if (lang === 'fr') return numberToFrenchWords(n);
+  return `${n.toLocaleString('en')} DZD`;
+}
+
+/**
  * Generate unique ID
  */
 export function generateId(): string {

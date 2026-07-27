@@ -714,6 +714,7 @@
     "totalIncome": "Total Income (Revenue)",
     "totalExpenses": "Total Expenses",
     "netFinancial": "Net Financial Position",
-    "expenseToIncome": "Expense to Income Ratio"
+    "expenseToIncome": "Expense to Income Ratio",
+    "amountInWords": "Amount in words"
   }
 }

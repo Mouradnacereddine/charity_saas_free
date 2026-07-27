@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, StatCard, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords, localizedDesc } from '../utils/helpers'
+import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords, numberToWords, localizedDesc } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake, Edit, ListOrdered } from 'lucide-react'
 import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useConfirmTransaction, useCancelTransaction } from '../hooks/useFinance'
@@ -240,8 +240,7 @@ export default function FinancePage() {
 
   // ---- Computed Values ----
   const amountNum = parseFloat(txAmount) || 0
-  const amountInWordsAr = amountNum > 0 ? numberToArabicWords(amountNum) : ''
-  const amountInWordsFr = amountNum > 0 ? numberToFrenchWords(amountNum) : ''
+  const amountInWords = amountNum > 0 ? numberToWords(amountNum) : ''
 
   const selectedCaisse = caisses.find((c: Caisse) => c.id === txCaisseId)
   const subCategories = selectedCaisse?.subCategories ?? []
@@ -818,14 +817,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 className="text-left"
               />
               {amountNum > 0 && (
-                <div className="mt-2 p-3 bg-muted rounded-lg border border-border space-y-1">
+                <div className="mt-2 p-3 bg-muted rounded-lg border border-border">
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-medium">{t('doctors.arabicLabel')}:</span>{' '}
-                    <span className="text-foreground">{amountInWordsAr}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground" dir="ltr">
-                    <span className="font-medium">En français:</span>{' '}
-                    <span className="text-foreground">{amountInWordsFr}</span>
+                    <span className="font-medium">{t('receipt.amountInWords')}:</span>{' '}
+                    <span className="text-foreground">{amountInWords}</span>
                   </p>
                 </div>
               )}
@@ -1337,7 +1332,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 dir="ltr"
               />
               {Number(confirmTxAmount) > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">{numberToArabicWords(Number(confirmTxAmount))}</p>
+                <p className="text-xs text-muted-foreground mt-1">{numberToWords(Number(confirmTxAmount))}</p>
               )}
               {(() => {
                 const maxVal = (() => {
@@ -1385,7 +1380,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 dir="ltr"
               />
               {Number(disburseAmount) > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">{numberToArabicWords(Number(disburseAmount))}</p>
+                <p className="text-xs text-muted-foreground mt-1">{numberToWords(Number(disburseAmount))}</p>
               )}
             </div>
             <div className="flex gap-2 justify-end">

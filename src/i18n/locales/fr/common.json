@@ -714,6 +714,7 @@
     "totalIncome": "Total des recettes",
     "totalExpenses": "Total des dépenses",
     "netFinancial": "Position financière nette",
-    "expenseToIncome": "Ratio dépenses/revenus"
+    "expenseToIncome": "Ratio dépenses/revenus",
+    "amountInWords": "Montant en lettres"
   }
 }

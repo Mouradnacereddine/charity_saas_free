@@ -714,6 +714,7 @@
     "totalIncome": "إجمالي المقبوضات",
     "totalExpenses": "إجمالي المدفوعات",
     "netFinancial": "الصافي المالي للمرحلة",
-    "expenseToIncome": "معدل المصاريف إلى المداخيل"
+    "expenseToIncome": "معدل المصاريف إلى المداخيل",
+    "amountInWords": "المبلغ بالحروف"
   }
 }
