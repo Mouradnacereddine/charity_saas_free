@@ -86,7 +86,7 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
     // Status: pending = amount TBD by doctor later (no deduction until confirmed)
     const txStatus = status || 'pending';
 
-    // Create referral and optionally deduct caisse balance atomically
+    // Create referral and optionally deduct caisse balance + create transaction atomically
     const referral = await prisma.$transaction(async (tx) => {
       // Only deduct balance when status is 'completed' and amount > 0
       if (numericAmount > 0 && txStatus === 'completed') {
@@ -99,6 +99,26 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
         await tx.caisse.update({
           where: { id: caisseId },
           data: { balance: { decrement: numericAmount } },
+        });
+
+        // Create a transaction record for traceability
+        await tx.transaction.create({
+          data: {
+            associationId,
+            type: 'debit',
+            amount: numericAmount,
+            amountInWords: words,
+            amountInWordsAr: wordsAr,
+            fundSource: 'caisse_physique',
+            caisseId,
+            subCategoryId: subCategoryId || undefined,
+            beneficiaryId,
+            description: `Orientation médicale - ${analysisTypeAr || analysisType || ''}`,
+            descriptionAr: `توجيه طبي - ${analysisTypeAr || analysisType || ''}`,
+            receiptNumber: reference,
+            status: 'completed',
+            date: new Date(date),
+          },
         });
       }
 
@@ -181,6 +201,8 @@ router.put('/referrals/:id/confirm', async (req: AuthRequest, res: Response): Pr
 
     const { amount, amountInWords, amountInWordsAr } = req.body;
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+    const words = amountInWords || `${numericAmount} DZD`;
+    const wordsAr = amountInWordsAr || `${numericAmount} دينار`;
 
     const referral = await prisma.$transaction(async (tx) => {
       if (numericAmount > 0) {
@@ -195,14 +217,39 @@ router.put('/referrals/:id/confirm', async (req: AuthRequest, res: Response): Pr
           where: { id: existing.caisseId },
           data: { balance: { decrement: numericAmount } },
         });
+
+        // Create a transaction record for traceability
+        const beneficiary = await tx.beneficiary.findFirst({
+          where: { id: existing.beneficiaryId, associationId },
+          select: { lastNameAr: true, firstNameAr: true },
+        });
+        const benNameAr = beneficiary ? `${beneficiary.lastNameAr} ${beneficiary.firstNameAr}` : '';
+        await tx.transaction.create({
+          data: {
+            associationId,
+            type: 'debit',
+            amount: numericAmount,
+            amountInWords: words,
+            amountInWordsAr: wordsAr,
+            fundSource: 'caisse_physique',
+            caisseId: existing.caisseId,
+            subCategoryId: existing.subCategoryId || undefined,
+            beneficiaryId: existing.beneficiaryId,
+            description: `Orientation médicale confirmée - ${existing.analysisTypeAr || existing.analysisType || ''}`,
+            descriptionAr: `توجيه طبي مؤكد - ${existing.analysisTypeAr || existing.analysisType || ''}`,
+            receiptNumber: existing.reference,
+            status: 'completed',
+            date: new Date(),
+          },
+        });
       }
 
       return tx.medicalReferral.update({
         where: { id },
         data: {
           amount: numericAmount,
-          amountInWords: amountInWords || `${numericAmount} DZD`,
-          amountInWordsAr: amountInWordsAr || `${numericAmount} دينار`,
+          amountInWords: words,
+          amountInWordsAr: wordsAr,
           status: 'completed',
         },
       });
