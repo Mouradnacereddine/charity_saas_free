@@ -84,6 +84,10 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
   const handleGoogleCredential = async (response: any) => {
     setLoading(true);
     setError('');
+    // Réinitialiser le formulaire d'association pour un nouveau compte
+    setShowAssocForm(false);
+    setAssocNameAr('');
+    setAssocName('');
 
     const hash = window.location.hash;
     const match = hash.match(/[?&]invite=([^&]+)/);
