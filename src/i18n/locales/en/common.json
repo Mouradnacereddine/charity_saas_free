@@ -61,7 +61,8 @@
     "date": "Date",
     "amount": "Amount",
     "done": "Done",
-    "error": "Error"
+    "error": "Error",
+    "article": "Article"
   },
   "settings": {
     "title": "Association Settings",

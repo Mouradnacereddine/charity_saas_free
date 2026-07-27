@@ -1271,7 +1271,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
   const handlePrintLoan = (loan: Loan) => {
     const itemsHtml = loan.items.map((item: any) =>
-      `<div class="row"><span class="lbl">${t('inventory.category')}</span><span class="val">${item.articleNameAr} <i>×${item.quantity}</i></span></div>`
+      `<div class="row"><span class="lbl">${t('common.article')}</span><span class="val">${item.articleNameAr || item.articleName} <i>×${item.quantity}</i></span></div>`
     ).join('')
 
     const statusLabel = loanStatusLabels[loan.status] || loan.status
@@ -1396,7 +1396,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                       {loan.beneficiaryReference || '—'}
                     </td>
                     <td className="py-3 px-4 text-muted-foreground">
-                      {loan.items.map((item) => item.articleNameAr).filter(Boolean).join('، ') || `(${loan.items.length} ${t('inventory.articles')})`}
+                      {loan.items.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                     </td>
                     <td className="py-3 px-4 text-muted-foreground">
                       {loan.items.map((item) => item.returnedQuantity || 0).reduce((a, b) => a + b, 0) || '—'}

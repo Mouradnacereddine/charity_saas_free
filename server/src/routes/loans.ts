@@ -23,8 +23,23 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Enrichir les items avec les noms d'articles depuis la base
+    const allArticles = await prisma.article.findMany({
+      where: { associationId },
+      select: { id: true, name: true, nameAr: true },
+    });
+    const articleMap = new Map(allArticles.map((a) => [a.id, a]));
+
     const result = loans.map((l: any) => ({
       ...l,
+      items: (l.items as any[] || []).map((item: any) => {
+        const article = articleMap.get(item.articleId);
+        return {
+          ...item,
+          articleName: article?.name || '',
+          articleNameAr: article?.nameAr || '',
+        };
+      }),
       beneficiaryName: l.beneficiary ? `${l.beneficiary.firstName} ${l.beneficiary.lastName}` : '',
       beneficiaryNameAr: l.beneficiary ? `${l.beneficiary.lastNameAr} ${l.beneficiary.firstNameAr}` : '',
       beneficiaryReference: l.beneficiary?.reference || '',

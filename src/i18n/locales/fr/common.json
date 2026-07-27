@@ -61,7 +61,8 @@
     "date": "Date",
     "amount": "Montant",
     "done": "Terminé",
-    "error": "Erreur"
+    "error": "Erreur",
+    "article": "Article"
   },
   "settings": {
     "title": "Paramètres de l'association",
