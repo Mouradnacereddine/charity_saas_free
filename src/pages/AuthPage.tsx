@@ -79,6 +79,9 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       script.onload = loadGoogle;
       document.head.appendChild(script);
     }
+    return () => {
+      googleInitialized = false;
+    };
   }, [i18n.language]);
 
   const handleGoogleCredential = async (response: any) => {
