@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../lib/api';
 import { CheckCircle, LogIn, UserPlus } from 'lucide-react';
 
@@ -13,6 +14,7 @@ declare global {
 
 export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [inviteInfo, setInviteInfo] = useState<{
@@ -104,6 +106,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       });
       localStorage.setItem('accessToken', res.data.accessToken);
       localStorage.setItem('refreshToken', res.data.refreshToken);
+      queryClient.resetQueries({ queryKey: ['auth', 'me'] });
       onSuccess();
     } catch (err: any) {
       const hasInviteInUrl = window.location.hash.includes('invite=');
@@ -133,6 +136,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
       pendingCredential.current = null;
       localStorage.setItem('accessToken', res.data.accessToken);
       localStorage.setItem('refreshToken', res.data.refreshToken);
+      queryClient.resetQueries({ queryKey: ['auth', 'me'] });
       onSuccess();
     } catch (err: any) {
       setError(err.response?.data?.error || t('auth.createAssociationFailed'));
