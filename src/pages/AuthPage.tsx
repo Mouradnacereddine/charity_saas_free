@@ -242,9 +242,37 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
               </div>
             )}
 
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-3">
               <div ref={googleBtnRef}></div>
             </div>
+            {error && !showAssocForm && (
+              <button
+                onClick={() => {
+                  if (window.google?.accounts?.id) {
+                    window.google.accounts.id.disableAutoSelect();
+                    googleInitialized = false;
+                    renderAttempted.current = false;
+                    setTimeout(() => {
+                      if (window.google?.accounts?.id) {
+                        window.google.accounts.id.initialize({
+                          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '1074847403581-qs7gvuumokefa5cid6cu0m0cibt67nc4.apps.googleusercontent.com',
+                          callback: handleGoogleCredential,
+                          cancel_on_tap_outside: false,
+                        });
+                        googleInitialized = true;
+                        window.google.accounts.id.renderButton(googleBtnRef.current!, {
+                          theme: 'outline', size: 'large', width: 300,
+                          text: 'signin_with', locale: i18n.language === 'ar' ? 'ar' : i18n.language,
+                        });
+                      }
+                    }, 300);
+                  }
+                }}
+                className="w-full py-2 text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+              >
+                {t('auth.useAnotherAccount')}
+              </button>
+            )}
 
             {(loading || checkingInvite) && (
               <p className="text-center text-sm text-muted-foreground mb-4">
