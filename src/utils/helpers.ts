@@ -5,16 +5,30 @@ import { translateSystemLabel } from './system-labels';
 /**
  * Calculate age from date of birth
  */
-export function calculateAge(dateOfBirth: string): { years: number; months: number; display: string; displayAr: string } {
+export function calculateAge(dateOfBirth: string): { years: number; months: number; display: string; displayAr: string; displayEn: string; displayFr: string } {
   const dob = new Date(dateOfBirth);
   const now = new Date();
   const years = differenceInYears(now, dob);
   const months = differenceInMonths(now, dob) % 12;
 
-  const display = months > 0 ? `${years} ans et ${months} mois` : `${years} ans`;
+  const displayFr = months > 0 ? `${years} ans et ${months} mois` : `${years} ans`;
   const displayAr = months > 0 ? `${years} سنة و ${months} شهر` : `${years} سنة`;
+  const displayEn = months > 0 ? `${years} years and ${months} months` : `${years} years`;
+  // Pour compatibilité ascendante : display = displayFr
+  const display = displayFr;
 
-  return { years, months, display, displayAr };
+  return { years, months, display, displayAr, displayEn, displayFr };
+}
+
+/**
+ * Retourne l'âge formaté dans la langue active.
+ */
+export function getAgeDisplay(dateOfBirth: string): string {
+  const age = calculateAge(dateOfBirth);
+  const lang = i18n.language;
+  if (lang === 'ar') return age.displayAr;
+  if (lang === 'en') return age.displayEn;
+  return age.displayFr;
 }
 
 /**

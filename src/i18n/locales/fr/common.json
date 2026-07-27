@@ -683,7 +683,10 @@
     "velocityText": "<strong>{total}</strong> opérations financières enregistrées sur <strong>{days} jours</strong>, soit une moyenne de <strong>{avgPerDay} opération(s)/jour</strong>. Le flux financier est actif et nécessite un rapprochement continu des reçus et la confirmation des transactions en attente.",
     "days_label": "jour(s)",
     "opsPerDay_label": "opération(s)/jour",
-    "totalOperations": "Total des opérations"
+    "totalOperations": "Total des opérations",
+    "periodIncome": "Recettes de la période",
+    "periodExpenses": "Dépenses de la période",
+    "netPeriodFlow": "Flux net de la période"
   },
   "receipt": {
     "title": "Reçu de don",

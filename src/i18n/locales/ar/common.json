@@ -683,7 +683,10 @@
     "velocityText": "تم تسجيل <strong>{total}</strong> عملية مالية خلال <strong>{days} يوماً</strong>، بمعدل <strong>{avgPerDay} عملية/يوم</strong>. حركة التدفق المالي نشطة وتتطلب مطابقة مستمرة للأوصال والتأكيد على المعاملات المعلقة.",
     "days_label": "يوماً",
     "opsPerDay_label": "عملية/يوم",
-    "totalOperations": "إجمالي العمليات"
+    "totalOperations": "إجمالي العمليات",
+    "periodIncome": "مداخيل الفترة",
+    "periodExpenses": "مصاريف الفترة",
+    "netPeriodFlow": "صافي تدفق الفترة"
   },
   "receipt": {
     "title": "وصل تبرع",

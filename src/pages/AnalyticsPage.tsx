@@ -580,12 +580,12 @@ export default function AnalyticsPage() {
                     <div className="bg-destructive h-full" style={{ width: `${debPercent}%` }} />
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground/70">
-                    <span>{t('analytics.periodIncome', 'مداخيل الفترة')}: {formatCurrency(c.periodCredits)}</span>
-                    <span>{t('analytics.periodExpenses', 'مصاريف الفترة')}: {formatCurrency(c.periodDebits)}</span>
+                    <span>{t('analytics.periodIncome')}: {formatCurrency(c.periodCredits)}</span>
+                    <span>{t('analytics.periodExpenses')}: {formatCurrency(c.periodDebits)}</span>
                   </div>
                 </div>
                 <div className={`text-xs font-medium ${c.periodFlow >= 0 ? 'text-success-foreground' : 'text-destructive'}`}>
-                  {t('analytics.netPeriodFlow', 'تدفق الفترة الصافي')}: {c.periodFlow >= 0 ? '+' : ''}{formatCurrency(c.periodFlow)}
+                  {t('analytics.netPeriodFlow')}: {c.periodFlow >= 0 ? '+' : ''}{formatCurrency(c.periodFlow)}
                 </div>
               </div>
             );

@@ -683,7 +683,10 @@
     "velocityText": "<strong>{total}</strong> financial transactions recorded over <strong>{days} days</strong>, averaging <strong>{avgPerDay} operation(s)/day</strong>. Cash flow is active and requires continuous receipt reconciliation and pending transaction confirmation.",
     "days_label": "day(s)",
     "opsPerDay_label": "operation(s)/day",
-    "totalOperations": "Total Operations"
+    "totalOperations": "Total Operations",
+    "periodIncome": "Period Income",
+    "periodExpenses": "Period Expenses",
+    "netPeriodFlow": "Net Period Flow"
   },
   "receipt": {
     "title": "Donation Receipt",

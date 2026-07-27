@@ -1,7 +1,7 @@
 import { useState, Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { calculateAge, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords, localizedDesc } from '../utils/helpers'
+import { calculateAge, getAgeDisplay, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords, localizedDesc } from '../utils/helpers'
 import { printReceipt, printBeneficiaryCard } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
@@ -931,7 +931,7 @@ export default function BeneficiariesPage() {
                           </Badge>
                         </td>
                         <td className="py-3 px-3 text-muted-foreground hidden sm:table-cell">
-                          {age ? age.displayAr : '—'}
+                          {age ? getAgeDisplay(b.dateOfBirth) : '—'}
                         </td>
                         <td className="py-3 px-3 text-muted-foreground">
                           <span className="inline-flex items-center gap-1">
@@ -983,7 +983,7 @@ export default function BeneficiariesPage() {
                                     <tr key={ci} className="border-t border-border hover:bg-card">
                                       <td className="py-2 px-3 font-medium text-foreground">{child.lastNameAr} {child.firstNameAr}</td>
                                       <td className="py-2 px-3 text-muted-foreground">{child.gender === 'female' ? t('common.female') : t('common.male')}</td>
-                                      <td className="py-2 px-3 text-muted-foreground">{calculateAge(child.dateOfBirth).displayAr}</td>
+                                      <td className="py-2 px-3 text-muted-foreground">{getAgeDisplay(child.dateOfBirth)}</td>
                                       <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
                                       <td className="py-2 px-3 text-muted-foreground">{getGradeName(child.schoolGradeId)}</td>
                                     </tr>
@@ -1040,7 +1040,7 @@ export default function BeneficiariesPage() {
               <div className="space-y-1">
                 <Input labelAr={t('receipt.birthDate')} type="date" value={form.dateOfBirth} onChange={(e) => handleFormChange('dateOfBirth', e.target.value)} required />
                 {form.dateOfBirth && (
-                  <p className="text-xs text-muted-foreground">{t('beneficiaries.ageDisplay')} {calculateAge(form.dateOfBirth).displayAr}</p>
+                  <p className="text-xs text-muted-foreground">{t('beneficiaries.ageDisplay')} {getAgeDisplay(form.dateOfBirth)}</p>
                 )}
               </div>
             </div>
@@ -1154,7 +1154,7 @@ export default function BeneficiariesPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.nameLatin')}</span><span className="font-medium text-foreground" dir="ltr">{selectedBeneficiary.firstName} {selectedBeneficiary.lastName}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.idNumber')}</span><span className="font-medium text-foreground">{selectedBeneficiary.nationalCardNumber}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.phone')}</span><span className="font-medium text-foreground" dir="ltr">{selectedBeneficiary.phone}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.birthDate')}</span><span className="font-medium text-foreground">{selectedBeneficiary.dateOfBirth ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${calculateAge(selectedBeneficiary.dateOfBirth).displayAr})` : '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.birthDate')}</span><span className="font-medium text-foreground">{selectedBeneficiary.dateOfBirth ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${getAgeDisplay(selectedBeneficiary.dateOfBirth)})` : '—'}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterAttribute')}</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterGender')}</span><span className="font-medium text-foreground">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.addressAr')}</span><span className="font-medium text-foreground">{selectedBeneficiary.addressAr || '—'}</span></div>
@@ -1185,7 +1185,7 @@ export default function BeneficiariesPage() {
                         <tr key={child.id} className="border-b border-border">
                           <td className="py-2 px-3">{child.lastNameAr} {child.firstNameAr}</td>
                           <td className="py-2 px-3">{child.gender === 'female' ? t('common.female') : t('common.male')}</td>
-                          <td className="py-2 px-3">{calculateAge(child.dateOfBirth).displayAr}</td>
+                          <td className="py-2 px-3">{getAgeDisplay(child.dateOfBirth)}</td>
                           <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
                           <td className="py-2 px-3">{getGradeName(child.schoolGradeId)}</td>
                         </tr>
