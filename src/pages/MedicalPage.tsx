@@ -371,11 +371,11 @@ export default function MedicalPage() {
     <>
       {/* Quick Search */}
       <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
         <input
           type="text"
           placeholder={t('medical.searchPlaceholder')}
-          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
           value={filterSearchTerm}
           onChange={(e) => setFilterSearchTerm(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }}
@@ -396,32 +396,32 @@ export default function MedicalPage() {
                 }))}
               />
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{t('medical.amountFrom')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('medical.amountFrom')}</label>
                 <input
                   type="number" min="0" placeholder="0"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={filterMinAmount} onChange={(e) => setFilterMinAmount(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{t('medical.amountTo')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('medical.amountTo')}</label>
                 <input
                   type="number" min="0" placeholder="0"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={filterMaxAmount} onChange={(e) => setFilterMaxAmount(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{t('analytics.fromDate')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('analytics.fromDate')}</label>
                 <input type="date"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{t('analytics.toDate')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('analytics.toDate')}</label>
                 <input type="date"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)}
                 />
               </div>
@@ -486,40 +486,40 @@ export default function MedicalPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('doctors.refCode')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('medical.beneficiary')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">{t('receipt.idNumber')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">{t('medical.doctor')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">{t('medical.analysisType')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('common.amount')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">{t('common.status')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">{t('common.date')}</th>
-                  <th className="text-center py-3 px-4 text-gray-600 font-medium">{t('common.actions')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium">{t('doctors.refCode')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium">{t('medical.beneficiary')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden lg:table-cell">{t('receipt.idNumber')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden sm:table-cell">{t('medical.doctor')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">{t('medical.analysisType')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium">{t('common.amount')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden sm:table-cell">{t('common.status')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden sm:table-cell">{t('common.date')}</th>
+                  <th className="text-center py-3 px-4 text-muted-foreground font-medium">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredReferrals.map((referral: MedicalReferral) => {
                   const benef = beneficiaries.find((b: Beneficiary) => b.id === referral.beneficiaryId);
                   return (
-                  <tr key={referral.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setShowDetailModal(referral)}>
-                    <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">{referral.reference || '—'}</td>
+                  <tr key={referral.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setShowDetailModal(referral)}>
+                    <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{referral.reference || '—'}</td>
                     <td className="py-3 px-4 font-medium">{referral.beneficiaryNameAr}</td>
                     <td className="py-3 px-4 hidden lg:table-cell font-mono text-xs" dir="ltr">{benef?.nationalCardNumber || '—'}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr || (referral.doctor ? `${referral.doctor.lastNameAr} ${referral.doctor.firstNameAr}` : '—')}</td>
                     <td className="py-3 px-4 hidden md:table-cell">{referral.analysisTypeAr || '—'}</td>
-                    <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary-600">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">{t('medical.pendingAmountLabel')}</Badge>}</td>
+                    <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">{t('medical.pendingAmountLabel')}</Badge>}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">
                       {(referral.status || 'pending') === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> :
                        (referral.status || 'pending') === 'completed' ? <Badge variant="success">{t('dashboard.completed')}</Badge> :
                        <Badge variant="danger">{t('dashboard.cancelled')}</Badge>}
                     </td>
-                    <td className="py-3 px-4 text-gray-500 hidden sm:table-cell">{formatDate(referral.date)}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{formatDate(referral.date)}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={(e) => { e.stopPropagation(); setShowDetailModal(referral); }} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded"><Eye className="w-4 h-4" /></button>
-                        <button onClick={(e) => { e.stopPropagation(); handlePrint(referral); }} className="p-1.5 text-gray-400 hover:text-success-600 hover:bg-green-50 rounded"><Printer className="w-4 h-4" /></button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(referral.id); }} className="p-1.5 text-gray-400 hover:text-danger-500 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); setShowDetailModal(referral); }} className="p-1.5 text-muted-foreground/70 hover:text-primary hover:bg-primary/10 rounded"><Eye className="w-4 h-4" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handlePrint(referral); }} className="p-1.5 text-muted-foreground/70 hover:text-success-600 hover:bg-success/10 rounded"><Printer className="w-4 h-4" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(referral.id); }} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 hover:bg-destructive/10 rounded"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -541,27 +541,27 @@ export default function MedicalPage() {
               options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))} />
           </div>
           {selectedBeneficiary && (
-            <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs flex gap-3 flex-wrap">
-              <span><span className="text-blue-600 font-medium">{t('receipt.attribute')}: </span><span className="text-gray-700">{ATTRIBUT_LABELS[selectedBeneficiary.attribut] || selectedBeneficiary.attribut}</span></span>
-              {selectedBeneficiary.gender && <span><span className="text-blue-600 font-medium">| {t('receipt.gender')}: </span><span className="text-gray-700">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></span>}
-              {selectedBeneficiary.nationalCardNumber && <span><span className="text-blue-600 font-medium">| {t('receipt.idNumber')}: </span><span className="text-gray-700" dir="ltr">{selectedBeneficiary.nationalCardNumber}</span></span>}
+            <div className="px-3 py-2 bg-accent border border-accent/30 rounded-lg text-xs flex gap-3 flex-wrap">
+              <span><span className="text-accent-foreground font-medium">{t('receipt.attribute')}: </span><span className="text-foreground">{ATTRIBUT_LABELS[selectedBeneficiary.attribut] || selectedBeneficiary.attribut}</span></span>
+              {selectedBeneficiary.gender && <span><span className="text-accent-foreground font-medium">| {t('receipt.gender')}: </span><span className="text-foreground">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></span>}
+              {selectedBeneficiary.nationalCardNumber && <span><span className="text-accent-foreground font-medium">| {t('receipt.idNumber')}: </span><span className="text-foreground" dir="ltr">{selectedBeneficiary.nationalCardNumber}</span></span>}
             </div>
           )}
           {/* Children selection */}
           {selectedBeneficiary && (selectedBeneficiary.children || []).length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('medical.childrenReferralDesc')}</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
+              <label className="block text-sm font-medium text-foreground mb-2">{t('medical.childrenReferralDesc')}</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-border rounded-lg bg-muted">
                 {selectedBeneficiary.children.map((child: any, idx: number) => {
                   const childKey = child.id || `${child.firstNameAr} ${child.lastNameAr}_${idx}`;
                   return (
                     <label key={idx} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white cursor-pointer transition-colors">
                       <input type="checkbox" checked={selectedChildren.includes(childKey)}
                         onChange={() => setSelectedChildren(prev => prev.includes(childKey) ? prev.filter(id => id !== childKey) : [...prev, childKey])}
-                        className="w-4 h-4 text-primary-600 rounded" />
-                      <span className="text-sm text-gray-800">{child.lastNameAr} {child.firstNameAr}</span>
-                      {child.dateOfBirth && <span className="text-xs text-gray-400">({calculateAge(child.dateOfBirth).displayAr})</span>}
-                      <span className="text-xs text-gray-400">{child.gender === 'female' ? t('common.female') : t('common.male')}</span>
+                        className="w-4 h-4 text-primary rounded" />
+                      <span className="text-sm text-foreground">{child.lastNameAr} {child.firstNameAr}</span>
+                      {child.dateOfBirth && <span className="text-xs text-muted-foreground/70">({calculateAge(child.dateOfBirth).displayAr})</span>}
+                      <span className="text-xs text-muted-foreground/70">{child.gender === 'female' ? t('common.female') : t('common.male')}</span>
                     </label>
                   );
                 })}
@@ -592,19 +592,19 @@ export default function MedicalPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Input labelAr={t('medical.amountOptional')} type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
-              {amount > 0 && <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(amount)}</p>}
+              {amount > 0 && <p className="text-xs text-muted-foreground mt-1">{numberToArabicWords(amount)}</p>}
             </div>
             <Input labelAr={t('common.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
-          <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-warning/10 border border-warning/30 rounded-lg">
             <input
               type="checkbox"
               id="pendingStatus"
               checked={txStatus === 'pending'}
               onChange={(e) => setTxStatus(e.target.checked ? 'pending' : 'completed')}
-              className="w-4 h-4 text-amber-500 rounded"
+              className="w-4 h-4 text-warning-foreground rounded"
             />
-            <label htmlFor="pendingStatus" className="text-sm text-amber-800 cursor-pointer">
+            <label htmlFor="pendingStatus" className="text-sm text-warning-foreground cursor-pointer">
               {t('medical.noPaymentCheck')}
             </label>
           </div>
@@ -620,32 +620,32 @@ export default function MedicalPage() {
       <Modal isOpen={!!showDetailModal} onClose={() => setShowDetailModal(null)} title={t('medical.referralDetails')} size="lg">
         {showDetailModal && (
           <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.referenceLabel')}</span><span className="font-semibold text-primary-700" dir="ltr">{showDetailModal.reference || '—'}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.beneficiaryLabel')}</span><span className="font-medium text-gray-900">{showDetailModal.beneficiaryNameAr} <span dir="ltr" className="text-xs text-gray-400">({showDetailModal.beneficiaryReference || ''})</span></span></div>
+            <div className="bg-muted rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.referenceLabel')}</span><span className="font-semibold text-primary" dir="ltr">{showDetailModal.reference || '—'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.beneficiaryLabel')}</span><span className="font-medium text-foreground">{showDetailModal.beneficiaryNameAr} <span dir="ltr" className="text-xs text-muted-foreground/70">({showDetailModal.beneficiaryReference || ''})</span></span></div>
               {(() => {
                 const b = beneficiaries.find((b: Beneficiary) => b.id === showDetailModal.beneficiaryId);
-                return b?.nationalCardNumber ? <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.nationalCardLabel')}</span><span className="font-medium text-gray-900" dir="ltr">{b.nationalCardNumber}</span></div> : null;
+                return b?.nationalCardNumber ? <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.nationalCardLabel')}</span><span className="font-medium text-foreground" dir="ltr">{b.nationalCardNumber}</span></div> : null;
               })()}
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.doctor')}</span><span className="font-medium text-gray-900">{showDetailModal.doctorNameAr || (showDetailModal.doctor ? `${showDetailModal.doctor.lastNameAr} ${showDetailModal.doctor.firstNameAr}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-gray-400 mr-2">({showDetailModal.doctor.specialty.nameAr})</span> : ''}</span></div>
-              {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.analysisType')}</span><span className="font-medium text-gray-900">{showDetailModal.analysisTypeAr}</span></div>}
-              {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('medical.hospital')}</span><span className="font-medium text-gray-900">{showDetailModal.hospitalAr}</span></div>}
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('common.date')}</span><span className="font-medium text-gray-900">{formatDate(showDetailModal.date)}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.doctor')}</span><span className="font-medium text-foreground">{showDetailModal.doctorNameAr || (showDetailModal.doctor ? `${showDetailModal.doctor.lastNameAr} ${showDetailModal.doctor.firstNameAr}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-muted-foreground/70 mr-2">({showDetailModal.doctor.specialty.nameAr})</span> : ''}</span></div>
+              {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.analysisType')}</span><span className="font-medium text-foreground">{showDetailModal.analysisTypeAr}</span></div>}
+              {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.hospital')}</span><span className="font-medium text-foreground">{showDetailModal.hospitalAr}</span></div>}
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('common.date')}</span><span className="font-medium text-foreground">{formatDate(showDetailModal.date)}</span></div>
               {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">{t('medical.referralChildrenLabel')}</span>
-                  <span className="font-medium text-gray-900 text-left">{showDetailModal.children.map((c: any) => c.nameAr || c.name || c.id).join('، ')}</span>
+                  <span className="text-xs text-muted-foreground">{t('medical.referralChildrenLabel')}</span>
+                  <span className="font-medium text-foreground text-left">{showDetailModal.children.map((c: any) => c.nameAr || c.name || c.id).join('، ')}</span>
                 </div>
               )}
               {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
-                <div className="border-t border-gray-200 pt-2 mt-1">
-                  <p className="text-xs text-gray-500 mb-2">{t('medical.childrenReferral')}:</p>
+                <div className="border-t border-border pt-2 mt-1">
+                  <p className="text-xs text-muted-foreground mb-2">{t('medical.childrenReferral')}:</p>
                   <div className="space-y-1">
                     {showDetailModal.children.map((c: any, i: number) => (
-                      <div key={i} className="flex items-center gap-3 text-sm bg-white rounded-lg px-3 py-2 border border-gray-100">
-                        <span className="font-medium text-gray-900">{c.nameAr || c.name || c.id}</span>
-                        {c.age && <span className="text-xs text-gray-400">{t('receipt.age')}: {c.age}</span>}
-                        <span className="text-xs text-gray-400">| {c.gender === 'female' ? t('common.female') : t('common.male')}</span>
+                      <div key={i} className="flex items-center gap-3 text-sm bg-white rounded-lg px-3 py-2 border border-border">
+                        <span className="font-medium text-foreground">{c.nameAr || c.name || c.id}</span>
+                        {c.age && <span className="text-xs text-muted-foreground/70">{t('receipt.age')}: {c.age}</span>}
+                        <span className="text-xs text-muted-foreground/70">| {c.gender === 'female' ? t('common.female') : t('common.male')}</span>
                       </div>
                     ))}
                   </div>
@@ -654,20 +654,20 @@ export default function MedicalPage() {
             </div>
             <div className="flex justify-between items-center">
               <div className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                (showDetailModal.status || 'pending') === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                (showDetailModal.status || 'pending') === 'completed' ? 'bg-green-50 text-green-700 border border-green-200' :
-                'bg-red-50 text-red-700 border border-red-200'
+                (showDetailModal.status || 'pending') === 'pending' ? 'bg-warning/10 text-warning-foreground border border-warning/30' :
+                (showDetailModal.status || 'pending') === 'completed' ? 'bg-success/10 text-success-foreground border border-success/30' :
+                'bg-destructive/10 text-destructive border border-destructive/30'
               }`}>
                 {(showDetailModal.status || 'pending') === 'pending' ? `🟡 ${t('dashboard.pending')}` :
                  (showDetailModal.status || 'pending') === 'completed' ? `🟢 ${t('dashboard.completed')}` : `🔴 ${t('dashboard.cancelled')}`}
               </div>
             </div>
-            <div className="bg-primary-50 rounded-lg p-4 text-center">
-              <p className="text-2xl font-bold text-primary-700">{showDetailModal.amount > 0 ? formatCurrency(showDetailModal.amount) : '—'}</p>
-              <p className="text-sm text-primary-600 mt-1">{showDetailModal.amount > 0 ? showDetailModal.amountInWordsAr : t('medical.pendingAmountLabel')}</p>
+            <div className="bg-primary/10 rounded-lg p-4 text-center">
+              <p className="text-2xl font-bold text-primary">{showDetailModal.amount > 0 ? formatCurrency(showDetailModal.amount) : '—'}</p>
+              <p className="text-sm text-primary mt-1">{showDetailModal.amount > 0 ? showDetailModal.amountInWordsAr : t('medical.pendingAmountLabel')}</p>
             </div>
             {showDetailModal.notes && (
-              <div><p className="text-xs text-gray-500">{t('common.notes')}</p><p className="text-sm bg-gray-50 rounded-lg p-3">{showDetailModal.notes}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('common.notes')}</p><p className="text-sm bg-muted rounded-lg p-3">{showDetailModal.notes}</p></div>
             )}
             <div className="flex justify-end gap-2">
               {(showDetailModal.status || 'pending') === 'pending' && (
@@ -697,9 +697,9 @@ export default function MedicalPage() {
             {/* Confirm modal for entering doctor's amount */}
             <Modal isOpen={confirmingId === showDetailModal.id} onClose={() => setConfirmingId(null)} title={t('medical.confirmReferral')} size="sm">
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">{t('medical.confirmAmount')}</p>
+                <p className="text-sm text-muted-foreground">{t('medical.confirmAmount')}</p>
                 <Input labelAr={t('common.amount')} type="number" value={confirmAmount} onChange={(e) => setConfirmAmount(e.target.value)} min={0} />
-                {Number(confirmAmount) > 0 && <p className="text-xs text-gray-500">{numberToArabicWords(Number(confirmAmount))}</p>}
+                {Number(confirmAmount) > 0 && <p className="text-xs text-muted-foreground">{numberToArabicWords(Number(confirmAmount))}</p>}
                 <div className="flex gap-2 justify-end">
                   <Button variant="secondary" onClick={() => setConfirmingId(null)}>{t('common.cancel')}</Button>
                   <Button onClick={async () => {
@@ -730,11 +730,11 @@ export default function MedicalPage() {
       <div className="space-y-6">
         {/* Analysis Types */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Stethoscope className="w-5 h-5 text-primary-600" />
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Stethoscope className="w-5 h-5 text-primary" />
             {t('medical.analysisTypes')}
           </h3>
-          <p className="text-sm text-gray-500 mb-4">{t('medical.manageAnalysis')}</p>
+          <p className="text-sm text-muted-foreground mb-4">{t('medical.manageAnalysis')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
             <Input labelAr={t('medical.nameAr')} value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder={t('medical.analysisPlaceholder')} />
             <Input labelAr={t('medical.nameLatin')} value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder="Ex: Analyse" dir="ltr" />
@@ -744,18 +744,18 @@ export default function MedicalPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.tableArabic')}</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.tableLatin')}</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-500">{t('medical.tableActions')}</th>
+                  <tr className="border-b border-border">
+                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.tableArabic')}</th>
+                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.tableLatin')}</th>
+                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('medical.tableActions')}</th>
                   </tr>
                 </thead>
                 <tbody>{analysisTypes.map((a: MedicalAnalysisType) => (
-                  <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={a.id} className="border-b border-border hover:bg-muted">
                     {editAnalysisId === a.id ? (
                       <>
-                        <td className="py-2 px-4"><input value={editAnalysisAr} onChange={(e) => setEditAnalysisAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
-                        <td className="py-2 px-4"><input value={editAnalysisFr} onChange={(e) => setEditAnalysisFr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                        <td className="py-2 px-4"><input value={editAnalysisAr} onChange={(e) => setEditAnalysisAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
+                        <td className="py-2 px-4"><input value={editAnalysisFr} onChange={(e) => setEditAnalysisFr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
                           <Button size="sm" onClick={handleUpdateAnalysis}>{t('common.save')}</Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditAnalysisId(null)}>{t('common.cancel')}</Button>
@@ -763,11 +763,11 @@ export default function MedicalPage() {
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-gray-900">{a.nameAr}</td>
-                        <td className="py-3 px-4 text-gray-600">{a.name}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{a.nameAr}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{a.name}</td>
                         <td className="py-3 px-4 text-center">
-                          <button onClick={() => { setEditAnalysisId(a.id); setEditAnalysisAr(a.nameAr); setEditAnalysisFr(a.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
-                          <button onClick={() => handleDeleteAnalysis(a.id)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditAnalysisId(a.id); setEditAnalysisAr(a.nameAr); setEditAnalysisFr(a.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteAnalysis(a.id)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </>
                     )}
@@ -780,11 +780,11 @@ export default function MedicalPage() {
 
         {/* Hospitals */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-primary-600" />
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-primary" />
             {t('medical.hospitals')}
           </h3>
-          <p className="text-sm text-gray-500 mb-4">{t('medical.manageHospitals')}</p>
+          <p className="text-sm text-muted-foreground mb-4">{t('medical.manageHospitals')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
             <Input labelAr={t('medical.nameAr')} value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} />
             <Input labelAr={t('medical.nameLatin')} value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder="Ex: CHU" dir="ltr" />
@@ -794,18 +794,18 @@ export default function MedicalPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.tableArabic')}</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">{t('medical.tableLatin')}</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-500">{t('medical.tableActions')}</th>
+                  <tr className="border-b border-border">
+                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.tableArabic')}</th>
+                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.tableLatin')}</th>
+                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('medical.tableActions')}</th>
                   </tr>
                 </thead>
                 <tbody>{hospitals.map((h: MedicalHospital) => (
-                  <tr key={h.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={h.id} className="border-b border-border hover:bg-muted">
                     {editHospId === h.id ? (
                       <>
-                        <td className="py-2 px-4"><input value={editHospAr} onChange={(e) => setEditHospAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
-                        <td className="py-2 px-4"><input value={editHospFr} onChange={(e) => setEditHospFr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                        <td className="py-2 px-4"><input value={editHospAr} onChange={(e) => setEditHospAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
+                        <td className="py-2 px-4"><input value={editHospFr} onChange={(e) => setEditHospFr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
                           <Button size="sm" onClick={handleUpdateHospital}>{t('common.save')}</Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditHospId(null)}>{t('common.cancel')}</Button>
@@ -813,11 +813,11 @@ export default function MedicalPage() {
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-gray-900">{h.nameAr}</td>
-                        <td className="py-3 px-4 text-gray-600">{h.name}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{h.nameAr}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{h.name}</td>
                         <td className="py-3 px-4 text-center">
-                          <button onClick={() => { setEditHospId(h.id); setEditHospAr(h.nameAr); setEditHospFr(h.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
-                          <button onClick={() => handleDeleteHospital(h.id)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditHospId(h.id); setEditHospAr(h.nameAr); setEditHospFr(h.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteHospital(h.id)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </>
                     )}
@@ -836,8 +836,8 @@ export default function MedicalPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('medical.title')}</h2>
-          <p className="text-sm text-gray-500 mt-1">{t('medical.subtitle')}</p>
+          <h2 className="text-2xl font-bold text-foreground">{t('medical.title')}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{t('medical.subtitle')}</p>
         </div>
         {activeTab === 'list' && (
         <div className="flex gap-2">
@@ -852,18 +852,18 @@ export default function MedicalPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="flex gap-2 sm:gap-4">
           <button onClick={() => setActiveTab('list')}
             className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
-              activeTab === 'list' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              activeTab === 'list' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}>
             <Stethoscope className="inline-block w-4 h-4 ml-2" />
             {t('medical.tabReferrals')}
           </button>
           <button onClick={() => setActiveTab('settings')}
             className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
-              activeTab === 'settings' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              activeTab === 'settings' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}>
             <Settings className="inline-block w-4 h-4 ml-2" />
             {t('medical.tabSettings')}

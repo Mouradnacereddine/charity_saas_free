@@ -4,6 +4,9 @@ import './index.css'
 import i18n from './i18n'
 import App from './App.tsx'
 
+// Définit la direction du document dès le chargement, avant tout rendu React.
+document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+
 createRoot(document.getElementById('root')!).render(
   <I18nextProvider i18n={i18n}>
     <App />

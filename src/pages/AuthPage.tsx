@@ -137,23 +137,23 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
   const isInvite = !!inviteInfo && !error;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-primary/5 p-4">
+      <div className="w-full max-w-md bg-card text-card-foreground rounded-2xl shadow-xl border border-border p-8">
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">🕌</div>
-          <h1 className="text-3xl font-bold text-primary-700">{t('app.title')}</h1>
-          <p className="text-gray-500 mt-2">{t('app.subtitle')}</p>
+          <h1 className="text-3xl font-bold text-primary">{t('app.title')}</h1>
+          <p className="text-muted-foreground mt-2">{t('app.subtitle')}</p>
         </div>
 
         {/* Invite info banner */}
         {inviteInfo && inviteInfo.associationNameAr && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
+          <div className="bg-success/10 border border-success/30 rounded-lg p-4 mb-6 flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-success shrink-0" />
             <div>
-              <p className="text-sm font-medium text-green-800">
+              <p className="text-sm font-medium text-success">
                 {t('auth.inviteBanner')} {inviteInfo.associationNameAr}
               </p>
-              <p className="text-xs text-green-600 mt-1">
+              <p className="text-xs text-success/80 mt-1">
                 {inviteInfo.role === 'treasurer' ? t('userMenu.treasurer') : t('userMenu.volunteer')}
               </p>
             </div>
@@ -164,40 +164,40 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
         {showAssocForm ? (
           <div className="mb-6">
             <div className="flex justify-center mb-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <UserPlus className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <UserPlus className="w-6 h-6 text-primary" />
               </div>
             </div>
-            <p className="text-sm font-medium text-gray-700 text-center mb-4">
+            <p className="text-sm font-medium text-foreground text-center mb-4">
               {t('auth.newUserTitle')}
             </p>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{t('auth.assocNameAr')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('auth.assocNameAr')}</label>
                 <input
                   type="text"
                   value={assocNameAr}
                   onChange={(e) => setAssocNameAr(e.target.value)}
                   placeholder={t('auth.nameArPlaceholder', 'Ex: Charity Association')}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-right"
+                  className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring text-start"
                   dir="rtl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{t('auth.assocNameLatin')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('auth.assocNameLatin')}</label>
                 <input
                   type="text"
                   value={assocName}
                   onChange={(e) => setAssocName(e.target.value)}
                   placeholder="Ex: Association El-Baraka"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                   dir="ltr"
                 />
               </div>
               <button
                 onClick={handleRegisterWithName}
                 disabled={loading || !assocNameAr.trim()}
-                className="w-full py-2.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? t('auth.creating') : t('auth.createAssociation')}
               </button>
@@ -209,23 +209,23 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
               {isInvite ? (
                 <>
                   <div className="flex justify-center mb-3">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                      <UserPlus className="w-6 h-6 text-green-600" />
+                    <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center">
+                      <UserPlus className="w-6 h-6 text-success" />
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">{t('auth.loginGoogle')}</p>
+                  <p className="text-sm text-muted-foreground">{t('auth.loginGoogle')}</p>
                 </>
               ) : (
                 <>
                   <div className="flex justify-center mb-3">
-                    <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                      <LogIn className="w-6 h-6 text-primary-600" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <LogIn className="w-6 h-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t('auth.loginGoogleButton')}
                   </p>
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-muted-foreground/80 mt-2">
                     {t('auth.loginInfo')}
                   </p>
                 </>
@@ -233,7 +233,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 text-center mb-6">
+              <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg p-3 text-center mb-6">
                 {error}
               </div>
             )}
@@ -243,7 +243,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
             </div>
 
             {(loading || checkingInvite) && (
-              <p className="text-center text-sm text-gray-500 mb-4">
+              <p className="text-center text-sm text-muted-foreground mb-4">
                 {checkingInvite ? t('auth.checkingInvite') : t('auth.loggingIn')}
               </p>
             )}

@@ -8,14 +8,14 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export function Button({ variant = 'primary', size = 'md', children, className = '', ...props }: ButtonProps) {
-  const base = 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const base = 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500 border border-gray-300',
-    danger: 'bg-danger-500 text-white hover:bg-danger-600 focus:ring-danger-500',
-    success: 'bg-success-500 text-white hover:bg-success-600 focus:ring-success-500',
-    ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500',
+    primary: 'bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary',
+    secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border focus:ring-ring',
+    danger: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive',
+    success: 'bg-success text-white hover:bg-success/90 focus:ring-success',
+    ghost: 'text-foreground hover:bg-muted focus:ring-ring',
   };
 
   const sizes = {
@@ -41,10 +41,10 @@ interface CardProps {
 
 export function Card({ children, className = '', title, titleAr, action }: CardProps) {
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}>
+    <div className={`bg-card text-card-foreground rounded-xl shadow-sm border border-border ${className}`}>
       {(title || titleAr || action) && (
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">{titleAr || title}</h3>
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <h3 className="font-semibold text-foreground">{titleAr || title}</h3>
           {action && <div>{action}</div>}
         </div>
       )}
@@ -63,15 +63,15 @@ export function Input({ label, labelAr, error, className = '', ...props }: Input
   return (
     <div className="space-y-1">
       {(label || labelAr) && (
-        <label className="block text-sm font-medium text-gray-700">{labelAr || label}</label>
+        <label className="block text-sm font-medium text-foreground">{labelAr || label}</label>
       )}
       <input
-        className={`w-full px-3 py-2 border rounded-lg text-sm min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-          error ? 'border-danger-500' : 'border-gray-300'
+        className={`w-full px-3 py-2 border rounded-lg text-sm min-h-[44px] bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring ${
+          error ? 'border-destructive' : 'border-input'
         } ${className}`}
         {...props}
       />
-      {error && <p className="text-xs text-danger-500">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
@@ -88,11 +88,11 @@ export function Select({ label, labelAr, options, error, className = '', placeho
   return (
     <div className="space-y-1">
       {(label || labelAr) && (
-        <label className="block text-sm font-medium text-gray-700">{labelAr || label}</label>
+        <label className="block text-sm font-medium text-foreground">{labelAr || label}</label>
       )}
       <select
-        className={`w-full px-3 py-2 border rounded-lg text-sm min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-          error ? 'border-danger-500' : 'border-gray-300'
+        className={`w-full px-3 py-2 border rounded-lg text-sm min-h-[44px] bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring ${
+          error ? 'border-destructive' : 'border-input'
         } ${className}`}
         {...props}
       >
@@ -103,7 +103,7 @@ export function Select({ label, labelAr, options, error, className = '', placeho
           </option>
         ))}
       </select>
-      {error && <p className="text-xs text-danger-500">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
@@ -152,9 +152,9 @@ export function SearchableSelect({
   return (
     <div className="space-y-1 relative" ref={containerRef}>
       {(label || labelAr) && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-foreground">
           {labelAr || label}
-          {required && <span className="text-red-500 mr-1">*</span>}
+          {required && <span className="text-destructive mr-1">*</span>}
         </label>
       )}
       <button
@@ -163,25 +163,25 @@ export function SearchableSelect({
           setIsOpen(!isOpen);
           setSearch('');
         }}
-        className={`w-full px-3 py-2 border rounded-lg text-sm min-h-[44px] bg-white flex items-center justify-between text-right focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-          error ? 'border-danger-500' : 'border-gray-300'
+        className={`w-full px-3 py-2 border rounded-lg text-sm min-h-[44px] bg-background flex items-center justify-between text-right focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring ${
+          error ? 'border-destructive' : 'border-input'
         }`}
       >
-        <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
+        <span className={selectedOption ? 'text-foreground' : 'text-muted-foreground'}>
           {selectedOption ? selectedOption.label : placeholder || t('common.select')}
         </span>
-        <span className="text-gray-500 text-xs">▼</span>
+        <span className="text-muted-foreground text-xs">▼</span>
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 flex flex-col overflow-hidden">
-          <div className="p-2 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+        <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg max-h-60 flex flex-col overflow-hidden">
+          <div className="p-2 border-b border-border bg-muted flex items-center gap-2">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('common.search')}
-              className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-2.5 py-1.5 text-xs border border-input bg-background text-foreground rounded focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring"
               autoFocus
             />
           </div>
@@ -192,12 +192,12 @@ export function SearchableSelect({
                 onChange('');
                 setIsOpen(false);
               }}
-              className="w-full text-right px-3 py-2 text-xs text-gray-400 hover:bg-gray-50 border-b border-gray-50"
+              className="w-full text-right px-3 py-2 text-xs text-muted-foreground hover:bg-muted border-b border-border"
             >
               {t('common.clear')}
             </button>
             {filteredOptions.length === 0 ? (
-              <p className="p-3 text-xs text-gray-400 text-center">{t('common.noResults')}</p>
+              <p className="p-3 text-xs text-muted-foreground text-center">{t('common.noResults')}</p>
             ) : (
               filteredOptions.map((opt) => (
                 <button
@@ -207,8 +207,8 @@ export function SearchableSelect({
                     onChange(opt.value);
                     setIsOpen(false);
                   }}
-                  className={`w-full text-right px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-700 transition-colors border-b border-gray-50 last:border-0 ${
-                    opt.value === value ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700'
+                  className={`w-full text-right px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors border-b border-border last:border-0 ${
+                    opt.value === value ? 'bg-primary/10 text-primary font-medium' : 'text-foreground'
                   }`}
                 >
                   {opt.label}
@@ -218,7 +218,7 @@ export function SearchableSelect({
           </div>
         </div>
       )}
-      {error && <p className="text-xs text-danger-500">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
@@ -233,16 +233,16 @@ export function TextArea({ label, labelAr, error, className = '', ...props }: Te
   return (
     <div className="space-y-1">
       {(label || labelAr) && (
-        <label className="block text-sm font-medium text-gray-700">{labelAr || label}</label>
+        <label className="block text-sm font-medium text-foreground">{labelAr || label}</label>
       )}
       <textarea
-        className={`w-full px-3 py-2 border rounded-lg text-sm min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-          error ? 'border-danger-500' : 'border-gray-300'
+        className={`w-full px-3 py-2 border rounded-lg text-sm min-h-[44px] bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring ${
+          error ? 'border-destructive' : 'border-input'
         } ${className}`}
         rows={3}
         {...props}
       />
-      {error && <p className="text-xs text-danger-500">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
@@ -255,16 +255,36 @@ interface StatCardProps {
   color?: string;
 }
 
-export function StatCard({ title, value, subtitle, icon, color = 'bg-primary-500' }: StatCardProps) {
+/** Mapping couleur de fond -> couleur d'icone pour un contraste garanti.
+ *  Sans cette map, certaines couleurs claires (bg-muted) sont invisibles avec text-white.
+ */
+const STAT_ICON_TEXT: Record<string, string> = {
+  'bg-primary': 'text-primary-foreground',
+  'bg-success': 'text-primary-foreground',   // vert doux -> blanc OK
+  'bg-destructive': 'text-primary-foreground',
+  'bg-warning': 'text-warning-foreground',   // ambre clair -> brun fonce
+  'bg-muted': 'text-foreground',             // gris clair -> texte fonce
+  'bg-secondary': 'text-foreground',
+};
+function pickIconText(color: string): string {
+  return STAT_ICON_TEXT[color] ?? 'text-primary-foreground';
+}
+
+export function StatCard({ title, value, subtitle, icon, color = 'bg-primary' }: StatCardProps) {
+  const iconText = pickIconText(color);
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1 truncate">{value}</p>
-          {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
+    <div className="bg-card text-card-foreground rounded-xl shadow-sm border border-border p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-xl sm:text-2xl font-bold text-foreground mt-1 truncate">{value}</p>
+          {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
         </div>
-        <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center text-white`}>
+        {/* Conteneur d'icone : taille fixe, couleur adaptée pour contraste garanti */}
+        <div
+          aria-hidden="true"
+          className={`shrink-0 flex-none w-14 h-14 min-w-[3.5rem] min-h-[3.5rem] ${color} rounded-xl flex items-center justify-center ${iconText}`}
+        >
           {icon}
         </div>
       </div>
@@ -293,10 +313,10 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className={`relative bg-white rounded-none sm:rounded-xl shadow-xl ${sizes[size]} w-full mx-0 sm:mx-4 h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-auto`}>
-        <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white sm:rounded-t-xl">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+      <div className={`relative bg-card text-card-foreground rounded-none sm:rounded-xl shadow-xl ${sizes[size]} w-full mx-0 sm:mx-4 h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-auto`}>
+        <div className="px-4 sm:px-6 py-4 border-b border-border flex items-center justify-between sticky top-0 bg-card sm:rounded-t-xl">
+          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+          <button onClick={onClose} className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted">
             ✕
           </button>
         </div>
@@ -313,11 +333,11 @@ interface BadgeProps {
 
 export function Badge({ children, variant = 'default' }: BadgeProps) {
   const variants = {
-    default: 'bg-gray-100 text-gray-700',
-    success: 'bg-green-100 text-green-700',
-    warning: 'bg-yellow-100 text-yellow-700',
-    danger: 'bg-red-100 text-red-700',
-    info: 'bg-blue-100 text-blue-700',
+    default: 'bg-secondary text-secondary-foreground',
+    success: 'bg-success/15 text-success',
+    warning: 'bg-warning/15 text-warning',
+    danger: 'bg-destructive/15 text-destructive',
+    info: 'bg-primary/15 text-primary',
   };
 
   return (
@@ -329,8 +349,8 @@ export function Badge({ children, variant = 'default' }: BadgeProps) {
 
 export function EmptyState({ message, icon }: { message: string; icon?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-      {icon && <div className="mb-4 text-gray-300">{icon}</div>}
+    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+      {icon && <div className="mb-4 text-muted-foreground/60">{icon}</div>}
       <p className="text-sm">{message}</p>
     </div>
   );
@@ -339,7 +359,7 @@ export function EmptyState({ message, icon }: { message: string; icon?: ReactNod
 export function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-12">
-      <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" />
     </div>
   );
 }

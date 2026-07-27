@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, StatCard, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
-import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake, Edit } from 'lucide-react'
+import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake, Edit, ListOrdered } from 'lucide-react'
 import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useConfirmTransaction, useCancelTransaction } from '../hooks/useFinance'
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
 import { useDonors } from '../hooks/useDonors'
@@ -465,29 +465,29 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
     <div className="space-y-6">
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('finance.title')}</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('finance.title')}</h1>
       </div>
 
-      {/* Stat Cards */}
+      {/* Stat Cards — variantes alignees MediCare */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           title={t('finance.totalBankBalance')}
           value={formatCurrency(totalBankBalance)}
           icon={<Building2 size={24} />}
-          color="bg-blue-500"
+          color="bg-primary"
         />
         <StatCard
           title={t('finance.totalCash')}
           value={formatCurrency(totalCash)}
           icon={<Banknote size={24} />}
-          color="bg-green-500"
+          color="bg-primary"
         />
         <StatCard
           title={t('finance.totalTransactions')}
           value={transactions.length}
           subtitle={`${transactions.filter((t: Transaction) => t.type === 'credit').length} ${t('dashboard.deposit')} | ${transactions.filter((t: Transaction) => t.type === 'debit').length} ${t('dashboard.withdrawal')}`}
-          icon={<ArrowUpCircle size={24} />}
-          color="bg-purple-500"
+          icon={<ListOrdered size={24} />}
+          color="bg-primary"
         />
       </div>
 
@@ -507,27 +507,27 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('finance.bankName')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('finance.accountNumber')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">RIB</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden md:table-cell">IBAN</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('finance.accountBalance')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('finance.bankName')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('finance.accountNumber')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">RIB</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">IBAN</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('finance.accountBalance')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {bankAccounts.map((account: BankAccount) => (
                   <tr
                     key={account.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="border-b border-border hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => setDetailBankAccount(account)}
                   >
-                    <td className="py-3 px-4 font-medium text-gray-900">{account.bankNameAr}</td>
-                    <td className="py-3 px-4 text-gray-600" dir="ltr">{account.accountNumber}</td>
-                    <td className="py-3 px-4 text-gray-600 hidden md:table-cell" dir="ltr">{account.rib}</td>
-                    <td className="py-3 px-4 text-gray-600 hidden md:table-cell" dir="ltr">{account.iban}</td>
-                    <td className="py-3 px-4 font-semibold text-gray-900">
+                    <td className="py-3 px-4 font-medium text-foreground">{account.bankNameAr}</td>
+                    <td className="py-3 px-4 text-muted-foreground" dir="ltr">{account.accountNumber}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell" dir="ltr">{account.rib}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell" dir="ltr">{account.iban}</td>
+                    <td className="py-3 px-4 font-semibold text-foreground">
                       {formatCurrency(account.balance)}
                     </td>
                     <td className="py-3 px-4">
@@ -562,7 +562,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
         }
       >
         {allocFilterOpen && (
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+          <div className="mb-4 p-4 bg-muted rounded-lg border border-border space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <Input labelAr={t('dashboard.donor')} value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} placeholder={t('common.search')} />
               <Input labelAr={t('dashboard.beneficiary')} value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} placeholder={t('common.search')} />
@@ -596,26 +596,26 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('dashboard.receiptNo')}</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('dashboard.donor')}</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('dashboard.beneficiary')}</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600 hidden md:table-cell">{t('dashboard.fund')}</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('common.amount')}</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('finance.remainingAmount')}</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('common.status')}</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">{t('common.date')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('dashboard.receiptNo')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('dashboard.donor')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('dashboard.beneficiary')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden md:table-cell">{t('dashboard.fund')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('common.amount')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('finance.remainingAmount')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('common.status')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('common.date')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAllocations.map((a: DonationAllocation) => {
                   const allocCaisse = caisses.find((c: any) => c.id === a.creditTransaction?.caisseId);
                   return (
-                  <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelectedAlloc(a)}>
-                    <td className="py-3 px-4 text-gray-500 font-mono text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
+                  <tr key={a.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setSelectedAlloc(a)}>
+                    <td className="py-3 px-4 text-muted-foreground font-mono text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
                     <td className="py-3 px-4 font-medium">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
-                    <td className="py-3 px-4 font-medium text-gray-900">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
-                    <td className="py-3 px-4 hidden md:table-cell text-gray-700">{allocCaisse?.nameAr || '—'}</td>
+                    <td className="py-3 px-4 font-medium text-foreground">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
+                    <td className="py-3 px-4 hidden md:table-cell text-foreground">{allocCaisse?.nameAr || '—'}</td>
                     <td className="py-3 px-4"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
                     <td className="py-3 px-4">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
                     <td className="py-3 px-4">{(() => {
@@ -626,7 +626,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                       if (a.debitTransactionId) return <Badge variant="info">{t('dashboard.partiallyDisbursed')}</Badge>;
                       return <Badge variant="info">{t('dashboard.active')}</Badge>;
                     })()}</td>
-                    <td className="py-3 px-4 text-gray-600">{formatDate(a.createdAt)}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{formatDate(a.createdAt)}</td>
                   </tr>
                   );
                 })}
@@ -640,16 +640,16 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       <Modal isOpen={!!selectedAlloc} onClose={() => setSelectedAlloc(null)} title={t('finance.allocationDetails')} size="md">
         {selectedAlloc && (
           <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('dashboard.donor')}</span><span className="font-medium text-gray-900">{selectedAlloc.donor.lastNameAr} {selectedAlloc.donor.firstNameAr}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('dashboard.beneficiary')}</span><span className="font-medium text-gray-900">{selectedAlloc.beneficiary.lastNameAr} {selectedAlloc.beneficiary.firstNameAr}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('dashboard.fund')}</span><span className="font-medium text-gray-900">{(() => { const ac = caisses.find((c: any) => c.id === selectedAlloc.creditTransaction?.caisseId); return ac?.nameAr || '—'; })()}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('common.amount')}</span><span className="font-bold text-green-600">{formatCurrency(selectedAlloc.amount)}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.remainingAmount')}</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : t('dashboard.fullyDisbursed')}</span></div>
-              {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('common.notes')}</span><span className="font-medium text-gray-900">{selectedAlloc.notes}</span></div>}
-              <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.originalDonationStatus')}</span><span className="font-medium">{selectedAlloc.creditTransaction?.status === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> : selectedAlloc.creditTransaction?.status === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> : <Badge variant="success">{t('dashboard.completed')}</Badge>}</span></div>
-              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount > 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.disbursed')}</span><span className="font-medium text-amber-600">{t('dashboard.partiallyDisbursed')}</span></div>}
-              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount <= 0 && <div className="flex justify-between items-center"><span className="text-xs text-gray-500">{t('finance.disbursed')}</span><span className="font-medium text-green-600">{t('dashboard.fullyDisbursed')}</span></div>}
+            <div className="bg-muted rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.donor')}</span><span className="font-medium text-foreground">{selectedAlloc.donor.lastNameAr} {selectedAlloc.donor.firstNameAr}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</span><span className="font-medium text-foreground">{selectedAlloc.beneficiary.lastNameAr} {selectedAlloc.beneficiary.firstNameAr}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{(() => { const ac = caisses.find((c: any) => c.id === selectedAlloc.creditTransaction?.caisseId); return ac?.nameAr || '—'; })()}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('common.amount')}</span><span className="font-bold text-success">{formatCurrency(selectedAlloc.amount)}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('finance.remainingAmount')}</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : t('dashboard.fullyDisbursed')}</span></div>
+              {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('common.notes')}</span><span className="font-medium text-foreground">{selectedAlloc.notes}</span></div>}
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('finance.originalDonationStatus')}</span><span className="font-medium">{selectedAlloc.creditTransaction?.status === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> : selectedAlloc.creditTransaction?.status === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> : <Badge variant="success">{t('dashboard.completed')}</Badge>}</span></div>
+              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount > 0 && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('finance.disbursed')}</span><span className="font-medium text-warning">{t('dashboard.partiallyDisbursed')}</span></div>}
+              {selectedAlloc.debitTransactionId && selectedAlloc.remainingAmount <= 0 && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('finance.disbursed')}</span><span className="font-medium text-success">{t('dashboard.fullyDisbursed')}</span></div>}
             </div>
             <div className="flex justify-end">
               <Button size="sm" variant="secondary" onClick={() => setSelectedAlloc(null)}>{t('common.close')}</Button>
@@ -665,15 +665,15 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Transaction Type */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">{t('finance.transactionType')}</label>
+              <label className="block text-sm font-medium text-foreground">{t('finance.transactionType')}</label>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setTxType('credit')}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all ${
                     txType === 'credit'
-                      ? 'bg-emerald-50 border-emerald-400 text-emerald-700 shadow-sm'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      ? 'bg-success/10 border-success/30 text-success-foreground shadow-sm'
+                      : 'bg-card border-border text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <ArrowUpCircle size={18} />
@@ -684,8 +684,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                   onClick={() => setTxType('debit')}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all ${
                     txType === 'debit'
-                      ? 'bg-red-50 border-red-400 text-red-700 shadow-sm'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      ? 'bg-destructive/10 border-destructive/30 text-destructive shadow-sm'
+                      : 'bg-card border-border text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <ArrowDownCircle size={18} />
@@ -696,15 +696,15 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
 
             {/* Fund Source */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">{t('dashboard.source')}</label>
+              <label className="block text-sm font-medium text-foreground">{t('dashboard.source')}</label>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setTxFundSource('banque')}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all ${
                     txFundSource === 'banque'
-                      ? 'bg-blue-50 border-blue-400 text-blue-700 shadow-sm'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      ? 'bg-accent border-accent text-accent-foreground shadow-sm'
+                      : 'bg-card border-border text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <Building2 size={18} />
@@ -715,8 +715,8 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                   onClick={() => setTxFundSource('caisse_physique')}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all ${
                     txFundSource === 'caisse_physique'
-                      ? 'bg-amber-50 border-amber-400 text-amber-700 shadow-sm'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      ? 'bg-warning/10 border-warning/30 text-warning-foreground shadow-sm'
+                      : 'bg-card border-border text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <Banknote size={18} />
@@ -818,14 +818,14 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 className="text-left"
               />
               {amountNum > 0 && (
-                <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1">
-                  <p className="text-xs text-gray-500">
+                <div className="mt-2 p-3 bg-muted rounded-lg border border-border space-y-1">
+                  <p className="text-xs text-muted-foreground">
                     <span className="font-medium">{t('doctors.arabicLabel')}:</span>{' '}
-                    <span className="text-gray-800">{amountInWordsAr}</span>
+                    <span className="text-foreground">{amountInWordsAr}</span>
                   </p>
-                  <p className="text-xs text-gray-500" dir="ltr">
+                  <p className="text-xs text-muted-foreground" dir="ltr">
                     <span className="font-medium">En français:</span>{' '}
-                    <span className="text-gray-800">{amountInWordsFr}</span>
+                    <span className="text-foreground">{amountInWordsFr}</span>
                   </p>
                 </div>
               )}
@@ -842,10 +842,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
           />
 
           {txError && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-center gap-2">
+            <div className="p-3 bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg flex items-center gap-2">
               <span>⚠️</span>
               <span>{txError}</span>
-              <button onClick={() => setTxError('')} className="mr-auto text-red-500 hover:text-red-700">✕</button>
+              <button onClick={() => setTxError('')} className="mr-auto text-destructive hover:text-destructive">✕</button>
             </div>
           )}
           <div className="flex items-center justify-between">
@@ -854,9 +854,9 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 type="checkbox"
                 checked={txPending}
                 onChange={(e) => setTxPending(e.target.checked)}
-                className="w-4 h-4 text-amber-500 focus:ring-amber-500 rounded"
+                className="w-4 h-4 text-warning-foreground focus:ring-amber-500 rounded"
               />
-              <span className="text-sm text-gray-600">{t('finance.pendingTx')}</span>
+              <span className="text-sm text-muted-foreground">{t('finance.pendingTx')}</span>
             </label>
             <Button type="submit" disabled={txSubmitting || amountNum <= 0 || !txCaisseId}>
               {txSubmitting ? t('common.saving') : t('finance.saveTransaction')}
@@ -881,19 +881,19 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       >
         {/* Collapsible Filter Section */}
         {filterOpen && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+          <div className="mb-6 p-4 bg-muted rounded-lg border border-border space-y-4">
             {/* Search */}
             <div className="relative">
               <Search
                 size={16}
-                className="absolute top-1/2 -translate-y-1/2 right-3 text-gray-400"
+                className="absolute top-1/2 -translate-y-1/2 right-3 text-muted-foreground/70"
               />
               <input
                 type="text"
                 value={filterSearchTerm}
                 onChange={(e) => setFilterSearchTerm(e.target.value)}
                 placeholder={t('finance.searchPlaceholder')}
-                className="w-full pr-10 pl-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full pr-10 pl-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 dir="rtl"
               />
             </div>
@@ -991,19 +991,19 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('common.date')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.receiptNo')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.type')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('common.status')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.source')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('common.amount')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('finance.remainingAmount')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.donor')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500">{t('dashboard.beneficiary')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden sm:table-cell">{t('dashboard.fund')}</th>
-                    <th className="text-right py-3 px-3 font-medium text-gray-500 hidden lg:table-cell">{t('receipt.description')}</th>
-                    <th className="text-center py-3 px-3 font-medium text-gray-500">{t('common.actions')}</th>
+                  <tr className="border-b border-border">
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground">{t('common.date')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground">{t('dashboard.receiptNo')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground">{t('dashboard.type')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground">{t('common.status')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground">{t('dashboard.source')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground">{t('common.amount')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground">{t('finance.remainingAmount')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground">{t('dashboard.donor')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground">{t('dashboard.beneficiary')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground hidden sm:table-cell">{t('dashboard.fund')}</th>
+                    <th className="text-start py-3 px-3 font-medium text-muted-foreground hidden lg:table-cell">{t('receipt.description')}</th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1014,13 +1014,13 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                     return (
                       <tr
                         key={tx.id}
-                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="border-b border-border hover:bg-muted transition-colors cursor-pointer"
                         onClick={() => setDetailTx(tx)}
                       >
-                        <td className="py-3 px-3 text-gray-600 whitespace-nowrap">
+                        <td className="py-3 px-3 text-muted-foreground whitespace-nowrap">
                           {formatDate(tx.date)}
                         </td>
-                        <td className="py-3 px-3 text-gray-500 font-mono text-xs" dir="ltr">{tx.receiptNumber || '—'}</td>
+                        <td className="py-3 px-3 text-muted-foreground font-mono text-xs" dir="ltr">{tx.receiptNumber || '—'}</td>
                         <td className="py-3 px-3">
                           {tx.type === 'credit' ? (
                             <Badge variant="success">{t('dashboard.deposit')}</Badge>
@@ -1046,22 +1046,22 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                             return <Badge variant="success">{t('dashboard.completed')}</Badge>;
                           })()}
                         </td>
-                        <td className="py-3 px-3 text-gray-600">
+                        <td className="py-3 px-3 text-muted-foreground">
                           {tx.fundSource === 'banque' ? (
                             <span className="flex items-center gap-1">
-                              <Building2 size={14} className="text-blue-500" />
+                              <Building2 size={14} className="text-accent-foreground" />
                               {t('dashboard.bank')}
                             </span>
                           ) : (
                             <span className="flex items-center gap-1">
-                              <Banknote size={14} className="text-amber-500" />
+                              <Banknote size={14} className="text-warning-foreground" />
                               {t('finance.cashFund')}
                             </span>
                           )}
                         </td>
                         <td
                           className={`py-3 px-3 font-semibold whitespace-nowrap ${
-                            tx.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                            tx.type === 'credit' ? 'text-success' : 'text-destructive'
                           }`}
                         >
                           {tx.type === 'credit' ? '+' : '-'}
@@ -1071,28 +1071,28 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                           {(() => {
                             const rawStatus = tx.status || 'completed';
                             const rem = (tx as any).remainingAmount;
-                            if (rawStatus === 'pending') return <span className="text-gray-400">—</span>;
-                            if (rawStatus === 'cancelled') return <span className="text-gray-400">—</span>;
+                            if (rawStatus === 'pending') return <span className="text-muted-foreground/70">—</span>;
+                            if (rawStatus === 'cancelled') return <span className="text-muted-foreground/70">—</span>;
                             // null = no allocation (credit without beneficiary)
-                            if (rem === null || rem === undefined) return <span className="text-gray-300">—</span>;
+                            if (rem === null || rem === undefined) return <span className="text-muted-foreground/50">—</span>;
                             if (rem > 0) return <Badge variant="warning">{formatCurrency(rem)}</Badge>;
                             return <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>;
                           })()}
                         </td>
-                        <td className="py-3 px-3 text-gray-700">
+                        <td className="py-3 px-3 text-foreground">
                           {txDonor ? `${txDonor.lastNameAr} ${txDonor.firstNameAr}` : '—'}
                         </td>
-                        <td className="py-3 px-3 text-gray-700">
+                        <td className="py-3 px-3 text-foreground">
                           {txBenef ? `${txBenef.lastNameAr} ${txBenef.firstNameAr}` : '—'}
                         </td>
-                        <td className="py-3 px-3 text-gray-600 hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
-                        <td className="py-3 px-3 text-gray-600 max-w-[160px] truncate hidden lg:table-cell">
+                        <td className="py-3 px-3 text-muted-foreground hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
+                        <td className="py-3 px-3 text-muted-foreground max-w-[160px] truncate hidden lg:table-cell">
                           {tx.descriptionAr || tx.description || '-'}
                         </td>
                         <td className="py-3 px-3 text-center">
                           <button
                             onClick={(e) => { e.stopPropagation(); handlePrintReceipt(tx); }}
-                            className="p-1.5 text-gray-400 hover:text-primary-600 transition-colors"
+                            className="p-1.5 text-muted-foreground/70 hover:text-primary transition-colors"
                             title={tx.type === 'credit' ? t('donors.printReceipt') : t('donors.printReceipt')}
                           >
                             <Printer size={16} />
@@ -1107,7 +1107,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-100 mt-4">
+              <div className="flex items-center justify-center gap-2 pt-4 border-t border-border mt-4">
                 <Button
                   size="sm"
                   variant="ghost"
@@ -1134,7 +1134,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                     }, [])
                     .map((item, idx) =>
                       item === 'ellipsis' ? (
-                        <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">
+                        <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground/70">
                           ...
                         </span>
                       ) : (
@@ -1144,7 +1144,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                           className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                             currentPage === item
                               ? 'bg-primary-600 text-white'
-                              : 'text-gray-600 hover:bg-gray-100'
+                              : 'text-muted-foreground hover:bg-muted'
                           }`}
                         >
                           {item}
@@ -1179,13 +1179,13 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       <Modal isOpen={!!detailBankAccount} onClose={() => setDetailBankAccount(null)} title={t('finance.bankAccountDetails')} size="md">
         {detailBankAccount && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 bg-gray-50 rounded-lg p-4">
-              <div><p className="text-xs text-gray-500">{t('finance.bankName')}</p><p className="font-semibold text-gray-900">{detailBankAccount.bankNameAr}</p></div>
-              <div><p className="text-xs text-gray-500">{t('finance.accountNumber')}</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.accountNumber}</p></div>
-              <div><p className="text-xs text-gray-500">RIB</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.rib}</p></div>
-              <div><p className="text-xs text-gray-500">IBAN</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.iban}</p></div>
-              <div><p className="text-xs text-gray-500">SWIFT</p><p className="font-mono text-gray-900" dir="ltr">{detailBankAccount.swift}</p></div>
-              <div><p className="text-xs text-gray-500">{t('finance.accountBalance')}</p><p className="font-bold text-lg text-green-600">{formatCurrency(detailBankAccount.balance)}</p></div>
+            <div className="grid grid-cols-1 gap-4 bg-muted rounded-lg p-4">
+              <div><p className="text-xs text-muted-foreground">{t('finance.bankName')}</p><p className="font-semibold text-foreground">{detailBankAccount.bankNameAr}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('finance.accountNumber')}</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.accountNumber}</p></div>
+              <div><p className="text-xs text-muted-foreground">RIB</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.rib}</p></div>
+              <div><p className="text-xs text-muted-foreground">IBAN</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.iban}</p></div>
+              <div><p className="text-xs text-muted-foreground">SWIFT</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.swift}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('finance.accountBalance')}</p><p className="font-bold text-lg text-success">{formatCurrency(detailBankAccount.balance)}</p></div>
             </div>
             <div className="flex justify-end gap-2">
               <Button size="sm" variant="primary" onClick={() => { handleOpenEditBank(detailBankAccount.id); setDetailBankAccount(null); }}>
@@ -1206,9 +1206,9 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
           const benef = beneficiaries.find((b: Beneficiary) => b.id === detailTx.beneficiaryId)
           return (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
-                <div><p className="text-xs text-gray-500">{t('dashboard.type')}</p><p className="font-medium">{detailTx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</p></div>
-                <div><p className="text-xs text-gray-500">{t('common.amount')}</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(detailTx.amount)}</p></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted rounded-lg p-4">
+                <div><p className="text-xs text-muted-foreground">{t('dashboard.type')}</p><p className="font-medium">{detailTx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</p></div>
+                <div><p className="text-xs text-muted-foreground">{t('common.amount')}</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-success' : 'text-destructive'}`}>{formatCurrency(detailTx.amount)}</p></div>
                 {(() => {
                   const rem = (detailTx as any).remainingAmount;
                   // Show remaining amount only for credit with allocation (non-null)
@@ -1216,20 +1216,20 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                     const consumed = detailTx.amount - rem;
                     return (
                       <>
-                        <div><p className="text-xs text-gray-500">{t('finance.disbursed', 'المبلغ المصرف')}</p><p className="font-medium text-amber-600">{formatCurrency(consumed)}</p></div>
-                        <div><p className="text-xs text-gray-500">{t('finance.remainingAmount')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
+                        <div><p className="text-xs text-muted-foreground">{t('finance.disbursed', 'المبلغ المصرف')}</p><p className="font-medium text-warning">{formatCurrency(consumed)}</p></div>
+                        <div><p className="text-xs text-muted-foreground">{t('finance.remainingAmount')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
                       </>
                     );
                   }
                   // For debit with allocation
                   if (rem !== null && rem !== undefined && typeof rem === 'number' && detailTx.type === 'debit') {
                     return (
-                      <div><p className="text-xs text-gray-500">{t('finance.remainingDisbursement')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
+                      <div><p className="text-xs text-muted-foreground">{t('finance.remainingDisbursement')}</p><p className="font-medium">{rem > 0 ? <Badge variant="warning">{formatCurrency(rem)}</Badge> : <Badge variant="success">{t('dashboard.fullyDisbursed')}</Badge>}</p></div>
                     );
                   }
                   return null;
                 })()}
-                <div><p className="text-xs text-gray-500">{t('common.status')}</p><p className="font-medium">{(() => {
+                <div><p className="text-xs text-muted-foreground">{t('common.status')}</p><p className="font-medium">{(() => {
                   const s = detailTx.status || 'completed';
                   if (s === 'pending') return <Badge variant="warning">{t('dashboard.pending')}</Badge>;
                   if (s === 'cancelled') return <Badge variant="danger">{t('dashboard.cancelled')}</Badge>;
@@ -1244,14 +1244,14 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                   }
                   return <Badge variant="success">{t('dashboard.completed')}</Badge>;
                 })()}</p></div>
-                <div><p className="text-xs text-gray-500">{t('dashboard.fund')}</p><p className="font-medium text-gray-900">{caisse?.nameAr || '—'}</p></div>
-                <div><p className="text-xs text-gray-500">{t('dashboard.source')}</p><p className="font-medium">{detailTx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}</p></div>
-                {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-gray-500">{t('finance.bankAccounts')}</p><p className="font-medium">{bankAcc.bankNameAr}</p></div>}
-                {donor && <div><p className="text-xs text-gray-500">{t('dashboard.donor')}</p><p className="font-medium">{donor.lastNameAr} {donor.firstNameAr}</p></div>}
-                {benef && <div><p className="text-xs text-gray-500">{t('dashboard.beneficiary')}</p><p className="font-medium">{benef.lastNameAr} {benef.firstNameAr}</p></div>}
-                {detailTx.descriptionAr && <div className="sm:col-span-2"><p className="text-xs text-gray-500">{t('common.description')}</p><p className="font-medium text-gray-900">{detailTx.descriptionAr || detailTx.description}</p></div>}
-                <div><p className="text-xs text-gray-500">{t('dashboard.receiptNo')}</p><p className="font-mono text-gray-900" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
-                <div><p className="text-xs text-gray-500">{t('common.date')}</p><p className="font-medium text-gray-900">{formatDate(detailTx.date)}</p></div>
+                <div><p className="text-xs text-muted-foreground">{t('dashboard.fund')}</p><p className="font-medium text-foreground">{caisse?.nameAr || '—'}</p></div>
+                <div><p className="text-xs text-muted-foreground">{t('dashboard.source')}</p><p className="font-medium">{detailTx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}</p></div>
+                {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-muted-foreground">{t('finance.bankAccounts')}</p><p className="font-medium">{bankAcc.bankNameAr}</p></div>}
+                {donor && <div><p className="text-xs text-muted-foreground">{t('dashboard.donor')}</p><p className="font-medium">{donor.lastNameAr} {donor.firstNameAr}</p></div>}
+                {benef && <div><p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</p><p className="font-medium">{benef.lastNameAr} {benef.firstNameAr}</p></div>}
+                {detailTx.descriptionAr && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{detailTx.descriptionAr || detailTx.description}</p></div>}
+                <div><p className="text-xs text-muted-foreground">{t('dashboard.receiptNo')}</p><p className="font-mono text-foreground" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
+                <div><p className="text-xs text-muted-foreground">{t('common.date')}</p><p className="font-medium text-foreground">{formatDate(detailTx.date)}</p></div>
               </div>
               <div className="flex justify-end gap-2 flex-wrap">
                 {detailTx.type === 'credit' && (detailTx.status === 'completed' || !detailTx.status) && (
@@ -1307,22 +1307,22 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       <Modal isOpen={!!confirmingTxId} onClose={() => { setConfirmingTxId(null); setConfirmTxAmount(''); }} title={t('finance.confirmTx')} size="sm">
         {confirmingTxId && detailTx && (
           <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">{t('dashboard.receiptNo')}</span><span className="font-mono" dir="ltr">{detailTx.receiptNumber || '—'}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">{t('dashboard.type')}</span><span>{detailTx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">{t('finance.originalAmount', 'المبلغ الأصلي')}</span><span className="font-bold">{formatCurrency(detailTx.amount)}</span></div>
+            <div className="bg-muted rounded-lg p-3 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.receiptNo')}</span><span className="font-mono" dir="ltr">{detailTx.receiptNumber || '—'}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.type')}</span><span>{detailTx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{t('finance.originalAmount', 'المبلغ الأصلي')}</span><span className="font-bold">{formatCurrency(detailTx.amount)}</span></div>
               {(() => {
                 const rem = (detailTx as any).remainingAmount;
                 if (rem !== null && typeof rem === 'number' && rem > 0 && detailTx.type === 'credit') {
                   return (
-                    <div className="flex justify-between"><span className="text-gray-500">{t('finance.remainingAmount')}</span><span className="font-bold text-amber-600">{formatCurrency(rem)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('finance.remainingAmount')}</span><span className="font-bold text-warning">{formatCurrency(rem)}</span></div>
                   );
                 }
                 return null;
               })()}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('finance.enterConfirmAmount')}</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('finance.enterConfirmAmount')}</label>
               <input
                 type="number"
                 value={confirmTxAmount}
@@ -1333,11 +1333,11 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                   return detailTx.amount;
                 })()}
                 min={0}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 dir="ltr"
               />
               {Number(confirmTxAmount) > 0 && (
-                <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(Number(confirmTxAmount))}</p>
+                <p className="text-xs text-muted-foreground mt-1">{numberToArabicWords(Number(confirmTxAmount))}</p>
               )}
               {(() => {
                 const maxVal = (() => {
@@ -1346,7 +1346,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                   return detailTx.amount;
                 })();
                 if (Number(confirmTxAmount) > maxVal) {
-                  return <p className="text-xs text-red-500 mt-1">{t('finance.amountExceedsLimit', 'المبلغ يتجاوز الحد المسموح به')} ({formatCurrency(maxVal)})</p>;
+                  return <p className="text-xs text-destructive mt-1">{t('finance.amountExceedsLimit', 'المبلغ يتجاوز الحد المسموح به')} ({formatCurrency(maxVal)})</p>;
                 }
                 return null;
               })()}
@@ -1370,22 +1370,22 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
       <Modal isOpen={!!disbursingAllocId} onClose={() => { setDisbursingAllocId(null); setDisburseAmount(''); }} title={t('finance.disburseRemaining')} size="sm">
         {disbursingAllocId && (
           <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">{t('finance.remainingDisbursement')}</span><span className="font-bold text-amber-600">{formatCurrency(Number(disburseAmount))}</span></div>
+            <div className="bg-muted rounded-lg p-3 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">{t('finance.remainingDisbursement')}</span><span className="font-bold text-warning">{formatCurrency(Number(disburseAmount))}</span></div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('finance.enterDisburseAmount')}</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('finance.enterDisburseAmount')}</label>
               <input
                 type="number"
                 value={disburseAmount}
                 onChange={(e) => { setDisburseAmount(e.target.value); }}
                 max={disburseAmount}
                 min={0}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 dir="ltr"
               />
               {Number(disburseAmount) > 0 && (
-                <p className="text-xs text-gray-500 mt-1">{numberToArabicWords(Number(disburseAmount))}</p>
+                <p className="text-xs text-muted-foreground mt-1">{numberToArabicWords(Number(disburseAmount))}</p>
               )}
             </div>
             <div className="flex gap-2 justify-end">

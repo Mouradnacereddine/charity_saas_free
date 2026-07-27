@@ -164,9 +164,9 @@ export default function DoctorsPage() {
   const renderListTab = () => (
     <>
       <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
         <input type="text" placeholder={t('doctors.searchPlaceholder')}
-          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
           value={filterSearchTerm} onChange={(e) => setFilterSearchTerm(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }} />
       </div>
@@ -194,42 +194,42 @@ export default function DoctorsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('doctors.refCode')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium">{t('doctors.sectionName')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">{t('doctors.specialty')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">{t('doctors.address')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">{t('doctors.phone')}</th>
-                  <th className="text-center py-3 px-4 text-gray-600 font-medium hidden lg:table-cell">{t('doctors.patientCount')}</th>
-                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">{t('doctors.addDate')}</th>
-                  <th className="text-center py-3 px-4 text-gray-600 font-medium">{t('common.actions')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium">{t('doctors.refCode')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium">{t('doctors.sectionName')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden sm:table-cell">{t('doctors.specialty')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden lg:table-cell">{t('doctors.address')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">{t('doctors.phone')}</th>
+                  <th className="text-center py-3 px-4 text-muted-foreground font-medium hidden lg:table-cell">{t('doctors.patientCount')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">{t('doctors.addDate')}</th>
+                  <th className="text-center py-3 px-4 text-muted-foreground font-medium">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredDoctors.map((doc: Doctor) => (
-                  <tr key={doc.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                  <tr key={doc.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => { setShowDetailModal(doc); setStatsDoctorId(doc.id); }}>
-                    <td className="py-3 px-4 font-semibold text-primary-700" dir="ltr">{doc.reference}</td>
+                    <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{doc.reference}</td>
                     <td className="py-3 px-4 font-medium">{doc.lastNameAr} {doc.firstNameAr}</td>
-                    <td className="py-3 px-4 hidden sm:table-cell text-gray-600">{doc.specialty?.nameAr || '—'}</td>
-                    <td className="py-3 px-4 hidden lg:table-cell text-gray-500 max-w-[200px] truncate" title={doc.addressAr || doc.address || '—'}>{doc.addressAr || doc.address || '—'}</td>
-                    <td className="py-3 px-4 hidden md:table-cell text-gray-600" dir="ltr">{doc.phone}</td>
+                    <td className="py-3 px-4 hidden sm:table-cell text-muted-foreground">{doc.specialty?.nameAr || '—'}</td>
+                    <td className="py-3 px-4 hidden lg:table-cell text-muted-foreground max-w-[200px] truncate" title={doc.addressAr || doc.address || '—'}>{doc.addressAr || doc.address || '—'}</td>
+                    <td className="py-3 px-4 hidden md:table-cell text-muted-foreground" dir="ltr">{doc.phone}</td>
                     <td className="py-3 px-4 text-center hidden lg:table-cell">
                       <Badge variant="info">{doc._count?.referrals ?? 0}</Badge>
                     </td>
-                    <td className="py-3 px-4 text-gray-500 hidden md:table-cell">{formatDate(doc.createdAt)}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{formatDate(doc.createdAt)}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => { setShowDetailModal(doc); setStatsDoctorId(doc.id); }}
-                          className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded">
+                          className="p-1.5 text-muted-foreground/70 hover:text-primary hover:bg-primary/10 rounded">
                           <Eye className="w-4 h-4" />
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); openEditForm(doc); }}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded">
+                          className="p-1.5 text-muted-foreground/70 hover:text-accent-foreground hover:bg-accent rounded">
                           <Edit className="w-4 h-4" />
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); handleDelete(doc.id); }}
-                          className="p-1.5 text-gray-400 hover:text-danger-500 hover:bg-red-50 rounded">
+                          className="p-1.5 text-muted-foreground/70 hover:text-danger-500 hover:bg-destructive/10 rounded">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -247,7 +247,7 @@ export default function DoctorsPage() {
         title={editingId ? t('doctors.editTitle') : t('doctors.addTitle')} size="lg">
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('doctors.sectionName')}</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('doctors.sectionName')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input labelAr={t('doctors.lastNameAr')} value={lastNameAr} onChange={(e) => setLastNameAr(e.target.value)} placeholder={t('doctors.lastNameArPlaceholder')} required />
               <Input labelAr={t('doctors.firstNameAr')} value={firstNameAr} onChange={(e) => setFirstNameAr(e.target.value)} placeholder={t('doctors.firstNameArPlaceholder')} required />
@@ -259,7 +259,7 @@ export default function DoctorsPage() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('doctors.contactInfo')}</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('doctors.contactInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input labelAr={t('doctors.phone')} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05XX XX XX XX" dir="ltr" required />
               <Input labelAr={t('doctors.email')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="doctor@example.com" dir="ltr" />
@@ -267,7 +267,7 @@ export default function DoctorsPage() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('doctors.additionalInfo')}</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('doctors.additionalInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SearchableSelect labelAr={t('doctors.specialty')} value={specialtyId} onChange={setSpecialtyId}
                 options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.nameAr }))}
@@ -277,7 +277,7 @@ export default function DoctorsPage() {
             <TextArea labelAr={t('common.notes')} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
-          <div className="flex gap-3 justify-end border-t border-gray-100 pt-4">
+          <div className="flex gap-3 justify-end border-t border-border pt-4">
             <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>{t('common.cancel')}</Button>
             <Button onClick={handleSave} disabled={!lastNameAr.trim() || !phone.trim() || createDoctor.isPending || updateDoctor.isPending}>
               {editingId ? t('common.update') : t('common.add')}
@@ -292,35 +292,35 @@ export default function DoctorsPage() {
         {showDetailModal && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500">{t('doctors.refCode')}</span><span className="font-medium" dir="ltr">{showDetailModal.reference}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500">{t('doctors.fullName')}</span><span className="font-medium">{showDetailModal.lastNameAr} {showDetailModal.firstNameAr}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500"><Phone className="inline w-3 h-3 ml-1" />{t('doctors.phone')}</span><span className="font-medium" dir="ltr">{showDetailModal.phone}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500"><Mail className="inline w-3 h-3 ml-1" />{t('doctors.email')}</span><span className="font-medium" dir="ltr">{showDetailModal.email || '—'}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500">{t('doctors.specialty')}</span><span className="font-medium">{showDetailModal.specialty?.nameAr || '—'}</span></div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-gray-500"><MapPin className="inline w-3 h-3 ml-1" />{t('doctors.address')}</span><span className="font-medium">{showDetailModal.address || '—'}</span></div>
+              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('doctors.refCode')}</span><span className="font-medium" dir="ltr">{showDetailModal.reference}</span></div>
+              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('doctors.fullName')}</span><span className="font-medium">{showDetailModal.lastNameAr} {showDetailModal.firstNameAr}</span></div>
+              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground"><Phone className="inline w-3 h-3 ml-1" />{t('doctors.phone')}</span><span className="font-medium" dir="ltr">{showDetailModal.phone}</span></div>
+              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground"><Mail className="inline w-3 h-3 ml-1" />{t('doctors.email')}</span><span className="font-medium" dir="ltr">{showDetailModal.email || '—'}</span></div>
+              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('doctors.specialty')}</span><span className="font-medium">{showDetailModal.specialty?.nameAr || '—'}</span></div>
+              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground"><MapPin className="inline w-3 h-3 ml-1" />{t('doctors.address')}</span><span className="font-medium">{showDetailModal.address || '—'}</span></div>
             </div>
-            {showDetailModal.notes && <div className="bg-gray-50 rounded-lg p-3 text-sm"><span className="text-gray-500">{t('common.notes')}</span><p className="mt-1">{showDetailModal.notes}</p></div>}
+            {showDetailModal.notes && <div className="bg-muted rounded-lg p-3 text-sm"><span className="text-muted-foreground">{t('common.notes')}</span><p className="mt-1">{showDetailModal.notes}</p></div>}
 
             {/* Stats section */}
-            <div className="border-t border-gray-200 pt-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary-600" /> {t('doctors.patientStats')}
+            <div className="border-t border-border pt-4">
+              <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" /> {t('doctors.patientStats')}
               </h4>
-              <p className="text-xs text-gray-400 mb-3">{t('doctors.patientStatsDesc')}</p>
+              <p className="text-xs text-muted-foreground/70 mb-3">{t('doctors.patientStatsDesc')}</p>
               {doctorStats ? (
                 <>
                   {/* Summary boxes */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                    <StatBox label={t('doctors.total')} value={doctorStats.totalReferrals} color="text-primary-600" />
-                    <StatBox label={t('doctors.thisMonth')} value={doctorStats.referralsThisMonth} color="text-green-600" />
-                    <StatBox label={t('doctors.thisWeek')} value={doctorStats.referralsThisWeek} color="text-amber-600" />
-                    <StatBox label={t('doctors.lastReferral')} value={doctorStats.lastReferral ? formatDate(doctorStats.lastReferral) : '—'} color="text-gray-600" />
+                    <StatBox label={t('doctors.total')} value={doctorStats.totalReferrals} color="text-primary" />
+                    <StatBox label={t('doctors.thisMonth')} value={doctorStats.referralsThisMonth} color="text-success" />
+                    <StatBox label={t('doctors.thisWeek')} value={doctorStats.referralsThisWeek} color="text-warning" />
+                    <StatBox label={t('doctors.lastReferral')} value={doctorStats.lastReferral ? formatDate(doctorStats.lastReferral) : '—'} color="text-muted-foreground" />
                   </div>
 
                   {/* Daily breakdown */}
                   {doctorStats.referralsByDay && doctorStats.referralsByDay.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                      <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
+                    <div className="bg-muted rounded-lg p-3 mb-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                         <Calendar className="w-3 h-3" /> {t('doctors.last7Days')}
                       </p>
                       <div className="flex items-end gap-1 h-16">
@@ -329,9 +329,9 @@ export default function DoctorsPage() {
                           const height = Math.max((d.count / max) * 100, 4);
                           return (
                             <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-                              <span className="text-[10px] text-gray-500 font-medium">{d.count}</span>
-                              <div className="w-full bg-green-300 rounded-t" style={{ height: `${height}%`, minHeight: '4px' }} />
-                              <span className="text-[9px] text-gray-400">{d.day.slice(8)}/{d.day.slice(5,7)}</span>
+                              <span className="text-[10px] text-muted-foreground font-medium">{d.count}</span>
+                              <div className="w-full bg-success/30 rounded-t" style={{ height: `${height}%`, minHeight: '4px' }} />
+                              <span className="text-[9px] text-muted-foreground/70">{d.day.slice(8)}/{d.day.slice(5,7)}</span>
                             </div>
                           );
                         })}
@@ -341,8 +341,8 @@ export default function DoctorsPage() {
 
                   {/* Monthly breakdown */}
                   {doctorStats.referralsByMonth && doctorStats.referralsByMonth.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                      <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
+                    <div className="bg-muted rounded-lg p-3 mb-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                         <Calendar className="w-3 h-3" /> {t('doctors.last12Months')}
                       </p>
                       <div className="space-y-1">
@@ -354,11 +354,11 @@ export default function DoctorsPage() {
                           const pct = Math.round((m.count / max) * 100);
                           return (
                             <div key={m.month} className="flex items-center gap-2 text-xs">
-                              <span className="w-24 text-left text-gray-600">{label}</span>
-                              <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
-                                <div className="bg-primary-500 h-full rounded-full transition-all" style={{ width: `${Math.max(pct, m.count > 0 ? 8 : 0)}%` }} />
+                              <span className="w-24 text-left text-muted-foreground">{label}</span>
+                              <div className="flex-1 bg-muted/80 rounded-full h-4 overflow-hidden">
+                                <div className="bg-primary/100 h-full rounded-full transition-all" style={{ width: `${Math.max(pct, m.count > 0 ? 8 : 0)}%` }} />
                               </div>
-                              <span className="w-6 text-center font-medium text-gray-700">{m.count}</span>
+                              <span className="w-6 text-center font-medium text-foreground">{m.count}</span>
                             </div>
                           );
                         })}
@@ -367,26 +367,26 @@ export default function DoctorsPage() {
                   )}
 
                   {/* Beneficiary history table */}
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
+                  <div className="bg-muted rounded-lg p-3">
+                    <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                       <Activity className="w-3 h-3" /> {t('doctors.recentBeneficiaries')}
                     </p>
                     <div className="max-h-48 overflow-y-auto">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-right py-1 px-2 font-medium text-gray-500">{t('common.date')}</th>
-                            <th className="text-right py-1 px-2 font-medium text-gray-500">{t('doctors.beneficiary')}</th>
-                            <th className="text-right py-1 px-2 font-medium text-gray-500">{t('doctors.beneficiaryRef')}</th>
-                            <th className="text-center py-1 px-2 font-medium text-gray-500">{t('common.status')}</th>
+                          <tr className="border-b border-border">
+                            <th className="text-start py-1 px-2 font-medium text-muted-foreground">{t('common.date')}</th>
+                            <th className="text-start py-1 px-2 font-medium text-muted-foreground">{t('doctors.beneficiary')}</th>
+                            <th className="text-start py-1 px-2 font-medium text-muted-foreground">{t('doctors.beneficiaryRef')}</th>
+                            <th className="text-center py-1 px-2 font-medium text-muted-foreground">{t('common.status')}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {doctorStats.referralBeneficiaries?.map((r: any) => (
-                            <tr key={r.id} className="border-b border-gray-100">
-                              <td className="py-1 px-2 text-gray-600">{formatDate(r.date)}</td>
-                              <td className="py-1 px-2 text-gray-900">{r.beneficiary?.nameAr || '—'}</td>
-                              <td className="py-1 px-2 text-gray-500 font-mono" dir="ltr">{r.beneficiary?.reference || '—'}</td>
+                            <tr key={r.id} className="border-b border-border">
+                              <td className="py-1 px-2 text-muted-foreground">{formatDate(r.date)}</td>
+                              <td className="py-1 px-2 text-foreground">{r.beneficiary?.nameAr || '—'}</td>
+                              <td className="py-1 px-2 text-muted-foreground font-mono" dir="ltr">{r.beneficiary?.reference || '—'}</td>
                               <td className="py-1 px-2 text-center">
                                 <Badge variant={r.status === 'completed' ? 'success' : r.status === 'pending' ? 'warning' : 'danger'}>
                                   {r.status === 'completed' ? t('dashboard.completed') : r.status === 'pending' ? t('dashboard.pending') : t('dashboard.cancelled')}
@@ -395,7 +395,7 @@ export default function DoctorsPage() {
                             </tr>
                           ))}
                           {(!doctorStats.referralBeneficiaries || doctorStats.referralBeneficiaries.length === 0) && (
-                            <tr><td colSpan={4} className="py-2 text-center text-gray-400">{t('doctors.noPreviousReferrals')}</td></tr>
+                            <tr><td colSpan={4} className="py-2 text-center text-muted-foreground/70">{t('doctors.noPreviousReferrals')}</td></tr>
                           )}
                           </tbody>
                       </table>
@@ -403,11 +403,11 @@ export default function DoctorsPage() {
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-gray-400">{t('doctors.loadingStats')}</p>
+                <p className="text-sm text-muted-foreground/70">{t('doctors.loadingStats')}</p>
               )}
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
+            <div className="flex justify-end gap-2 border-t border-border pt-4">
               <Button size="sm" variant="secondary" onClick={() => setShowDetailModal(null)}>{t('common.close')}</Button>
               <Button size="sm" onClick={() => { const d = showDetailModal; setShowDetailModal(null); openEditForm(d); }}>{t('common.edit')}</Button>
             </div>
@@ -420,11 +420,11 @@ export default function DoctorsPage() {
   const renderSettingsTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Settings className="w-5 h-5 text-primary-600" />
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Settings className="w-5 h-5 text-primary" />
           {t('doctors.specialties')}
         </h3>
-        <p className="text-sm text-gray-500 mb-4">{t('doctors.manageSpecialties')}</p>
+        <p className="text-sm text-muted-foreground mb-4">{t('doctors.manageSpecialties')}</p>
         <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
           <Input labelAr={t('doctors.nameAr')} value={newSpecAr} onChange={(e) => setNewSpecAr(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} />
           <Input labelAr={t('doctors.nameLatin')} value={newSpecFr} onChange={(e) => setNewSpecFr(e.target.value)} placeholder="Ex: Généraliste" dir="ltr" />
@@ -434,22 +434,22 @@ export default function DoctorsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('doctors.arabicLabel')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">{t('doctors.latinLabel')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 hidden sm:table-cell">{t('doctors.doctorCount')}</th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('doctors.arabicLabel')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('doctors.latinLabel')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">{t('doctors.doctorCount')}</th>
+                  <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {specialties.length === 0 ? (
-                  <tr><td colSpan={4} className="py-8 text-center text-gray-400">{t('doctors.noSpecialties')}</td></tr>
+                  <tr><td colSpan={4} className="py-8 text-center text-muted-foreground/70">{t('doctors.noSpecialties')}</td></tr>
                 ) : specialties.map((s: DoctorSpecialty) => (
-                  <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={s.id} className="border-b border-border hover:bg-muted">
                     {editSpecId === s.id ? (
                       <>
-                        <td className="py-2 px-4"><input value={editSpecAr} onChange={(e) => setEditSpecAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
-                        <td className="py-2 px-4"><input value={editSpecFr} onChange={(e) => setEditSpecFr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                        <td className="py-2 px-4"><input value={editSpecAr} onChange={(e) => setEditSpecAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
+                        <td className="py-2 px-4"><input value={editSpecFr} onChange={(e) => setEditSpecFr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
                         <td className="py-2 px-4 hidden sm:table-cell" />
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
                           <Button size="sm" onClick={handleUpdateSpecialty}>{t('common.save')}</Button>
@@ -458,12 +458,12 @@ export default function DoctorsPage() {
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-gray-900">{s.nameAr}</td>
-                        <td className="py-3 px-4 text-gray-600">{s.name}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{s.nameAr}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{s.name}</td>
                         <td className="py-3 px-4 hidden sm:table-cell"><Badge>{s._count?.doctors ?? 0}</Badge></td>
                         <td className="py-3 px-4 text-center">
-                          <button onClick={() => { setEditSpecId(s.id); setEditSpecAr(s.nameAr); setEditSpecFr(s.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
-                          <button onClick={() => handleDeleteSpecialty(s.id)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditSpecId(s.id); setEditSpecAr(s.nameAr); setEditSpecFr(s.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteSpecialty(s.id)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </>
                     )}
@@ -481,8 +481,8 @@ export default function DoctorsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('doctors.title')}</h2>
-          <p className="text-sm text-gray-500 mt-1">{t('doctors.subtitle')}</p>
+          <h2 className="text-2xl font-bold text-foreground">{t('doctors.title')}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{t('doctors.subtitle')}</p>
         </div>
         {activeTab === 'list' && (
           <div className="flex gap-2">
@@ -496,18 +496,18 @@ export default function DoctorsPage() {
         )}
       </div>
 
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="flex gap-2 sm:gap-4">
           <button onClick={() => setActiveTab('list')}
             className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
-              activeTab === 'list' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              activeTab === 'list' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}>
             <Stethoscope className="inline-block w-4 h-4 ml-2" />
             {t('doctors.tabDoctors')}
           </button>
           <button onClick={() => setActiveTab('settings')}
             className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
-              activeTab === 'settings' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              activeTab === 'settings' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}>
             <Settings className="inline-block w-4 h-4 ml-2" />
             {t('doctors.tabSettings')}
@@ -522,8 +522,8 @@ export default function DoctorsPage() {
 
 function StatBox({ label, value, color }: { label: string; value: string | number; color: string }) {
   return (
-    <div className="bg-gray-50 rounded-lg p-3 text-center">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
+    <div className="bg-muted rounded-lg p-3 text-center">
+      <p className="text-xs text-muted-foreground mb-1">{label}</p>
       <p className={`text-lg font-bold ${color}`}>{value}</p>
     </div>
   );

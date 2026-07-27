@@ -135,8 +135,8 @@ export default function CaissesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('caisses.title')}</h2>
-          <p className="text-sm text-gray-500 mt-1">{t('caisses.subtitle')}</p>
+          <h2 className="text-2xl font-bold text-foreground">{t('caisses.title')}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{t('caisses.subtitle')}</p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4" />
@@ -154,27 +154,27 @@ export default function CaissesPage() {
               {/* Caisse Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <FolderOpen className="w-5 h-5 text-primary-600" />
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <FolderOpen className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{caisse.nameAr}</h3>
-                      <span className="text-xs text-primary-500 font-mono" dir="ltr">{caisse.reference || '—'}</span>
+                      <h3 className="font-semibold text-foreground">{caisse.nameAr}</h3>
+                      <span className="text-xs text-primary/70 font-mono" dir="ltr">{caisse.reference || '—'}</span>
                     </div>
-                    <p className="text-xs text-gray-500">{caisse.name}</p>
+                    <p className="text-xs text-muted-foreground">{caisse.name}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => openEditCaisse(caisse)}
-                    className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded"
+                    className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteCaisse(caisse.id)}
-                    className="p-1.5 text-gray-400 hover:text-danger-500 hover:bg-red-50 rounded"
+                    className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -182,9 +182,9 @@ export default function CaissesPage() {
               </div>
 
               {/* Balance */}
-              <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                <p className="text-xs text-gray-500 mb-1">{t('caisses.balance')}</p>
-                <p className={`text-lg font-bold ${caisse.balance >= 0 ? 'text-success-600' : 'text-danger-500'}`}>
+              <div className="bg-muted rounded-lg p-3 mb-4">
+                <p className="text-xs text-muted-foreground mb-1">{t('caisses.balance')}</p>
+                <p className={`text-lg font-bold ${caisse.balance >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {formatCurrency(caisse.balance)}
                 </p>
               </div>
@@ -192,38 +192,38 @@ export default function CaissesPage() {
               {/* Sub-categories */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-700">{t('caisses.subCategories')}</p>
+                  <p className="text-sm font-medium text-foreground">{t('caisses.subCategories')}</p>
                   <button
                     onClick={() => setShowSubCatModal(caisse.id)}
-                    className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" />
                     {t('common.add')}
                   </button>
                 </div>
                 {(caisse.subCategories || []).length === 0 ? (
-                  <p className="text-xs text-gray-400">{t('caisses.noFunds')}</p>
+                  <p className="text-xs text-muted-foreground">{t('caisses.noFunds')}</p>
                 ) : (
                   <div className="space-y-1.5">
                     {caisse.subCategories.map((sub: SubCategory) => (
                       <div
                         key={sub.id}
-                        className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
+                        className="flex items-center justify-between bg-muted rounded-lg px-3 py-2"
                       >
                         <div className="flex items-center gap-2">
-                          <Tag className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm text-gray-700">{sub.nameAr}</span>
+                          <Tag className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm text-foreground">{sub.nameAr}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => openEditSubCat(caisse.id, sub)}
-                            className="p-1 text-gray-400 hover:text-primary-600"
+                            className="p-1 text-muted-foreground hover:text-primary"
                           >
                             <Edit className="w-3 h-3" />
                           </button>
                           <button
                             onClick={() => handleDeleteSubCategory(caisse.id, sub.id)}
-                            className="p-1 text-gray-400 hover:text-danger-500"
+                            className="p-1 text-muted-foreground hover:text-destructive"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>

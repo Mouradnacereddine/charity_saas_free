@@ -718,11 +718,11 @@ export default function BeneficiariesPage() {
     <div>
       {/* ---- Quick Search ---- */}
       <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
         <input
           type="text"
           placeholder={t('beneficiaries.searchPlaceholder')}
-          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
           value={filterSearchTerm}
           onChange={(e) => setFilterSearchTerm(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }}
@@ -733,13 +733,13 @@ export default function BeneficiariesPage() {
       {showFilters && (
         <Card titleAr={t("beneficiaries.advancedSearch")}>
           {/* Filter tabs */}
-          <div className="flex gap-1 mb-4 border-b border-gray-200">
+          <div className="flex gap-1 mb-4 border-b border-border">
             <button
               onClick={() => setFilterTab('beneficiary')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 filterTab === 'beneficiary'
-                  ? 'border-primary-600 text-primary-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <Users className="w-4 h-4 inline ml-1" />
@@ -749,8 +749,8 @@ export default function BeneficiariesPage() {
               onClick={() => setFilterTab('children')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 filterTab === 'children'
-                  ? 'border-primary-600 text-primary-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <Baby className="w-4 h-4 inline ml-1" />
@@ -881,16 +881,16 @@ export default function BeneficiariesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-gray-500">
-                  <th className="py-3 px-4 text-right font-medium w-8"></th>
-                  <th className="py-3 px-4 text-right font-medium">{t('doctors.refCode')}</th>
-                  <th className="py-3 px-4 text-right font-medium">{t('beneficiaries.sectionName')}</th>
-                  <th className="py-3 px-4 text-right font-medium hidden md:table-cell">{t('receipt.idNumber')}</th>
-                  <th className="py-3 px-4 text-right font-medium hidden lg:table-cell">{t('receipt.phone')}</th>
-                  <th className="py-3 px-4 text-right font-medium">{t('beneficiaries.filterAttribute')}</th>
-                  <th className="py-3 px-4 text-right font-medium hidden sm:table-cell">{t('receipt.age')}</th>
-                  <th className="py-3 px-4 text-right font-medium">{t('beneficiaries.childrenCount')}</th>
-                  <th className="py-3 px-4 text-right font-medium hidden lg:table-cell">{t('dashboard.fund')}</th>
+                <tr className="border-b border-border text-muted-foreground">
+                  <th className="py-3 px-4 text-start font-medium w-8"></th>
+                  <th className="py-3 px-4 text-start font-medium">{t('doctors.refCode')}</th>
+                  <th className="py-3 px-4 text-start font-medium">{t('beneficiaries.sectionName')}</th>
+                  <th className="py-3 px-4 text-start font-medium hidden md:table-cell">{t('receipt.idNumber')}</th>
+                  <th className="py-3 px-4 text-start font-medium hidden lg:table-cell">{t('receipt.phone')}</th>
+                  <th className="py-3 px-4 text-start font-medium">{t('beneficiaries.filterAttribute')}</th>
+                  <th className="py-3 px-4 text-start font-medium hidden sm:table-cell">{t('receipt.age')}</th>
+                  <th className="py-3 px-4 text-start font-medium">{t('beneficiaries.childrenCount')}</th>
+                  <th className="py-3 px-4 text-start font-medium hidden lg:table-cell">{t('dashboard.fund')}</th>
                   <th className="py-3 px-4 text-center font-medium">{t('common.actions')}</th>
                 </tr>
               </thead>
@@ -901,28 +901,28 @@ export default function BeneficiariesPage() {
                   return (
                     <Fragment key={b.id}>
                       <tr
-                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="border-b border-border hover:bg-muted transition-colors cursor-pointer"
                         onClick={() => openDetail(b)}
                       >
                         <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
                           {(b.children || []).length > 0 && (
                             <button
                               onClick={() => toggleExpand(b.id)}
-                              className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                              className="p-1 text-muted-foreground/70 hover:text-primary transition-colors"
                               title={isExpanded ? t('beneficiaries.hideChildren') : t('beneficiaries.showChildren')}
                             >
                               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </button>
                           )}
                         </td>
-                        <td className="py-3 px-3 font-semibold text-primary-700" dir="ltr">
+                        <td className="py-3 px-3 font-semibold text-primary" dir="ltr">
                           {b.reference || '—'}
                         </td>
-                        <td className="py-3 px-3 font-medium text-gray-900">
+                        <td className="py-3 px-3 font-medium text-foreground">
                           {b.lastNameAr} {b.firstNameAr}
                         </td>
-                        <td className="py-3 px-3 text-gray-600 hidden md:table-cell">{b.nationalCardNumber}</td>
-                        <td className="py-3 px-3 text-gray-600 hidden lg:table-cell" dir="ltr">
+                        <td className="py-3 px-3 text-muted-foreground hidden md:table-cell">{b.nationalCardNumber}</td>
+                        <td className="py-3 px-3 text-muted-foreground hidden lg:table-cell" dir="ltr">
                           {b.phone}
                         </td>
                         <td className="py-3 px-3">
@@ -930,34 +930,34 @@ export default function BeneficiariesPage() {
                             {ATTRIBUT_LABELS[b.attribut] ?? b.attribut}
                           </Badge>
                         </td>
-                        <td className="py-3 px-3 text-gray-600 hidden sm:table-cell">
+                        <td className="py-3 px-3 text-muted-foreground hidden sm:table-cell">
                           {age ? age.displayAr : '—'}
                         </td>
-                        <td className="py-3 px-3 text-gray-600">
+                        <td className="py-3 px-3 text-muted-foreground">
                           <span className="inline-flex items-center gap-1">
                             <Baby className="w-3.5 h-3.5" />
                             {b.children.length}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-gray-600 hidden lg:table-cell">
+                        <td className="py-3 px-3 text-muted-foreground hidden lg:table-cell">
                           {getCaisseName(b.caisseId)}
                           {b.subCategoryId && (
-                            <span className="text-gray-400 text-xs block mt-0.5">
+                            <span className="text-muted-foreground/70 text-xs block mt-0.5">
                               ({getSubCaisseName(b.caisseId, b.subCategoryId)})
                             </span>
                           )}
                         </td>
                         <td className="py-3 px-3">
                           <div className="flex items-center justify-center gap-1">
-                            <button className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors" title={t('beneficiaries.viewDetailsHint')}
+                            <button className="p-1.5 rounded-lg text-muted-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors" title={t('beneficiaries.viewDetailsHint')}
                               onClick={(e) => { e.stopPropagation(); openDetail(b) }}>
                               <Eye className="w-4 h-4" />
                             </button>
-                            <button className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title={t('beneficiaries.editHint')}
+                            <button className="p-1.5 rounded-lg text-muted-foreground/70 hover:text-accent-foreground hover:bg-accent transition-colors" title={t('beneficiaries.editHint')}
                               onClick={(e) => { e.stopPropagation(); openEditForm(b) }}>
                               <Edit className="w-4 h-4" />
                             </button>
-                            <button className="p-1.5 rounded-lg text-gray-400 hover:text-danger-500 hover:bg-red-50 transition-colors" title={t('beneficiaries.deleteHint')}
+                            <button className="p-1.5 rounded-lg text-muted-foreground/70 hover:text-danger-500 hover:bg-destructive/10 transition-colors" title={t('beneficiaries.deleteHint')}
                               onClick={(e) => { e.stopPropagation(); handleDelete(b.id) }}>
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -966,26 +966,26 @@ export default function BeneficiariesPage() {
                       </tr>
                       {isExpanded && b.children && b.children.length > 0 && (
                         <tr key={`${b.id}-children`}>
-                          <td colSpan={10} className="px-4 pb-4 pt-1 bg-gray-50">
-                            <div className="rounded-lg border border-gray-200 overflow-hidden">
+                          <td colSpan={10} className="px-4 pb-4 pt-1 bg-muted">
+                            <div className="rounded-lg border border-border overflow-hidden">
                               <table className="w-full text-xs">
                                 <thead>
-                                  <tr className="bg-gray-100 text-gray-600">
-                                    <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.sectionName')}</th>
-                                    <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.filterGender')}</th>
-                                    <th className="py-2 px-3 text-right font-medium">{t('receipt.age')}</th>
-                                    <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
-                                    <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.schoolGrade')}</th>
+                                  <tr className="bg-muted text-muted-foreground">
+                                    <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.sectionName')}</th>
+                                    <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.filterGender')}</th>
+                                    <th className="py-2 px-3 text-start font-medium">{t('receipt.age')}</th>
+                                    <th className="py-2 px-3 text-start font-medium">{t('common.status')}</th>
+                                    <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.schoolGrade')}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {b.children.map((child: any, ci: number) => (
-                                    <tr key={ci} className="border-t border-gray-100 hover:bg-white">
-                                      <td className="py-2 px-3 font-medium text-gray-900">{child.lastNameAr} {child.firstNameAr}</td>
-                                      <td className="py-2 px-3 text-gray-600">{child.gender === 'female' ? t('common.female') : t('common.male')}</td>
-                                      <td className="py-2 px-3 text-gray-600">{calculateAge(child.dateOfBirth).displayAr}</td>
+                                    <tr key={ci} className="border-t border-border hover:bg-card">
+                                      <td className="py-2 px-3 font-medium text-foreground">{child.lastNameAr} {child.firstNameAr}</td>
+                                      <td className="py-2 px-3 text-muted-foreground">{child.gender === 'female' ? t('common.female') : t('common.male')}</td>
+                                      <td className="py-2 px-3 text-muted-foreground">{calculateAge(child.dateOfBirth).displayAr}</td>
                                       <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
-                                      <td className="py-2 px-3 text-gray-600">{getGradeName(child.schoolGradeId)}</td>
+                                      <td className="py-2 px-3 text-muted-foreground">{getGradeName(child.schoolGradeId)}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1013,7 +1013,7 @@ export default function BeneficiariesPage() {
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
           {/* Names */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('beneficiaries.sectionName')}</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('beneficiaries.sectionName')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input labelAr={t('beneficiaries.nameAr')} value={form.firstNameAr} onChange={(e) => handleFormChange('firstNameAr', e.target.value)} required />
               <Input labelAr={t('beneficiaries.lastNameAr')} value={form.lastNameAr} onChange={(e) => handleFormChange('lastNameAr', e.target.value)} required />
@@ -1024,7 +1024,7 @@ export default function BeneficiariesPage() {
 
           {/* Address */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('beneficiaries.addressTitle')}</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3">{t('beneficiaries.addressTitle')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input labelAr={t('beneficiaries.addressAr')} value={form.addressAr} onChange={(e) => handleFormChange('addressAr', e.target.value)} required />
               <Input labelAr={t('beneficiaries.addressLatin')} value={form.address} onChange={(e) => handleFormChange('address', e.target.value)} dir="ltr" required />
@@ -1033,14 +1033,14 @@ export default function BeneficiariesPage() {
 
           {/* Identity & Contact */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('beneficiaries.personalInfo')}</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3">{t('beneficiaries.personalInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input labelAr={t('receipt.idNumber')} value={form.nationalCardNumber} onChange={(e) => handleFormChange('nationalCardNumber', e.target.value)} required />
               <Input labelAr={t('receipt.phone')} value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value)} dir="ltr" required />
               <div className="space-y-1">
                 <Input labelAr={t('receipt.birthDate')} type="date" value={form.dateOfBirth} onChange={(e) => handleFormChange('dateOfBirth', e.target.value)} required />
                 {form.dateOfBirth && (
-                  <p className="text-xs text-gray-500">{t('beneficiaries.ageDisplay')} {calculateAge(form.dateOfBirth).displayAr}</p>
+                  <p className="text-xs text-muted-foreground">{t('beneficiaries.ageDisplay')} {calculateAge(form.dateOfBirth).displayAr}</p>
                 )}
               </div>
             </div>
@@ -1048,7 +1048,7 @@ export default function BeneficiariesPage() {
 
           {/* Classification */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('beneficiaries.classificationTitle')}</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3">{t('beneficiaries.classificationTitle')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <SearchableSelect
                 labelAr={t('beneficiaries.filterAttribute')}
@@ -1065,14 +1065,14 @@ export default function BeneficiariesPage() {
               />
               <div className="space-y-1">
                 <Input labelAr={t('beneficiaries.onBehalfOf')} placeholder={t('beneficiaries.onBehalfOfPlaceholder')} value={form.onBehalfOf} onChange={(e) => handleFormChange('onBehalfOf', e.target.value)} />
-                <p className="text-xs text-gray-400">{t('beneficiaries.onBehalfOfHint')}</p>
+                <p className="text-xs text-muted-foreground/70">{t('beneficiaries.onBehalfOfHint')}</p>
               </div>
             </div>
           </div>
 
           {/* Situation */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('common.status')}</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3">{t('common.status')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SearchableSelect
                 labelAr={t('common.status')}
@@ -1087,7 +1087,7 @@ export default function BeneficiariesPage() {
           {/* Children */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-gray-700">{t('beneficiaries.children')}</h4>
+              <h4 className="text-sm font-semibold text-foreground">{t('beneficiaries.children')}</h4>
               <Button size="sm" variant="secondary" onClick={addChild}>
                 <Plus className="w-4 h-4" /> {t('beneficiaries.addChild')}
               </Button>
@@ -1095,10 +1095,10 @@ export default function BeneficiariesPage() {
             {form.children.length > 0 && (
               <div className="space-y-4">
                 {form.children.map((child, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div key={index} className="border border-border rounded-lg p-4 bg-muted">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-sm font-medium text-gray-700">{t('beneficiaries.childNumber')} {index + 1}</span>
-                      <button onClick={() => removeChild(index)} className="text-xs text-red-500 hover:text-red-700">✕ {t('beneficiaries.removeChild')}</button>
+                      <span className="text-sm font-medium text-foreground">{t('beneficiaries.childNumber')} {index + 1}</span>
+                      <button onClick={() => removeChild(index)} className="text-xs text-destructive hover:text-destructive">✕ {t('beneficiaries.removeChild')}</button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <Input labelAr={t('beneficiaries.nameAr')} value={child.firstNameAr} onChange={(e) => updateChild(index, 'firstNameAr', e.target.value)} />
@@ -1135,7 +1135,7 @@ export default function BeneficiariesPage() {
           {/* Notes */}
           <TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => handleFormChange('notes', e.target.value)} />
 
-          <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button variant="secondary" onClick={closeFormModal}>{t('common.cancel')}</Button>
             <Button onClick={handleSave}>{editingId ? t('beneficiaries.updateForm') : t('beneficiaries.saveForm')}</Button>
           </div>
@@ -1145,44 +1145,44 @@ export default function BeneficiariesPage() {
       {/* ---- Detail View Modal ---- */}
       {selectedBeneficiary && (
         <Modal isOpen={showDetailModal} onClose={closeDetail} title={`${selectedBeneficiary.lastNameAr} ${selectedBeneficiary.firstNameAr}`} size="xl">
-          <div className="space-y-6" dir="rtl">
+          <div className="space-y-6" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('beneficiaries.personalInfo')}</h4>
+              <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('beneficiaries.personalInfo')}</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">{t('doctors.refCode')}</span><span className="font-semibold text-primary-700" dir="ltr">{selectedBeneficiary.reference || '—'}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.nameAr')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.lastNameAr} {selectedBeneficiary.firstNameAr}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.nameLatin')}</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.firstName} {selectedBeneficiary.lastName}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('receipt.idNumber')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.nationalCardNumber}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('receipt.phone')}</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.phone}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('receipt.birthDate')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.dateOfBirth ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${calculateAge(selectedBeneficiary.dateOfBirth).displayAr})` : '—'}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.filterAttribute')}</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.filterGender')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.addressAr')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.addressAr || '—'}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.addressLatin')}</span><span className="font-medium text-gray-900" dir="ltr">{selectedBeneficiary.address || '—'}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">{t('dashboard.fund')}</span><span className="font-medium text-gray-900">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-gray-500 mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
-                {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between"><span className="text-gray-500">{t('beneficiaries.onBehalfOf')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.onBehalfOfName}</span></div>}
-                {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">{t('common.status')}</span><span className="font-medium text-gray-900">{HEALTH_STATUS_LABELS[selectedBeneficiary.situationAr] || selectedBeneficiary.situationAr}{selectedBeneficiary.situation && <span className="text-gray-400 mr-2" dir="ltr">({selectedBeneficiary.situation})</span>}</span></div>}
-                {selectedBeneficiary.notes && <div className="flex justify-between md:col-span-2"><span className="text-gray-500">{t('common.notes')}</span><span className="font-medium text-gray-900">{selectedBeneficiary.notes}</span></div>}
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('doctors.refCode')}</span><span className="font-semibold text-primary" dir="ltr">{selectedBeneficiary.reference || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.nameAr')}</span><span className="font-medium text-foreground">{selectedBeneficiary.lastNameAr} {selectedBeneficiary.firstNameAr}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.nameLatin')}</span><span className="font-medium text-foreground" dir="ltr">{selectedBeneficiary.firstName} {selectedBeneficiary.lastName}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.idNumber')}</span><span className="font-medium text-foreground">{selectedBeneficiary.nationalCardNumber}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.phone')}</span><span className="font-medium text-foreground" dir="ltr">{selectedBeneficiary.phone}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.birthDate')}</span><span className="font-medium text-foreground">{selectedBeneficiary.dateOfBirth ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${calculateAge(selectedBeneficiary.dateOfBirth).displayAr})` : '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterAttribute')}</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterGender')}</span><span className="font-medium text-foreground">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.addressAr')}</span><span className="font-medium text-foreground">{selectedBeneficiary.addressAr || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.addressLatin')}</span><span className="font-medium text-foreground" dir="ltr">{selectedBeneficiary.address || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-muted-foreground mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
+                {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.onBehalfOf')}</span><span className="font-medium text-foreground">{selectedBeneficiary.onBehalfOfName}</span></div>}
+                {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('common.status')}</span><span className="font-medium text-foreground">{HEALTH_STATUS_LABELS[selectedBeneficiary.situationAr] || selectedBeneficiary.situationAr}{selectedBeneficiary.situation && <span className="text-muted-foreground/70 mr-2" dir="ltr">({selectedBeneficiary.situation})</span>}</span></div>}
+                {selectedBeneficiary.notes && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('common.notes')}</span><span className="font-medium text-foreground">{selectedBeneficiary.notes}</span></div>}
               </div>
             </div>
 
             {selectedBeneficiary.children.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('beneficiaries.childrenDetails')} ({selectedBeneficiary.children.length})</h4>
+                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('beneficiaries.childrenDetails')} ({selectedBeneficiary.children.length})</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.sectionName')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.filterGender')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('receipt.age')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.schoolGrade')}</th>
+                      <tr className="border-b border-border">
+                        <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.sectionName')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.filterGender')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('receipt.age')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.status')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.schoolGrade')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {selectedBeneficiary.children.map((child: any) => (
-                        <tr key={child.id} className="border-b border-gray-100">
+                        <tr key={child.id} className="border-b border-border">
                           <td className="py-2 px-3">{child.lastNameAr} {child.firstNameAr}</td>
                           <td className="py-2 px-3">{child.gender === 'female' ? t('common.female') : t('common.male')}</td>
                           <td className="py-2 px-3">{calculateAge(child.dateOfBirth).displayAr}</td>
@@ -1198,26 +1198,26 @@ export default function BeneficiariesPage() {
 
             {beneficiaryAllocations.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('beneficiaries.incomingDonations')} ({beneficiaryAllocations.length})</h4>
+                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('beneficiaries.incomingDonations')} ({beneficiaryAllocations.length})</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.tableDonor')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.amount')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.spent')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.remaining')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.date')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.receiptNo')}</th>
+                      <tr className="border-b border-border">
+                        <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.tableDonor')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.amount')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.spent')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.remaining')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.status')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.date')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.receiptNo')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {beneficiaryAllocations.map((a: DonationAllocation) => {
                         const spent = a.amount - a.remainingAmount;
                         return (
-                        <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-2 px-3 font-medium text-gray-900">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
+                        <tr key={a.id} className="border-b border-border hover:bg-muted">
+                          <td className="py-2 px-3 font-medium text-foreground">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
                           <td className="py-2 px-3"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
                           <td className="py-2 px-3">{spent > 0 ? formatCurrency(spent) : '—'}</td>
                           <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
@@ -1231,18 +1231,18 @@ export default function BeneficiariesPage() {
                               return <Badge variant="info">{t('dashboard.active')}</Badge>;
                             })()}
                           </td>
-                          <td className="py-2 px-3 text-gray-700">{formatDate(a.createdAt)}</td>
-                          <td className="py-2 px-3 text-gray-400 text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
+                          <td className="py-2 px-3 text-foreground">{formatDate(a.createdAt)}</td>
+                          <td className="py-2 px-3 text-muted-foreground/70 text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
                         </tr>
                       )})}
                     </tbody>
                   </table>
                 </div>
                 {/* Total allocations summary */}
-                <div className="mt-2 p-3 bg-gray-50 rounded-lg flex gap-6 text-sm">
-                  <span>{t('beneficiaries.totalAllocations')} <strong className="text-green-600">{formatCurrency(beneficiaryAllocations.reduce((sum: number, a: DonationAllocation) => sum + a.amount, 0))}</strong></span>
-                  <span>{t('beneficiaries.totalDisbursed')} <strong className="text-blue-600">{formatCurrency(beneficiaryAllocations.reduce((sum: number, a: DonationAllocation) => sum + (a.amount - a.remainingAmount), 0))}</strong></span>
-                  <span>{t('beneficiaries.totalRemaining')} <strong className="text-amber-600">{formatCurrency(beneficiaryAllocations.reduce((sum: number, a: DonationAllocation) => sum + a.remainingAmount, 0))}</strong></span>
+                <div className="mt-2 p-3 bg-muted rounded-lg flex gap-6 text-sm">
+                  <span>{t('beneficiaries.totalAllocations')} <strong className="text-success">{formatCurrency(beneficiaryAllocations.reduce((sum: number, a: DonationAllocation) => sum + a.amount, 0))}</strong></span>
+                  <span>{t('beneficiaries.totalDisbursed')} <strong className="text-accent-foreground">{formatCurrency(beneficiaryAllocations.reduce((sum: number, a: DonationAllocation) => sum + (a.amount - a.remainingAmount), 0))}</strong></span>
+                  <span>{t('beneficiaries.totalRemaining')} <strong className="text-warning">{formatCurrency(beneficiaryAllocations.reduce((sum: number, a: DonationAllocation) => sum + a.remainingAmount, 0))}</strong></span>
                 </div>
               </div>
             )}
@@ -1250,35 +1250,35 @@ export default function BeneficiariesPage() {
             {/* Debit transactions (money actually disbursed) */}
             {beneficiaryDebits.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('beneficiaries.amountsDisbursed')} ({beneficiaryDebits.length})</h4>
+                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('beneficiaries.amountsDisbursed')} ({beneficiaryDebits.length})</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="py-2 px-3 text-right font-medium">{t('common.date')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.amount')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('beneficiaries.fundingSource')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('dashboard.fund')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.description')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.actions')}</th>
+                      <tr className="border-b border-border">
+                        <th className="py-2 px-3 text-start font-medium">{t('common.date')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.amount')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.fundingSource')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('dashboard.fund')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.status')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.description')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {beneficiaryDebits.map((tx: any) => {
                         const caisse = caisses.find((c: any) => c.id === tx.caisseId);
                         return (
-                        <tr key={tx.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-2 px-3 text-gray-700">{formatDate(tx.date)}</td>
-                          <td className="py-2 px-3 font-semibold text-red-600">-{formatCurrency(tx.amount)}</td>
-                          <td className="py-2 px-3 text-gray-600">{tx.fundSource === 'banque' ? t('beneficiaries.bankLabel') : t('beneficiaries.cashLabel')}</td>
-                          <td className="py-2 px-3 text-gray-600">{caisse?.nameAr || '—'}</td>
+                        <tr key={tx.id} className="border-b border-border hover:bg-muted">
+                          <td className="py-2 px-3 text-foreground">{formatDate(tx.date)}</td>
+                          <td className="py-2 px-3 font-semibold text-destructive">-{formatCurrency(tx.amount)}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{tx.fundSource === 'banque' ? t('beneficiaries.bankLabel') : t('beneficiaries.cashLabel')}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{caisse?.nameAr || '—'}</td>
                           <td className="py-2 px-3">
                             {(tx.status || 'completed') === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> :
                              (tx.status || 'completed') === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> :
                              <Badge variant="success">{t('dashboard.completed')}</Badge>}
                           </td>
-                          <td className="py-2 px-3 text-gray-500 text-xs max-w-[150px] truncate">{tx.descriptionAr || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground text-xs max-w-[150px] truncate">{tx.descriptionAr || '—'}</td>
                           <td className="py-2 px-3">
                             <button
                               onClick={(e) => {
@@ -1301,7 +1301,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">{t('common.description'
                                   association?.nameAr
                                 )
                               }}
-                              className="p-1 text-gray-400 hover:text-primary-600"
+                              className="p-1 text-muted-foreground/70 hover:text-primary"
                               title={t('receipt.print')}
                             >
                               <Printer size={14} />
@@ -1312,11 +1312,11 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">{t('common.description'
                     </tbody>
                   </table>
                 </div>
-                <div className="mt-2 p-3 bg-red-50 rounded-lg text-sm">
-                  <span>{t('beneficiaries.totalDisbursed')} <strong className="text-red-600">{formatCurrency(beneficiaryDebits
+                <div className="mt-2 p-3 bg-destructive/10 rounded-lg text-sm">
+                  <span>{t('beneficiaries.totalDisbursed')} <strong className="text-destructive">{formatCurrency(beneficiaryDebits
                     .filter((tx: any) => (tx.status || 'completed') !== 'cancelled')
                     .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-                  )}</strong> <span className="text-gray-400 text-xs mr-2">({beneficiaryDebits.filter((tx: any) => (tx.status || 'completed') === 'cancelled').length} {t('beneficiaries.cancelledNotCounted')})</span></span>
+                  )}</strong> <span className="text-muted-foreground/70 text-xs mr-2">({beneficiaryDebits.filter((tx: any) => (tx.status || 'completed') === 'cancelled').length} {t('beneficiaries.cancelledNotCounted')})</span></span>
                 </div>
               </div>
             )}
@@ -1324,37 +1324,37 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">{t('common.description'
             {/* Medical referrals (التوجيه الطبي) */}
             {beneficiaryReferrals.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">{t('beneficiaries.medicalReferral')} ({beneficiaryReferrals.length})</h4>
+                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('beneficiaries.medicalReferral')} ({beneficiaryReferrals.length})</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="py-2 px-3 text-right font-medium">{t('common.date')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('medical.doctor')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.amount')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.status')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('dashboard.fund')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('medical.analysisType')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('medical.hospital')}</th>
-                        <th className="py-2 px-3 text-right font-medium">{t('common.actions')}</th>
+                      <tr className="border-b border-border">
+                        <th className="py-2 px-3 text-start font-medium">{t('common.date')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('medical.doctor')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.amount')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.status')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('dashboard.fund')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('medical.analysisType')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('medical.hospital')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {beneficiaryReferrals.map((ref: any) => {
                         const caisse = caisses.find((c: any) => c.id === ref.caisseId);
                         return (
-                        <tr key={ref.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-2 px-3 text-gray-700">{formatDate(ref.date)}</td>
-                          <td className="py-2 px-3 font-medium text-gray-900">{ref.doctorNameAr}</td>
+                        <tr key={ref.id} className="border-b border-border hover:bg-muted">
+                          <td className="py-2 px-3 text-foreground">{formatDate(ref.date)}</td>
+                          <td className="py-2 px-3 font-medium text-foreground">{ref.doctorNameAr}</td>
                           <td className="py-2 px-3"><Badge variant="warning">{formatCurrency(ref.amount)}</Badge></td>
                           <td className="py-2 px-3">
                             {(ref.status || 'pending') === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> :
                              (ref.status || 'pending') === 'completed' ? <Badge variant="success">{t('dashboard.completed')}</Badge> :
                              <Badge variant="danger">{t('dashboard.cancelled')}</Badge>}
                           </td>
-                          <td className="py-2 px-3 text-gray-600">{caisse?.nameAr || '—'}</td>
-                          <td className="py-2 px-3 text-gray-600">{ref.analysisTypeAr || '—'}</td>
-                          <td className="py-2 px-3 text-gray-600">{ref.hospitalAr || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{caisse?.nameAr || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{ref.analysisTypeAr || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{ref.hospitalAr || '—'}</td>
                           <td className="py-2 px-3">
                             <button
                               onClick={(e) => {
@@ -1383,7 +1383,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                                   association?.nameAr
                                 )
                               }}
-                              className="p-1 text-gray-400 hover:text-primary-600"
+                              className="p-1 text-muted-foreground/70 hover:text-primary"
                               title={t('receipt.print')}
                             >
                               <Printer size={14} />
@@ -1394,16 +1394,16 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                     </tbody>
                   </table>
                 </div>
-                <div className="mt-2 p-3 bg-orange-50 rounded-lg text-sm">
-                  <span>{t('beneficiaries.medicalReferral')}: <strong className="text-orange-600">{formatCurrency(beneficiaryReferrals
+                <div className="mt-2 p-3 bg-warning/10 rounded-lg text-sm">
+                  <span>{t('beneficiaries.medicalReferral')}: <strong className="text-warning">{formatCurrency(beneficiaryReferrals
                     .filter((ref: any) => (ref.status || 'pending') !== 'cancelled')
                     .reduce((sum: number, ref: any) => sum + (ref.amount || 0), 0)
-                  )}</strong> <span className="text-gray-400 text-xs mr-2">({beneficiaryReferrals.filter((ref: any) => (ref.status || 'pending') === 'cancelled').length} {t('beneficiaries.cancelledNotCounted')})</span></span>
+                  )}</strong> <span className="text-muted-foreground/70 text-xs mr-2">({beneficiaryReferrals.filter((ref: any) => (ref.status || 'pending') === 'cancelled').length} {t('beneficiaries.cancelledNotCounted')})</span></span>
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
               <Button size="sm" variant="secondary" onClick={() => handlePrintCard(selectedBeneficiary)}>
                 <Printer className="w-4 h-4" /> {t('beneficiaries.printCardBtn')}
               </Button>
@@ -1427,12 +1427,12 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
   )
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       {/* ---- Header ---- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('beneficiaries.tabList')}</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">{t('beneficiaries.tabList')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {t('beneficiaries.manageText')} {displayBeneficiaries.length}{widowFilterActive ? ' (' + t('beneficiaries.widowFilterActiveBtn') + ' — ' + t('beneficiaries.findMostChildrenBtn') + ')' : ''}
           </p>
         </div>
@@ -1449,14 +1449,14 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
       </div>
 
       {/* ---- Tabs ---- */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="flex gap-2 sm:gap-4">
           <button onClick={() => setActiveTab('list')}
-            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${activeTab === 'list' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${activeTab === 'list' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'}`}>
             <Users className="inline-block w-4 h-4 ml-2" /> {t('beneficiaries.tabList')}
           </button>
           <button onClick={handleSettingsTab}
-            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${activeTab === 'settings' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${activeTab === 'settings' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'}`}>
             <Settings className="inline-block w-4 h-4 ml-2" /> {t('beneficiaries.tabSettings')}
           </button>
         </nav>
@@ -1466,11 +1466,11 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
         <div className="space-y-8">
           {/* ---- Attributs Section ---- */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-primary-600" />
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-primary" />
               {t('beneficiaries.sectionSettings')}
             </h3>
-            <p className="text-sm text-gray-500 mb-4">{t('beneficiaries.settingsDesc')}</p>
+            <p className="text-sm text-muted-foreground mb-4">{t('beneficiaries.settingsDesc')}</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
               <Input labelAr={t('beneficiaries.nameAr')} value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder={t('beneficiaries.attributPlaceholder')} />
               <Input labelAr={t('beneficiaries.nameLatin')} value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder={t('beneficiaries.attributLatinPlaceholder')} dir="ltr" />
@@ -1480,19 +1480,19 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">{t('beneficiaries.labelArabic')}</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">{t('beneficiaries.labelLatin')}</th>
-                      <th className="text-center py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
+                    <tr className="border-b border-border">
+                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.labelArabic')}</th>
+                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.labelLatin')}</th>
+                      <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {attributs.map((a: BeneficiaryAttribut) => (
-                      <tr key={a.name} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={a.name} className="border-b border-border hover:bg-muted">
                         {editAttrId === a.name ? (
                           <>
-                            <td className="py-2 px-4"><input value={editAttrNameAr} onChange={(e) => setEditAttrNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
-                            <td className="py-2 px-4"><input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                            <td className="py-2 px-4"><input value={editAttrNameAr} onChange={(e) => setEditAttrNameAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
+                            <td className="py-2 px-4"><input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
                             <td className="py-2 px-4 text-center flex gap-1 justify-center">
                               <Button size="sm" onClick={handleUpdateAttribut}>{t('common.save')}</Button>
                               <Button size="sm" variant="ghost" onClick={() => setEditAttrId(null)}>{t('common.cancel')}</Button>
@@ -1500,11 +1500,11 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                           </>
                         ) : (
                           <>
-                            <td className="py-3 px-4 font-medium text-gray-900">{a.nameAr}</td>
-                            <td className="py-3 px-4 text-gray-600">{a.name}</td>
+                            <td className="py-3 px-4 font-medium text-foreground">{a.nameAr}</td>
+                            <td className="py-3 px-4 text-muted-foreground">{a.name}</td>
                             <td className="py-3 px-4 text-center">
-                              <button onClick={() => { setEditAttrId(a.name); setEditAttrNameAr(a.nameAr); setEditAttrName(a.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
-                              <button onClick={() => handleDeleteAttribut(a.name)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => { setEditAttrId(a.name); setEditAttrNameAr(a.nameAr); setEditAttrName(a.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteAttribut(a.name)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                             </td>
                           </>
                         )}
@@ -1518,11 +1518,11 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
 
           {/* ---- School Grades Section ---- */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <FolderTree className="w-5 h-5 text-primary-600" />
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <FolderTree className="w-5 h-5 text-primary" />
               {t('beneficiaries.schoolGradesSection')}
             </h3>
-            <p className="text-sm text-gray-500 mb-4">{t('beneficiaries.addSchoolGrade')}</p>
+            <p className="text-sm text-muted-foreground mb-4">{t('beneficiaries.addSchoolGrade')}</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
               <Input labelAr={t('beneficiaries.nameAr')} value={newGradeNameAr} onChange={(e) => setNewGradeNameAr(e.target.value)} placeholder={t('beneficiaries.gradePlaceholder')} />
               <Input labelAr={t('beneficiaries.nameLatin')} value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder={t('beneficiaries.gradeLatinPlaceholder')} dir="ltr" />
@@ -1532,19 +1532,19 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">{t('beneficiaries.labelArabic')}</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">{t('beneficiaries.labelLatin')}</th>
-                      <th className="text-center py-3 px-4 font-medium text-gray-500">{t('common.actions')}</th>
+                    <tr className="border-b border-border">
+                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.labelArabic')}</th>
+                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.labelLatin')}</th>
+                      <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {schoolGrades.map((g: any) => (
-                      <tr key={g.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={g.id} className="border-b border-border hover:bg-muted">
                         {editGradeId === g.id ? (
                           <>
-                            <td className="py-2 px-4"><input value={editGradeNameAr} onChange={(e) => setEditGradeNameAr(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" /></td>
-                            <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                            <td className="py-2 px-4"><input value={editGradeNameAr} onChange={(e) => setEditGradeNameAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
+                            <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
                             <td className="py-2 px-4 text-center flex gap-1 justify-center">
                               <Button size="sm" onClick={handleUpdateGrade}>{t('common.save')}</Button>
                               <Button size="sm" variant="ghost" onClick={() => setEditGradeId(null)}>{t('common.cancel')}</Button>
@@ -1552,18 +1552,18 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                           </>
                         ) : (
                           <>
-                            <td className="py-3 px-4 font-medium text-gray-900">{g.nameAr}</td>
-                            <td className="py-3 px-4 text-gray-600">{g.name}</td>
+                            <td className="py-3 px-4 font-medium text-foreground">{g.nameAr}</td>
+                            <td className="py-3 px-4 text-muted-foreground">{g.name}</td>
                             <td className="py-3 px-4 text-center">
-                              <button onClick={() => { setEditGradeId(g.id); setEditGradeNameAr(g.nameAr); setEditGradeName(g.name); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded"><Edit className="w-4 h-4" /></button>
-                              <button onClick={() => handleDeleteGrade(g.id)} className="p-1.5 text-gray-400 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => { setEditGradeId(g.id); setEditGradeNameAr(g.nameAr); setEditGradeName(g.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteGrade(g.id)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                             </td>
                           </>
                         )}
                       </tr>
                     ))}
                     {schoolGrades.length === 0 && (
-                      <tr><td colSpan={3} className="py-8 text-center text-gray-400">{t('beneficiaries.noGrades')}</td></tr>
+                      <tr><td colSpan={3} className="py-8 text-center text-muted-foreground/70">{t('beneficiaries.noGrades')}</td></tr>
                     )}
                   </tbody>
                 </table>

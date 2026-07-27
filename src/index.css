@@ -3,25 +3,28 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
-@custom-variant dark (&:is(.dark *));
+/* Thème unique clair — pas de dark mode. Sidebar claire uniforme. */
 
 @theme {
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
+  /* Échelle primary — terracotta chaud, assorti à --primary (hue 35) */
+  --color-primary-50: oklch(0.97 0.015 35);
+  --color-primary-100: oklch(0.93 0.04 35);
+  --color-primary-200: oklch(0.86 0.08 35);
+  --color-primary-300: oklch(0.76 0.12 35);
+  --color-primary-400: oklch(0.65 0.16 35);
+  --color-primary-500: oklch(0.57 0.18 35);
+  --color-primary-600: oklch(0.50 0.18 35);
+  --color-primary-700: oklch(0.43 0.16 35);
+  --color-primary-800: oklch(0.35 0.13 35);
+  --color-primary-900: oklch(0.28 0.10 35);
+  --color-success-500: oklch(0.62 0.14 152);
+  --color-success-600: oklch(0.55 0.13 152);
+  --color-warning-500: oklch(0.74 0.16 70);
+  --color-warning-600: oklch(0.65 0.16 60);
+  --color-warning-700: oklch(0.45 0.13 50);
+  --color-warning-foreground: oklch(0.25 0.05 45);
+  --color-danger-500: oklch(0.60 0.20 27);
+  --color-danger-600: oklch(0.53 0.20 27);
 }
 
 /* RTL/LTR direction — controlled by dir attribute on <html> */
@@ -30,7 +33,7 @@ html {
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 min-h-screen;
+  @apply bg-background text-foreground min-h-screen;
   margin: 0;
 }
 
@@ -38,18 +41,18 @@ body {
   min-height: 100vh;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling (tons chauds) */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  @apply bg-muted;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+  @apply bg-border rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+  @apply bg-accent;
 }
 
 /* Print styles */
@@ -99,6 +102,11 @@ body {
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
@@ -120,72 +128,65 @@ body {
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  /* =============================================================
+     PALETTE CHALEUR / AMBRE / TERRACOTTA - SaaS Sante 2026
+     Inspiration : MediCare (chaleureuse, humaine, anti-clinique)
+     - AUCUN GRIS - tout est en tons chauds (hsl 30-50)
+     - Fond creme chaleureux (hue 50, chroma 0.015)
+     - Foreground brun-beige (jamais gray-700)
+     - Accent terracotta (hue 25-30, chroma 0.13)
+     - Sidebar beige dore clair (hue 45)
+     ============================================================= */
+  --background: oklch(0.985 0.015 75);
+  --foreground: oklch(0.32 0.04 55);
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --card: oklch(1 0.012 75);
+  --card-foreground: oklch(0.28 0.04 55);
+  /* Popover avec une teinte beige dore plus appreciable */
+  --popover: oklch(0.99 0.025 65);
+  --popover-foreground: oklch(0.28 0.04 55);
+
+  /* Accent terracotta chaud - chaleureux mais pas criard */
+  --primary: oklch(0.62 0.13 35);
+  --primary-foreground: oklch(0.99 0.005 70);
+
+  /* Surfaces secondaires - beige dore tres doux */
+  --secondary: oklch(0.96 0.020 70);
+  --secondary-foreground: oklch(0.45 0.06 55);
+  --muted: oklch(0.95 0.025 70);
+  --muted-foreground: oklch(0.55 0.04 60);
+  --accent: oklch(0.94 0.035 65);
+  --accent-foreground: oklch(0.35 0.08 45);
+
+  --destructive: oklch(0.55 0.18 25);
+  --destructive-foreground: oklch(0.99 0.005 70);
+  --success: oklch(0.65 0.10 80);
+  --success-foreground: oklch(0.40 0.06 70);
+  --warning: oklch(0.78 0.13 65);
+  --warning-foreground: oklch(0.30 0.06 50);
+  --danger-foreground: oklch(0.50 0.16 27);
+
+  --border: oklch(0.90 0.020 70);
+  --input: oklch(0.92 0.022 70);
+  --ring: oklch(0.62 0.13 35);
+
+  --chart-1: oklch(0.62 0.13 35);
+  --chart-2: oklch(0.68 0.12 55);
+  --chart-3: oklch(0.72 0.11 75);
+  --chart-4: oklch(0.78 0.13 65);
+  --chart-5: oklch(0.50 0.06 40);
+
+  --radius: 0.625rem;
+
+  /* Sidebar - beige dore clair, distincte mais douce */
+  --sidebar: oklch(0.95 0.030 65);
+  --sidebar-foreground: oklch(0.40 0.05 55);
+  --sidebar-primary: oklch(0.62 0.13 35);
+  --sidebar-primary-foreground: oklch(0.99 0.005 70);
+  --sidebar-accent: oklch(0.91 0.045 60);
+  --sidebar-accent-foreground: oklch(0.28 0.06 45);
+  --sidebar-border: oklch(0.88 0.025 65);
+  --sidebar-ring: oklch(0.62 0.13 35);
 }
 
 @layer base {
@@ -197,5 +198,43 @@ body {
   }
   html {
     @apply font-sans;
+  }
+  /* Calendriers et selects natifs prennent l'accent du theme (pas le bleu navigateur) */
+  input[type="date"],
+  input[type="month"],
+  input[type="datetime-local"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    accent-color: var(--primary);
+  }
+  /* Calendrier natif Chrome — icone calendrier en terracotta */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="month"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(48%) sepia(40%) saturate(700%) hue-rotate(340deg) brightness(85%) contrast(90%);
+    cursor: pointer;
+  }
+  /* Fleche native des <select> Chrome — teintee terracotta */
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a6765c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 0.75rem center;
+    background-size: 14px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  /* En mode RTL, la fleche se deplace a droite */
+  [dir="rtl"] select {
+    background-position: right 0.75rem center;
+  }
+  /* Focus sur selects et date inputs : remplacer le halo bleu par la couleur du theme */
+  select:focus-visible,
+  input[type="date"]:focus-visible,
+  input[type="month"]:focus-visible,
+  input[type="datetime-local"]:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -1px;
+    border-color: var(--ring);
   }
 }

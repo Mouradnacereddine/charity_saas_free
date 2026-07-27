@@ -25,29 +25,30 @@ describe('Button', () => {
   it('applies primary variant classes by default', () => {
     render(<Button>Primary</Button>)
     const btn = screen.getByRole('button', { name: 'Primary' })
-    expect(btn).toHaveClass('bg-primary-600')
+    expect(btn).toHaveClass('bg-primary')
+    expect(btn).toHaveClass('text-primary-foreground')
   })
 
   it('applies secondary variant classes', () => {
     render(<Button variant="secondary">Sec</Button>)
     const btn = screen.getByRole('button', { name: 'Sec' })
-    expect(btn).toHaveClass('bg-gray-100')
-    expect(btn).toHaveClass('text-gray-700')
+    expect(btn).toHaveClass('bg-secondary')
+    expect(btn).toHaveClass('text-secondary-foreground')
   })
 
   it('applies danger variant classes', () => {
     render(<Button variant="danger">Del</Button>)
-    expect(screen.getByRole('button', { name: 'Del' })).toHaveClass('bg-danger-500')
+    expect(screen.getByRole('button', { name: 'Del' })).toHaveClass('bg-destructive')
   })
 
   it('applies success variant classes', () => {
     render(<Button variant="success">OK</Button>)
-    expect(screen.getByRole('button', { name: 'OK' })).toHaveClass('bg-success-500')
+    expect(screen.getByRole('button', { name: 'OK' })).toHaveClass('text-white')
   })
 
   it('applies ghost variant classes', () => {
     render(<Button variant="ghost">Ghost</Button>)
-    expect(screen.getByRole('button', { name: 'Ghost' })).toHaveClass('text-gray-600')
+    expect(screen.getByRole('button', { name: 'Ghost' })).toHaveClass('text-foreground')
   })
 
   it('applies sm size classes', () => {
@@ -244,27 +245,27 @@ describe('Badge', () => {
 
   it('applies default variant classes', () => {
     render(<Badge>Default</Badge>)
-    expect(screen.getByText('Default')).toHaveClass('bg-gray-100', 'text-gray-700')
+    expect(screen.getByText('Default')).toHaveClass('bg-secondary', 'text-secondary-foreground')
   })
 
   it('applies success variant classes', () => {
     render(<Badge variant="success">OK</Badge>)
-    expect(screen.getByText('OK')).toHaveClass('bg-green-100', 'text-green-700')
+    expect(screen.getByText('OK')).toHaveClass('text-success')
   })
 
   it('applies warning variant classes', () => {
     render(<Badge variant="warning">Warn</Badge>)
-    expect(screen.getByText('Warn')).toHaveClass('bg-yellow-100', 'text-yellow-700')
+    expect(screen.getByText('Warn')).toHaveClass('text-warning')
   })
 
   it('applies danger variant classes', () => {
     render(<Badge variant="danger">Err</Badge>)
-    expect(screen.getByText('Err')).toHaveClass('bg-red-100', 'text-red-700')
+    expect(screen.getByText('Err')).toHaveClass('bg-destructive/15', 'text-destructive')
   })
 
   it('applies info variant classes', () => {
     render(<Badge variant="info">Info</Badge>)
-    expect(screen.getByText('Info')).toHaveClass('bg-blue-100', 'text-blue-700')
+    expect(screen.getByText('Info')).toHaveClass('bg-primary/15', 'text-primary')
   })
 })
 
