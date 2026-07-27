@@ -1,7 +1,7 @@
 import { useState, Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { calculateAge, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
+import { calculateAge, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords, localizedDesc } from '../utils/helpers'
 import { printReceipt, printBeneficiaryCard } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
@@ -1278,7 +1278,7 @@ export default function BeneficiariesPage() {
                              (tx.status || 'completed') === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> :
                              <Badge variant="success">{t('dashboard.completed')}</Badge>}
                           </td>
-                          <td className="py-2 px-3 text-muted-foreground text-xs max-w-[150px] truncate">{i18n.language === 'ar' ? (tx.descriptionAr || tx.description || '—') : (tx.description || tx.descriptionAr || '—')}</td>
+                          <td className="py-2 px-3 text-muted-foreground text-xs max-w-[150px] truncate">{localizedDesc(tx.description, tx.descriptionAr) || '—'}</td>
                           <td className="py-2 px-3">
                             <button
                               onClick={(e) => {

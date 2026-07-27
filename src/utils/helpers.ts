@@ -242,14 +242,46 @@ export function generateMedicalReferralReference(): string {
 
 
 /**
- * Choisit la description dans la bonne langue selon la langue active.
- * Affiche descriptionAr pour l'arabe, description pour les autres langues.
- * @deprecated Utiliser i18nDescription() à la place (plus explicite)
+ * Traduit une chaîne système française connue vers l'anglais.
+ * Utile pour les anciennes données en base qui contiennent encore
+ * "Orientation médicale" au lieu de "Medical referral".
+ */
+function translateSystemFrToEn(fr: string): string {
+  return fr
+    .replace(/^Orientation médicale confirmée - /, 'Medical referral confirmed - ')
+    .replace(/^Orientation médicale - /, 'Medical referral - ');
+}
+
+/**
+ * Normalise une description système : s'assure que le préfixe est
+ * dans la bonne langue selon i18n.language, même pour les anciennes
+ * données qui pourraient encore contenir du français.
+ */
+function normalizeDesc(description?: string, lang?: string): string {
+  if (!description) return '';
+  // Si on est en anglais et que la chaîne commence par du français connu
+  if (lang === 'en') {
+    if (description.startsWith('Orientation médicale') || description.startsWith('Medical referral')) {
+      return translateSystemFrToEn(description);
+    }
+  }
+  // Si on est en français et que la chaîne commence par de l'anglais
+  if (lang === 'fr' && description.startsWith('Medical referral')) {
+    return description.replace(/^Medical referral( confirmed)? - /, (m, c) => c ? 'Orientation médicale confirmée - ' : 'Orientation médicale - ');
+  }
+  return description;
+}
+
+/**
+ * Choisit la description dans la bonne langue selon la langue active et
+ * normalise les anciennes chaînes système françaises vers la langue cible.
+ *
+ * Affiche descriptionAr pour l'arabe, description (normalisée) pour les autres.
  */
 export function localizedDesc(description?: string, descriptionAr?: string): string {
   const lang = i18n.language;
-  if (lang === 'ar') return descriptionAr || description || '';
-  return description || descriptionAr || '';
+  if (lang === 'ar') return descriptionAr || normalizeDesc(description, lang) || '';
+  return normalizeDesc(description || descriptionAr, lang) || '';
 }
 
 /**

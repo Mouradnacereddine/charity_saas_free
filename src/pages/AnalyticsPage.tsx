@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import i18nInstance from '../i18n';
 import { Card, StatCard, LoadingSpinner, Badge, Button } from '../components/common/UI';
 import { SmartText } from '../components/common/SmartText';
+import { localizedDesc } from '../utils/helpers';
 
 // Use i18nInstance.t directly instead of the hook-based t to avoid
 // "t is not a function" errors during React Query re-renders (react-i18next#1950)
@@ -776,7 +777,7 @@ export default function AnalyticsPage() {
                             </Badge>
                           </td>
                           <td className="py-2 px-4 text-muted-foreground">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
-                          <td className="py-2 px-4 text-foreground font-medium">{i18nInstance.language === 'ar' ? tx.descriptionAr : (tx.description || tx.descriptionAr)}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{localizedDesc(tx.description, tx.descriptionAr)}</td>
                           <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
@@ -834,7 +835,7 @@ export default function AnalyticsPage() {
                               {tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}
                             </Badge>
                           </td>
-                          <td className="py-2 px-4 text-foreground font-medium">{i18nInstance.language === 'ar' ? tx.descriptionAr : (tx.description || tx.descriptionAr)}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{localizedDesc(tx.description, tx.descriptionAr)}</td>
                           <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
@@ -952,7 +953,7 @@ export default function AnalyticsPage() {
                           <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4 text-foreground font-medium">{caisse ? caisse.nameAr : '—'}</td>
                           <td className="py-2 px-4 text-muted-foreground">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
-                          <td className="py-2 px-4 text-foreground">{i18nInstance.language === 'ar' ? tx.descriptionAr : (tx.description || tx.descriptionAr)}</td>
+                          <td className="py-2 px-4 text-foreground">{localizedDesc(tx.description, tx.descriptionAr)}</td>
                           <td className="py-2 px-4 text-muted-foreground">{formatDate(tx.date)}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>

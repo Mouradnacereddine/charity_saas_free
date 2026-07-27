@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { StatCard, Card, Modal, Badge, Button, LoadingSpinner } from '../components/common/UI'
 import { useDashboardStats } from '../hooks/useDashboard'
 import { useAuth } from '../hooks/useAuth'
-import { formatCurrency, formatDate } from '../utils/helpers'
+import { formatCurrency, formatDate, localizedDesc } from '../utils/helpers'
 import { Wallet, Banknote, Users, HeartHandshake, Package, Handshake, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
 
 export default function DashboardPage() {
@@ -137,7 +137,7 @@ export default function DashboardPage() {
                       <td className="py-3 px-4 text-foreground hidden lg:table-cell">
                         {tx.type === 'debit' && tx.beneficiary ? `${tx.beneficiary.lastNameAr} ${tx.beneficiary.firstNameAr}` : '—'}
                       </td>
-                      <td className="py-3 px-4 text-foreground hidden sm:table-cell">{i18n.language === 'ar' ? tx.descriptionAr : tx.description || tx.descriptionAr}</td>
+                      <td className="py-3 px-4 text-foreground hidden sm:table-cell">{localizedDesc(tx.description, tx.descriptionAr)}</td>
                       <td className="py-3 px-4 hidden sm:table-cell">
                         {(tx.status || 'completed') === 'pending' ? (
                           <Badge variant="warning">{t('dashboard.pending')}</Badge>
@@ -177,7 +177,7 @@ export default function DashboardPage() {
               {detailTx.type === 'debit' && detailTx.beneficiary && (
                 <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</p><p className="font-medium text-foreground">{detailTx.beneficiary.lastNameAr} {detailTx.beneficiary.firstNameAr}</p></div>
               )}
-              {(detailTx.descriptionAr || detailTx.description) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{i18n.language === 'ar' ? detailTx.descriptionAr : detailTx.description || detailTx.descriptionAr}</p></div>}
+              {(detailTx.descriptionAr || detailTx.description) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{localizedDesc(detailTx.description, detailTx.descriptionAr)}</p></div>}
               {detailTx.receiptNumber && <div><p className="text-xs text-muted-foreground">{t('dashboard.receiptNo')}</p><p className="font-mono text-foreground" dir="ltr">{detailTx.receiptNumber}</p></div>}
               <div><p className="text-xs text-muted-foreground">{t('common.date')}</p><p className="font-medium text-foreground">{formatDate(detailTx.date)}</p></div>
             </div>

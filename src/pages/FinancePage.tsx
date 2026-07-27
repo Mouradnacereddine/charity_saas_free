@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, StatCard, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
+import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords, localizedDesc } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake, Edit, ListOrdered } from 'lucide-react'
 import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useConfirmTransaction, useCancelTransaction } from '../hooks/useFinance'
@@ -1087,7 +1087,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                         </td>
                         <td className="py-3 px-3 text-muted-foreground hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
                         <td className="py-3 px-3 text-muted-foreground max-w-[160px] truncate hidden lg:table-cell">
-                          {i18n.language === 'ar' ? (tx.descriptionAr || tx.description || '-') : (tx.description || tx.descriptionAr || '-')}
+                          {localizedDesc(tx.description, tx.descriptionAr) || '-'}
                         </td>
                         <td className="py-3 px-3 text-center">
                           <button
@@ -1249,7 +1249,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-muted-foreground">{t('finance.bankAccounts')}</p><p className="font-medium">{bankAcc.bankNameAr}</p></div>}
                 {donor && <div><p className="text-xs text-muted-foreground">{t('dashboard.donor')}</p><p className="font-medium">{donor.lastNameAr} {donor.firstNameAr}</p></div>}
                 {benef && <div><p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</p><p className="font-medium">{benef.lastNameAr} {benef.firstNameAr}</p></div>}
-                {(detailTx.descriptionAr || detailTx.description) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{i18n.language === 'ar' ? detailTx.descriptionAr : detailTx.description || detailTx.descriptionAr}</p></div>}
+                {(detailTx.descriptionAr || detailTx.description) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{localizedDesc(detailTx.description, detailTx.descriptionAr)}</p></div>}
                 <div><p className="text-xs text-muted-foreground">{t('dashboard.receiptNo')}</p><p className="font-mono text-foreground" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
                 <div><p className="text-xs text-muted-foreground">{t('common.date')}</p><p className="font-medium text-foreground">{formatDate(detailTx.date)}</p></div>
               </div>
