@@ -58,7 +58,7 @@ model Association {
   id        String   @id @default(uuid())
   name      String
   nameAr    String
-  email     String   @unique
+  email     String
   password  String
   logoUrl   String?
   createdAt DateTime @default(now())
