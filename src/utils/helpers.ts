@@ -242,6 +242,25 @@ export function generateMedicalReferralReference(): string {
 
 
 /**
+ * Choisit la description dans la bonne langue selon la langue active.
+ * Affiche descriptionAr pour l'arabe, description pour les autres langues.
+ * @deprecated Utiliser i18nDescription() à la place (plus explicite)
+ */
+export function localizedDesc(description?: string, descriptionAr?: string): string {
+  const lang = i18n.language;
+  if (lang === 'ar') return descriptionAr || description || '';
+  return description || descriptionAr || '';
+}
+
+/**
+ * Wrapper React-friendly : appelle localizedDesc avec les deux champs.
+ * À utiliser dans le JSX pour remplacer {tx.descriptionAr || tx.description || '-'}
+ */
+export function useLocalizedDesc(desc?: string, descAr?: string): string {
+  return localizedDesc(desc, descAr);
+}
+
+/**
  * Generate unique ID
  */
 export function generateId(): string {

@@ -1278,7 +1278,7 @@ export default function BeneficiariesPage() {
                              (tx.status || 'completed') === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> :
                              <Badge variant="success">{t('dashboard.completed')}</Badge>}
                           </td>
-                          <td className="py-2 px-3 text-muted-foreground text-xs max-w-[150px] truncate">{tx.descriptionAr || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground text-xs max-w-[150px] truncate">{i18n.language === 'ar' ? (tx.descriptionAr || tx.description || '—') : (tx.description || tx.descriptionAr || '—')}</td>
                           <td className="py-2 px-3">
                             <button
                               onClick={(e) => {

@@ -249,7 +249,8 @@ export default function AnalyticsPage() {
   const logTx = useMemo(() => {
     return filteredTx.filter((tx) => {
       const matchesSearch =
-        tx.descriptionAr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tx.descriptionAr || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tx.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (tx.receiptNumber && tx.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCaisse = logCaisseFilter === '' || tx.caisseId === logCaisseFilter;
       const matchesType = logTypeFilter === '' || tx.type === logTypeFilter;
@@ -775,7 +776,7 @@ export default function AnalyticsPage() {
                             </Badge>
                           </td>
                           <td className="py-2 px-4 text-muted-foreground">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
-                          <td className="py-2 px-4 text-foreground font-medium">{tx.descriptionAr}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{i18nInstance.language === 'ar' ? tx.descriptionAr : (tx.description || tx.descriptionAr)}</td>
                           <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
@@ -833,7 +834,7 @@ export default function AnalyticsPage() {
                               {tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}
                             </Badge>
                           </td>
-                          <td className="py-2 px-4 text-foreground font-medium">{tx.descriptionAr}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{i18nInstance.language === 'ar' ? tx.descriptionAr : (tx.description || tx.descriptionAr)}</td>
                           <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
@@ -951,7 +952,7 @@ export default function AnalyticsPage() {
                           <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4 text-foreground font-medium">{caisse ? caisse.nameAr : '—'}</td>
                           <td className="py-2 px-4 text-muted-foreground">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
-                          <td className="py-2 px-4 text-foreground">{tx.descriptionAr}</td>
+                          <td className="py-2 px-4 text-foreground">{i18nInstance.language === 'ar' ? tx.descriptionAr : (tx.description || tx.descriptionAr)}</td>
                           <td className="py-2 px-4 text-muted-foreground">{formatDate(tx.date)}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
