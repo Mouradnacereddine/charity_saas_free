@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { asArray } from '../hooks/useApiSafety';
 
 const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.origin.startsWith('http://localhost') ? 'http://localhost:3001/api' : '/api');
 
@@ -16,6 +17,28 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Response interceptor — ensure list endpoints always return arrays, single-object
+// endpoints always return objects. This guards against `a.filter is not a function`
+// and `o.find is not a function` runtime crashes when the backend returns
+// something unexpected (error wrapper, pagination envelope, etc.).
+api.interceptors.response.use(
+  (response) => {
+    const url: string = response.config?.url || '';
+    const data = response.data;
+    // Endpoints that conventionally return a list: if the body is not already
+    // an array, attempt to extract a known envelope (e.g. { data: [...] }).
+    // Endpoints that conventionally return a single object: leave as-is.
+    // We detect "list" endpoints by URL prefix to avoid over-correcting.
+    const isListEndpoint =
+      /\/(articles|article-categories|storage-locations|article-statuses|school-grades|caisses|beneficiaries|donors|doctors|finance\/transactions|finance\/bank-accounts|finance\/allocations|medical\/referrals|medical\/analysis-types|medical\/hospitals|loans|notifications|auth\/users|auth\/invites|beneficiary-attributs)/(\?|$|[\d/])/.test(url) ||
+      /\/auth\/users\b/.test(url);
+    if (isListEndpoint) {
+      response.data = asArray(data);
+    }
+    return response;
+  },
+);
 
 // Response interceptor — auto-refresh on 401
 let isRefreshing = false;

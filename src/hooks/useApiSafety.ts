@@ -16,3 +16,15 @@ export function asArray<T = unknown>(data: unknown): T[] {
   }
   return [];
 }
+
+/** Defensive guard for single-object query data. */
+export function asObject<T = unknown>(data: unknown): T | null {
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    return data as T;
+  }
+  if (data && Array.isArray((data as any).data)) {
+    const first = (data as { data: unknown[] }).data[0];
+    return (first ?? null) as T | null;
+  }
+  return null;
+}
