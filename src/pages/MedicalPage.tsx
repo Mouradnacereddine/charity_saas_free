@@ -725,7 +725,7 @@ export default function MedicalPage() {
             {t('medical.analysisTypes')}
           </h3>
           <p className="text-sm text-muted-foreground mb-4">{t('medical.manageAnalysis')}</p>
-          <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-4">
             <Input label={t('medical.name')} value={newAnalysis} onChange={(e) => setNewAnalysis(e.target.value)} placeholder={t('medical.analysisPlaceholder')} dir={dirForInput(association?.locale)} />
             <Button onClick={handleAddAnalysis} disabled={!newAnalysis.trim()}>{t('common.add')}</Button>
           </div>
@@ -771,7 +771,7 @@ export default function MedicalPage() {
             {t('medical.hospitals')}
           </h3>
           <p className="text-sm text-muted-foreground mb-4">{t('medical.manageHospitals')}</p>
-          <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-4">
             <Input label={t('medical.name')} value={newHosp} onChange={(e) => setNewHosp(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} dir={dirForInput(association?.locale)} />
             <Button onClick={handleAddHospital} disabled={!newHosp.trim()}>{t('common.add')}</Button>
           </div>

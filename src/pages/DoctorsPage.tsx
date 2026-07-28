@@ -414,7 +414,7 @@ export default function DoctorsPage() {
           {t('doctors.specialties')}
         </h3>
         <p className="text-sm text-muted-foreground mb-4">{t('doctors.manageSpecialties')}</p>
-        <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-4">
           <Input label={t('doctors.sectionName')} value={newSpec} onChange={(e) => setNewSpec(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} dir={dirForInput(association?.locale)} />
           <Button onClick={handleAddSpecialty} disabled={!newSpec.trim()}>{t('common.add')}</Button>
         </div>
