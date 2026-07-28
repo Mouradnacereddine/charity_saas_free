@@ -1,12 +1,10 @@
 /**
  * Vercel Serverless Function entry.
  *
- * The backend (server/dist/index.js) compiles in CommonJS ("module": "commonjs"
- * in server/tsconfig.json), while the root package.json declares
- * "type": "module" (ESM). We use createRequire() to load the CJS module
- * from within an ESM context.
+ * Le root package.json n'a plus "type": "module", donc tous les .js sont
+ * CommonJS. On peut utiliser require() directement sur le backend compile.
  */
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const _app = require('./server-dist/index.js');
-export default _app.default || _app;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const app = require('./server-dist/index.js').default || require('./server-dist/index.js');
+
+export default app;
