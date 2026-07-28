@@ -59,14 +59,14 @@ export function printReceipt(
  * Full A4 card using the same visual style as printReceipt (blue header, row/lbl/val, sign)
  * but on full page width with margins — exactly like the Orientation Médicale layout but wide.
  */
-export const FULL_CARD_CSS = `
+export const FULL_CARD_CSS = (dir: string = 'rtl') => `
   @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; font-size: 11px; color: #1a1a1a; background: #fff; padding: 15mm; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: ${dir}; font-size: 11px; color: #1a1a1a; background: #fff; padding: 15mm; }
   @media print { body { padding: 15mm; } }
   .hdr { border-bottom: 2px solid #2563eb; padding-bottom: 4px; margin-bottom: 8px; }
   .hdr h1 { font-size: 16px; color: #2563eb; margin: 0; display: inline; }
-  .hdr .sub { float: left; font-size: 10px; color: #999; }
+  .hdr .sub { float: ${dir === 'rtl' ? 'left' : 'right'}; font-size: 10px; color: #999; }
   .section { margin-bottom: 10px; }
   .section-title { font-size: 12px; font-weight: 700; color: #1e40af; margin: 0 0 4px; padding: 3px 8px; background: #eff6ff; border-right: 3px solid #2563eb; }
   .info { display: flex; flex-wrap: wrap; gap: 0 10px; }
@@ -159,7 +159,7 @@ export function printBeneficiaryCard(params: {
     @media print { .no-print { display: none; } }
   </style>
   </head><body>
-  <div class="hdr"><h1>🕌 ${params.assocName || t('app.title')}</h1><span class="sub">Carte Bénéficiaire — ${params.reference || ''}</span></div>
+  <div class="hdr"><h1>🕌 ${params.assocName || t('app.title')}</h1><span class="sub">${l.title} — ${params.reference || ''}</span></div>
   <div class="section">
     <div class="section-title">${l.personalInfo}</div>
     <div class="info">

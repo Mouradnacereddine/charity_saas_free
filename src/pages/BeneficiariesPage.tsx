@@ -469,7 +469,7 @@ export default function BeneficiariesPage() {
          ).join('')}
          </div></div><div class="col"><div class="row"><span class="lbl">${t('receipt.gender')} / ${t('receipt.age')} / ${t('common.status')}</span>
          ${b.children.map((ch: any) =>
-           `<span class="val">${ch.gender === 'female' ? t('common.female') : t('common.male')} — ${calculateAge(ch.dateOfBirth).displayAr} — ${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</span><br>`
+           `<span class="val">${ch.gender === 'female' ? t('common.female') : t('common.male')} — ${getAgeDisplay(ch.dateOfBirth)} — ${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</span><br>`
          ).join('')}
          </div></div></div></div>`
       : ''
@@ -484,7 +484,7 @@ export default function BeneficiariesPage() {
       nationalCardNumber: b.nationalCardNumber || '—',
       phone: b.phone,
       dateOfBirth: b.dateOfBirth ? formatDate(b.dateOfBirth) : '—',
-      ageDisplay: b.dateOfBirth ? calculateAge(b.dateOfBirth).displayAr : '—',
+      ageDisplay: b.dateOfBirth ? getAgeDisplay(b.dateOfBirth) : '—',
       attribut: ATTRIBUT_LABELS[b.attribut] || b.attribut,
       gender: b.gender === 'female' ? t('common.female') : t('common.male'),
       caisseName: caisse?.name || '—',
@@ -515,6 +515,8 @@ export default function BeneficiariesPage() {
   // ---- Print Full File (A4) ----
   const handlePrintFullFile = (b: Beneficiary, allocations: DonationAllocation[], debits: any[], referrals: any[]) => {
     const caisse = caisses.find((c: any) => c.id === b.caisseId)
+    const isLtr = i18n.language !== 'ar';
+    const dir = isLtr ? 'ltr' : 'rtl';
 
     // personalInfoHtml is now inlined directly in the template
 
@@ -527,7 +529,7 @@ export default function BeneficiariesPage() {
             <tr>
               <td>${ch.lastName} ${ch.firstName}</td>
               <td>${ch.gender === 'female' ? t('common.female') : t('common.male')}</td>
-              <td>${calculateAge(ch.dateOfBirth).displayAr}</td>
+              <td>${getAgeDisplay(ch.dateOfBirth)}</td>
               <td>${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</td>
               <td>${getGradeName(ch.schoolGradeId)}</td>
             </tr>`).join('')}</tbody>
@@ -575,7 +577,7 @@ export default function BeneficiariesPage() {
               <td>${tx.fundSource === 'banque' ? t('beneficiaries.bankLabel') : t('beneficiaries.cashLabel')}</td>
               <td>${c?.name || '—'}</td>
               <td>${s}</td>
-              <td>${tx.descriptionAr || '—'}</td>
+              <td>${tx.description || '—'}</td>
             </tr>`
           }).join('')}</tbody>
         </table>
@@ -603,18 +605,18 @@ export default function BeneficiariesPage() {
       </div>` : ''
 
     const fullHtml = `
-      <!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
+      <!DOCTYPE html><html dir="${dir}"><head><meta charset="utf-8">
       <style>
         @page { size: A4; margin: 0; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; font-size: 11.5px; color: #1a1a1a; padding: 0; line-height: 1.6; background: #fff; }
+        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: ${dir}; font-size: 11.5px; color: #1a1a1a; padding: 0; line-height: 1.6; background: #fff; }
         .page-wrap { width: 100%; min-height: 100vh; padding: 25mm 25mm 20mm 25mm; }
         @media print { body { background: #fff; } .page-wrap { padding: 25mm 25mm 20mm 25mm; } }
         .header { text-align: center; margin-bottom: 22px; padding-bottom: 12px; border-bottom: 3px double #2563eb; }
         .header h1 { font-size: 22px; color: #1e40af; margin: 0 0 4px; }
         .header .sub { font-size: 11px; color: #6b7280; }
         .section { margin-bottom: 18px; page-break-inside: avoid; }
-        .section-title { font-size: 14px; font-weight: 700; color: #1e40af; margin: 0 0 10px; padding: 6px 12px; background: #eff6ff; border-right: 4px solid #2563eb; border-radius: 0 4px 4px 0; }
+        .section-title { font-size: 14px; font-weight: 700; color: #1e40af; margin: 0 0 10px; padding: 6px 12px; background: #eff6ff; border-${isLtr ? 'left' : 'right'}: 4px solid #2563eb; border-radius: ${isLtr ? '0 4px 4px 0' : '4px 0 0 4px'}; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 20px; padding: 8px 4px; }
         .info-grid .item { display: flex; padding: 2px 0; border-bottom: 1px dotted #e5e7eb; }
         .info-grid .item .lbl { min-width: 140px; font-weight: 600; color: #4b5563; font-size: 11px; }
@@ -641,7 +643,7 @@ export default function BeneficiariesPage() {
             <div class="item"><span class="lbl">${t('beneficiaries.nameLatin')}</span><span class="val">${b.firstName} ${b.lastName}</span></div>
             <div class="item"><span class="lbl">{t('receipt.idNumber')}</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
             <div class="item"><span class="lbl">{t('receipt.phone')}</span><span class="val">${b.phone}</span></div>
-            <div class="item"><span class="lbl">{t('receipt.birthDate')}</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${calculateAge(b.dateOfBirth).displayAr})` : '—'}</span></div>
+            <div class="item"><span class="lbl">{t('receipt.birthDate')}</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${getAgeDisplay(b.dateOfBirth)})` : '—'}</span></div>
             <div class="item"><span class="lbl">{t('beneficiaries.filterAttribute')}</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
             <div class="item"><span class="lbl">{t('beneficiaries.filterGender')}</span><span class="val">${b.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
             <div class="item"><span class="lbl">${t('beneficiaries.addressTitle')}</span><span class="val">${b.address || '—'}</span></div>
@@ -655,7 +657,7 @@ export default function BeneficiariesPage() {
         ${debitsHtml}
         ${refsHtml}
         <button class="no-print" onclick="window.print()">${t('beneficiaries.printFileBtn')}</button>
-        <div class="footer">${t('receipt.generatedBy')} — ${new Date().toLocaleDateString('ar-DZ')}</div>
+        <div class="footer">${t('receipt.generatedBy')} — ${new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-DZ' : i18n.language === 'fr' ? 'fr-FR' : 'en-US')}</div>
       </div>
       </body></html>`
 

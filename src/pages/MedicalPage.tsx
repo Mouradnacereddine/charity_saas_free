@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { formatCurrency, formatDate, numberToArabicWords, numberToWords, calculateAge } from '../utils/helpers';
+import { formatCurrency, formatDate, numberToArabicWords, numberToWords, calculateAge, getAgeDisplay } from '../utils/helpers';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import type { MedicalReferral, Beneficiary, Caisse, MedicalAnalysisType, MedicalHospital, SubCategory } from '../types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -193,7 +193,7 @@ export default function MedicalPage() {
         id: child.id || childId,
         name: `${child.lastName || ''} ${child.firstName || ''}`.trim(),
         name: `${child.firstName || ''} ${child.lastName || ''}`.trim(),
-        age: calculateAge(child.dateOfBirth).displayAr,
+        age: calculateAge(child.dateOfBirth).display,
         gender: child.gender || 'male',
       } : { id: childId, name: childId, age: '', gender: 'male' };
     });
@@ -232,8 +232,8 @@ export default function MedicalPage() {
   const handlePrint = (referral: MedicalReferral) => {
     const caisse = caisses.find((c: Caisse) => c.id === referral.caisseId)
     const subCat = caisse?.subCategories.find((s: SubCategory) => s.id === referral.subCategoryId)
-    const caisseRow = caisse ? `<span class="lbl">${t('medical.caisse')}</span><span class="val">${caisse.nameAr}</span>` : ''
-    const subCatRow = subCat ? `<span class="lbl">${t('medical.subCategory')}</span><span class="val">${subCat.nameAr}</span>` : ''
+    const caisseRow = caisse ? `<span class="lbl">${t('medical.caisse')}</span><span class="val">${caisse.name}</span>` : ''
+    const subCatRow = subCat ? `<span class="lbl">${t('medical.subCategory')}</span><span class="val">${subCat.name}</span>` : ''
 
     const childrenHtml = referral.children && Array.isArray(referral.children) && referral.children.length > 0
       ? referral.children.map((c: any) => {
@@ -241,8 +241,7 @@ export default function MedicalPage() {
           let ageDisplay = ''
           try {
             if (c.dateOfBirth) {
-              const age = calculateAge(c.dateOfBirth)
-              ageDisplay = age?.displayAr || ''
+              ageDisplay = getAgeDisplay(c.dateOfBirth)
             } else if (c.age) {
               ageDisplay = `${c.age} ${t('receipt.age')}`
             }
@@ -253,7 +252,7 @@ export default function MedicalPage() {
       : ''
 
     const fullBeneficiary = beneficiaries.find((b: Beneficiary) => b.id === referral.beneficiaryId)
-    const ageDisplay = fullBeneficiary ? calculateAge(fullBeneficiary.dateOfBirth).displayAr : ''
+    const ageDisplay = fullBeneficiary ? getAgeDisplay(fullBeneficiary.dateOfBirth) : ''
     const genderDisplay = fullBeneficiary?.gender === 'female' ? t('common.female') : fullBeneficiary?.gender === 'male' ? t('common.male') : ''
 
     const isLtr = i18n.language !== 'ar';
@@ -550,7 +549,7 @@ export default function MedicalPage() {
                         onChange={() => setSelectedChildren(prev => prev.includes(childKey) ? prev.filter(id => id !== childKey) : [...prev, childKey])}
                         className="w-4 h-4 text-primary rounded" />
                       <span className="text-sm text-foreground">{child.lastName} {child.firstName}</span>
-                      {child.dateOfBirth && <span className="text-xs text-muted-foreground/70">({calculateAge(child.dateOfBirth).displayAr})</span>}
+                      {child.dateOfBirth && <span className="text-xs text-muted-foreground/70">({getAgeDisplay(child.dateOfBirth)})</span>}
                       <span className="text-xs text-muted-foreground/70">{child.gender === 'female' ? t('common.female') : t('common.male')}</span>
                     </label>
                   );
@@ -617,7 +616,7 @@ export default function MedicalPage() {
                 const b = beneficiaries.find((b: Beneficiary) => b.id === showDetailModal.beneficiaryId);
                 return b?.nationalCardNumber ? <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.nationalCardLabel')}</span><span className="font-medium text-foreground" dir="ltr">{b.nationalCardNumber}</span></div> : null;
               })()}
-              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.doctor')}</span><span className="font-medium text-foreground">{showDetailModal.doctorName || (showDetailModal.doctor ? `${showDetailModal.doctor.lastName} ${showDetailModal.doctor.firstName}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-muted-foreground/70 mr-2">({showDetailModal.doctor.specialty.nameAr})</span> : ''}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.doctor')}</span><span className="font-medium text-foreground">{showDetailModal.doctorName || (showDetailModal.doctor ? `${showDetailModal.doctor.lastName} ${showDetailModal.doctor.firstName}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-muted-foreground/70 mr-2">({showDetailModal.doctor.specialty.nameAr || showDetailModal.doctor.specialty.name})</span> : ''}</span></div>
               {showDetailModal.analysisType && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.analysisType')}</span><span className="font-medium text-foreground">{showDetailModal.analysisType}</span></div>}
               {showDetailModal.hospital && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.hospital')}</span><span className="font-medium text-foreground">{showDetailModal.hospital}</span></div>}
               <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('common.date')}</span><span className="font-medium text-foreground">{formatDate(showDetailModal.date)}</span></div>
