@@ -726,7 +726,7 @@ export default function MedicalPage() {
           </h3>
           <p className="text-sm text-muted-foreground mb-4">{t('medical.manageAnalysis')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-4">
-            <Input label={t('medical.name')} value={newAnalysis} onChange={(e) => setNewAnalysis(e.target.value)} placeholder={t('medical.analysisPlaceholder')} dir={dirForInput(association?.locale)} />
+            <Input label={t('medical.name')} value={newAnalysis} onChange={(e) => setNewAnalysis(e.target.value)} placeholder={t('medical.analysisPlaceholder')} dir={dirForInput(i18n.language)} />
             <Button onClick={handleAddAnalysis} disabled={!newAnalysis.trim()}>{t('common.add')}</Button>
           </div>
           <Card>
@@ -742,7 +742,7 @@ export default function MedicalPage() {
                   <tr key={a.id} className="border-b border-border hover:bg-muted">
                     {editAnalysisId === a.id ? (
                       <>
-                        <td className="py-2 px-4"><input value={editAnalysis} onChange={(e) => setEditAnalysis(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
+                        <td className="py-2 px-4"><input value={editAnalysis} onChange={(e) => setEditAnalysis(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(i18n.language)} /></td>
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
                           <Button size="sm" onClick={handleUpdateAnalysis}>{t('common.save')}</Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditAnalysisId(null)}>{t('common.cancel')}</Button>
@@ -772,7 +772,7 @@ export default function MedicalPage() {
           </h3>
           <p className="text-sm text-muted-foreground mb-4">{t('medical.manageHospitals')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-4">
-            <Input label={t('medical.name')} value={newHosp} onChange={(e) => setNewHosp(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} dir={dirForInput(association?.locale)} />
+            <Input label={t('medical.name')} value={newHosp} onChange={(e) => setNewHosp(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} dir={dirForInput(i18n.language)} />
             <Button onClick={handleAddHospital} disabled={!newHosp.trim()}>{t('common.add')}</Button>
           </div>
           <Card>
@@ -788,7 +788,7 @@ export default function MedicalPage() {
                   <tr key={h.id} className="border-b border-border hover:bg-muted">
                     {editHospId === h.id ? (
                       <>
-                        <td className="py-2 px-4"><input value={editHosp} onChange={(e) => setEditHosp(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
+                        <td className="py-2 px-4"><input value={editHosp} onChange={(e) => setEditHosp(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(i18n.language)} /></td>
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
                           <Button size="sm" onClick={handleUpdateHospital}>{t('common.save')}</Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditHospId(null)}>{t('common.cancel')}</Button>

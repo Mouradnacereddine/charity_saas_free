@@ -13,7 +13,7 @@ import { useDoctors, useCreateDoctor, useUpdateDoctor, useDeleteDoctor, useDocto
 const MONTH_KEYS = ['analytics.january','analytics.february','analytics.march','analytics.april','analytics.may','analytics.june','analytics.july','analytics.august','analytics.september','analytics.october','analytics.november','analytics.december'];
 
 export default function DoctorsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { association } = useAuth();
   const queryClient = useQueryClient();
   const { data: doctors = [], isLoading } = useDoctors();
@@ -242,8 +242,8 @@ export default function DoctorsPage() {
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('doctors.sectionName')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label={t('doctors.lastName')} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder={t('doctors.lastNamePlaceholder')} required dir={dirForInput(association?.locale)} />
-              <Input label={t('doctors.firstName')} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder={t('doctors.firstNamePlaceholder')} required dir={dirForInput(association?.locale)} />
+              <Input label={t('doctors.lastName')} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder={t('doctors.lastNamePlaceholder')} required dir={dirForInput(i18n.language)} />
+              <Input label={t('doctors.firstName')} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder={t('doctors.firstNamePlaceholder')} required dir={dirForInput(i18n.language)} />
             </div>
           </div>
 
@@ -415,7 +415,7 @@ export default function DoctorsPage() {
         </h3>
         <p className="text-sm text-muted-foreground mb-4">{t('doctors.manageSpecialties')}</p>
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-4">
-          <Input label={t('doctors.sectionName')} value={newSpec} onChange={(e) => setNewSpec(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} dir={dirForInput(association?.locale)} />
+          <Input label={t('doctors.sectionName')} value={newSpec} onChange={(e) => setNewSpec(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} dir={dirForInput(i18n.language)} />
           <Button onClick={handleAddSpecialty} disabled={!newSpec.trim()}>{t('common.add')}</Button>
         </div>
         <Card>
@@ -435,7 +435,7 @@ export default function DoctorsPage() {
                   <tr key={s.id} className="border-b border-border hover:bg-muted">
                     {editSpecId === s.id ? (
                       <>
-                        <td className="py-2 px-4"><input value={editSpec} onChange={(e) => setEditSpec(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
+                        <td className="py-2 px-4"><input value={editSpec} onChange={(e) => setEditSpec(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(i18n.language)} /></td>
                         <td className="py-2 px-4 hidden sm:table-cell" />
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
                           <Button size="sm" onClick={handleUpdateSpecialty}>{t('common.save')}</Button>

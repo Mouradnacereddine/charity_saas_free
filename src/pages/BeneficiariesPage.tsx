@@ -988,8 +988,8 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('beneficiaries.sectionName')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label={t('beneficiaries.firstName')} value={form.firstName} onChange={(e) => handleFormChange('firstName', e.target.value)} required dir={dirForInput(association?.locale)} />
-              <Input label={t('beneficiaries.lastName')} value={form.lastName} onChange={(e) => handleFormChange('lastName', e.target.value)} required dir={dirForInput(association?.locale)} />
+              <Input label={t('beneficiaries.firstName')} value={form.firstName} onChange={(e) => handleFormChange('firstName', e.target.value)} required dir={dirForInput(i18n.language)} />
+              <Input label={t('beneficiaries.lastName')} value={form.lastName} onChange={(e) => handleFormChange('lastName', e.target.value)} required dir={dirForInput(i18n.language)} />
             </div>
           </div>
 
@@ -997,7 +997,7 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3">{t('beneficiaries.addressTitle')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label={t('beneficiaries.address')} value={form.address} onChange={(e) => handleFormChange('address', e.target.value)} required dir={dirForInput(association?.locale)} />
+              <Input label={t('beneficiaries.address')} value={form.address} onChange={(e) => handleFormChange('address', e.target.value)} required dir={dirForInput(i18n.language)} />
             </div>
           </div>
 
@@ -1071,8 +1071,8 @@ export default function BeneficiariesPage() {
                       <button onClick={() => removeChild(index)} className="text-xs text-destructive hover:text-destructive">✕ {t('beneficiaries.removeChild')}</button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Input label={t('beneficiaries.firstName')} value={child.firstName} onChange={(e) => updateChild(index, 'firstName', e.target.value)} dir={dirForInput(association?.locale)} />
-                      <Input label={t('beneficiaries.lastName')} value={child.lastName} onChange={(e) => updateChild(index, 'lastName', e.target.value)} dir={dirForInput(association?.locale)} />
+                      <Input label={t('beneficiaries.firstName')} value={child.firstName} onChange={(e) => updateChild(index, 'firstName', e.target.value)} dir={dirForInput(i18n.language)} />
+                      <Input label={t('beneficiaries.lastName')} value={child.lastName} onChange={(e) => updateChild(index, 'lastName', e.target.value)} dir={dirForInput(i18n.language)} />
                       <Input label={t('receipt.birthDate')} type="date" value={child.dateOfBirth} onChange={(e) => updateChild(index, 'dateOfBirth', e.target.value)} />
                       <SearchableSelect
                         label={t('beneficiaries.childGender')}
@@ -1440,7 +1440,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
             </h3>
             <p className="text-sm text-muted-foreground mb-4">{t('beneficiaries.settingsDesc')}</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-              <Input label={t('beneficiaries.name')} value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder={t('beneficiaries.attributPlaceholder')} dir={dirForInput(association?.locale)} />
+              <Input label={t('beneficiaries.name')} value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder={t('beneficiaries.attributPlaceholder')} dir={dirForInput(i18n.language)} />
               <Button onClick={handleAddAttribut} disabled={!newAttrName.trim()}>{t('common.add')}</Button>
             </div>
             <Card>
@@ -1457,7 +1457,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                       <tr key={a.name} className="border-b border-border hover:bg-muted">
                         {editAttrId === a.name ? (
                           <>
-                            <td className="py-2 px-4"><input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
+                            <td className="py-2 px-4"><input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(i18n.language)} /></td>
                             <td className="py-2 px-4 text-center flex gap-1 justify-center">
                               <Button size="sm" onClick={handleUpdateAttribut}>{t('common.save')}</Button>
                               <Button size="sm" variant="ghost" onClick={() => setEditAttrId(null)}>{t('common.cancel')}</Button>
@@ -1488,7 +1488,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
             </h3>
             <p className="text-sm text-muted-foreground mb-4">{t('beneficiaries.addSchoolGrade')}</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-              <Input label={t('beneficiaries.sectionName')} value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder={t('beneficiaries.gradePlaceholder')} dir={dirForInput(association?.locale)} />
+              <Input label={t('beneficiaries.sectionName')} value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder={t('beneficiaries.gradePlaceholder')} dir={dirForInput(i18n.language)} />
               <Button onClick={handleAddGrade} disabled={!newGradeName.trim()}>{t('common.add')}</Button>
             </div>
             <Card>
@@ -1505,7 +1505,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                       <tr key={g.id} className="border-b border-border hover:bg-muted">
                         {editGradeId === g.id ? (
                           <>
-                            <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
+                            <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(i18n.language)} /></td>
                             <td className="py-2 px-4 text-center flex gap-1 justify-center">
                               <Button size="sm" onClick={handleUpdateGrade}>{t('common.save')}</Button>
                               <Button size="sm" variant="ghost" onClick={() => setEditGradeId(null)}>{t('common.cancel')}</Button>

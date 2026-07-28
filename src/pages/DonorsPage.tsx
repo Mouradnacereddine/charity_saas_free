@@ -228,8 +228,8 @@ export default function DonorsPage() {
         title={editingId ? t('donors.edit') : t('donors.addTitle')} size="lg">
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label={t('donors.lastName')} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder={t('donors.lastNamePlaceholder')} required dir={dirForInput(association?.locale)} />
-            <Input label={t('donors.firstName')} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder={t('donors.firstNamePlaceholder')} required dir={dirForInput(association?.locale)} />
+            <Input label={t('donors.lastName')} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder={t('donors.lastNamePlaceholder')} required dir={dirForInput(i18n.language)} />
+            <Input label={t('donors.firstName')} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder={t('donors.firstNamePlaceholder')} required dir={dirForInput(i18n.language)} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label={t('donors.phone')} type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="05XX XX XX XX" dir="ltr" required />
