@@ -479,8 +479,6 @@ export default function BeneficiariesPage() {
       reference: b.reference || '—',
       lastName: b.lastName,
       firstName: b.firstName,
-      firstName: b.firstName,
-      lastName: b.lastName,
       nationalCardNumber: b.nationalCardNumber || '—',
       phone: b.phone,
       dateOfBirth: b.dateOfBirth ? formatDate(b.dateOfBirth) : '—',
@@ -495,6 +493,8 @@ export default function BeneficiariesPage() {
       labels: {
         title: t('receipt.beneficiaryCard'),
         personalInfo: t('receipt.personalInfo'),
+        fullName: t('receipt.fullName'),
+        fullName: t('receipt.name'),
         name: t('receipt.nameAr'),
         attribut: t('receipt.attribute'),
         birthDate: t('receipt.birthDate'),
@@ -524,7 +524,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">${t('beneficiaries.childrenDetails')} (${b.children.length})</div>
         <table class="data-table">
-          <thead><tr><th>{t('beneficiaries.sectionName')}</th><th>{t('beneficiaries.filterGender')}</th><th>{t('receipt.age')}</th><th>{t('common.status')}</th><th>{t('beneficiaries.schoolGrade')}</th></tr></thead>
+          <thead><tr><th>${t("beneficiaries.sectionName")}</th><th>${t("beneficiaries.filterGender")}</th><th>${t("receipt.age")}</th><th>${t("common.status")}</th><th>${t("beneficiaries.schoolGrade")}</th></tr></thead>
           <tbody>${b.children.map((ch: any) => `
             <tr>
               <td>${ch.lastName} ${ch.firstName}</td>
@@ -540,7 +540,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">${t('beneficiaries.titleIncomingDonations')} (${allocations.length})</div>
         <table class="data-table">
-          <thead><tr><th>${t('beneficiaries.tableDonor')}</th><th>{t('common.amount')}</th><th>${t('beneficiaries.spent')}</th><th>${t('beneficiaries.remaining')}</th><th>{t('common.status')}</th><th>{t('common.date')}</th></tr></thead>
+          <thead><tr><th>${t('beneficiaries.tableDonor')}</th><th>${t("common.amount")}</th><th>${t('beneficiaries.spent')}</th><th>${t('beneficiaries.remaining')}</th><th>${t("common.status")}</th><th>${t("common.date")}</th></tr></thead>
           <tbody>${allocations.map((a: DonationAllocation) => {
             const spent = a.amount - a.remainingAmount
             const s = a.creditTransaction?.status
@@ -567,7 +567,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">${t('beneficiaries.titleDisbursed')} (${debits.length})</div>
         <table class="data-table">
-          <thead><tr><th>{t('common.date')}</th><th>{t('common.amount')}</th><th>${t('beneficiaries.fundingSource')}</th><th>{t('dashboard.fund')}</th><th>{t('common.status')}</th><th>{t('common.description')}</th></tr></thead>
+          <thead><tr><th>${t("common.date")}</th><th>${t("common.amount")}</th><th>${t('beneficiaries.fundingSource')}</th><th>${t("dashboard.fund")}</th><th>${t("common.status")}</th><th>${t("common.description")}</th></tr></thead>
           <tbody>${debits.map((tx: any) => {
             const c = caisses.find((c: any) => c.id === tx.caisseId)
             const s = (tx.status || 'completed') === 'pending' ? t('dashboard.pending') : (tx.status || 'completed') === 'cancelled' ? t('dashboard.cancelled') : t('dashboard.completed')
@@ -587,7 +587,7 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">${t('beneficiaries.titleMedicalReferrals')} (${referrals.length})</div>
         <table class="data-table">
-          <thead><tr><th>{t('common.date')}</th><th>${t('beneficiaries.doctor')}</th><th>{t('common.amount')}</th><th>${t('beneficiaries.analysis')}</th><th>${t('beneficiaries.hospital')}</th><th>{t('beneficiaries.referralChildren')}</th></tr></thead>
+          <thead><tr><th>${t("common.date")}</th><th>${t('beneficiaries.doctor')}</th><th>${t("common.amount")}</th><th>${t('beneficiaries.analysis')}</th><th>${t('beneficiaries.hospital')}</th><th>${t("beneficiaries.referralChildren")}</th></tr></thead>
           <tbody>${referrals.map((ref: any) => {
             const childrenNames = ref.children && Array.isArray(ref.children) && ref.children.length > 0
               ? ref.children.map((c: any) => c.name).join(', ')
@@ -637,18 +637,18 @@ export default function BeneficiariesPage() {
           <div class="sub">${b.reference || ''}</div>
         </div>
         <div class="section">
-          <div class="section-title">{t('beneficiaries.personalInfo')}</div>
+          <div class="section-title">${t("beneficiaries.personalInfo")}</div>
           <div class="info-grid">
             <div class="item"><span class="lbl">${t('beneficiaries.nameAr')}</span><span class="val">${b.lastName} ${b.firstName}</span></div>
             <div class="item"><span class="lbl">${t('beneficiaries.nameLatin')}</span><span class="val">${b.firstName} ${b.lastName}</span></div>
-            <div class="item"><span class="lbl">{t('receipt.idNumber')}</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
-            <div class="item"><span class="lbl">{t('receipt.phone')}</span><span class="val">${b.phone}</span></div>
-            <div class="item"><span class="lbl">{t('receipt.birthDate')}</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${getAgeDisplay(b.dateOfBirth)})` : '—'}</span></div>
-            <div class="item"><span class="lbl">{t('beneficiaries.filterAttribute')}</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
-            <div class="item"><span class="lbl">{t('beneficiaries.filterGender')}</span><span class="val">${b.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
+            <div class="item"><span class="lbl">${t("receipt.idNumber")}</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
+            <div class="item"><span class="lbl">${t("receipt.phone")}</span><span class="val">${b.phone}</span></div>
+            <div class="item"><span class="lbl">${t("receipt.birthDate")}</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${getAgeDisplay(b.dateOfBirth)})` : '—'}</span></div>
+            <div class="item"><span class="lbl">${t("beneficiaries.filterAttribute")}</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
+            <div class="item"><span class="lbl">${t("beneficiaries.filterGender")}</span><span class="val">${b.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
             <div class="item"><span class="lbl">${t('beneficiaries.addressTitle')}</span><span class="val">${b.address || '—'}</span></div>
-            <div class="item"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.name || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
-            ${b.situation ? `<div class="item"><span class="lbl">{t('common.status')}</span><span class="val">${HEALTH_STATUS_LABELS[b.situation] || b.situation}</span></div>` : ''}
+            <div class="item"><span class="lbl">${t("dashboard.fund")}</span><span class="val">${caisse?.name || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
+            ${b.situation ? `<div class="item"><span class="lbl">${t("common.status")}</span><span class="val">${HEALTH_STATUS_LABELS[b.situation] || b.situation}</span></div>` : ''}
             ${b.notes ? `<div class="item"><span class="lbl" style="min-width:140px">${t('common.notes')}</span><span class="val">${b.notes}</span></div>` : ''}
           </div>
         </div>

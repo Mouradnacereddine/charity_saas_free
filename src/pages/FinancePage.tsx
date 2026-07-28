@@ -325,7 +325,7 @@ export default function FinancePage() {
     if (tx.type === 'credit') {
       const donor = donors.find((d: Donor) => d.id === tx.donorId)
       printReceipt(
-        t('receipt.title'), 'Reçu de Don',
+        t('receipt.title'), t('receipt.title'),
         `<div class="col"><div class="row"><span class="lbl">${t('receipt.receiptNo')}</span><span class="val">${tx.receiptNumber || '—'}</span></div>
 <div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
 <div class="row"><span class="lbl">${t('dashboard.donor')}</span><span class="val">${donor ? `${donor.lastName} ${donor.firstName}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div></div>
@@ -341,7 +341,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
     } else {
       const benef = beneficiaries.find((b: Beneficiary) => b.id === tx.beneficiaryId)
       printReceipt(
-        t('receipt.expenseTitle'), 'Bon de Sortie',
+        t('receipt.expenseTitle'), t('receipt.expenseTitle'),
         `<div class="col"><div class="row"><span class="lbl">${t('receipt.receiptNo')}</span><span class="val">${tx.receiptNumber || '—'}</span></div>
 <div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
 <div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${benef ? `${benef.lastName} ${benef.firstName}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div></div>
