@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryApi, loansApi } from '../lib/api';
+import { asArray } from './useApiSafety';
 
 // ---- Articles ----
 export function useArticles(params?: Record<string, string>) {
@@ -7,7 +8,7 @@ export function useArticles(params?: Record<string, string>) {
     queryKey: ['articles', params],
     queryFn: async () => {
       const res = await inventoryApi.articles(params);
-      return res.data;
+      return asArray(res.data);
     },
   });
 }
@@ -42,7 +43,7 @@ export function useArticleCategories() {
     queryKey: ['article-categories'],
     queryFn: async () => {
       const res = await inventoryApi.categories();
-      return res.data;
+      return asArray(res.data);
     },
   });
 }
@@ -77,7 +78,7 @@ export function useArticleStatuses() {
     queryKey: ['article-statuses'],
     queryFn: async () => {
       const res = await inventoryApi.statuses();
-      return res.data;
+      return asArray(res.data);
     },
   });
 }
@@ -112,7 +113,7 @@ export function useStorageLocations() {
     queryKey: ['storage-locations'],
     queryFn: async () => {
       const res = await inventoryApi.locations();
-      return res.data;
+      return asArray(res.data);
     },
   });
 }
@@ -147,7 +148,7 @@ export function useLoans(params?: Record<string, string>) {
     queryKey: ['loans', params],
     queryFn: async () => {
       const res = await loansApi.list(params);
-      return res.data;
+      return asArray(res.data);
     },
   });
 }
@@ -210,7 +211,7 @@ export function useSchoolGrades() {
     queryKey: ['school-grades'],
     queryFn: async () => {
       const res = await inventoryApi.schoolGrades();
-      return res.data;
+      return asArray(res.data);
     },
   });
 }
