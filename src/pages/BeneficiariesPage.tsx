@@ -587,17 +587,19 @@ export default function BeneficiariesPage() {
       <div class="section">
         <div class="section-title">${t('beneficiaries.titleMedicalReferrals')} (${referrals.length})</div>
         <table class="data-table">
-          <thead><tr><th>${t("common.date")}</th><th>${t('beneficiaries.doctor')}</th><th>${t("common.amount")}</th><th>${t('beneficiaries.analysis')}</th><th>${t('beneficiaries.hospital')}</th><th>${t("beneficiaries.referralChildren")}</th></tr></thead>
+          <thead><tr><th>${t("common.date")}</th><th>${t('beneficiaries.doctor')}</th><th>${t("common.amount")}</th><th>${t('beneficiaries.analysis')}</th><th>${t('beneficiaries.hospital')}</th><th>${t("common.status")}</th><th>${t("beneficiaries.referralChildren")}</th></tr></thead>
           <tbody>${referrals.map((ref: any) => {
             const childrenNames = ref.children && Array.isArray(ref.children) && ref.children.length > 0
               ? ref.children.map((c: any) => c.name).join(', ')
               : '—'
+            const refStatus = (ref.status || 'pending') === 'pending' ? t('dashboard.pending') : (ref.status || 'pending') === 'completed' ? t('dashboard.completed') : t('dashboard.cancelled')
             return `<tr>
               <td>${formatDate(ref.date)}</td>
               <td>${ref.doctorName}</td>
               <td>${formatCurrency(ref.amount)}</td>
               <td>${ref.analysisType || '—'}</td>
               <td>${ref.hospital || '—'}</td>
+              <td>${refStatus}</td>
               <td>${childrenNames}</td>
             </tr>`
           }).join('')}</tbody>
