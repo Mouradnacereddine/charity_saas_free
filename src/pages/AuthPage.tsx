@@ -96,8 +96,8 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
     setError('');
     // Réinitialiser le formulaire d'association pour un nouveau compte
     setShowAssocForm(false);
-    setAssocNameAr('');
     setAssocName('');
+    setAssocLocale('ar');
 
     const hash = window.location.hash;
     const match = hash.match(/[?&]invite=([^&]+)/);

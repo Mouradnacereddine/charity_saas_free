@@ -125,9 +125,7 @@ export default function MedicalPage() {
   });
 
   const selectedDoctor = allDoctors.find((d: any) => d.id === doctorId);
-  const [analysisTypeAr, setAnalysisTypeAr] = useState('');
   const [analysisType, setAnalysisType] = useState('');
-  const [hospitalAr, setHospitalAr] = useState('');
   const [hospital, setHospital] = useState('');
   const [amount, setAmount] = useState(0);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -177,9 +175,8 @@ export default function MedicalPage() {
     setBeneficiaryId('');
     setCaisseId('');
     setSubCategoryId('');
-    setAnalysisTypeAr('');
     setAnalysisType('');
-    setHospitalAr('');
+    setAnalysisType('');
     setHospital('');
     setAmount(0);
     setDate(new Date().toISOString().split('T')[0]);
@@ -209,14 +206,11 @@ export default function MedicalPage() {
       await createMedicalReferral.mutateAsync({
         beneficiaryId,
         beneficiaryName: `${beneficiary.firstName} ${beneficiary.lastName}`,
-        beneficiaryNameAr: `${beneficiary.lastName} ${beneficiary.firstName}`,
         caisseId,
         subCategoryId: subCategoryId || undefined,
         doctorId,
         analysisType: analysisType || undefined,
-        analysisTypeAr: analysisTypeAr || undefined,
         hospital: hospital || undefined,
-        hospitalAr: hospitalAr || undefined,
         amount: amount || 0,
         status: txStatus,
         date,
@@ -584,10 +578,10 @@ export default function MedicalPage() {
               placeholder={t('doctors.specialtyPlaceholder')} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableSelect labelAr={t('medical.analysisType')} value={analysisTypeAr} onChange={(val) => { const a = analysisTypes.find((x: MedicalAnalysisType) => x.nameAr === val); setAnalysisTypeAr(val); setAnalysisType(a?.name || val); }}
-              options={analysisTypes.map((a: MedicalAnalysisType) => ({ value: a.nameAr, label: a.nameAr }))} placeholder={t('doctors.specialtyPlaceholder')} />
-            <SearchableSelect labelAr={t('medical.hospital')} value={hospitalAr} onChange={(val) => { const h = hospitals.find((x: MedicalHospital) => x.nameAr === val); setHospitalAr(val); setHospital(h?.name || val); }}
-              options={hospitals.map((h: MedicalHospital) => ({ value: h.nameAr, label: h.nameAr }))} placeholder={t('doctors.specialtyPlaceholder')} />
+            <SearchableSelect label={t('medical.analysisType')} value={analysisType} onChange={(val) => setAnalysisType(val)}
+              options={analysisTypes.map((a: MedicalAnalysisType) => ({ value: a.name, label: a.name }))} placeholder={t('doctors.specialtyPlaceholder')} />
+            <SearchableSelect label={t('medical.hospital')} value={hospital} onChange={(val) => setHospital(val)}
+              options={hospitals.map((h: MedicalHospital) => ({ value: h.name, label: h.name }))} placeholder={t('doctors.specialtyPlaceholder')} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
