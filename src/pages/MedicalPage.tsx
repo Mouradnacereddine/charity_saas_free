@@ -96,16 +96,12 @@ export default function MedicalPage() {
   };
 
   // Settings tab state
-  const [newAnalysisAr, setNewAnalysisAr] = useState('')
-  const [newAnalysisFr, setNewAnalysisFr] = useState('')
+  const [newAnalysis, setNewAnalysis] = useState('')
   const [editAnalysisId, setEditAnalysisId] = useState<string | null>(null)
-  const [editAnalysisAr, setEditAnalysisAr] = useState('')
-  const [editAnalysisFr, setEditAnalysisFr] = useState('')
-  const [newHospAr, setNewHospAr] = useState('')
-  const [newHospFr, setNewHospFr] = useState('')
+  const [editAnalysis, setEditAnalysis] = useState('')
+  const [newHosp, setNewHosp] = useState('')
   const [editHospId, setEditHospId] = useState<string | null>(null)
-  const [editHospAr, setEditHospAr] = useState('')
-  const [editHospFr, setEditHospFr] = useState('')
+  const [editHosp, setEditHosp] = useState('')
 
   // Form states
   const [beneficiaryId, setBeneficiaryId] = useState('');
@@ -143,28 +139,28 @@ export default function MedicalPage() {
   };
 
   const handleAddAnalysis = async () => {
-    if (!newAnalysisAr.trim()) return
-    await createAnalysisMutation.mutateAsync({ name: newAnalysisFr.trim(), nameAr: newAnalysisAr.trim() })
-    setNewAnalysisAr(''); setNewAnalysisFr('')
+    if (!newAnalysis.trim()) return
+    await createAnalysisMutation.mutateAsync({ name: newAnalysis.trim() })
+    setNewAnalysis('')
   }
   const handleUpdateAnalysis = async () => {
-    if (!editAnalysisId || !editAnalysisAr.trim()) return
-    await updateAnalysisMutation.mutateAsync({ id: editAnalysisId, data: { name: editAnalysisFr.trim(), nameAr: editAnalysisAr.trim() } })
-    setEditAnalysisId(null); setEditAnalysisAr(''); setEditAnalysisFr('')
+    if (!editAnalysisId || !editAnalysis.trim()) return
+    await updateAnalysisMutation.mutateAsync({ id: editAnalysisId, data: { name: editAnalysis.trim() } })
+    setEditAnalysisId(null); setEditAnalysis('')
   }
   const handleDeleteAnalysis = async (id: string) => {
     if (!window.confirm(t('medical.confirmDeleteAnalysis'))) return
     await deleteAnalysisMutation.mutateAsync(id)
   }
   const handleAddHospital = async () => {
-    if (!newHospAr.trim()) return
-    await createHospitalMutation.mutateAsync({ name: newHospFr.trim(), nameAr: newHospAr.trim() })
-    setNewHospAr(''); setNewHospFr('')
+    if (!newHosp.trim()) return
+    await createHospitalMutation.mutateAsync({ name: newHosp.trim() })
+    setNewHosp('')
   }
   const handleUpdateHospital = async () => {
-    if (!editHospId || !editHospAr.trim()) return
-    await updateHospitalMutation.mutateAsync({ id: editHospId, data: { name: editHospFr.trim(), nameAr: editHospAr.trim() } })
-    setEditHospId(null); setEditHospAr(''); setEditHospFr('')
+    if (!editHospId || !editHosp.trim()) return
+    await updateHospitalMutation.mutateAsync({ id: editHospId, data: { name: editHosp.trim() } })
+    setEditHospId(null); setEditHosp('')
   }
   const handleDeleteHospital = async (id: string) => {
     if (!window.confirm(t('medical.confirmDeleteHospital'))) return
@@ -175,7 +171,6 @@ export default function MedicalPage() {
     setBeneficiaryId('');
     setCaisseId('');
     setSubCategoryId('');
-    setAnalysisType('');
     setAnalysisType('');
     setHospital('');
     setAmount(0);
@@ -195,11 +190,11 @@ export default function MedicalPage() {
       const child = (beneficiary.children || []).find((c: any) => c.id === childId || `${c.firstName} ${c.lastName}` === childId);
       return child ? {
         id: child.id || childId,
-        nameAr: `${child.lastName || ''} ${child.firstName || ''}`.trim(),
+        name: `${child.lastName || ''} ${child.firstName || ''}`.trim(),
         name: `${child.firstName || ''} ${child.lastName || ''}`.trim(),
         age: calculateAge(child.dateOfBirth).displayAr,
         gender: child.gender || 'male',
-      } : { id: childId, nameAr: childId, name: '', age: '', gender: 'male' };
+      } : { id: childId, name: childId, age: '', gender: 'male' };
     });
 
     try {
@@ -241,7 +236,7 @@ export default function MedicalPage() {
 
     const childrenHtml = referral.children && Array.isArray(referral.children) && referral.children.length > 0
       ? referral.children.map((c: any) => {
-          const nameAr = c.nameAr || `${c.lastName || ''} ${c.firstName || ''}`.trim() || '—'
+          const childName = c.name || `${c.lastName || ''} ${c.firstName || ''}`.trim() || '—'
           let ageDisplay = ''
           try {
             if (c.dateOfBirth) {
@@ -252,7 +247,7 @@ export default function MedicalPage() {
             }
           } catch { ageDisplay = '' }
           const gender = c.gender === 'female' ? t('common.female') : c.gender === 'male' ? t('common.male') : ''
-          return `<div class="child-item"><span class="child-name">${nameAr}</span>${ageDisplay ? ` — ${ageDisplay}` : ''}${gender ? ` — ${gender}` : ''}</div>`
+          return `<div class="child-item"><span class="child-name">${c.name}</span>${ageDisplay ? ` — ${ageDisplay}` : ''}${gender ? ` — ${gender}` : ''}</div>`
         }).join('')
       : ''
 
@@ -294,7 +289,7 @@ export default function MedicalPage() {
 </head>
 <body>
   <div class="header">
-    <span class="assoc">🕌 ${association?.nameAr || t('app.title')}</span>
+    <span class="assoc">🕌 ${association?.name || t('app.title')}</span>
     <span class="title">${t('medical.title')}</span>
   </div>
   <div class="info-grid">
@@ -356,8 +351,8 @@ export default function MedicalPage() {
     if (committedAnalysis && !(r.analysisType?.includes(committedAnalysis))) return false;
     if (committedStatus && (r.status || 'pending') !== committedStatus) return false;
 
-    const docSpecialtyAr = r.doctor?.specialty?.nameAr || '';
-    if (committedSpecialty && !docSpecialtyAr.includes(committedSpecialty)) return false;
+    const docSpecialty = r.doctor?.specialty?.name || '';
+    if (committedSpecialty && !docSpecialty.includes(committedSpecialty)) return false;
 
     return true;
   });
@@ -386,7 +381,7 @@ export default function MedicalPage() {
                 onChange={setFilterCaisseId}
                 options={caisses.map((c: Caisse) => ({
                   value: c.id,
-                  label: c.nameAr,
+                  label: c.name,
                 }))}
               />
               <div>
@@ -425,7 +420,7 @@ export default function MedicalPage() {
                 onChange={setFilterDoctor}
                 options={allDoctors.map((d: any) => ({
                   value: `${d.lastName} ${d.firstName}`,
-                  label: `${d.lastName} ${d.firstName}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''}`,
+                  label: `${d.lastName} ${d.firstName}${d.specialty ? ' (' + d.specialty.name + ')' : ''}`,
                 }))}
                 placeholder={t('doctors.specialtyPlaceholder')}
               />
@@ -434,8 +429,8 @@ export default function MedicalPage() {
                 value={filterAnalysis}
                 onChange={setFilterAnalysis}
                 options={analysisTypes.map((a: any) => ({
-                  value: a.nameAr,
-                  label: a.nameAr,
+                  value: a.name,
+                  label: a.name,
                 }))}
                 placeholder={t('doctors.specialtyPlaceholder')}
               />
@@ -444,8 +439,8 @@ export default function MedicalPage() {
                 value={filterSpecialty}
                 onChange={setFilterSpecialty}
                 options={specialties.map((s: any) => ({
-                  value: s.nameAr,
-                  label: s.nameAr,
+                  value: s.name,
+                  label: s.name,
                 }))}
                 placeholder={t('doctors.specialtyPlaceholder')}
               />
@@ -532,7 +527,7 @@ export default function MedicalPage() {
             <SearchableSelect labelAr={t('medical.beneficiary')} value={beneficiaryId} onChange={setBeneficiaryId}
               options={beneficiaries.map((b: Beneficiary) => ({ value: b.id, label: `${b.lastName} ${b.firstName} (${b.reference || ''})` }))} />
             <SearchableSelect labelAr={t('dashboard.fund')} value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
-              options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))} />
+              options={caisses.map((c: Caisse) => ({ value: c.id, label: c.name }))} />
           </div>
           {selectedBeneficiary && (
             <div className="px-3 py-2 bg-accent border border-accent/30 rounded-lg text-xs flex gap-3 flex-wrap">
@@ -567,13 +562,13 @@ export default function MedicalPage() {
             const subs = sc?.subCategories || []
             if (subs.length === 0) return null
             return <SearchableSelect labelAr={t('medical.subCategory')} value={subCategoryId} onChange={setSubCategoryId}
-              options={subs.map((s: SubCategory) => ({ value: s.id, label: s.nameAr }))} />
+              options={subs.map((s: SubCategory) => ({ value: s.id, label: s.name }))} />
           })()}
           <div className="md:col-span-2">
             <SearchableSelect labelAr={t('medical.doctor')} value={doctorId} onChange={setDoctorId}
               options={allDoctors.map((d: any) => ({
                 value: d.id,
-                label: `${d.lastName} ${d.firstName}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''} | ${d.phone}${d.address ? ' - ' + d.address : ''}`,
+                label: `${d.lastName} ${d.firstName}${d.specialty ? ' (' + d.specialty.name + ')' : ''} | ${d.phone}${d.address ? ' - ' + d.address : ''}`,
               }))}
               placeholder={t('doctors.specialtyPlaceholder')} />
           </div>
@@ -628,7 +623,7 @@ export default function MedicalPage() {
               {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-muted-foreground">{t('medical.referralChildrenLabel')}</span>
-                  <span className="font-medium text-foreground text-left">{showDetailModal.children.map((c: any) => c.nameAr || c.name || c.id).join('، ')}</span>
+                  <span className="font-medium text-foreground text-left">{showDetailModal.children.map((c: any) => c.name || c.name || c.id).join('، ')}</span>
                 </div>
               )}
               {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
@@ -637,7 +632,7 @@ export default function MedicalPage() {
                   <div className="space-y-1">
                     {showDetailModal.children.map((c: any, i: number) => (
                       <div key={i} className="flex items-center gap-3 text-sm bg-white rounded-lg px-3 py-2 border border-border">
-                        <span className="font-medium text-foreground">{c.nameAr || c.name || c.id}</span>
+                        <span className="font-medium text-foreground">{c.name || c.name || c.id}</span>
                         {c.age && <span className="text-xs text-muted-foreground/70">{t('receipt.age')}: {c.age}</span>}
                         <span className="text-xs text-muted-foreground/70">| {c.gender === 'female' ? t('common.female') : t('common.male')}</span>
                       </div>
@@ -730,17 +725,15 @@ export default function MedicalPage() {
           </h3>
           <p className="text-sm text-muted-foreground mb-4">{t('medical.manageAnalysis')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-            <Input labelAr={t('medical.nameAr')} value={newAnalysisAr} onChange={(e) => setNewAnalysisAr(e.target.value)} placeholder={t('medical.analysisPlaceholder')} />
-            <Input labelAr={t('medical.nameLatin')} value={newAnalysisFr} onChange={(e) => setNewAnalysisFr(e.target.value)} placeholder={t('medical.analysisPlaceholder')} dir="ltr" />
-            <Button onClick={handleAddAnalysis} disabled={!newAnalysisAr.trim()}>{t('common.add')}</Button>
+            <Input label={t('medical.name')} value={newAnalysis} onChange={(e) => setNewAnalysis(e.target.value)} placeholder={t('medical.analysisPlaceholder')} dir={dirForInput(association?.locale)} />
+            <Button onClick={handleAddAnalysis} disabled={!newAnalysis.trim()}>{t('common.add')}</Button>
           </div>
           <Card>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.tableArabic')}</th>
-                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.tableLatin')}</th>
+                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.sectionName')}</th>
                     <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('medical.tableActions')}</th>
                   </tr>
                 </thead>
@@ -748,8 +741,7 @@ export default function MedicalPage() {
                   <tr key={a.id} className="border-b border-border hover:bg-muted">
                     {editAnalysisId === a.id ? (
                       <>
-                        <td className="py-2 px-4"><input value={editAnalysisAr} onChange={(e) => setEditAnalysisAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
-                        <td className="py-2 px-4"><input value={editAnalysisFr} onChange={(e) => setEditAnalysisFr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                        <td className="py-2 px-4"><input value={editAnalysis} onChange={(e) => setEditAnalysis(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
                           <Button size="sm" onClick={handleUpdateAnalysis}>{t('common.save')}</Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditAnalysisId(null)}>{t('common.cancel')}</Button>
@@ -757,10 +749,9 @@ export default function MedicalPage() {
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-foreground">{a.nameAr}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{a.name}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{a.name}</td>
                         <td className="py-3 px-4 text-center">
-                          <button onClick={() => { setEditAnalysisId(a.id); setEditAnalysisAr(a.nameAr); setEditAnalysisFr(a.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditAnalysisId(a.id); setEditAnalysis(a.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
                           <button onClick={() => handleDeleteAnalysis(a.id)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </>
@@ -780,17 +771,15 @@ export default function MedicalPage() {
           </h3>
           <p className="text-sm text-muted-foreground mb-4">{t('medical.manageHospitals')}</p>
           <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-            <Input labelAr={t('medical.nameAr')} value={newHospAr} onChange={(e) => setNewHospAr(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} />
-            <Input labelAr={t('medical.nameLatin')} value={newHospFr} onChange={(e) => setNewHospFr(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} dir="ltr" />
-            <Button onClick={handleAddHospital} disabled={!newHospAr.trim()}>{t('common.add')}</Button>
+            <Input label={t('medical.name')} value={newHosp} onChange={(e) => setNewHosp(e.target.value)} placeholder={t('medical.hospitalPlaceholder')} dir={dirForInput(association?.locale)} />
+            <Button onClick={handleAddHospital} disabled={!newHosp.trim()}>{t('common.add')}</Button>
           </div>
           <Card>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.tableArabic')}</th>
-                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.tableLatin')}</th>
+                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.sectionName')}</th>
                     <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('medical.tableActions')}</th>
                   </tr>
                 </thead>
@@ -798,8 +787,7 @@ export default function MedicalPage() {
                   <tr key={h.id} className="border-b border-border hover:bg-muted">
                     {editHospId === h.id ? (
                       <>
-                        <td className="py-2 px-4"><input value={editHospAr} onChange={(e) => setEditHospAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
-                        <td className="py-2 px-4"><input value={editHospFr} onChange={(e) => setEditHospFr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                        <td className="py-2 px-4"><input value={editHosp} onChange={(e) => setEditHosp(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
                           <Button size="sm" onClick={handleUpdateHospital}>{t('common.save')}</Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditHospId(null)}>{t('common.cancel')}</Button>
@@ -807,10 +795,9 @@ export default function MedicalPage() {
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-foreground">{h.nameAr}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{h.name}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{h.name}</td>
                         <td className="py-3 px-4 text-center">
-                          <button onClick={() => { setEditHospId(h.id); setEditHospAr(h.nameAr); setEditHospFr(h.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditHospId(h.id); setEditHosp(h.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
                           <button onClick={() => handleDeleteHospital(h.id)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </>

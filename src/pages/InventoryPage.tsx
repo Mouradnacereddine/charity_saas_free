@@ -63,19 +63,19 @@ const EMPTY_ARTICLE_FORM = {
 
 // ---- Helpers ----
 
-function getCategoryNameAr(category: any, categories: ArticleCategory[]): string {
+function getCategoryName(category: any, categories: ArticleCategory[]): string {
   if (!category) return '—'
   // API may return an object (with include) or a string ID
-  if (typeof category === 'object') return category.nameAr || category.name || '—'
+  if (typeof category === 'object') return category.name || '—'
   const found = categories.find((c: ArticleCategory) => c.id === category)
-  return found ? found.nameAr : category
+  return found ? found.name : category
 }
 
-function getStorageNameAr(storageLocation: any, locations: StorageLocation[]): string {
+function getStorageName(storageLocation: any, locations: StorageLocation[]): string {
   if (!storageLocation) return '—'
-  if (typeof storageLocation === 'object') return storageLocation.nameAr || storageLocation.name || '—'
+  if (typeof storageLocation === 'object') return storageLocation.name || '—'
   const found = locations.find((l: StorageLocation) => l.id === storageLocation)
-  return found ? found.nameAr : storageLocation
+  return found ? found.name : storageLocation
 }
 
 /** Guess French status name from Arabic input (simple transliteration helper). */
@@ -217,17 +217,13 @@ function SettingsTab() { const { t, i18n } = useTranslation();
   const updateSts = useUpdateStatus()
   const deleteSts = useDeleteStatus()
   // Category form state
-  const [newCatNameAr, setNewCatNameAr] = useState('')
   const [newCatName, setNewCatName] = useState('')
   const [editCatId, setEditCatId] = useState<string | null>(null)
-  const [editCatNameAr, setEditCatNameAr] = useState('')
   const [editCatName, setEditCatName] = useState('')
 
   // Location form state
-  const [newLocNameAr, setNewLocNameAr] = useState('')
   const [newLocName, setNewLocName] = useState('')
   const [editLocId, setEditLocId] = useState<string | null>(null)
-  const [editLocNameAr, setEditLocNameAr] = useState('')
   const [editLocName, setEditLocName] = useState('')
 
   // Status form state
@@ -244,9 +240,8 @@ function SettingsTab() { const { t, i18n } = useTranslation();
   // ---- Category CRUD ----
 
   const handleAddCategory = async () => {
-    if (!newCatNameAr.trim()) return
-    await createCat.mutateAsync({ name: newCatName.trim(), nameAr: newCatNameAr.trim() })
-    setNewCatNameAr('')
+    if (!newCatName.trim()) return
+    await createCat.mutateAsync({ name: newCatName.trim() })
     setNewCatName('')
   }
 
@@ -257,30 +252,26 @@ function SettingsTab() { const { t, i18n } = useTranslation();
 
   const startEditCategory = (cat: ArticleCategory) => {
     setEditCatId(cat.id)
-    setEditCatNameAr(cat.nameAr)
     setEditCatName(cat.name)
   }
 
   const handleUpdateCategory = async () => {
-    if (!editCatId || !editCatNameAr.trim()) return
-    await updateCat.mutateAsync({ id: editCatId, data: { name: editCatName.trim(), nameAr: editCatNameAr.trim() } })
+    if (!editCatId || !editCatName.trim()) return
+    await updateCat.mutateAsync({ id: editCatId, data: { name: editCatName.trim() } })
     setEditCatId(null)
-    setEditCatNameAr('')
     setEditCatName('')
   }
 
   const cancelEditCategory = () => {
     setEditCatId(null)
-    setEditCatNameAr('')
     setEditCatName('')
   }
 
   // ---- Location CRUD ----
 
   const handleAddLocation = async () => {
-    if (!newLocNameAr.trim()) return
-    await createLoc.mutateAsync({ name: newLocName.trim(), nameAr: newLocNameAr.trim() })
-    setNewLocNameAr('')
+    if (!newLocName.trim()) return
+    await createLoc.mutateAsync({ name: newLocName.trim() })
     setNewLocName('')
   }
 
@@ -291,21 +282,19 @@ function SettingsTab() { const { t, i18n } = useTranslation();
 
   const startEditLocation = (loc: StorageLocation) => {
     setEditLocId(loc.id)
-    setEditLocNameAr(loc.nameAr)
     setEditLocName(loc.name)
   }
 
   const handleUpdateLocation = async () => {
-    if (!editLocId || !editLocNameAr.trim()) return
-    await updateLoc.mutateAsync({ id: editLocId, data: { name: editLocName.trim(), nameAr: editLocNameAr.trim() } })
+    if (!editLocId || !editLocName.trim()) return
+    await updateLoc.mutateAsync({ id: editLocId, data: { name: editLocName.trim() } })
     setEditLocId(null)
-    setEditLocNameAr('')
     setEditLocName('')
+  }
   }
 
   const cancelEditLocation = () => {
     setEditLocId(null)
-    setEditLocNameAr('')
     setEditLocName('')
   }
 
@@ -353,22 +342,15 @@ function SettingsTab() { const { t, i18n } = useTranslation();
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
-              labelAr={t('inventory.nameAr')}
-              value={newCatNameAr}
-              onChange={(e) => setNewCatNameAr(e.target.value)}
-              placeholder={t('inventory.nameArPlaceholder')}
-            />
-          </div>
-          <div className="flex-1">
-            <Input
-              labelAr={t('inventory.nameLatin')}
+              label={t('inventory.name')}
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
-              placeholder={t('inventory.nameArPlaceholder')}
+              placeholder={t('inventory.namePlaceholder')}
+              dir={dirForInput(association?.locale)}
             />
           </div>
           <div className="flex items-end">
-            <Button onClick={handleAddCategory} disabled={!newCatNameAr.trim()}>
+            <Button onClick={handleAddCategory} disabled={!newCatName.trim()}>
               <Plus className="w-4 h-4" />
 {t("common.add")}
             </Button>
@@ -383,8 +365,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.nameAr')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.nameLatin')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.name')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
@@ -396,23 +377,16 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                         <td className="py-3 px-4">
                           <input
                             type="text"
-                            value={editCatNameAr}
-                            onChange={(e) => setEditCatNameAr(e.target.value)}
+                            value={editCatName}
+                            onChange={(e) => setEditCatName(e.target.value)}
                             className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                            dir={dirForInput(association?.locale)}
                             autoFocus
                           />
                         </td>
                         <td className="py-3 px-4">
-                          <input
-                            type="text"
-                            value={editCatName}
-                            onChange={(e) => setEditCatName(e.target.value)}
-                            className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                          />
-                        </td>
-                        <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
-                            <Button size="sm" onClick={handleUpdateCategory} disabled={!editCatNameAr.trim()}>
+                            <Button size="sm" onClick={handleUpdateCategory} disabled={!editCatName.trim()}>
 {t("common.save")}
                             </Button>
                             <Button size="sm" variant="secondary" onClick={cancelEditCategory}>
@@ -423,8 +397,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-foreground">{cat.nameAr}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{cat.name || '—'}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{cat.name}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <button
@@ -459,22 +432,15 @@ function SettingsTab() { const { t, i18n } = useTranslation();
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
-              labelAr={t('inventory.nameAr')}
-              value={newLocNameAr}
-              onChange={(e) => setNewLocNameAr(e.target.value)}
-              placeholder={t('inventory.locationPlaceholder')}
-            />
-          </div>
-          <div className="flex-1">
-            <Input
-              labelAr={t('inventory.nameLatin')}
+              label={t('inventory.name')}
               value={newLocName}
               onChange={(e) => setNewLocName(e.target.value)}
               placeholder={t('inventory.locationPlaceholder')}
+              dir={dirForInput(association?.locale)}
             />
           </div>
           <div className="flex items-end">
-            <Button onClick={handleAddLocation} disabled={!newLocNameAr.trim()}>
+            <Button onClick={handleAddLocation} disabled={!newLocName.trim()}>
               <Plus className="w-4 h-4" />
 {t("common.add")}
             </Button>
@@ -489,8 +455,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.nameAr')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.nameLatin')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.name')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
@@ -502,23 +467,16 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                         <td className="py-3 px-4">
                           <input
                             type="text"
-                            value={editLocNameAr}
-                            onChange={(e) => setEditLocNameAr(e.target.value)}
+                            value={editLocName}
+                            onChange={(e) => setEditLocName(e.target.value)}
                             className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                            dir={dirForInput(association?.locale)}
                             autoFocus
                           />
                         </td>
                         <td className="py-3 px-4">
-                          <input
-                            type="text"
-                            value={editLocName}
-                            onChange={(e) => setEditLocName(e.target.value)}
-                            className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                          />
-                        </td>
-                        <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
-                            <Button size="sm" onClick={handleUpdateLocation} disabled={!editLocNameAr.trim()}>
+                            <Button size="sm" onClick={handleUpdateLocation} disabled={!editLocName.trim()}>
 {t("common.save")}
                             </Button>
                             <Button size="sm" variant="secondary" onClick={cancelEditLocation}>
@@ -529,8 +487,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-foreground">{loc.nameAr}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{loc.name || '—'}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{loc.name}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <button
@@ -618,7 +575,7 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-foreground">{sts.nameAr}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{sts.name}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <button
@@ -696,16 +653,15 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
 
   const filtered = articles.filter((a: Article) => {
     const acat = a as any
-    const catNameAr = getCategoryNameAr(acat.category, categories)
+    const catName = getCategoryName(acat.category, categories)
     const st = committedFilters.searchTerm
 
     const matchesSearch =
       !st ||
       a.name.toLowerCase().includes(st.toLowerCase()) ||
-      a.nameAr.toLowerCase().includes(st.toLowerCase()) ||
-      catNameAr.toLowerCase().includes(st.toLowerCase()) ||
+      catName.toLowerCase().includes(st.toLowerCase()) ||
       (a.reference || '').toLowerCase().includes(st.toLowerCase()) ||
-      (typeof acat.category === 'object' ? acat.category.nameAr?.toLowerCase().includes(st.toLowerCase()) : (acat.category || '').toLowerCase().includes(st.toLowerCase()))
+      (typeof acat.category === 'object' ? acat.category.name?.toLowerCase().includes(st.toLowerCase()) : (acat.category || '').toLowerCase().includes(st.toLowerCase()))
     const matchesCategory =
       !committedFilters.category || (typeof acat.category === 'object' ? acat.category.id === committedFilters.category : acat.category === committedFilters.category)
     const matchesStatus = !committedFilters.status || a.status === committedFilters.status
@@ -731,7 +687,6 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
   const openEdit = (article: Article) => {
     setEditingArticle(article)
     setForm({
-      nameAr: article.nameAr,
       name: article.name,
       description: article.description || '',
       category: resolveId(article.category),
@@ -755,7 +710,6 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
       return
     }
     const data = {
-      nameAr: form.nameAr,
       name: form.name,
       description: form.description || undefined,
       category: form.category,
@@ -790,17 +744,17 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
 
   const categoryOptions = categories.map((c: ArticleCategory) => ({
     value: c.id,
-    label: `${c.nameAr} (${c.name || ''})`,
+    label: `${c.name}`,
   }))
 
   const locationOptions = locations.map((l: StorageLocation) => ({
     value: l.id,
-    label: `${l.nameAr} (${l.name || ''})`,
+    label: `${l.name}`,
   }))
 
   const statusOptions = [
     { value: '', label: t('common.all') },
-    ...statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.nameAr })),
+    ...statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.name })),
   ]
 
   const typeOptions = [
@@ -901,19 +855,19 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
                     <td className="py-3 px-4 font-semibold text-primary" dir="ltr">
                       {article.reference || '—'}
                     </td>
-                    <td className="py-3 px-4 font-medium text-foreground">{article.nameAr}</td>
+                    <td className="py-3 px-4 font-medium text-foreground">{article.name}</td>
                     <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
-                      {getCategoryNameAr(article.category, categories)}
+                      {getCategoryName(article.category, categories)}
                     </td>
                     <td className="py-3 px-4 text-muted-foreground">{article.quantity}</td>
                     <td className="py-3 px-4 text-muted-foreground">{article.availableQuantity}</td>
                     <td className="py-3 px-4">
                       <Badge variant="default">
-                        {(article as any).statusModel?.nameAr || statusLabels[article.status] || article.status}
+                        {(article as any).statusModel?.name || statusLabels[article.status] || article.status}
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">
-                      {getStorageNameAr(article.storageLocation, locations)}
+                      {getStorageName(article.storageLocation, locations)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button
@@ -943,16 +897,14 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
           /* ---- EDIT MODE: only storageLocation, status, notes are editable ---- */
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted rounded-lg p-4">
-              <div><p className="text-xs text-muted-foreground">{t('inventory.nameAr')}</p><p className="font-medium">{form.nameAr}</p></div>
-              <div><p className="text-xs text-muted-foreground">{t('inventory.nameLatin')}</p><p className="font-medium">{form.name}</p></div>
-              {form.description && <div><p className="text-xs text-muted-foreground">{t('doctors.arabicLabel')}</p><p className="font-medium">{form.description}</p></div>}
-              {form.description && <div><p className="text-xs text-muted-foreground">{t('inventory.descriptionLatin')}</p><p className="font-medium">{form.description}</p></div>}
-              <div><p className="text-xs text-muted-foreground">{t('inventory.category')}</p><p className="font-medium">{categories.find((c) => c.id === form.category)?.nameAr || '—'}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('inventory.name')}</p><p className="font-medium">{form.name}</p></div>
+              {form.description && <div><p className="text-xs text-muted-foreground">{t('inventory.description')}</p><p className="font-medium">{form.description}</p></div>}
+              <div><p className="text-xs text-muted-foreground">{t('inventory.category')}</p><p className="font-medium">{categories.find((c) => c.id === form.category)?.name || '—'}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('inventory.quantity')}</p><p className="font-medium">{form.quantity}</p></div>
-              <div><SearchableSelect labelAr={t('inventory.storageLocation')} value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required /></div>
-              <div><SearchableSelect labelAr={t('common.status')} value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} /></div>
+              <div><SearchableSelect label={t('inventory.storageLocation')} value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required /></div>
+              <div><SearchableSelect label={t('common.status')} value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.name }))} /></div>
             </div>
-            <TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            <TextArea label={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             {formError && <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-3">{formError}</div>}
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
@@ -963,18 +915,17 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
           /* ---- CREATE MODE: all fields editable ---- */
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr={t('inventory.nameAr')} value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} required />
-              <Input labelAr={t('inventory.nameLatin')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-              <SearchableSelect labelAr={t('inventory.category')} value={form.category} onChange={(val) => setForm({ ...form, category: val })} options={categoryOptions} required />
-              <SearchableSelect labelAr={t('inventory.storageLocation')} value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required />
-              <Input labelAr={t('inventory.quantity')} type="number" min={0} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} required />
-              <SearchableSelect labelAr={t('common.status')} value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.nameAr }))} />
-              <div className="md:col-span-2"><TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+              <Input label={t('inventory.name')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required dir={dirForInput(association?.locale)} />
+              <SearchableSelect label={t('inventory.category')} value={form.category} onChange={(val) => setForm({ ...form, category: val })} options={categoryOptions} required />
+              <SearchableSelect label={t('inventory.storageLocation')} value={form.storageLocation} onChange={(val) => setForm({ ...form, storageLocation: val })} options={locationOptions} required />
+              <Input label={t('inventory.quantity')} type="number" min={0} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} required />
+              <SearchableSelect label={t('common.status')} value={form.statusId} onChange={(val) => { const s = statuses.find((st: ArticleStatus) => st.id === val); setForm({ ...form, statusId: val, isPermanent: s ? s.isPermanent : false }); }} options={statuses.map((s: ArticleStatus) => ({ value: s.id, label: s.name }))} />
+              <div className="md:col-span-2"><TextArea label={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
             {formError && <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-3 mt-4">{formError}</div>}
             <div className="flex justify-end gap-3 mt-6">
               <Button variant="secondary" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
-              <Button onClick={handleSubmit} disabled={!form.nameAr || !form.name || !form.category}>{t('common.add')}</Button>
+              <Button onClick={handleSubmit} disabled={!form.name || !form.category}>{t('common.add')}</Button>
             </div>
           </div>
         )}
@@ -1272,7 +1223,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       '',
       t('receipt.beneficiarySign'),
       t('receipt.stampSignature'),
-      association?.nameAr
+      association?.name
     )
   }
 
@@ -1451,7 +1402,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   onChange={(val) => updateLoanItemRow(index, 'articleId', val)}
                   options={availableArticles.map((a: Article) => ({
                     value: a.id,
-                    label: `${a.nameAr} (${t('inventory.available')}: ${a.availableQuantity})`,
+                    label: `${a.name} (${t('inventory.available')}: ${a.availableQuantity})`,
                   }))}
                 />
                 <Input
@@ -1472,7 +1423,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   onChange={(val) => updateLoanItemRow(index, 'conditionOnLoan', val)}
                   options={
                     statuses.length > 0
-                      ? statuses.map((s: ArticleStatus) => ({ value: s.nameAr, label: s.nameAr }))
+                      ? statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.name }))
                       : []
                   }
                 />
@@ -1553,7 +1504,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   const art = articles.find((a: Article) => a.id === item.articleId)
                   return art ? (
                     <span key={item.articleId} className="bg-muted px-2 py-1 rounded">
-                      {art.nameAr}: {t('inventory.quantity')} {art.quantity} | {t('inventory.available')} {art.availableQuantity}
+                      {art.name}: {t('inventory.quantity')} {art.quantity} | {t('inventory.available')} {art.availableQuantity}
                     </span>
                   ) : null
                 })}
@@ -1649,7 +1600,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                         onChange={(val) => updateReturnEntry(index, 'condition', val)}
                         options={
                           statuses.length > 0
-                            ? statuses.map((s: ArticleStatus) => ({ value: s.nameAr, label: s.nameAr }))
+                            ? statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.name }))
                             : []
                         }
                       />
@@ -1683,7 +1634,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                     onChange={setNewItemArticleId}
                     options={availableArticles.map((a: Article) => ({
                       value: a.id,
-                      label: `${a.nameAr} (${t('inventory.available')}: ${a.availableQuantity})`,
+                      label: `${a.name} (${t('inventory.available')}: ${a.availableQuantity})`,
                     }))}
                   />
                   <Input
@@ -1704,7 +1655,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                     onChange={(val) => setNewItemCondition(val)}
                     options={
                       statuses.length > 0
-                        ? statuses.map((s: ArticleStatus) => ({ value: s.nameAr, label: s.nameAr }))
+                        ? statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.name }))
                         : []
                     }
                   />
