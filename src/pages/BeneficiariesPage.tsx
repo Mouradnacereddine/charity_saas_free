@@ -1371,7 +1371,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
               </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-border">
+            <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-border">
               <Button size="sm" variant="secondary" onClick={() => handlePrintCard(selectedBeneficiary)}>
                 <Printer className="w-4 h-4" /> {t('beneficiaries.printCardBtn')}
               </Button>
