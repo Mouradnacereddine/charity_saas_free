@@ -203,7 +203,10 @@ export default function InventoryPage() {
 // SETTINGS TAB — Categories & Storage Locations
 // ============================================================
 
-function SettingsTab() { const { t, i18n } = useTranslation();
+function SettingsTab() {
+  const { t, i18n } = useTranslation();
+  const { association } = useAuth();
+
   const { data: categories = [], isLoading: catsLoading } = useArticleCategories()
   const { data: locations = [], isLoading: locsLoading } = useStorageLocations()
   const { data: statuses = [], isLoading: stsLoading } = useArticleStatuses()
@@ -289,8 +292,8 @@ function SettingsTab() { const { t, i18n } = useTranslation();
     if (!editLocId || !editLocName.trim()) return
     await updateLoc.mutateAsync({ id: editLocId, data: { name: editLocName.trim() } })
     setEditLocId(null)
+
     setEditLocName('')
-  }
   }
 
   const cancelEditLocation = () => {
