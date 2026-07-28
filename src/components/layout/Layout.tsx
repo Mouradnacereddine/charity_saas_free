@@ -208,7 +208,7 @@ export function Layout({
               side="top"
               align="end"
               sideOffset={8}
-              className="min-w-[240px]"}
+              className="min-w-[240px]"
               dir={isRtl ? 'rtl' : 'ltr'}
             >
               <div className="p-3 border-b border-border">
