@@ -27,10 +27,10 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { reference, name, nameAr, balance, subCategories } = req.body;
+    const { reference, name, balance, subCategories } = req.body;
 
-    if (!reference || !name || !nameAr) {
-      res.status(400).json({ error: 'Missing required fields: reference, name, nameAr' });
+    if (!reference || !name) {
+      res.status(400).json({ error: 'Missing required fields: reference, name' });
       return;
     }
 
@@ -39,7 +39,6 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
         associationId,
         reference,
         name,
-        nameAr,
         balance: balance || 0,
         subCategories: subCategories || [],
       },
@@ -89,12 +88,11 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const { reference, name, nameAr, balance, subCategories } = req.body;
+    const { reference, name, balance, subCategories } = req.body;
 
     const data: any = {};
     if (reference !== undefined) data.reference = reference;
     if (name !== undefined) data.name = name;
-    if (nameAr !== undefined) data.nameAr = nameAr;
     if (balance !== undefined) data.balance = balance;
     if (subCategories !== undefined) data.subCategories = subCategories;
 

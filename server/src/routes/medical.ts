@@ -22,18 +22,16 @@ router.get('/referrals', async (req: AuthRequest, res: Response): Promise<void> 
 
     const referrals = await prisma.medicalReferral.findMany({
       where,
-      include: { beneficiary: true, caisse: true, doctor: { include: { specialty: { select: { id: true, name: true, nameAr: true } } } } },
+      include: { beneficiary: true, caisse: true, doctor: { include: { specialty: { select: { id: true, name: true } } } } },
       orderBy: [{ createdAt: 'desc' }, { date: 'desc' }],
     });
 
     const result = referrals.map((r: any) => ({
       ...r,
       beneficiaryName: r.beneficiary ? `${r.beneficiary.firstName} ${r.beneficiary.lastName}` : '',
-      beneficiaryNameAr: r.beneficiary ? `${r.beneficiary.lastNameAr} ${r.beneficiary.firstNameAr}` : '',
       beneficiaryReference: r.beneficiary?.reference || '',
       doctorName: r.doctor ? `${r.doctor.firstName} ${r.doctor.lastName}` : '',
-      doctorNameAr: r.doctor ? `${r.doctor.lastNameAr} ${r.doctor.firstNameAr}` : '',
-      doctorSpecialtyAr: r.doctor?.specialty?.nameAr || '',
+      doctorSpecialty: r.doctor?.specialty?.name || '',
     }));
 
     res.json(result);
@@ -49,15 +47,14 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
     const associationId = req.user!.associationId;
     const {
       reference: refInput, beneficiaryId, caisseId, subCategoryId,
-      doctorId, analysisType, analysisTypeAr,
-      hospital, hospitalAr, amount, amountInWords, amountInWordsAr,
+      doctorId, analysisType,
+      hospital, amount, amountInWords,
       date, notes, children, status,
     } = req.body;
 
     const reference = refInput || generateRef('MED');
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
     const words = amountInWords || `${numericAmount} DZD`;
-    const wordsAr = amountInWordsAr || `${numericAmount} دينار`;
 
     if (!beneficiaryId || !caisseId || !doctorId || !date) {
       res.status(400).json({ error: 'Missing required fields' });
@@ -108,13 +105,11 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
             type: 'debit',
             amount: numericAmount,
             amountInWords: words,
-            amountInWordsAr: wordsAr,
             fundSource: 'caisse_physique',
             caisseId,
             subCategoryId: subCategoryId || undefined,
             beneficiaryId,
-            description: `Medical referral - ${analysisType || analysisTypeAr || ''}`,
-            descriptionAr: `توجيه طبي - ${analysisTypeAr || analysisType || ''}`,
+            description: `Medical referral - ${analysisType || ''}`,
             receiptNumber: reference,
             status: 'completed',
             date: new Date(date),
@@ -131,12 +126,9 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
           subCategoryId,
           doctorId,
           analysisType,
-          analysisTypeAr,
           hospital,
-          hospitalAr,
           amount: numericAmount,
           amountInWords: words,
-          amountInWordsAr: wordsAr,
           status: txStatus,
           date: new Date(date),
           notes,
@@ -164,7 +156,7 @@ router.get('/referrals/:id', async (req: AuthRequest, res: Response): Promise<vo
 
     const referral = await prisma.medicalReferral.findFirst({
       where: { id, associationId },
-      include: { beneficiary: true, caisse: true, doctor: { include: { specialty: { select: { id: true, name: true, nameAr: true } } } } },
+      include: { beneficiary: true, caisse: true, doctor: { include: { specialty: { select: { id: true, name: true } } } } },
     });
 
     if (!referral) {
@@ -199,10 +191,9 @@ router.put('/referrals/:id/confirm', async (req: AuthRequest, res: Response): Pr
       return;
     }
 
-    const { amount, amountInWords, amountInWordsAr } = req.body;
+    const { amount, amountInWords } = req.body;
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
     const words = amountInWords || `${numericAmount} DZD`;
-    const wordsAr = amountInWordsAr || `${numericAmount} دينار`;
 
     const referral = await prisma.$transaction(async (tx) => {
       if (numericAmount > 0) {
@@ -221,22 +212,19 @@ router.put('/referrals/:id/confirm', async (req: AuthRequest, res: Response): Pr
         // Create a transaction record for traceability
         const beneficiary = await tx.beneficiary.findFirst({
           where: { id: existing.beneficiaryId, associationId },
-          select: { lastNameAr: true, firstNameAr: true },
+          select: { lastName: true, firstName: true },
         });
-        const benNameAr = beneficiary ? `${beneficiary.lastNameAr} ${beneficiary.firstNameAr}` : '';
         await tx.transaction.create({
           data: {
             associationId,
             type: 'debit',
             amount: numericAmount,
             amountInWords: words,
-            amountInWordsAr: wordsAr,
             fundSource: 'caisse_physique',
             caisseId: existing.caisseId,
             subCategoryId: existing.subCategoryId || undefined,
             beneficiaryId: existing.beneficiaryId,
-            description: `Medical referral confirmed - ${existing.analysisType || existing.analysisTypeAr || ''}`,
-            descriptionAr: `توجيه طبي مؤكد - ${existing.analysisTypeAr || existing.analysisType || ''}`,
+            description: `Medical referral confirmed - ${existing.analysisType || ''}`,
             receiptNumber: existing.reference,
             status: 'completed',
             date: new Date(),
@@ -249,7 +237,6 @@ router.put('/referrals/:id/confirm', async (req: AuthRequest, res: Response): Pr
         data: {
           amount: numericAmount,
           amountInWords: words,
-          amountInWordsAr: wordsAr,
           status: 'completed',
         },
       });
@@ -315,8 +302,8 @@ router.put('/referrals/:id', async (req: AuthRequest, res: Response): Promise<vo
 
     const {
       reference, beneficiaryId, caisseId, subCategoryId,
-      doctorId, analysisType, analysisTypeAr,
-      hospital, hospitalAr, amount, amountInWords, amountInWordsAr,
+      doctorId, analysisType,
+      hospital, amount, amountInWords,
       date, notes,
     } = req.body;
 
@@ -327,12 +314,9 @@ router.put('/referrals/:id', async (req: AuthRequest, res: Response): Promise<vo
     if (subCategoryId !== undefined) data.subCategoryId = subCategoryId;
     if (doctorId !== undefined) data.doctorId = doctorId;
     if (analysisType !== undefined) data.analysisType = analysisType;
-    if (analysisTypeAr !== undefined) data.analysisTypeAr = analysisTypeAr;
     if (hospital !== undefined) data.hospital = hospital;
-    if (hospitalAr !== undefined) data.hospitalAr = hospitalAr;
     if (amount !== undefined) data.amount = amount;
     if (amountInWords !== undefined) data.amountInWords = amountInWords;
-    if (amountInWordsAr !== undefined) data.amountInWordsAr = amountInWordsAr;
     if (date !== undefined) data.date = new Date(date);
     if (notes !== undefined) data.notes = notes;
     if (req.body.status !== undefined) data.status = req.body.status;
@@ -405,15 +389,15 @@ router.get('/analysis-types', async (req: AuthRequest, res: Response): Promise<v
 router.post('/analysis-types', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
 
-    if (!name || !nameAr) {
-      res.status(400).json({ error: 'Missing required fields: name, nameAr' });
+    if (!name) {
+      res.status(400).json({ error: 'Missing required field: name' });
       return;
     }
 
     const type = await prisma.medicalAnalysisType.create({
-      data: { associationId, name, nameAr },
+      data: { associationId, name },
     });
 
     res.status(201).json(type);
@@ -438,10 +422,9 @@ router.put('/analysis-types/:id', async (req: AuthRequest, res: Response): Promi
       return;
     }
 
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
     const data: any = {};
     if (name !== undefined) data.name = name;
-    if (nameAr !== undefined) data.nameAr = nameAr;
 
     const type = await prisma.medicalAnalysisType.update({
       where: { id },
@@ -503,15 +486,15 @@ router.get('/hospitals', async (req: AuthRequest, res: Response): Promise<void> 
 router.post('/hospitals', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
 
-    if (!name || !nameAr) {
-      res.status(400).json({ error: 'Missing required fields: name, nameAr' });
+    if (!name) {
+      res.status(400).json({ error: 'Missing required field: name' });
       return;
     }
 
     const hospital = await prisma.medicalHospital.create({
-      data: { associationId, name, nameAr },
+      data: { associationId, name },
     });
 
     res.status(201).json(hospital);
@@ -536,10 +519,9 @@ router.put('/hospitals/:id', async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
     const data: any = {};
     if (name !== undefined) data.name = name;
-    if (nameAr !== undefined) data.nameAr = nameAr;
 
     const hospital = await prisma.medicalHospital.update({
       where: { id },

@@ -54,36 +54,39 @@ enum LoanStatus {
 // MODELS
 // ============================================
 
+/// Langue active de l'association : "ar" | "fr" | "en". Détermine la direction
+/// (RTL/LTR) des formulaires et la seule langue de saisie des données métier.
+/// Source de vérité de la langue (pas de doublon Ar/Latin par champ).
 model Association {
   id        String   @id @default(uuid())
   name      String
-  nameAr    String
+  locale    String   @default("ar")
   email     String
   password  String
   logoUrl   String?
   createdAt DateTime @default(now())
 
-  users              User[]
-  caisses            Caisse[]
-  bankAccounts       BankAccount[]
-  beneficiaries      Beneficiary[]
-  donors             Donor[]
-  transactions       Transaction[]
-  articleCategories  ArticleCategory[]
-  storageLocations   StorageLocation[]
-  articles           Article[]
-  loans              Loan[]
+  users                User[]
+  caisses              Caisse[]
+  bankAccounts         BankAccount[]
+  beneficiaries        Beneficiary[]
+  donors               Donor[]
+  transactions         Transaction[]
+  articleCategories    ArticleCategory[]
+  storageLocations     StorageLocation[]
+  articles             Article[]
+  loans                Loan[]
   medicalAnalysisTypes MedicalAnalysisType[]
-  medicalHospitals   MedicalHospital[]
-  doctorSpecialties  DoctorSpecialty[]
-  doctors           Doctor[]
-  schoolGrades       SchoolGrade[]
-  articleStatuses    ArticleStatusType[]
-  medicalReferrals   MedicalReferral[]
-  donationReceipts   DonationReceipt[]
-  donationAllocations DonationAllocation[]
-  notifications      Notification[]
-  inviteTokens       InviteToken[]
+  medicalHospitals     MedicalHospital[]
+  doctorSpecialties    DoctorSpecialty[]
+  doctors              Doctor[]
+  schoolGrades         SchoolGrade[]
+  articleStatuses      ArticleStatusType[]
+  medicalReferrals     MedicalReferral[]
+  donationReceipts     DonationReceipt[]
+  donationAllocations  DonationAllocation[]
+  notifications        Notification[]
+  inviteTokens         InviteToken[]
 
   @@index([email])
 }
@@ -100,7 +103,6 @@ model User {
   email         String     @unique
   password      String
   name          String
-  nameAr        String
   role          Role       @default(user)
   status        UserStatus @default(approved)
   createdAt     DateTime   @default(now())
@@ -117,7 +119,6 @@ model InviteToken {
   token         String    @unique
   role          Role      @default(user)
   name          String?
-  nameAr        String?
   expiresAt     DateTime
   usedAt        DateTime?
   createdAt     DateTime  @default(now())
@@ -133,7 +134,6 @@ model Caisse {
   associationId String
   reference     String
   name          String
-  nameAr        String
   balance       Decimal  @default(0)
   subCategories Json     @default("[]")
   createdAt     DateTime @default(now())
@@ -152,7 +152,6 @@ model BankAccount {
   id            String   @id @default(uuid())
   associationId String
   bankName      String
-  bankNameAr    String
   accountNumber String
   rib           String
   iban          String
@@ -161,7 +160,7 @@ model BankAccount {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  association  Association  @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  association  Association   @relation(fields: [associationId], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
   @@index([associationId])
@@ -173,30 +172,26 @@ model Beneficiary {
   reference          String
   firstName          String
   lastName           String
-  firstNameAr        String
-  lastNameAr         String
   address            String
-  addressAr          String
   phone              String
   nationalCardNumber String
   dateOfBirth        DateTime
   attribut           String
-  gender             String? @default("male")
+  gender             String?  @default("male")
   onBehalfOfName     String?
   situation          String?
-  situationAr        String?
   children           Json     @default("[]")
   caisseId           String?
   subCategoryId      String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  association      Association        @relation(fields: [associationId], references: [id], onDelete: Cascade)
-  caisse           Caisse?            @relation(fields: [caisseId], references: [id], onDelete: SetNull)
+  association      Association          @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  caisse           Caisse?              @relation(fields: [caisseId], references: [id], onDelete: SetNull)
   transactions     Transaction[]
   loans            Loan[]
   medicalReferrals MedicalReferral[]
-  debitAllocations   DonationAllocation[]
+  debitAllocations DonationAllocation[]
 
   @@index([associationId])
   @@index([caisseId])
@@ -209,52 +204,49 @@ model Donor {
   reference     String
   firstName     String
   lastName      String
-  firstNameAr   String
-  lastNameAr    String
   phone         String
   email         String?
   address       String?
-  gender        String? @default("male")
-  totalDonated  Decimal    @default(0)
+  gender        String?  @default("male")
+  totalDonated  Decimal  @default(0)
   notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  association      Association      @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  association      Association       @relation(fields: [associationId], references: [id], onDelete: Cascade)
   transactions     Transaction[]
   donationReceipts DonationReceipt[]
 
-  creditAllocations  DonationAllocation[]
+  creditAllocations DonationAllocation[]
+
   @@index([associationId])
 }
 
 model Transaction {
-  id              String          @id @default(uuid())
-  associationId   String
-  type            TransactionType
-  amount          Decimal
-  amountInWords   String
-  amountInWordsAr String
-  fundSource      FundSource
-  caisseId        String
-  subCategoryId   String?
-  bankAccountId   String?
-  donorId         String?
-  beneficiaryId   String?
-  description     String
-  descriptionAr   String
-  receiptNumber   String?
-  status          TransactionStatus @default(completed)
-  date            DateTime
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id            String            @id @default(uuid())
+  associationId String
+  type          TransactionType
+  amount        Decimal
+  amountInWords String
+  fundSource    FundSource
+  caisseId      String
+  subCategoryId String?
+  bankAccountId String?
+  donorId       String?
+  beneficiaryId String?
+  description   String
+  receiptNumber String?
+  status        TransactionStatus @default(completed)
+  date          DateTime
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
-  association      Association       @relation(fields: [associationId], references: [id], onDelete: Cascade)
-  caisse           Caisse            @relation(fields: [caisseId], references: [id])
-  bankAccount      BankAccount?      @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
-  donor            Donor?            @relation(fields: [donorId], references: [id], onDelete: SetNull)
-  beneficiary      Beneficiary?      @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
-  donationReceipts DonationReceipt[]
+  association       Association          @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  caisse            Caisse               @relation(fields: [caisseId], references: [id])
+  bankAccount       BankAccount?         @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
+  donor             Donor?               @relation(fields: [donorId], references: [id], onDelete: SetNull)
+  beneficiary       Beneficiary?         @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
+  donationReceipts  DonationReceipt[]
   creditAllocations DonationAllocation[] @relation("CreditAllocation")
   debitAllocations  DonationAllocation[] @relation("DebitAllocation")
 
@@ -271,7 +263,6 @@ model ArticleCategory {
   id            String   @id @default(uuid())
   associationId String
   name          String
-  nameAr        String
   createdAt     DateTime @default(now())
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
@@ -284,7 +275,6 @@ model StorageLocation {
   id            String   @id @default(uuid())
   associationId String
   name          String
-  nameAr        String
   createdAt     DateTime @default(now())
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
@@ -298,9 +288,7 @@ model Article {
   associationId     String
   reference         String
   name              String
-  nameAr            String
   description       String?
-  descriptionAr     String?
   categoryId        String?
   quantity          Int
   availableQuantity Int
@@ -312,10 +300,10 @@ model Article {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
-  association     Association     @relation(fields: [associationId], references: [id], onDelete: Cascade)
-  category        ArticleCategory? @relation(fields: [categoryId], references: [id])
-  statusModel     ArticleStatusType?  @relation(fields: [statusId], references: [id])
-  storageLocation StorageLocation? @relation(fields: [storageLocationId], references: [id])
+  association     Association        @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  category        ArticleCategory?   @relation(fields: [categoryId], references: [id])
+  statusModel     ArticleStatusType? @relation(fields: [statusId], references: [id])
+  storageLocation StorageLocation?   @relation(fields: [storageLocationId], references: [id])
 
   @@index([associationId])
   @@index([categoryId])
@@ -338,8 +326,8 @@ model Loan {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  association  Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
-  beneficiary  Beneficiary @relation(fields: [beneficiaryId], references: [id])
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [id])
 
   @@index([associationId])
   @@index([beneficiaryId])
@@ -350,7 +338,6 @@ model MedicalAnalysisType {
   id            String   @id @default(uuid())
   associationId String
   name          String
-  nameAr        String
   createdAt     DateTime @default(now())
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
@@ -362,7 +349,6 @@ model SchoolGrade {
   id            String   @id @default(uuid())
   associationId String
   name          String
-  nameAr        String
   createdAt     DateTime @default(now())
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
@@ -374,10 +360,9 @@ model DoctorSpecialty {
   id            String   @id @default(uuid())
   associationId String
   name          String
-  nameAr        String
   createdAt     DateTime @default(now())
 
-  doctors    Doctor[]   @relation("DoctorSpecialtyDoctors")
+  doctors     Doctor[]    @relation("DoctorSpecialtyDoctors")
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
 
   @@index([associationId])
@@ -389,8 +374,6 @@ model Doctor {
   reference     String
   firstName     String
   lastName      String
-  firstNameAr   String
-  lastNameAr    String
   phone         String
   email         String?
   specialtyId   String?
@@ -399,8 +382,8 @@ model Doctor {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  specialty   DoctorSpecialty? @relation("DoctorSpecialtyDoctors", fields: [specialtyId], references: [id], onDelete: SetNull)
-  association Association      @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  specialty   DoctorSpecialty?  @relation("DoctorSpecialtyDoctors", fields: [specialtyId], references: [id], onDelete: SetNull)
+  association Association       @relation(fields: [associationId], references: [id], onDelete: Cascade)
   referrals   MedicalReferral[]
 
   @@index([associationId])
@@ -408,14 +391,12 @@ model Doctor {
 }
 
 model ArticleStatusType {
-  id            String         @id @default(uuid())
+  id            String   @id @default(uuid())
   associationId String
   name          String
-  nameAr        String
-  isPermanent   Boolean        @default(false)
+  isPermanent   Boolean  @default(false)
   description   String?
-  descriptionAr String?
-  createdAt     DateTime       @default(now())
+  createdAt     DateTime @default(now())
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
   articles    Article[]
@@ -427,7 +408,6 @@ model MedicalHospital {
   id            String   @id @default(uuid())
   associationId String
   name          String
-  nameAr        String
   createdAt     DateTime @default(now())
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
@@ -436,26 +416,23 @@ model MedicalHospital {
 }
 
 model MedicalReferral {
-  id              String   @id @default(uuid())
-  associationId   String
-  reference       String
-  beneficiaryId   String
-  caisseId        String
-  subCategoryId   String?
-  doctorId        String
-  analysisType    String?
-  analysisTypeAr  String?
-  hospital        String?
-  hospitalAr      String?
-  amount          Decimal    @default(0)
-  amountInWords   String   @default("")
-  amountInWordsAr String   @default("")
-  status          String   @default("pending")
-  date            DateTime
-  notes           String?
-  children        Json     @default("[]")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String   @id @default(uuid())
+  associationId String
+  reference     String
+  beneficiaryId String
+  caisseId      String
+  subCategoryId String?
+  doctorId      String
+  analysisType  String?
+  hospital      String?
+  amount        Decimal  @default(0)
+  amountInWords String   @default("")
+  status        String   @default("pending")
+  date          DateTime
+  notes         String?
+  children      Json     @default("[]")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
   beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [id])
@@ -475,17 +452,13 @@ model DonationReceipt {
   receiptNumber   String
   donorId         String
   donorName       String
-  donorNameAr     String
   transactionId   String
   amount          Decimal
   amountInWords   String
-  amountInWordsAr String
   caisseId        String
   caisseName      String
-  caisseNameAr    String
   subCategoryId   String?
   subCategoryName String?
-  subCategoryNameAr String?
   date            DateTime
   createdAt       DateTime @default(now())
 
@@ -506,7 +479,6 @@ model Notification {
   associationId String
   type          String
   message       String
-  messageAr     String
   read          Boolean  @default(false)
   link          String?
   createdAt     DateTime @default(now())
@@ -518,23 +490,23 @@ model Notification {
 }
 
 model DonationAllocation {
-  id                 String   @id @default(uuid())
-  associationId      String
-  donorId            String
-  beneficiaryId      String
+  id                  String   @id @default(uuid())
+  associationId       String
+  donorId             String
+  beneficiaryId       String
   creditTransactionId String
-  debitTransactionId String?
-  amount             Decimal
-  remainingAmount    Decimal
-  notes              String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  debitTransactionId  String?
+  amount              Decimal
+  remainingAmount     Decimal
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  association        Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
-  donor              Donor       @relation(fields: [donorId], references: [id])
-  beneficiary        Beneficiary @relation(fields: [beneficiaryId], references: [id])
-  creditTransaction  Transaction @relation("CreditAllocation", fields: [creditTransactionId], references: [id])
-  debitTransaction   Transaction? @relation("DebitAllocation", fields: [debitTransactionId], references: [id])
+  association       Association  @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  donor             Donor        @relation(fields: [donorId], references: [id])
+  beneficiary       Beneficiary  @relation(fields: [beneficiaryId], references: [id])
+  creditTransaction Transaction  @relation("CreditAllocation", fields: [creditTransactionId], references: [id])
+  debitTransaction  Transaction? @relation("DebitAllocation", fields: [debitTransactionId], references: [id])
 
   @@index([associationId])
   @@index([donorId])

@@ -68,10 +68,10 @@ router.put('/:id/read', async (req: AuthRequest, res: Response): Promise<void> =
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { type, message, messageAr, link } = req.body;
+    const { type, message, link } = req.body;
 
-    if (!type || !message || !messageAr) {
-      res.status(400).json({ error: 'Missing required fields: type, message, messageAr' });
+    if (!type || !message) {
+      res.status(400).json({ error: 'Missing required fields: type, message' });
       return;
     }
 
@@ -80,7 +80,6 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
         associationId,
         type,
         message,
-        messageAr,
         link,
       },
     });

@@ -257,13 +257,14 @@ export function generateMedicalReferralReference(): string {
 
 
 /**
- * Choisit la description dans la bonne langue selon la langue active.
- * Affiche descriptionAr pour l'arabe, description (traduite si libellé système)
- * pour le français et l'anglais.
+ * Retourne la description dans la langue de l'UI. Désormais la description est
+ * stockée en un seul exemplaire (langue de l'association), et la couche i18n
+ * ne fait que traduire d'éventuels préfixes système.
  */
 export function localizedDesc(description?: string, descriptionAr?: string): string {
   const lang = i18n.language;
-  if (lang === 'ar') return descriptionAr || description || '';
+  // descriptionAr est conservé en signature pour rétrocompat mais ignoré
+  // (la valeur est désormais unique).
   return translateSystemLabel(description || descriptionAr || '', lang) || '';
 }
 

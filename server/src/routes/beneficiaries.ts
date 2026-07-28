@@ -26,8 +26,6 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       where.OR = [
         { firstName: { contains: term, mode: 'insensitive' } },
         { lastName: { contains: term, mode: 'insensitive' } },
-        { firstNameAr: { contains: term, mode: 'insensitive' } },
-        { lastNameAr: { contains: term, mode: 'insensitive' } },
         { reference: { contains: term, mode: 'insensitive' } },
         { nationalCardNumber: { contains: term, mode: 'insensitive' } },
         { phone: { contains: term, mode: 'insensitive' } },
@@ -40,7 +38,6 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       where.OR = where.OR || [];
       where.OR.push(
         { situation: { contains: String(situation), mode: 'insensitive' } },
-        { situationAr: { contains: String(situation), mode: 'insensitive' } },
       );
     }
 
@@ -165,15 +162,15 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
-      reference: refInput, firstName, lastName, firstNameAr, lastNameAr,
-      address, addressAr, phone, nationalCardNumber, dateOfBirth,
-      attribut, gender, onBehalfOfName, situation, situationAr,
+      reference: refInput, firstName, lastName,
+      address, phone, nationalCardNumber, dateOfBirth,
+      attribut, gender, onBehalfOfName, situation,
       children, caisseId, subCategoryId,
     } = req.body;
 
     const reference = refInput || generateRef('BEN');
 
-    if (!firstName || !lastName || !firstNameAr || !lastNameAr || !address || !addressAr || !phone || !nationalCardNumber || !dateOfBirth || !attribut) {
+    if (!firstName || !lastName || !address || !phone || !nationalCardNumber || !dateOfBirth || !attribut) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
@@ -184,10 +181,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
         reference,
         firstName,
         lastName,
-        firstNameAr,
-        lastNameAr,
         address,
-        addressAr,
         phone,
         nationalCardNumber,
         dateOfBirth: new Date(dateOfBirth),
@@ -195,7 +189,6 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
         gender: gender || 'male',
         onBehalfOfName,
         situation,
-        situationAr,
         children: children || [],
         caisseId,
         subCategoryId,
@@ -249,9 +242,9 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     }
 
     const {
-      reference, firstName, lastName, firstNameAr, lastNameAr,
-      address, addressAr, phone, nationalCardNumber, dateOfBirth,
-      attribut, onBehalfOfName, situation, situationAr,
+      reference, firstName, lastName,
+      address, phone, nationalCardNumber, dateOfBirth,
+      attribut, onBehalfOfName, situation,
       children, caisseId, subCategoryId,
     } = req.body;
 
@@ -259,17 +252,13 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     if (reference !== undefined) data.reference = reference;
     if (firstName !== undefined) data.firstName = firstName;
     if (lastName !== undefined) data.lastName = lastName;
-    if (firstNameAr !== undefined) data.firstNameAr = firstNameAr;
-    if (lastNameAr !== undefined) data.lastNameAr = lastNameAr;
     if (address !== undefined) data.address = address;
-    if (addressAr !== undefined) data.addressAr = addressAr;
     if (phone !== undefined) data.phone = phone;
     if (nationalCardNumber !== undefined) data.nationalCardNumber = nationalCardNumber;
     if (dateOfBirth !== undefined) data.dateOfBirth = new Date(dateOfBirth);
     if (attribut !== undefined) data.attribut = attribut;
     if (onBehalfOfName !== undefined) data.onBehalfOfName = onBehalfOfName;
     if (situation !== undefined) data.situation = situation;
-    if (situationAr !== undefined) data.situationAr = situationAr;
     if (children !== undefined) data.children = children;
     if (caisseId !== undefined) data.caisseId = caisseId;
     if (subCategoryId !== undefined) data.subCategoryId = subCategoryId;

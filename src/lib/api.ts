@@ -96,8 +96,10 @@ export const authApi = {
     api.post('/auth/google', data),
   updateLogo: (logoUrl: string) =>
     api.put('/auth/association/logo', { logoUrl }),
-  updateName: (data: { name: string; nameAr: string }) =>
-    api.put('/auth/association/name', data),
+  updateName: (name: string) =>
+    api.put('/auth/association/name', { name }),
+  updateLocale: (locale: 'ar' | 'fr' | 'en') =>
+    api.put('/auth/association/locale', { locale }),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
   refresh: (refreshToken: string) =>

@@ -19,13 +19,14 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [inviteInfo, setInviteInfo] = useState<{
     email: string; role: string;
-    associationNameAr: string;
+    associationName: string;
+    associationLocale?: 'ar' | 'fr' | 'en';
   } | null>(null);
   const [inviteToken, setInviteToken] = useState('');
   const [checkingInvite, setCheckingInvite] = useState(false);
   const [checkingAccount, setCheckingAccount] = useState(true);
   const [assocName, setAssocName] = useState('');
-  const [assocNameAr, setAssocNameAr] = useState('');
+  const [assocLocale, setAssocLocale] = useState<'ar' | 'fr' | 'en'>('ar');
   const [showAssocForm, setShowAssocForm] = useState(false);
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const renderAttempted = useRef(false);
@@ -39,10 +40,14 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
 
     if (token) {
       setInviteToken(token);
-      setInviteInfo({ email: '', role: '', associationNameAr: '...' });
+      setInviteInfo({ email: '', role: '', associationName: '...' });
       setCheckingInvite(true);
       authApi.inviteDetails(token)
-        .then(res => setInviteInfo(res.data))
+        .then(res => {
+          setInviteInfo(res.data);
+          // If invite returns association locale, pre-fill the new user form with same locale
+          if (res.data.associationLocale) setAssocLocale(res.data.associationLocale);
+        })
         .catch(err => setError(err.response?.data?.error || t('auth.inviteCodeInvalid')))
         .finally(() => setCheckingInvite(false));
     }
@@ -123,20 +128,22 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
   };
 
   const handleRegisterWithName = async () => {
-    if (!assocNameAr.trim() || !pendingCredential.current) return;
+    if (!assocName.trim() || !pendingCredential.current) return;
     setLoading(true);
     setError('');
     try {
       const res = await authApi.googleLogin({
         credential: pendingCredential.current,
         mode: 'register',
-        associationName: assocName || assocNameAr,
-        associationNameAr: assocNameAr,
+        associationName: assocName,
+        locale: assocLocale,
       });
       pendingCredential.current = null;
       localStorage.setItem('accessToken', res.data.accessToken);
       localStorage.setItem('refreshToken', res.data.refreshToken);
       queryClient.resetQueries({ queryKey: ['auth', 'me'] });
+      // Synchronize UI language with the association locale
+      if (assocLocale) i18n.changeLanguage(assocLocale);
       onSuccess();
     } catch (err: any) {
       setError(err.response?.data?.error || t('auth.createAssociationFailed'));
@@ -157,12 +164,12 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
         </div>
 
         {/* Invite info banner */}
-        {inviteInfo && inviteInfo.associationNameAr && (
+        {inviteInfo && inviteInfo.associationName && (
           <div className="bg-success/10 border border-success/30 rounded-lg p-4 mb-6 flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-success shrink-0" />
             <div>
               <p className="text-sm font-medium text-success">
-                {t('auth.inviteBanner')} {inviteInfo.associationNameAr}
+                {t('auth.inviteBanner')} {inviteInfo.associationName}
               </p>
               <p className="text-xs text-success/80 mt-1">
                 {inviteInfo.role === 'treasurer' ? t('userMenu.treasurer') : t('userMenu.volunteer')}
@@ -171,7 +178,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
           </div>
         )}
 
-        {/* Association name form (shown after Google auth for new users) */}
+        {/* Association name form (shown after Google auth for new users) — un seul champ, direction selon la locale */}
         {showAssocForm ? (
           <div className="mb-6">
             <div className="flex justify-center mb-3">
@@ -184,30 +191,32 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
             </p>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('auth.assocNameAr')}</label>
-                <input
-                  type="text"
-                  value={assocNameAr}
-                  onChange={(e) => setAssocNameAr(e.target.value)}
-                  placeholder={t('auth.nameArPlaceholder')}
-                  className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring text-start"
-                  dir="rtl"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('auth.assocNameLatin')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('auth.assocName')}</label>
                 <input
                   type="text"
                   value={assocName}
                   onChange={(e) => setAssocName(e.target.value)}
-                  placeholder={t('auth.assocNamePlaceholder') || 'Ex: Association El-Baraka'}
+                  placeholder={t('auth.namePlaceholder')}
                   className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
-                  dir="ltr"
+                  dir={assocLocale === 'ar' ? 'rtl' : 'ltr'}
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('settings.locale')}</label>
+                <select
+                  value={assocLocale}
+                  onChange={(e) => setAssocLocale(e.target.value as 'ar' | 'fr' | 'en')}
+                  className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                >
+                  <option value="ar">{t('settings.localeAr')}</option>
+                  <option value="fr">{t('settings.localeFr')}</option>
+                  <option value="en">{t('settings.localeEn')}</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">{t('settings.localeHint')}</p>
               </div>
               <button
                 onClick={handleRegisterWithName}
-                disabled={loading || !assocNameAr.trim()}
+                disabled={loading || !assocName.trim()}
                 className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? t('auth.creating') : t('auth.createAssociation')}

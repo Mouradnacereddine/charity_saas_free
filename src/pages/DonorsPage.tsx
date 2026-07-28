@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
+import { dirForInput } from '../utils/localized'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt } from 'lucide-react'
 import type { Donor, DonationReceipt } from '../types'
@@ -11,8 +12,6 @@ import { caissesApi, financeApi } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
 
 const emptyDonorForm = {
-  firstNameAr: '',
-  lastNameAr: '',
   firstName: '',
   lastName: '',
   phone: '',
@@ -55,8 +54,6 @@ export default function DonorsPage() {
   const openEditForm = (donor: Donor) => {
     setEditingId(donor.id)
     setForm({
-      firstNameAr: donor.firstNameAr || '',
-      lastNameAr: donor.lastNameAr || '',
       firstName: donor.firstName || '',
       lastName: donor.lastName || '',
       phone: donor.phone || '',
@@ -68,13 +65,11 @@ export default function DonorsPage() {
   }
 
   const handleSave = async () => {
-    if (!form.lastNameAr.trim()) return
+    if (!form.lastName.trim()) return
     const data = {
       ...form,
-      firstNameAr: form.firstNameAr.trim(),
-      lastNameAr: form.lastNameAr.trim(),
-      firstName: form.firstName.trim() || form.firstNameAr.trim(),
-      lastName: form.lastName.trim() || form.lastNameAr.trim(),
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
       phone: form.phone.trim(),
     }
     if (editingId) {
@@ -102,7 +97,7 @@ export default function DonorsPage() {
   }
 
   const filteredDonors = donors.filter((d: Donor) => {
-    const name = `${d.lastNameAr} ${d.firstNameAr} ${d.lastName} ${d.firstName}`.toLowerCase()
+    const name = `${d.lastName} ${d.firstName} ${d.lastName} ${d.firstName}`.toLowerCase()
     if (committedName && !name.includes(committedName.toLowerCase())) return false
     if (committedPhone && !(d.phone || '').includes(committedPhone)) return false
     if (committedGender && d.gender !== committedGender) return false
@@ -119,7 +114,7 @@ export default function DonorsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.refCode')}</span><span className="font-medium" dir="ltr">{donor.reference}</span></div>
-            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('common.sectionName')}</span><span className="font-medium">{donor.lastNameAr} {donor.firstNameAr}</span></div>
+            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('common.sectionName')}</span><span className="font-medium">{donor.lastName} {donor.firstName}</span></div>
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.phone')}</span><span className="font-medium" dir="ltr">{donor.phone}</span></div>
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.totalDonations')}</span><span className="font-medium text-success">{formatCurrency(donor._sum?.amount || 0)}</span></div>
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.donationCount')}</span><span className="font-medium">{donor._count?.transactions || 0}</span></div>
@@ -209,7 +204,7 @@ export default function DonorsPage() {
                 {filteredDonors.map((donor: Donor) => (
                   <tr key={donor.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setShowDetailModal(donor)}>
                     <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{donor.reference}</td>
-                    <td className="py-3 px-4 font-medium text-foreground">{donor.lastNameAr} {donor.firstNameAr}</td>
+                    <td className="py-3 px-4 font-medium text-foreground">{donor.lastName} {donor.firstName}</td>
                     <td className="py-3 px-4 hidden sm:table-cell text-foreground" dir="ltr">{donor.phone}</td>
                     <td className="py-3 px-4 hidden md:table-cell text-success font-semibold">{formatCurrency(donor._sum?.amount || 0)}</td>
                     <td className="py-3 px-4 hidden md:table-cell"><Badge>{donor._count?.transactions || 0}</Badge></td>
@@ -233,12 +228,12 @@ export default function DonorsPage() {
         title={editingId ? t('donors.edit') : t('donors.addTitle')} size="lg">
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input labelAr={t('donors.lastNameAr')} value={form.lastNameAr} onChange={(e) => setForm({ ...form, lastNameAr: e.target.value })} placeholder={t('donors.lastNameArPlaceholder')} required />
-            <Input labelAr={t('donors.firstNameAr')} value={form.firstNameAr} onChange={(e) => setForm({ ...form, firstNameAr: e.target.value })} placeholder={t('donors.firstNameArPlaceholder')} required />
+            <Input label={t('donors.lastName')} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder={t('donors.lastNamePlaceholder')} required dir={dirForInput(association?.locale)} />
+            <Input label={t('donors.firstName')} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder={t('donors.firstNamePlaceholder')} required dir={dirForInput(association?.locale)} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input labelAr={t('donors.lastNameLatin')} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder={t('donors.lastNameArPlaceholder')} dir="ltr" />
-            <Input labelAr={t('donors.firstNameLatin')} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder={t('donors.firstNameArPlaceholder')} dir="ltr" />
+            <Input labelAr={t('donors.lastNameLatin')} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder={t('donors.lastNamePlaceholder')} dir="ltr" />
+            <Input labelAr={t('donors.firstNameLatin')} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder={t('donors.firstNamePlaceholder')} dir="ltr" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input labelAr={t('donors.phone')} type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="05XX XX XX XX" dir="ltr" required />
@@ -248,7 +243,7 @@ export default function DonorsPage() {
           <TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           <div className="flex gap-3 justify-end border-t border-border pt-4">
             <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>{t('common.cancel')}</Button>
-            <Button onClick={handleSave} disabled={!form.lastNameAr.trim() || !form.phone.trim() || createDonor.isPending || updateDonor.isPending}>
+            <Button onClick={handleSave} disabled={!form.lastName.trim() || !form.phone.trim() || createDonor.isPending || updateDonor.isPending}>
               {editingId ? t('common.update') : t('common.add')}
             </Button>
           </div>

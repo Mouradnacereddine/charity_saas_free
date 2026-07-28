@@ -1,6 +1,12 @@
 // ============================================
 // TYPES — SaaS Association Charitable
 // ============================================
+//
+// Note Architecture : la langue active de l'association est stockée dans
+// `Association.locale` ("ar" | "fr" | "en"). Chaque entité métier possède
+// désormais UN seul champ textuel par attribut (ex: `name`), saisi dans la
+// langue de l'association. Aucune version suffixée `Ar` n'existe plus.
+// Le rendu utilise les helpers de `src/utils/localized.ts`.
 
 // ---- Enums & Constants ----
 
@@ -13,12 +19,34 @@ export type ChildHealthStatus = 'bonne_sante' | 'malade' | 'handicape' | 'autre'
 export type UserStatus = 'pending' | 'approved' | 'rejected';
 export type TransactionStatus = 'pending' | 'completed' | 'cancelled';
 export type Role = 'admin' | 'treasurer' | 'user';
+export type Locale = 'ar' | 'fr' | 'en';
+
+// ---- Association ----
+
+export interface Association {
+  id: string;
+  name: string;
+  locale: Locale;
+  email: string;
+  logoUrl?: string;
+  createdAt: string;
+}
+
+export interface User {
+  id: string;
+  associationId: string;
+  email: string;
+  name: string;
+  role: Role;
+  status: UserStatus;
+  association?: Association;
+  createdAt: string;
+}
 
 export interface InviteToken {
   id: string;
   role: Role;
   name: string | null;
-  nameAr: string | null;
   token: string;
   inviteLink: string | null;
   expiresAt: string;
@@ -32,7 +60,6 @@ export interface InviteToken {
 export interface BeneficiaryAttribut {
   id: string;
   name: string;
-  nameAr: string;
   createdAt: Date;
 }
 
@@ -41,7 +68,6 @@ export interface BeneficiaryAttribut {
 export interface ArticleCategory {
   id: string;
   name: string;
-  nameAr: string;
   createdAt: Date;
 }
 
@@ -50,21 +76,18 @@ export interface ArticleCategory {
 export interface MedicalAnalysisType {
   id: string;
   name: string;
-  nameAr: string;
   createdAt: Date;
 }
 
 export interface MedicalHospital {
   id: string;
   name: string;
-  nameAr: string;
   createdAt: Date;
 }
 
 export interface DoctorSpecialty {
   id: string;
   name: string;
-  nameAr: string;
   _count?: { doctors: number };
 }
 
@@ -73,8 +96,6 @@ export interface Doctor {
   reference: string;
   firstName: string;
   lastName: string;
-  firstNameAr: string;
-  lastNameAr: string;
   phone: string;
   email?: string;
   specialtyId?: string;
@@ -98,24 +119,21 @@ export interface DoctorStats {
     id: string;
     date: string;
     status: string;
-    beneficiary: { id: string; nameAr: string; reference: string } | null;
+    beneficiary: { id: string; name: string; reference: string } | null;
   }[];
 }
 
 export interface SchoolGrade {
   id: string;
   name: string;
-  nameAr: string;
   createdAt: Date;
 }
 
 export interface ArticleStatus {
   id: string;
   name: string;
-  nameAr: string;
   isPermanent: boolean;
   description?: string;
-  descriptionAr?: string;
   createdAt: Date;
 }
 
@@ -124,7 +142,6 @@ export interface ArticleStatus {
 export interface StorageLocation {
   id: string;
   name: string;
-  nameAr: string;
   createdAt: Date;
 }
 
@@ -133,14 +150,12 @@ export interface StorageLocation {
 export interface SubCategory {
   id: string;
   name: string;
-  nameAr: string;
 }
 
 export interface Caisse {
   id: string;
   reference: string;
   name: string;
-  nameAr: string;
   subCategories: SubCategory[];
   balance: number;
   createdAt: Date;
@@ -152,7 +167,6 @@ export interface Caisse {
 export interface BankAccount {
   id: string;
   bankName: string;
-  bankNameAr: string;
   accountNumber: string;
   rib: string;
   iban: string;
@@ -168,8 +182,6 @@ export interface Child {
   id: string;
   firstName: string;
   lastName: string;
-  firstNameAr: string;
-  lastNameAr: string;
   dateOfBirth: string; // ISO date string
   gender?: string;
   healthStatus: ChildHealthStatus;
@@ -184,10 +196,7 @@ export interface Beneficiary {
   reference: string;
   firstName: string;
   lastName: string;
-  firstNameAr: string;
-  lastNameAr: string;
   address: string;
-  addressAr: string;
   phone: string;
   nationalCardNumber: string;
   dateOfBirth: string; // ISO date string
@@ -196,7 +205,6 @@ export interface Beneficiary {
   onBehalfOf?: string; // ID of another beneficiary (e.g., child presenting on behalf of widow)
   onBehalfOfName?: string;
   situation?: string;
-  situationAr?: string;
   children: Child[];
   caisseId?: string;
   subCategoryId?: string;
@@ -212,8 +220,6 @@ export interface Donor {
   reference: string;
   firstName: string;
   lastName: string;
-  firstNameAr: string;
-  lastNameAr: string;
   phone: string;
   email?: string;
   address?: string;
@@ -232,7 +238,6 @@ export interface Transaction {
   status: TransactionStatus;
   amount: number;
   amountInWords: string;
-  amountInWordsAr: string;
   fundSource: FundSource;
   caisseId: string;
   subCategoryId?: string;
@@ -240,7 +245,6 @@ export interface Transaction {
   donorId?: string;
   beneficiaryId?: string;
   description: string;
-  descriptionAr: string;
   receiptNumber?: string;
   date: string; // ISO date string
   createdAt: Date;
@@ -253,18 +257,14 @@ export interface Article {
   id: string;
   reference: string;
   name: string;
-  nameAr: string;
   description?: string;
-  descriptionAr?: string;
   category: string;
-  categoryAr: string;
   quantity: number;
   availableQuantity: number;
   status: ArticleStatusEnum;
   statusId?: string;
   statusModel?: ArticleStatus;
   storageLocation: string;
-  storageLocationAr: string;
   isPermanent: boolean; // definitif = not returnable
   notes?: string;
   createdAt: Date;
@@ -276,9 +276,7 @@ export interface Article {
 export interface LoanItem {
   articleId: string;
   articleName: string;
-  articleNameAr: string;
   categoryName?: string;
-  categoryNameAr?: string;
   quantity: number;
   returnedQuantity: number;
   conditionOnLoan: string;
@@ -292,7 +290,6 @@ export interface Loan {
   reference: string;
   beneficiaryId: string;
   beneficiaryName: string;
-  beneficiaryNameAr: string;
   beneficiaryReference?: string;
   items: LoanItem[];
   status: LoanStatus;
@@ -311,26 +308,21 @@ export interface MedicalReferral {
   reference: string;
   beneficiaryId: string;
   beneficiaryName: string;
-  beneficiaryNameAr: string;
   beneficiaryReference?: string;
   caisseId: string;
   subCategoryId?: string;
   doctorId: string;
   doctor?: Doctor;
   doctorName?: string;
-  doctorNameAr?: string;
-  doctorSpecialtyAr?: string;
+  doctorSpecialty?: string;
   analysisType?: string;
-  analysisTypeAr?: string;
   hospital?: string;
-  hospitalAr?: string;
   amount: number;
   amountInWords: string;
-  amountInWordsAr: string;
   status?: string;
   date: string;
   notes?: string;
-  children?: { id: string; nameAr: string; name: string; age: string; gender?: string }[];
+  children?: { id: string; name: string; age: string; gender?: string }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -342,17 +334,13 @@ export interface DonationReceipt {
   receiptNumber: string;
   donorId: string;
   donorName: string;
-  donorNameAr: string;
   transactionId: string;
   amount: number;
   amountInWords: string;
-  amountInWordsAr: string;
   caisseId: string;
   caisseName: string;
-  caisseNameAr: string;
   subCategoryId?: string;
   subCategoryName?: string;
-  subCategoryNameAr?: string;
   date: string;
   createdAt: Date;
 }
@@ -368,8 +356,8 @@ export interface DonationAllocation {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
-  donor: { id: string; firstName: string; lastName: string; firstNameAr: string; lastNameAr: string; reference: string };
-  beneficiary: { id: string; firstName: string; lastName: string; firstNameAr: string; lastNameAr: string; reference: string };
+  donor: { id: string; firstName: string; lastName: string; reference: string };
+  beneficiary: { id: string; firstName: string; lastName: string; reference: string };
   creditTransaction: { id: string; date: string; receiptNumber?: string; caisseId: string; status: TransactionStatus };
   debitTransaction?: { id: string; date: string; receiptNumber?: string };
 }

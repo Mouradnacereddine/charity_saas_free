@@ -2,6 +2,7 @@ import { useState, Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { calculateAge, getAgeDisplay, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords, localizedDesc } from '../utils/helpers'
+import { dirForInput } from '../utils/localized'
 import { printReceipt, printBeneficiaryCard } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
@@ -26,8 +27,6 @@ const ATTRIBUT_BADGE_VARIANT: Record<string, 'default' | 'success' | 'warning' |
 
 function emptyChild(): Omit<Child, 'id'> & { id?: string } {
   return {
-    firstNameAr: '',
-    lastNameAr: '',
     firstName: '',
     lastName: '',
     dateOfBirth: '',
@@ -39,11 +38,8 @@ function emptyChild(): Omit<Child, 'id'> & { id?: string } {
 }
 
 type BeneficiaryFormData = {
-  firstNameAr: string
-  lastNameAr: string
   firstName: string
   lastName: string
-  addressAr: string
   address: string
   phone: string
   nationalCardNumber: string
@@ -52,7 +48,6 @@ type BeneficiaryFormData = {
   gender: string
   onBehalfOf: string
   situation: string
-  situationAr: string
   caisseId: string
   subCategoryId: string
   children: (Omit<Child, 'id'> & { id?: string })[]
@@ -61,11 +56,8 @@ type BeneficiaryFormData = {
 
 function emptyForm(): BeneficiaryFormData {
   return {
-    firstNameAr: '',
-    lastNameAr: '',
     firstName: '',
     lastName: '',
-    addressAr: '',
     address: '',
     phone: '',
     nationalCardNumber: '',
@@ -74,7 +66,6 @@ function emptyForm(): BeneficiaryFormData {
     gender: 'male',
     onBehalfOf: '',
     situation: '',
-    situationAr: '',
     caisseId: '',
     subCategoryId: '',
     children: [],
@@ -84,11 +75,8 @@ function emptyForm(): BeneficiaryFormData {
 
 function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
   return {
-    firstNameAr: b.firstNameAr,
-    lastNameAr: b.lastNameAr,
     firstName: b.firstName,
     lastName: b.lastName,
-    addressAr: b.addressAr,
     address: b.address,
     phone: b.phone,
     nationalCardNumber: b.nationalCardNumber,
@@ -97,7 +85,6 @@ function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
     gender: b.gender ?? 'male',
     onBehalfOf: b.onBehalfOfName ?? '',
     situation: b.situation ?? '',
-    situationAr: b.situationAr ?? '',
     caisseId: b.caisseId ?? '',
     subCategoryId: b.subCategoryId ?? '',
     children: b.children.map((c: any) => ({ ...c, schoolGradeId: c.schoolGradeId ?? '' })),
@@ -171,21 +158,17 @@ export default function BeneficiariesPage() {
   }
 
   // ---- Attribut management (إدارة التصنيفات) ----
-  const [newAttrNameAr, setNewAttrNameAr] = useState('')
   const [newAttrName, setNewAttrName] = useState('')
   const [editAttrId, setEditAttrId] = useState<string | null>(null)
-  const [editAttrNameAr, setEditAttrNameAr] = useState('')
   const [editAttrName, setEditAttrName] = useState('')
 
   // School grade management state
-  const [newGradeNameAr, setNewGradeNameAr] = useState('')
   const [newGradeName, setNewGradeName] = useState('')
   const [editGradeId, setEditGradeId] = useState<string | null>(null)
-  const [editGradeNameAr, setEditGradeNameAr] = useState('')
   const [editGradeName, setEditGradeName] = useState('')
 
   const createAttributMutation = useMutation({
-    mutationFn: (data: { name: string; nameAr: string }) => attributsApi.create(data),
+    mutationFn: (data: { name: string }) => attributsApi.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['attributs'] }),
   })
 
@@ -195,7 +178,7 @@ export default function BeneficiariesPage() {
   })
 
   const createGradeMutation = useMutation({
-    mutationFn: (data: { name: string; nameAr: string }) => inventoryApi.createSchoolGrade(data),
+    mutationFn: (data: { name: string }) => inventoryApi.createSchoolGrade(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['school-grades'] }),
   })
   const deleteGradeMutation = useMutation({
@@ -204,20 +187,17 @@ export default function BeneficiariesPage() {
   })
 
   const handleAddAttribut = async () => {
-    if (!newAttrNameAr.trim()) return
-    await createAttributMutation.mutateAsync({ name: newAttrName.trim(), nameAr: newAttrNameAr.trim() })
-    setNewAttrNameAr('')
+    if (!newAttrName.trim()) return
+    await createAttributMutation.mutateAsync({ name: newAttrName.trim() })
     setNewAttrName('')
   }
 
   const handleUpdateAttribut = async () => {
-    if (!editAttrId || !editAttrNameAr.trim()) return
+    if (!editAttrId || !editAttrName.trim()) return
     await api.put(`/beneficiary-attributs/${encodeURIComponent(editAttrId)}`, {
       name: editAttrName.trim(),
-      nameAr: editAttrNameAr.trim(),
     })
     setEditAttrId(null)
-    setEditAttrNameAr('')
     setEditAttrName('')
     queryClient.invalidateQueries({ queryKey: ['attributs'] })
   }
@@ -233,16 +213,15 @@ export default function BeneficiariesPage() {
   }
 
   const handleAddGrade = async () => {
-    if (!newGradeNameAr.trim()) return
-    await createGradeMutation.mutateAsync({ name: newGradeName.trim(), nameAr: newGradeNameAr.trim() })
-    setNewGradeNameAr('')
+    if (!newGradeName.trim()) return
+    await createGradeMutation.mutateAsync({ name: newGradeName.trim() })
     setNewGradeName('')
   }
 
   const handleUpdateGrade = async () => {
-    if (!editGradeId || !editGradeNameAr.trim()) return
-    await inventoryApi.updateSchoolGrade(editGradeId, { name: editGradeName.trim(), nameAr: editGradeNameAr.trim() })
-    setEditGradeId(null); setEditGradeNameAr(''); setEditGradeName('')
+    if (!editGradeId || !editGradeName.trim()) return
+    await inventoryApi.updateSchoolGrade(editGradeId, { name: editGradeName.trim() })
+    setEditGradeId(null); setEditGradeName('')
     queryClient.invalidateQueries({ queryKey: ['school-grades'] })
   }
 
@@ -278,15 +257,15 @@ export default function BeneficiariesPage() {
   // ---- Caisse options ----
   const caisseOptions = caisses.map((c: any) => ({
     value: c.id,
-    label: c.nameAr || c.name,
+    label: c.name,
   }))
 
   const attributOptions = attributs.map((a: BeneficiaryAttribut) => ({
     value: a.name,
-    label: a.nameAr,
+    label: a.name,
   }))
 
-  const gradeOptions = schoolGrades.map((g: any) => ({ value: g.id, label: g.nameAr }))
+  const gradeOptions = schoolGrades.map((g: any) => ({ value: g.id, label: g.name }))
 
   // Compute display list (show only beneficiaries with the most children)
   const [widowFilterActive, setWidowFilterActive] = useState(false)
@@ -425,11 +404,8 @@ export default function BeneficiariesPage() {
 
   const handleSave = async () => {
     const data: any = {
-      firstNameAr: form.firstNameAr,
-      lastNameAr: form.lastNameAr,
       firstName: form.firstName,
       lastName: form.lastName,
-      addressAr: form.addressAr,
       address: form.address,
       phone: form.phone,
       nationalCardNumber: form.nationalCardNumber,
@@ -438,13 +414,10 @@ export default function BeneficiariesPage() {
       gender: form.gender || 'male',
       onBehalfOfName: form.onBehalfOf || undefined,
       situation: form.situation || undefined,
-      situationAr: form.situationAr || undefined,
       caisseId: form.caisseId || undefined,
       subCategoryId: form.subCategoryId || undefined,
       children: form.children.map((c) => ({
         id: c.id || crypto.randomUUID(),
-        firstNameAr: c.firstNameAr,
-        lastNameAr: c.lastNameAr,
         firstName: c.firstName ?? '',
         lastName: c.lastName ?? '',
         dateOfBirth: c.dateOfBirth,
@@ -492,7 +465,7 @@ export default function BeneficiariesPage() {
       ? `<div class="section"><div class="section-title">${t('beneficiaries.children')} (${b.children.length})</div>
          <div class="info"><div class="col"><div class="row"><span class="lbl">${t('receipt.nameAr')}</span>
          ${b.children.map((ch: any) =>
-           `<span class="val">${ch.lastNameAr} ${ch.firstNameAr}</span><br>`
+           `<span class="val">${ch.lastName} ${ch.firstName}</span><br>`
          ).join('')}
          </div></div><div class="col"><div class="row"><span class="lbl">${t('receipt.gender')} / ${t('receipt.age')} / ${t('common.status')}</span>
          ${b.children.map((ch: any) =>
@@ -502,10 +475,10 @@ export default function BeneficiariesPage() {
       : ''
 
     printBeneficiaryCard({
-      assocNameAr: association?.nameAr || t('app.title'),
+      assocName: association?.name || t('app.title'),
       reference: b.reference || '—',
-      lastNameAr: b.lastNameAr,
-      firstNameAr: b.firstNameAr,
+      lastName: b.lastName,
+      firstName: b.firstName,
       firstName: b.firstName,
       lastName: b.lastName,
       nationalCardNumber: b.nationalCardNumber || '—',
@@ -514,15 +487,15 @@ export default function BeneficiariesPage() {
       ageDisplay: b.dateOfBirth ? calculateAge(b.dateOfBirth).displayAr : '—',
       attribut: ATTRIBUT_LABELS[b.attribut] || b.attribut,
       gender: b.gender === 'female' ? t('common.female') : t('common.male'),
-      caisseNameAr: caisse?.nameAr || '—',
-      situation: b.situationAr ? `${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}` : undefined,
+      caisseName: caisse?.name || '—',
+      situation: b.situation ? `${HEALTH_STATUS_LABELS[b.situation] || b.situation}` : undefined,
       childrenHtml,
       dir: isLtr ? 'ltr' : 'rtl',
       lang: cl,
       labels: {
         title: t('receipt.beneficiaryCard'),
         personalInfo: t('receipt.personalInfo'),
-        nameAr: t('receipt.nameAr'),
+        name: t('receipt.nameAr'),
         attribut: t('receipt.attribute'),
         birthDate: t('receipt.birthDate'),
         idNumber: t('receipt.idNumber'),
@@ -552,7 +525,7 @@ export default function BeneficiariesPage() {
           <thead><tr><th>{t('beneficiaries.sectionName')}</th><th>{t('beneficiaries.filterGender')}</th><th>{t('receipt.age')}</th><th>{t('common.status')}</th><th>{t('beneficiaries.schoolGrade')}</th></tr></thead>
           <tbody>${b.children.map((ch: any) => `
             <tr>
-              <td>${ch.lastNameAr} ${ch.firstNameAr}</td>
+              <td>${ch.lastName} ${ch.firstName}</td>
               <td>${ch.gender === 'female' ? t('common.female') : t('common.male')}</td>
               <td>${calculateAge(ch.dateOfBirth).displayAr}</td>
               <td>${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus}</td>
@@ -571,7 +544,7 @@ export default function BeneficiariesPage() {
             const s = a.creditTransaction?.status
             const statusLabel = s === 'pending' ? t('beneficiaries.pendingStatus') : s === 'cancelled' ? t('dashboard.cancelled') : a.remainingAmount <= 0 ? t('dashboard.fullyDisbursed') : a.debitTransactionId ? t('dashboard.partiallyDisbursed') : t('beneficiaries.activeStatus')
           return `<tr>
-            <td>${a.donor.lastNameAr} ${a.donor.firstNameAr}</td>
+            <td>${a.donor.lastName} ${a.donor.firstName}</td>
             <td>${formatCurrency(a.amount)}</td>
             <td>${spent > 0 ? formatCurrency(spent) : '—'}</td>
             <td>${a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : '0'}</td>
@@ -600,7 +573,7 @@ export default function BeneficiariesPage() {
               <td>${formatDate(tx.date)}</td>
               <td>${formatCurrency(tx.amount)}</td>
               <td>${tx.fundSource === 'banque' ? t('beneficiaries.bankLabel') : t('beneficiaries.cashLabel')}</td>
-              <td>${c?.nameAr || '—'}</td>
+              <td>${c?.name || '—'}</td>
               <td>${s}</td>
               <td>${tx.descriptionAr || '—'}</td>
             </tr>`
@@ -615,14 +588,14 @@ export default function BeneficiariesPage() {
           <thead><tr><th>{t('common.date')}</th><th>${t('beneficiaries.doctor')}</th><th>{t('common.amount')}</th><th>${t('beneficiaries.analysis')}</th><th>${t('beneficiaries.hospital')}</th><th>{t('beneficiaries.referralChildren')}</th></tr></thead>
           <tbody>${referrals.map((ref: any) => {
             const childrenNames = ref.children && Array.isArray(ref.children) && ref.children.length > 0
-              ? ref.children.map((c: any) => c.nameAr).join(', ')
+              ? ref.children.map((c: any) => c.name).join(', ')
               : '—'
             return `<tr>
               <td>${formatDate(ref.date)}</td>
-              <td>${ref.doctorNameAr}</td>
+              <td>${ref.doctorName}</td>
               <td>${formatCurrency(ref.amount)}</td>
-              <td>${ref.analysisTypeAr || '—'}</td>
-              <td>${ref.hospitalAr || '—'}</td>
+              <td>${ref.analysisType || '—'}</td>
+              <td>${ref.hospital || '—'}</td>
               <td>${childrenNames}</td>
             </tr>`
           }).join('')}</tbody>
@@ -664,16 +637,16 @@ export default function BeneficiariesPage() {
         <div class="section">
           <div class="section-title">{t('beneficiaries.personalInfo')}</div>
           <div class="info-grid">
-            <div class="item"><span class="lbl">${t('beneficiaries.nameAr')}</span><span class="val">${b.lastNameAr} ${b.firstNameAr}</span></div>
+            <div class="item"><span class="lbl">${t('beneficiaries.nameAr')}</span><span class="val">${b.lastName} ${b.firstName}</span></div>
             <div class="item"><span class="lbl">${t('beneficiaries.nameLatin')}</span><span class="val">${b.firstName} ${b.lastName}</span></div>
             <div class="item"><span class="lbl">{t('receipt.idNumber')}</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
             <div class="item"><span class="lbl">{t('receipt.phone')}</span><span class="val">${b.phone}</span></div>
             <div class="item"><span class="lbl">{t('receipt.birthDate')}</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${calculateAge(b.dateOfBirth).displayAr})` : '—'}</span></div>
             <div class="item"><span class="lbl">{t('beneficiaries.filterAttribute')}</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
             <div class="item"><span class="lbl">{t('beneficiaries.filterGender')}</span><span class="val">${b.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
-            <div class="item"><span class="lbl">${t('beneficiaries.addressTitle')}</span><span class="val">${b.addressAr || '—'}</span></div>
-            <div class="item"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
-            ${b.situationAr ? `<div class="item"><span class="lbl">{t('common.status')}</span><span class="val">${HEALTH_STATUS_LABELS[b.situationAr] || b.situationAr}${b.situation ? ` (${b.situation})` : ''}</span></div>` : ''}
+            <div class="item"><span class="lbl">${t('beneficiaries.addressTitle')}</span><span class="val">${b.address || '—'}</span></div>
+            <div class="item"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.name || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
+            ${b.situation ? `<div class="item"><span class="lbl">{t('common.status')}</span><span class="val">${HEALTH_STATUS_LABELS[b.situation] || b.situation}</span></div>` : ''}
             ${b.notes ? `<div class="item"><span class="lbl" style="min-width:140px">${t('common.notes')}</span><span class="val">${b.notes}</span></div>` : ''}
           </div>
         </div>
@@ -697,20 +670,20 @@ export default function BeneficiariesPage() {
   const getCaisseName = (caisseId?: string) => {
     if (!caisseId) return '—'
     const c = caisses.find((c: any) => c.id === caisseId)
-    return c?.nameAr || c?.name || '—'
+    return c?.name || '—'
   }
 
   const getSubCaisseName = (caisseId?: string, subCatId?: string) => {
     if (!caisseId || !subCatId) return '—'
     const c = caisses.find((c: any) => c.id === caisseId)
     const sc = c?.subCategories.find((s: any) => s.id === subCatId)
-    return sc?.nameAr || sc?.name || '—'
+    return sc?.name || '—'
   }
 
   const getGradeName = (gradeId?: string) => {
     if (!gradeId) return '—'
     const g = schoolGrades.find((g: any) => g.id === gradeId)
-    return g?.nameAr || '—'
+    return g?.name || '—'
   }
 
   // ---- Render helpers ----
@@ -919,7 +892,7 @@ export default function BeneficiariesPage() {
                           {b.reference || '—'}
                         </td>
                         <td className="py-3 px-3 font-medium text-foreground">
-                          {b.lastNameAr} {b.firstNameAr}
+                          {b.lastName} {b.firstName}
                         </td>
                         <td className="py-3 px-3 text-muted-foreground hidden md:table-cell">{b.nationalCardNumber}</td>
                         <td className="py-3 px-3 text-muted-foreground hidden lg:table-cell" dir="ltr">
@@ -981,7 +954,7 @@ export default function BeneficiariesPage() {
                                 <tbody>
                                   {b.children.map((child: any, ci: number) => (
                                     <tr key={ci} className="border-t border-border hover:bg-card">
-                                      <td className="py-2 px-3 font-medium text-foreground">{child.lastNameAr} {child.firstNameAr}</td>
+                                      <td className="py-2 px-3 font-medium text-foreground">{child.lastName} {child.firstName}</td>
                                       <td className="py-2 px-3 text-muted-foreground">{child.gender === 'female' ? t('common.female') : t('common.male')}</td>
                                       <td className="py-2 px-3 text-muted-foreground">{getAgeDisplay(child.dateOfBirth)}</td>
                                       <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
@@ -1011,23 +984,20 @@ export default function BeneficiariesPage() {
         size="xl"
       >
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
-          {/* Names */}
+          {/* Names — un seul champ, direction pilotée par la locale de l'association */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('beneficiaries.sectionName')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr={t('beneficiaries.nameAr')} value={form.firstNameAr} onChange={(e) => handleFormChange('firstNameAr', e.target.value)} required />
-              <Input labelAr={t('beneficiaries.lastNameAr')} value={form.lastNameAr} onChange={(e) => handleFormChange('lastNameAr', e.target.value)} required />
-              <Input labelAr={t('beneficiaries.nameLatin')} value={form.firstName} onChange={(e) => handleFormChange('firstName', e.target.value)} dir="ltr" required />
-              <Input labelAr={t('beneficiaries.lastNameLatin')} value={form.lastName} onChange={(e) => handleFormChange('lastName', e.target.value)} dir="ltr" required />
+              <Input label={t('beneficiaries.firstName')} value={form.firstName} onChange={(e) => handleFormChange('firstName', e.target.value)} required dir={dirForInput(association?.locale)} />
+              <Input label={t('beneficiaries.lastName')} value={form.lastName} onChange={(e) => handleFormChange('lastName', e.target.value)} required dir={dirForInput(association?.locale)} />
             </div>
           </div>
 
-          {/* Address */}
+          {/* Address — un seul champ */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3">{t('beneficiaries.addressTitle')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr={t('beneficiaries.addressAr')} value={form.addressAr} onChange={(e) => handleFormChange('addressAr', e.target.value)} required />
-              <Input labelAr={t('beneficiaries.addressLatin')} value={form.address} onChange={(e) => handleFormChange('address', e.target.value)} dir="ltr" required />
+              <Input label={t('beneficiaries.address')} value={form.address} onChange={(e) => handleFormChange('address', e.target.value)} required dir={dirForInput(association?.locale)} />
             </div>
           </div>
 
@@ -1035,10 +1005,10 @@ export default function BeneficiariesPage() {
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3">{t('beneficiaries.personalInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input labelAr={t('receipt.idNumber')} value={form.nationalCardNumber} onChange={(e) => handleFormChange('nationalCardNumber', e.target.value)} required />
-              <Input labelAr={t('receipt.phone')} value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value)} dir="ltr" required />
+              <Input label={t('receipt.idNumber')} value={form.nationalCardNumber} onChange={(e) => handleFormChange('nationalCardNumber', e.target.value)} required />
+              <Input label={t('receipt.phone')} value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value)} dir="ltr" required />
               <div className="space-y-1">
-                <Input labelAr={t('receipt.birthDate')} type="date" value={form.dateOfBirth} onChange={(e) => handleFormChange('dateOfBirth', e.target.value)} required />
+                <Input label={t('receipt.birthDate')} type="date" value={form.dateOfBirth} onChange={(e) => handleFormChange('dateOfBirth', e.target.value)} required />
                 {form.dateOfBirth && (
                   <p className="text-xs text-muted-foreground">{t('beneficiaries.ageDisplay')} {getAgeDisplay(form.dateOfBirth)}</p>
                 )}
@@ -1051,20 +1021,20 @@ export default function BeneficiariesPage() {
             <h4 className="text-sm font-semibold text-foreground mb-3">{t('beneficiaries.classificationTitle')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <SearchableSelect
-                labelAr={t('beneficiaries.filterAttribute')}
+                label={t('beneficiaries.filterAttribute')}
                 options={attributOptions}
                 value={form.attribut}
                 onChange={(val) => handleFormChange('attribut', val)}
                 required
               />
               <SearchableSelect
-                labelAr={t('beneficiaries.filterGender')}
+                label={t('beneficiaries.filterGender')}
                 options={[{ value: 'male', label: t('common.male') }, { value: 'female', label: t('common.female') }]}
                 value={form.gender || 'male'}
                 onChange={(val) => handleFormChange('gender', val)}
               />
               <div className="space-y-1">
-                <Input labelAr={t('beneficiaries.onBehalfOf')} placeholder={t('beneficiaries.onBehalfOfPlaceholder')} value={form.onBehalfOf} onChange={(e) => handleFormChange('onBehalfOf', e.target.value)} />
+                <Input label={t('beneficiaries.onBehalfOf')} placeholder={t('beneficiaries.onBehalfOfPlaceholder')} value={form.onBehalfOf} onChange={(e) => handleFormChange('onBehalfOf', e.target.value)} />
                 <p className="text-xs text-muted-foreground/70">{t('beneficiaries.onBehalfOfHint')}</p>
               </div>
             </div>
@@ -1075,12 +1045,12 @@ export default function BeneficiariesPage() {
             <h4 className="text-sm font-semibold text-foreground mb-3">{t('common.status')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SearchableSelect
-                labelAr={t('common.status')}
+                label={t('common.status')}
                 options={HEALTH_STATUS_OPTIONS}
-                value={form.situationAr}
-                onChange={(val) => handleFormChange('situationAr', val)}
+                value={form.situation}
+                onChange={(val) => handleFormChange('situation', val)}
               />
-              <Input labelAr={t('beneficiaries.situationDetails')} placeholder={t('beneficiaries.situationDetailsPlaceholder')} value={form.situation} onChange={(e) => handleFormChange('situation', e.target.value)} />
+              <Input label={t('beneficiaries.situationDetails')} placeholder={t('beneficiaries.situationDetailsPlaceholder')} value={form.situation} onChange={(e) => handleFormChange('situation', e.target.value)} />
             </div>
           </div>
 
@@ -1101,25 +1071,25 @@ export default function BeneficiariesPage() {
                       <button onClick={() => removeChild(index)} className="text-xs text-destructive hover:text-destructive">✕ {t('beneficiaries.removeChild')}</button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Input labelAr={t('beneficiaries.nameAr')} value={child.firstNameAr} onChange={(e) => updateChild(index, 'firstNameAr', e.target.value)} />
-                      <Input labelAr={t('beneficiaries.lastNameAr')} value={child.lastNameAr} onChange={(e) => updateChild(index, 'lastNameAr', e.target.value)} />
-                      <Input labelAr={t('receipt.birthDate')} type="date" value={child.dateOfBirth} onChange={(e) => updateChild(index, 'dateOfBirth', e.target.value)} />
+                      <Input label={t('beneficiaries.firstName')} value={child.firstName} onChange={(e) => updateChild(index, 'firstName', e.target.value)} dir={dirForInput(association?.locale)} />
+                      <Input label={t('beneficiaries.lastName')} value={child.lastName} onChange={(e) => updateChild(index, 'lastName', e.target.value)} dir={dirForInput(association?.locale)} />
+                      <Input label={t('receipt.birthDate')} type="date" value={child.dateOfBirth} onChange={(e) => updateChild(index, 'dateOfBirth', e.target.value)} />
                       <SearchableSelect
-                        labelAr={t('beneficiaries.childGender')}
+                        label={t('beneficiaries.childGender')}
                         options={[{ value: 'male', label: t('common.male') }, { value: 'female', label: t('common.female') }]}
                         value={child.gender || 'male'}
                         onChange={(val) => updateChild(index, 'gender', val)}
                       />
                       <SearchableSelect
-                        labelAr={t('common.status')}
+                        label={t('common.status')}
                         options={HEALTH_STATUS_OPTIONS}
                         value={child.healthStatus}
                         onChange={(val) => updateChild(index, 'healthStatus', val)}
                       />
-                      <Input labelAr={t('beneficiaries.childHealthDetails')} placeholder={t('beneficiaries.childHealthDetailsPlaceholder')} value={child.healthDetails || ''} onChange={(e) => updateChild(index, 'healthDetails', e.target.value)} />
+                      <Input label={t('beneficiaries.childHealthDetails')} placeholder={t('beneficiaries.childHealthDetailsPlaceholder')} value={child.healthDetails || ''} onChange={(e) => updateChild(index, 'healthDetails', e.target.value)} />
                       {gradeOptions.length > 0 && (
                         <SearchableSelect
-                          labelAr={t('beneficiaries.schoolGrade')}
+                          label={t('beneficiaries.schoolGrade')}
                           options={gradeOptions}
                           value={child.schoolGradeId || ''}
                           onChange={(val) => updateChild(index, 'schoolGradeId', val)}
@@ -1133,7 +1103,7 @@ export default function BeneficiariesPage() {
           </div>
 
           {/* Notes */}
-          <TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => handleFormChange('notes', e.target.value)} />
+          <TextArea label={t('common.notes')} value={form.notes} onChange={(e) => handleFormChange('notes', e.target.value)} />
 
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button variant="secondary" onClick={closeFormModal}>{t('common.cancel')}</Button>
@@ -1144,24 +1114,23 @@ export default function BeneficiariesPage() {
 
       {/* ---- Detail View Modal ---- */}
       {selectedBeneficiary && (
-        <Modal isOpen={showDetailModal} onClose={closeDetail} title={`${selectedBeneficiary.lastNameAr} ${selectedBeneficiary.firstNameAr}`} size="xl">
+        <Modal isOpen={showDetailModal} onClose={closeDetail} title={`${selectedBeneficiary.lastName} ${selectedBeneficiary.firstName}`} size="xl">
           <div className="space-y-6" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('beneficiaries.personalInfo')}</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('doctors.refCode')}</span><span className="font-semibold text-primary" dir="ltr">{selectedBeneficiary.reference || '—'}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.nameAr')}</span><span className="font-medium text-foreground">{selectedBeneficiary.lastNameAr} {selectedBeneficiary.firstNameAr}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.nameLatin')}</span><span className="font-medium text-foreground" dir="ltr">{selectedBeneficiary.firstName} {selectedBeneficiary.lastName}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.fullName')}</span><span className="font-medium text-foreground">{selectedBeneficiary.lastName} {selectedBeneficiary.firstName}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.idNumber')}</span><span className="font-medium text-foreground">{selectedBeneficiary.nationalCardNumber}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.phone')}</span><span className="font-medium text-foreground" dir="ltr">{selectedBeneficiary.phone}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('receipt.birthDate')}</span><span className="font-medium text-foreground">{selectedBeneficiary.dateOfBirth ? `${formatDate(selectedBeneficiary.dateOfBirth)} (${getAgeDisplay(selectedBeneficiary.dateOfBirth)})` : '—'}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterAttribute')}</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterGender')}</span><span className="font-medium text-foreground">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.addressAr')}</span><span className="font-medium text-foreground">{selectedBeneficiary.addressAr || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.address')}</span><span className="font-medium text-foreground">{selectedBeneficiary.address || '—'}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.addressLatin')}</span><span className="font-medium text-foreground" dir="ltr">{selectedBeneficiary.address || '—'}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-muted-foreground mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
                 {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.onBehalfOf')}</span><span className="font-medium text-foreground">{selectedBeneficiary.onBehalfOfName}</span></div>}
-                {(selectedBeneficiary.situationAr || selectedBeneficiary.situation) && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('common.status')}</span><span className="font-medium text-foreground">{HEALTH_STATUS_LABELS[selectedBeneficiary.situationAr] || selectedBeneficiary.situationAr}{selectedBeneficiary.situation && <span className="text-muted-foreground/70 mr-2" dir="ltr">({selectedBeneficiary.situation})</span>}</span></div>}
+                {selectedBeneficiary.situation && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('common.status')}</span><span className="font-medium text-foreground">{HEALTH_STATUS_LABELS[selectedBeneficiary.situation] || selectedBeneficiary.situation}</span></div>}
                 {selectedBeneficiary.notes && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('common.notes')}</span><span className="font-medium text-foreground">{selectedBeneficiary.notes}</span></div>}
               </div>
             </div>
@@ -1183,7 +1152,7 @@ export default function BeneficiariesPage() {
                     <tbody>
                       {selectedBeneficiary.children.map((child: any) => (
                         <tr key={child.id} className="border-b border-border">
-                          <td className="py-2 px-3">{child.lastNameAr} {child.firstNameAr}</td>
+                          <td className="py-2 px-3">{child.lastName} {child.firstName}</td>
                           <td className="py-2 px-3">{child.gender === 'female' ? t('common.female') : t('common.male')}</td>
                           <td className="py-2 px-3">{getAgeDisplay(child.dateOfBirth)}</td>
                           <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
@@ -1217,7 +1186,7 @@ export default function BeneficiariesPage() {
                         const spent = a.amount - a.remainingAmount;
                         return (
                         <tr key={a.id} className="border-b border-border hover:bg-muted">
-                          <td className="py-2 px-3 font-medium text-foreground">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
+                          <td className="py-2 px-3 font-medium text-foreground">{a.donor.lastName} {a.donor.firstName}</td>
                           <td className="py-2 px-3"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
                           <td className="py-2 px-3">{spent > 0 ? formatCurrency(spent) : '—'}</td>
                           <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
@@ -1272,33 +1241,33 @@ export default function BeneficiariesPage() {
                           <td className="py-2 px-3 text-foreground">{formatDate(tx.date)}</td>
                           <td className="py-2 px-3 font-semibold text-destructive">-{formatCurrency(tx.amount)}</td>
                           <td className="py-2 px-3 text-muted-foreground">{tx.fundSource === 'banque' ? t('beneficiaries.bankLabel') : t('beneficiaries.cashLabel')}</td>
-                          <td className="py-2 px-3 text-muted-foreground">{caisse?.nameAr || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{caisse?.name || '—'}</td>
                           <td className="py-2 px-3">
                             {(tx.status || 'completed') === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> :
                              (tx.status || 'completed') === 'cancelled' ? <Badge variant="danger">{t('dashboard.cancelled')}</Badge> :
                              <Badge variant="success">{t('dashboard.completed')}</Badge>}
                           </td>
-                          <td className="py-2 px-3 text-muted-foreground text-xs max-w-[150px] truncate">{localizedDesc(tx.description, tx.descriptionAr) || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground text-xs max-w-[150px] truncate">{localizedDesc(tx.description) || '—'}</td>
                           <td className="py-2 px-3">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const caisse = caisses.find((c: any) => c.id === tx.caisseId)
                                 const amount = typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)
-                                const wordsAr = tx.amountInWordsAr && !tx.amountInWordsAr.match(/^\d/) ? tx.amountInWordsAr : numberToArabicWords(amount)
+                                const wordsAr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToArabicWords(amount)
                                 const wordsFr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToFrenchWords(amount)
                                 printReceipt(
                                   t('receipt.expenseTitle'), 'Bon de Sortie',
                                   `<div class="col"><div class="row"><span class="lbl">${t('beneficiaries.receiptNo')}</span><span class="val">${tx.id.slice(0, 8) || '—'}</span></div>
 <div class="row"><span class="lbl">{t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
-<div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${selectedBeneficiary?.lastNameAr || ''} ${selectedBeneficiary?.firstNameAr || ''}</span></div></div>
-<div class="col"><div class="row"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}</span></div>
+<div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${selectedBeneficiary?.lastName || ''} ${selectedBeneficiary?.firstName || ''}</span></div></div>
+<div class="col"><div class="row"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.name || '—'}</span></div>
 <div class="row"><span class="lbl">${t('dashboard.source')}</span><span class="val">${tx.fundSource === 'banque' ? t('beneficiaries.bankLabel') : t('beneficiaries.cashLabel')}</span></div>
-${tx.descriptionAr ? `<div class="row"><span class="lbl">{t('common.description')}</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
+${tx.description ? `<div class="row"><span class="lbl">{t('common.description')}</span><span class="val">${tx.description}</span></div>` : ''}</div>`,
                                   'background:#fff0f0;color:#dc2626',
                                   `- ${formatCurrency(amount)}`, wordsAr, wordsFr,
                                   t('receipt.beneficiarySign'), t('receipt.stampSignature'),
-                                  association?.nameAr
+                                  association?.name
                                 )
                               }}
                               className="p-1 text-muted-foreground/70 hover:text-primary"
@@ -1345,42 +1314,42 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">{t('common.description'
                         return (
                         <tr key={ref.id} className="border-b border-border hover:bg-muted">
                           <td className="py-2 px-3 text-foreground">{formatDate(ref.date)}</td>
-                          <td className="py-2 px-3 font-medium text-foreground">{ref.doctorNameAr}</td>
+                          <td className="py-2 px-3 font-medium text-foreground">{ref.doctorName}</td>
                           <td className="py-2 px-3"><Badge variant="warning">{formatCurrency(ref.amount)}</Badge></td>
                           <td className="py-2 px-3">
                             {(ref.status || 'pending') === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> :
                              (ref.status || 'pending') === 'completed' ? <Badge variant="success">{t('dashboard.completed')}</Badge> :
                              <Badge variant="danger">{t('dashboard.cancelled')}</Badge>}
                           </td>
-                          <td className="py-2 px-3 text-muted-foreground">{caisse?.nameAr || '—'}</td>
-                          <td className="py-2 px-3 text-muted-foreground">{ref.analysisTypeAr || '—'}</td>
-                          <td className="py-2 px-3 text-muted-foreground">{ref.hospitalAr || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{caisse?.name || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{ref.analysisType || '—'}</td>
+                          <td className="py-2 px-3 text-muted-foreground">{ref.hospital || '—'}</td>
                           <td className="py-2 px-3">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const caisse = caisses.find((c: any) => c.id === ref.caisseId)
                                 const subCat = caisse?.subCategories.find((s: any) => s.id === ref.subCategoryId)
-                                const caisseRow = caisse ? `<div class="row"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse.nameAr}</span></div>` : ''
-                                const subCatRow = subCat ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${subCat.nameAr}</span></div>` : ''
+                                const caisseRow = caisse ? `<div class="row"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse.name}</span></div>` : ''
+                                const subCatRow = subCat ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${subCat.name}</span></div>` : ''
                                 const childrenHtml = ref.children && Array.isArray(ref.children) && ref.children.length > 0
-                                  ? `<div class="row"><span class="lbl">${t('beneficiaries.referralChildren')}</span><span class="val">${ref.children.map((c: any) => c.nameAr || c.name).join(', ')}</span></div>`
+                                  ? `<div class="row"><span class="lbl">${t('beneficiaries.referralChildren')}</span><span class="val">${ref.children.map((c: any) => c.name).join(', ')}</span></div>`
                                   : ''
                                 printReceipt(
                                   t('medical.referralDetails'), 'Orientation Médicale',
                                   `<div class="col"><div class="row"><span class="lbl">{t('doctors.refCode')}</span><span class="val">${ref.reference || '—'}</span></div>
-<div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${ref.beneficiaryNameAr || ''}</span></div>
-<div class="row"><span class="lbl">${t('medical.doctor')}</span><span class="val">${ref.doctorNameAr}</span></div>
-${ref.analysisTypeAr ? `<div class="row"><span class="lbl">${t('medical.analysisType')}</span><span class="val">${ref.analysisTypeAr}</span></div>` : ''}</div>
+<div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${ref.beneficiaryName || ''}</span></div>
+<div class="row"><span class="lbl">${t('medical.doctor')}</span><span class="val">${ref.doctorName}</span></div>
+${ref.analysisType ? `<div class="row"><span class="lbl">${t('medical.analysisType')}</span><span class="val">${ref.analysisType}</span></div>` : ''}</div>
 <div class="col">${caisseRow}${subCatRow}
 <div class="row"><span class="lbl">{t('common.date')}</span><span class="val">${formatDate(ref.date)}</span></div>
-${ref.hospitalAr ? `<div class="row"><span class="lbl">${t('medical.hospital')}</span><span class="val">${ref.hospitalAr}</span></div>` : ''}
+${ref.hospital ? `<div class="row"><span class="lbl">${t('medical.hospital')}</span><span class="val">${ref.hospital}</span></div>` : ''}
 ${childrenHtml}
 ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><span class="val">${ref.notes}</span></div>` : ''}</div>`,
                                   'color:#2563eb',
-                                  formatCurrency(ref.amount), ref.amountInWordsAr || '', '',
+                                  formatCurrency(ref.amount), ref.amountInWords || '', '',
                                   t('medical.presidentSignature'), t('medical.assocStamp'),
-                                  association?.nameAr
+                                  association?.name
                                 )
                               }}
                               className="p-1 text-muted-foreground/70 hover:text-primary"
@@ -1472,17 +1441,15 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
             </h3>
             <p className="text-sm text-muted-foreground mb-4">{t('beneficiaries.settingsDesc')}</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-              <Input labelAr={t('beneficiaries.nameAr')} value={newAttrNameAr} onChange={(e) => setNewAttrNameAr(e.target.value)} placeholder={t('beneficiaries.attributPlaceholder')} />
-              <Input labelAr={t('beneficiaries.nameLatin')} value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder={t('beneficiaries.attributLatinPlaceholder')} dir="ltr" />
-              <Button onClick={handleAddAttribut} disabled={!newAttrNameAr.trim()}>{t('common.add')}</Button>
+              <Input label={t('beneficiaries.name')} value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder={t('beneficiaries.attributPlaceholder')} dir={dirForInput(association?.locale)} />
+              <Button onClick={handleAddAttribut} disabled={!newAttrName.trim()}>{t('common.add')}</Button>
             </div>
             <Card>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.labelArabic')}</th>
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.labelLatin')}</th>
+                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.sectionName')}</th>
                       <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                     </tr>
                   </thead>
@@ -1491,8 +1458,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                       <tr key={a.name} className="border-b border-border hover:bg-muted">
                         {editAttrId === a.name ? (
                           <>
-                            <td className="py-2 px-4"><input value={editAttrNameAr} onChange={(e) => setEditAttrNameAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
-                            <td className="py-2 px-4"><input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                            <td className="py-2 px-4"><input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
                             <td className="py-2 px-4 text-center flex gap-1 justify-center">
                               <Button size="sm" onClick={handleUpdateAttribut}>{t('common.save')}</Button>
                               <Button size="sm" variant="ghost" onClick={() => setEditAttrId(null)}>{t('common.cancel')}</Button>
@@ -1500,10 +1466,9 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                           </>
                         ) : (
                           <>
-                            <td className="py-3 px-4 font-medium text-foreground">{a.nameAr}</td>
-                            <td className="py-3 px-4 text-muted-foreground">{a.name}</td>
+                            <td className="py-3 px-4 font-medium text-foreground">{a.name}</td>
                             <td className="py-3 px-4 text-center">
-                              <button onClick={() => { setEditAttrId(a.name); setEditAttrNameAr(a.nameAr); setEditAttrName(a.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => { setEditAttrId(a.name); setEditAttrName(a.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
                               <button onClick={() => handleDeleteAttribut(a.name)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                             </td>
                           </>
@@ -1524,17 +1489,15 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
             </h3>
             <p className="text-sm text-muted-foreground mb-4">{t('beneficiaries.addSchoolGrade')}</p>
             <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-              <Input labelAr={t('beneficiaries.nameAr')} value={newGradeNameAr} onChange={(e) => setNewGradeNameAr(e.target.value)} placeholder={t('beneficiaries.gradePlaceholder')} />
-              <Input labelAr={t('beneficiaries.nameLatin')} value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder={t('beneficiaries.gradeLatinPlaceholder')} dir="ltr" />
-              <Button onClick={handleAddGrade} disabled={!newGradeNameAr.trim()}>{t('common.add')}</Button>
+              <Input label={t('beneficiaries.sectionName')} value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder={t('beneficiaries.gradePlaceholder')} dir={dirForInput(association?.locale)} />
+              <Button onClick={handleAddGrade} disabled={!newGradeName.trim()}>{t('common.add')}</Button>
             </div>
             <Card>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.labelArabic')}</th>
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.labelLatin')}</th>
+                      <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('beneficiaries.sectionName')}</th>
                       <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                     </tr>
                   </thead>
@@ -1543,8 +1506,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                       <tr key={g.id} className="border-b border-border hover:bg-muted">
                         {editGradeId === g.id ? (
                           <>
-                            <td className="py-2 px-4"><input value={editGradeNameAr} onChange={(e) => setEditGradeNameAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
-                            <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                            <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
                             <td className="py-2 px-4 text-center flex gap-1 justify-center">
                               <Button size="sm" onClick={handleUpdateGrade}>{t('common.save')}</Button>
                               <Button size="sm" variant="ghost" onClick={() => setEditGradeId(null)}>{t('common.cancel')}</Button>
@@ -1552,10 +1514,9 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                           </>
                         ) : (
                           <>
-                            <td className="py-3 px-4 font-medium text-foreground">{g.nameAr}</td>
-                            <td className="py-3 px-4 text-muted-foreground">{g.name}</td>
+                            <td className="py-3 px-4 font-medium text-foreground">{g.name}</td>
                             <td className="py-3 px-4 text-center">
-                              <button onClick={() => { setEditGradeId(g.id); setEditGradeNameAr(g.nameAr); setEditGradeName(g.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => { setEditGradeId(g.id); setEditGradeName(g.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
                               <button onClick={() => handleDeleteGrade(g.id)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                             </td>
                           </>
@@ -1563,7 +1524,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
                       </tr>
                     ))}
                     {schoolGrades.length === 0 && (
-                      <tr><td colSpan={3} className="py-8 text-center text-muted-foreground/70">{t('beneficiaries.noGrades')}</td></tr>
+                      <tr><td colSpan={2} className="py-8 text-center text-muted-foreground/70">{t('beneficiaries.noGrades')}</td></tr>
                     )}
                   </tbody>
                 </table>

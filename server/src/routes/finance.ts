@@ -43,14 +43,9 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
       const term = String(searchTerm);
       where.OR = [
         { description: { contains: term, mode: 'insensitive' } },
-        { descriptionAr: { contains: term, mode: 'insensitive' } },
         { receiptNumber: { contains: term, mode: 'insensitive' } },
-        { donor: { firstNameAr: { contains: term, mode: 'insensitive' } } },
-        { donor: { lastNameAr: { contains: term, mode: 'insensitive' } } },
         { donor: { firstName: { contains: term, mode: 'insensitive' } } },
         { donor: { lastName: { contains: term, mode: 'insensitive' } } },
-        { beneficiary: { firstNameAr: { contains: term, mode: 'insensitive' } } },
-        { beneficiary: { lastNameAr: { contains: term, mode: 'insensitive' } } },
         { beneficiary: { firstName: { contains: term, mode: 'insensitive' } } },
         { beneficiary: { lastName: { contains: term, mode: 'insensitive' } } },
       ];
@@ -124,9 +119,9 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
   try {
     const associationId = req.user!.associationId;
     const {
-      type, amount, amountInWords, amountInWordsAr,
+      type, amount, amountInWords,
       fundSource, caisseId, subCategoryId, bankAccountId,
-      donorId, beneficiaryId, allocatedBeneficiaryId, allocationId, description, descriptionAr,
+      donorId, beneficiaryId, allocatedBeneficiaryId, allocationId, description,
       receiptNumber, date, status,
     } = req.body;
 
@@ -153,7 +148,6 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
 
     // Auto-generate amountInWords if not provided
     const words = amountInWords || `${amount} DZD`;
-    const wordsAr = amountInWordsAr || `${amount} دينار`;
 
     // Auto-generate receipt number for all transactions
     const ref = receiptNumber || generateRef('BON');
@@ -198,7 +192,6 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
           type,
           amount,
           amountInWords: words,
-          amountInWordsAr: wordsAr,
           fundSource,
           caisseId,
           subCategoryId,
@@ -206,7 +199,6 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
           donorId,
           beneficiaryId,
           description,
-          descriptionAr,
           receiptNumber: ref,
           status: txStatus as any,
           date: date ? new Date(date) : new Date(),
@@ -266,17 +258,13 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
                 receiptNumber: ref,
                 donorId,
                 donorName: `${donor.firstName} ${donor.lastName}`,
-                donorNameAr: `${donor.lastNameAr} ${donor.firstNameAr}`,
                 transactionId: transaction.id,
                 amount: amountNum,
                 amountInWords,
-                amountInWordsAr,
                 caisseId,
                 caisseName: caisse.name,
-                caisseNameAr: caisse.nameAr,
                 subCategoryId: subCat?.id,
                 subCategoryName: subCat?.name,
-                subCategoryNameAr: subCat?.nameAr,
                 date: date ? new Date(date) : new Date(),
               },
             });
@@ -326,7 +314,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
             data: {
               associationId, donorId, beneficiaryId: allocBenefId, creditTransactionId: transaction.id,
               amount: amountNum, remainingAmount: amountNum,
-              notes: `تبرع مخصص من ${donor.lastNameAr} ${donor.firstNameAr} إلى ${beneficiary.lastNameAr} ${beneficiary.firstNameAr}`,
+              notes: `تبرع مخصص من ${donor.lastName} ${donor.firstName} إلى ${beneficiary.lastName} ${beneficiary.firstName}`,
             },
           });
         }
@@ -392,10 +380,10 @@ router.get('/bank-accounts', async (req: AuthRequest, res: Response): Promise<vo
 router.post('/bank-accounts', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { bankName, bankNameAr, accountNumber, rib, iban, swift, balance } = req.body;
+    const { bankName, accountNumber, rib, iban, swift, balance } = req.body;
 
-    if (!bankName || !bankNameAr || !accountNumber) {
-      res.status(400).json({ error: 'Missing required fields: bankName, bankNameAr, accountNumber' });
+    if (!bankName || !accountNumber) {
+      res.status(400).json({ error: 'Missing required fields: bankName, accountNumber' });
       return;
     }
 
@@ -403,7 +391,6 @@ router.post('/bank-accounts', async (req: AuthRequest, res: Response): Promise<v
       data: {
         associationId,
         bankName,
-        bankNameAr,
         accountNumber,
         rib: rib || '',
         iban: iban || '',
@@ -434,11 +421,10 @@ router.put('/bank-accounts/:id', async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    const { bankName, bankNameAr, accountNumber, rib, iban, swift, balance } = req.body;
+    const { bankName, accountNumber, rib, iban, swift, balance } = req.body;
 
     const data: any = {};
     if (bankName !== undefined) data.bankName = bankName;
-    if (bankNameAr !== undefined) data.bankNameAr = bankNameAr;
     if (accountNumber !== undefined) data.accountNumber = accountNumber;
     if (rib !== undefined) data.rib = rib;
     if (iban !== undefined) data.iban = iban;
@@ -617,14 +603,11 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
                 receiptNumber: ref,
                 donorId: tx.donorId,
                 donorName: `${donor.firstName} ${donor.lastName}`,
-                donorNameAr: `${donor.lastNameAr} ${donor.firstNameAr}`,
                 transactionId: tx.id,
                 amount: amountNum,
                 amountInWords: tx.amountInWords,
-                amountInWordsAr: tx.amountInWordsAr,
                 caisseId: tx.caisseId,
                 caisseName: caisse.name,
-                caisseNameAr: caisse.nameAr,
                 subCategoryId: tx.subCategoryId || undefined,
                 date: tx.date,
               },
@@ -648,7 +631,6 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
             type: 'debit',
             amount: confirmAmount,
             amountInWords: `${confirmAmount} DZD`,
-            amountInWordsAr: `${confirmAmount} دينار`,
             fundSource: tx.fundSource,
             caisseId: tx.caisseId,
             subCategoryId: tx.subCategoryId,
@@ -656,7 +638,6 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
             beneficiaryId: tx.beneficiaryId,
             donorId: tx.donorId,
             description: tx.description,
-            descriptionAr: tx.descriptionAr,
             receiptNumber: debitRef,
             status: 'completed',
             date: new Date(),
@@ -780,8 +761,8 @@ router.get('/allocations', async (req: AuthRequest, res: Response): Promise<void
     const allocations = await prisma.donationAllocation.findMany({
       where,
       include: {
-        donor: { select: { id: true, firstName: true, lastName: true, firstNameAr: true, lastNameAr: true, reference: true } },
-        beneficiary: { select: { id: true, firstName: true, lastName: true, firstNameAr: true, lastNameAr: true, reference: true } },
+        donor: { select: { id: true, firstName: true, lastName: true, reference: true } },
+        beneficiary: { select: { id: true, firstName: true, lastName: true, reference: true } },
         creditTransaction: { select: { id: true, date: true, receiptNumber: true, caisseId: true, status: true } },
         debitTransaction: { select: { id: true, date: true, receiptNumber: true } },
       },
@@ -847,14 +828,12 @@ router.post('/allocations/:id/disburse', async (req: AuthRequest, res: Response)
           type: 'debit',
           amount: disburseAmount,
           amountInWords: `${disburseAmount} DZD`,
-          amountInWordsAr: `${disburseAmount} دينار`,
           fundSource: creditTx.fundSource,
           caisseId: creditTx.caisseId,
           subCategoryId: creditTx.subCategoryId,
           bankAccountId: creditTx.bankAccountId,
           beneficiaryId: alloc.beneficiaryId,
           description: creditTx.description,
-          descriptionAr: creditTx.descriptionAr,
           receiptNumber: ref,
           status: 'completed',
           date: new Date(),

@@ -65,7 +65,7 @@ function BankAccountModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           labelAr={t('finance.bankName')}
-          value={form.bankNameAr}
+          value={form.bankName}
           onChange={(e) => setForm({ ...form, bankNameAr: e.target.value })}
           required
           dir="rtl"
@@ -266,7 +266,7 @@ export default function FinancePage() {
     if (!account) return
     setEditingBankId(id)
     setBankFormData({
-      bankNameAr: account.bankNameAr,
+      bankNameAr: account.bankName,
       accountNumber: account.accountNumber,
       rib: account.rib,
       iban: account.iban,
@@ -280,8 +280,8 @@ export default function FinancePage() {
       await updateBankAccount.mutateAsync({
         id: editingBankId,
         data: {
-          bankNameAr: data.bankNameAr,
-          bankName: data.bankNameAr,
+          bankNameAr: data.bankName,
+          bankName: data.bankName,
           accountNumber: data.accountNumber,
           rib: data.rib,
           iban: data.iban,
@@ -290,8 +290,8 @@ export default function FinancePage() {
       })
     } else {
       await createBankAccount.mutateAsync({
-        bankName: data.bankNameAr,
-        bankNameAr: data.bankNameAr,
+        bankName: data.bankName,
+        bankNameAr: data.bankName,
         accountNumber: data.accountNumber,
         rib: data.rib,
         iban: data.iban,
@@ -309,7 +309,7 @@ export default function FinancePage() {
 
     // Generate proper amount in words at print time (handles old data with numeric-only strings)
     const amount = typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)
-    const wordsAr = tx.amountInWordsAr && !tx.amountInWordsAr.match(/^\d/) ? tx.amountInWordsAr : numberToArabicWords(amount)
+    const wordsAr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToArabicWords(amount)
     const wordsFr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToFrenchWords(amount)
 
     const isLtr = i18n.language !== 'ar';
@@ -322,7 +322,7 @@ export default function FinancePage() {
 <div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
 <div class="row"><span class="lbl">${t('dashboard.donor')}</span><span class="val">${donor ? `${donor.lastNameAr} ${donor.firstNameAr}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div></div>
 <div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
-${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.description')}</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
+${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description')}</span><span class="val">${tx.description}</span></div>` : ''}</div>`,
         'color:#16a34a',
         formatCurrency(amount), wordsAr, wordsFr,
         t('donors.donorSignature'), t('receipt.stampSignature'),
@@ -339,7 +339,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
 <div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${benef ? `${benef.lastNameAr} ${benef.firstNameAr}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div></div>
 <div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
 <div class="row"><span class="lbl">${t('dashboard.source')}</span><span class="val">${tx.fundSource === 'banque' ? t('dashboard.bank') : t('dashboard.cash')}</span></div>
-${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.description')}</span><span class="val">${tx.descriptionAr}</span></div>` : ''}</div>`,
+${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description')}</span><span class="val">${tx.description}</span></div>` : ''}</div>`,
         'background:#fff0f0;color:#dc2626',
         `- ${formatCurrency(amount)}`, wordsAr, wordsFr,
         t('receipt.beneficiarySignature'), t('receipt.stampSignature'),
@@ -522,7 +522,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                     className="border-b border-border hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => setDetailBankAccount(account)}
                   >
-                    <td className="py-3 px-4 font-medium text-foreground">{account.bankNameAr}</td>
+                    <td className="py-3 px-4 font-medium text-foreground">{account.bankName}</td>
                     <td className="py-3 px-4 text-muted-foreground" dir="ltr">{account.accountNumber}</td>
                     <td className="py-3 px-4 text-muted-foreground hidden md:table-cell" dir="ltr">{account.rib}</td>
                     <td className="py-3 px-4 text-muted-foreground hidden md:table-cell" dir="ltr">{account.iban}</td>
@@ -734,7 +734,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 onChange={setTxBankAccountId}
                 options={bankAccounts.map((a: BankAccount) => ({
                   value: a.id,
-                  label: `${a.bankNameAr} - ${a.accountNumber}`,
+                  label: `${a.bankName} - ${a.accountNumber}`,
                 }))}
                 required
               />
@@ -1082,7 +1082,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                         </td>
                         <td className="py-3 px-3 text-muted-foreground hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
                         <td className="py-3 px-3 text-muted-foreground max-w-[160px] truncate hidden lg:table-cell">
-                          {localizedDesc(tx.description, tx.descriptionAr) || '-'}
+                          {localizedDesc(tx.description, tx.description) || '-'}
                         </td>
                         <td className="py-3 px-3 text-center">
                           <button
@@ -1175,7 +1175,7 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
         {detailBankAccount && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 bg-muted rounded-lg p-4">
-              <div><p className="text-xs text-muted-foreground">{t('finance.bankName')}</p><p className="font-semibold text-foreground">{detailBankAccount.bankNameAr}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('finance.bankName')}</p><p className="font-semibold text-foreground">{detailBankAccount.bankName}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('finance.accountNumber')}</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.accountNumber}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('finance.rib')}</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.rib}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('finance.iban')}</p><p className="font-mono text-foreground" dir="ltr">{detailBankAccount.iban}</p></div>
@@ -1241,10 +1241,10 @@ ${tx.descriptionAr ? `<div class="row"><span class="lbl">${t('receipt.descriptio
                 })()}</p></div>
                 <div><p className="text-xs text-muted-foreground">{t('dashboard.fund')}</p><p className="font-medium text-foreground">{caisse?.nameAr || '—'}</p></div>
                 <div><p className="text-xs text-muted-foreground">{t('dashboard.source')}</p><p className="font-medium">{detailTx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}</p></div>
-                {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-muted-foreground">{t('finance.bankAccounts')}</p><p className="font-medium">{bankAcc.bankNameAr}</p></div>}
+                {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-muted-foreground">{t('finance.bankAccounts')}</p><p className="font-medium">{bankAcc.bankName}</p></div>}
                 {donor && <div><p className="text-xs text-muted-foreground">{t('dashboard.donor')}</p><p className="font-medium">{donor.lastNameAr} {donor.firstNameAr}</p></div>}
                 {benef && <div><p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</p><p className="font-medium">{benef.lastNameAr} {benef.firstNameAr}</p></div>}
-                {(detailTx.descriptionAr || detailTx.description) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{localizedDesc(detailTx.description, detailTx.descriptionAr)}</p></div>}
+                {(detailTx.description || detailTx.description) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{localizedDesc(detailTx.description, detailTx.description)}</p></div>}
                 <div><p className="text-xs text-muted-foreground">{t('dashboard.receiptNo')}</p><p className="font-mono text-foreground" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
                 <div><p className="text-xs text-muted-foreground">{t('common.date')}</p><p className="font-medium text-foreground">{formatDate(detailTx.date)}</p></div>
               </div>

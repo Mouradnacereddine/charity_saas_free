@@ -1,5 +1,6 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -50,9 +51,10 @@ export function Layout({
   activePage,
   onNavigate,
   breadcrumbs,
-  associationNameAr,
+  associationName,
+  associationLocale,
   associationLogoUrl,
-  userNameAr,
+  userName,
   userRole,
   isAdmin,
   onLogout,
@@ -61,38 +63,46 @@ export function Layout({
   activePage: string;
   onNavigate: (page: string) => void;
   breadcrumbs?: { label: string; page: string }[];
-  associationNameAr?: string;
+  associationName?: string;
+  associationLocale?: 'ar' | 'fr' | 'en';
   associationLogoUrl?: string;
-  userNameAr?: string;
+  userName?: string;
   userRole?: string;
   isAdmin?: boolean;
   onLogout?: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [settingsNameAr, setSettingsNameAr] = useState(associationNameAr || '');
-  const [settingsName, setSettingsName] = useState('');
+  const [settingsName, setSettingsName] = useState(associationName || '');
+  const [settingsLocale, setSettingsLocale] = useState(associationLocale || 'ar');
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState('');
 
   useEffect(() => {
-    setSettingsNameAr(associationNameAr || '');
-  }, [associationNameAr]);
+    setSettingsName(associationName || '');
+    setSettingsLocale(associationLocale || 'ar');
+  }, [associationName, associationLocale]);
 
   useEffect(() => {
     document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
   }, [i18n.language]);
+
   const handleUpdateName = async () => {
-    if (!settingsNameAr.trim()) return;
+    if (!settingsName.trim()) return;
     setSavingName(true);
     setNameError('');
     try {
-      await authApi.updateName({ name: settingsName || settingsNameAr, nameAr: settingsNameAr });
+      await authApi.updateName(settingsName);
+      if (settingsLocale !== associationLocale) {
+        await authApi.updateLocale(settingsLocale);
+        i18n.changeLanguage(settingsLocale);
+      }
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
       setShowSettingsModal(false);
-      window.location.reload();
     } catch (err: any) {
       setNameError(err.response?.data?.error || t('settings.error'));
     } finally {
@@ -102,110 +112,107 @@ export function Layout({
 
   const roleLabel = userRole === 'admin' ? t('userMenu.systemAdmin') : userRole === 'treasurer' ? t('userMenu.treasurer') : t('userMenu.volunteer');
   const isRtl = i18n.language === 'ar';
+  const sidebarDir = isRtl ? 'right' : 'left';
+  const headerDir = isRtl ? 'rtl' : 'ltr';
 
   return (
     <div className="flex h-dvh overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar — always full viewport height */}
+      {/* Sidebar */}
       <aside
-        className={`
-          fixed top-0 z-50 h-dvh bg-sidebar text-sidebar-foreground
-          transition-all duration-200 ease-in-out
-          w-64 flex flex-col
-          lg:translate-x-0 lg:sticky lg:z-auto
-          ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}
-          ${isRtl ? 'right-0' : 'left-0'}
-          ${sidebarOpen
-            ? 'translate-x-0'
-            : isRtl
-              ? 'translate-x-full'
-              : '-translate-x-full'
-          }
-        `}
+        className={`bg-card text-card-foreground border-border ${
+          isRtl ? 'border-l' : 'border-r'
+        } flex flex-col transition-all duration-300 ${
+          sidebarOpen ? 'fixed inset-y-0 z-50 w-64' : 'hidden'
+        } lg:flex lg:relative lg:z-auto ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
+        dir={isRtl ? 'rtl' : 'ltr'}
       >
-        <div className="flex items-center justify-between p-5 border-b border-sidebar-border">
-          <div className="flex items-center gap-2 min-w-0">
-            {associationLogoUrl ? (
-              <img src={associationLogoUrl} alt="logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
-            ) : (
-              <span className="text-lg shrink-0">🕌</span>
-            )}
-            <h1 className={`text-lg font-bold truncate transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
-              {associationNameAr || t('app.title')}
-            </h1>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={toggleSidebar}
-              className="hidden lg:flex p-1.5 rounded-lg text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-              aria-label={sidebarCollapsed ? t('nav.toggleExpand') : t('nav.toggleCollapse')}
-              title={sidebarCollapsed ? t('nav.toggleExpand') : t('nav.toggleCollapse')}
-            >
-              <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? '' : 'rotate-180'}`} />
-            </button>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1 text-muted-foreground hover:text-sidebar-foreground"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          {(!sidebarCollapsed || sidebarOpen) && (
+            <div className="flex items-center gap-2 min-w-0">
+              {associationLogoUrl ? (
+                <img
+                  src={associationLogoUrl}
+                  alt={associationName || ''}
+                  className="w-8 h-8 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold">
+                  {(associationName || 'A').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="font-semibold text-sm truncate">
+                {associationName || t('app.title')}
+              </span>
+            </div>
+          )}
+          <button
+            onClick={() => {
+              setSidebarOpen(false);
+              toggleSidebar();
+            }}
+            className="p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+            aria-label={sidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : sidebarCollapsed ? (isRtl ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />) : (isRtl ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />)}
+          </button>
         </div>
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-none">
-          {navItems
-            .filter((item) => item.id !== 'analytics' || isAdmin || userRole === 'treasurer')
-            .map((item) => (
+
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activePage === item.id;
+            return (
               <button
                 key={item.id}
                 onClick={() => {
                   onNavigate(item.id);
                   setSidebarOpen(false);
                 }}
-                title={sidebarCollapsed ? t(item.labelKey) : undefined}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''
-                } ${
-                  activePage === item.id
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
                 }`}
+                aria-current={isActive ? 'page' : undefined}
               >
-                <item.icon className="w-5 h-5 shrink-0" />
-                <span className={`truncate transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
-                  {t(item.labelKey)}
-                </span>
+                <Icon className="w-5 h-5 shrink-0" />
+                {(!sidebarCollapsed || sidebarOpen) && <span className="truncate">{t(item.labelKey)}</span>}
               </button>
-            ))}
+            );
+          })}
         </nav>
 
-        {/* User section — avatar as dropdown trigger */}
-        <div className="border-t border-sidebar-border shrink-0">
+        {/* User menu (footer of sidebar) */}
+        <div className="border-t border-border p-3">
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex w-full items-center justify-center gap-3 px-3 py-3 hover:bg-sidebar-accent transition-colors"
-                title={userNameAr || t('userMenu.defaultName')}>
-                <div className="w-8 h-8 bg-sidebar-accent text-sidebar-accent-foreground rounded-full flex items-center justify-center font-bold text-sm shrink-0">
-                  {userNameAr?.charAt(0) || '?'}
+            <DropdownMenuTrigger className="w-full flex items-center gap-2 p-2 rounded-lg text-foreground hover:bg-muted transition-colors">
+              <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-secondary-foreground font-semibold shrink-0">
+                {(userName || '?').charAt(0).toUpperCase()}
+              </div>
+              {(!sidebarCollapsed || sidebarOpen) && (
+                <div className="flex-1 text-start min-w-0">
+                  <p className="text-sm font-medium truncate">{userName || t('userMenu.defaultName')}</p>
+                  <p className="text-xs text-muted-foreground truncate">{roleLabel}</p>
                 </div>
-                <span className={`truncate text-sm text-muted-foreground transition-opacity duration-200 ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : ''}`}>
-                  {userNameAr || t('userMenu.defaultName')}
-                </span>
+              )}
             </DropdownMenuTrigger>
             <DropdownMenuContent
               side="top"
               align="end"
               sideOffset={8}
-              className="min-w-[240px]"
-              dir="rtl"
+              className="min-w-[240px]"}
+              dir={isRtl ? 'rtl' : 'ltr'}
             >
               <div className="p-3 border-b border-border">
-                <p className="text-sm font-medium text-foreground">{userNameAr || t('userMenu.defaultName')}</p>
+                <p className="text-sm font-medium text-foreground">{userName || t('userMenu.defaultName')}</p>
                 <p className="text-xs text-muted-foreground">{roleLabel}</p>
               </div>
               <div className="p-1">
@@ -244,7 +251,7 @@ export function Layout({
               <Menu className="w-6 h-6" />
             </button>
             {breadcrumbs && (
-              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground" dir="rtl">
+              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground" dir={headerDir}>
                 {breadcrumbs.map((crumb, i) => (
                   <span key={`bc-${i}`} className="flex items-center gap-1.5">
                     {i > 0 && <ChevronLeft className="w-3 h-3 text-border" />}
@@ -264,7 +271,7 @@ export function Layout({
             <span className="text-sm text-[var(--success)] font-arabic">{t('app.bismillah')}</span>
           </div>
           <div className="flex items-center gap-2">
-            {/* Sélecteur de langue — isolé du menu utilisateur */}
+            {/* Sélecteur de langue — change la langue de l'UI (préférence navigateur, pas la langue de l'association) */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-sm"
                   aria-label={t('language.label')}>
@@ -299,33 +306,35 @@ export function Layout({
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
 
-      {/* Settings modal */}
+      {/* Settings modal — un seul champ nom + sélecteur de langue persistante de l'association */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
           <div className="bg-card text-card-foreground rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-foreground mb-4">{t('settings.title')}</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('settings.nameAr')}</label>
-                <input
-                  type="text"
-                  value={settingsNameAr}
-                  onChange={(e) => setSettingsNameAr(e.target.value)}
-                  placeholder={t('auth.nameArPlaceholder')}
-                  className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring text-right"
-                  dir="rtl"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('settings.nameLatin')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('settings.name')}</label>
                 <input
                   type="text"
                   value={settingsName}
                   onChange={(e) => setSettingsName(e.target.value)}
-                  placeholder={t('auth.nameArPlaceholder')}
+                  placeholder={t('settings.namePlaceholder')}
                   className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
-                  dir="ltr"
+                  dir={settingsLocale === 'ar' ? 'rtl' : 'ltr'}
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('settings.locale')}</label>
+                <select
+                  value={settingsLocale}
+                  onChange={(e) => setSettingsLocale(e.target.value as 'ar' | 'fr' | 'en')}
+                  className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                >
+                  <option value="ar">{t('settings.localeAr')}</option>
+                  <option value="fr">{t('settings.localeFr')}</option>
+                  <option value="en">{t('settings.localeEn')}</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">{t('settings.localeHint')}</p>
               </div>
               {nameError && (
                 <p className="text-xs text-destructive">{nameError}</p>
@@ -339,7 +348,7 @@ export function Layout({
                 </button>
                 <button
                   onClick={handleUpdateName}
-                  disabled={savingName || !settingsNameAr.trim()}
+                  disabled={savingName || !settingsName.trim()}
                   className="flex-1 py-2.5 text-sm text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {savingName ? t('common.saving') : t('common.save')}

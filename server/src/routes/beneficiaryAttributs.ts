@@ -14,14 +14,14 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 
     const dummies = await prisma.beneficiary.findMany({
       where: { associationId, phone: DUMMY_PHONE },
-      select: { attribut: true, firstNameAr: true },
+      select: { attribut: true, firstName: true },
     });
 
     const seen = new Set<string>();
     const attributs = dummies
       .filter((b) => b.attribut && !seen.has(b.attribut) && seen.add(b.attribut))
-      .map((b) => ({ name: b.attribut!, nameAr: b.firstNameAr || b.attribut! }))
-      .sort((a, b) => a.nameAr.localeCompare(b.nameAr, 'ar'));
+      .map((b) => ({ key: b.attribut!, name: b.firstName || b.attribut! }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     res.json(attributs);
   } catch (error) {
@@ -34,7 +34,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { name, nameAr, attribut } = req.body;
+    const { name, attribut } = req.body;
     const key = attribut || name;
 
     if (!key) {
@@ -48,10 +48,10 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
     });
 
     if (existing) {
-      // Update nameAr
+      // Update display name (stored on the dummy beneficiary's firstName)
       await prisma.beneficiary.update({
         where: { id: existing.id },
-        data: { firstNameAr: nameAr || key },
+        data: { firstName: name || key },
       });
     } else {
       // Create dummy
@@ -59,9 +59,8 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
       await prisma.beneficiary.create({
         data: {
           associationId, reference: `ATTR-${ts}`, attribut: key,
-          firstName: key, lastName: '',
-          firstNameAr: nameAr || key, lastNameAr: '',
-          address: '', addressAr: '',
+          firstName: name || key, lastName: '',
+          address: '',
           phone: DUMMY_PHONE,
           nationalCardNumber: `ATTR-${ts}`,
           dateOfBirth: new Date('2000-01-01'), children: [],
@@ -69,7 +68,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
       });
     }
 
-    res.status(201).json({ name: key, nameAr: nameAr || key, message: 'Attribut created' });
+    res.status(201).json({ name: key, message: 'Attribut created' });
   } catch (error) {
     console.error('Error creating beneficiary attribut:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -80,26 +79,25 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
 router.put('/:attribut', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { attribut } = req.params;
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
     const associationId = req.user!.associationId;
     const newKey = name || attribut;
-    const newNameAr = nameAr || attribut;
 
     // If key changed, update all real beneficiaries + dummy
     if (newKey !== attribut) {
       await prisma.beneficiary.updateMany({
         where: { associationId, attribut },
-        data: { attribut: newKey, firstNameAr: newNameAr },
+        data: { attribut: newKey, firstName: newKey },
       });
     } else {
       // Just update the dummy's display name
       await prisma.beneficiary.updateMany({
         where: { associationId, attribut, phone: DUMMY_PHONE },
-        data: { firstNameAr: newNameAr },
+        data: { firstName: newKey },
       });
     }
 
-    res.json({ name: newKey, nameAr: newNameAr, message: 'Attribut mis à jour' });
+    res.json({ name: newKey, message: 'Attribut mis à jour' });
   } catch (error) {
     console.error('Error updating beneficiary attribut:', error);
     res.status(500).json({ error: 'Internal server error' });

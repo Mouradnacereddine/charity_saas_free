@@ -27,8 +27,8 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     const allArticles = await prisma.article.findMany({
       where: { associationId },
       select: {
-        id: true, name: true, nameAr: true,
-        category: { select: { id: true, name: true, nameAr: true } },
+        id: true, name: true,
+        category: { select: { id: true, name: true } },
       },
     });
     const articleMap = new Map(allArticles.map((a) => [a.id, a]));
@@ -40,13 +40,10 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         return {
           ...item,
           articleName: article?.name || '',
-          articleNameAr: article?.nameAr || '',
           categoryName: article?.category?.name || '',
-          categoryNameAr: article?.category?.nameAr || '',
         };
       }),
       beneficiaryName: l.beneficiary ? `${l.beneficiary.firstName} ${l.beneficiary.lastName}` : '',
-      beneficiaryNameAr: l.beneficiary ? `${l.beneficiary.lastNameAr} ${l.beneficiary.firstNameAr}` : '',
       beneficiaryReference: l.beneficiary?.reference || '',
     }));
 
@@ -149,7 +146,6 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     const result = {
       ...loan,
       beneficiaryName: loan.beneficiary ? `${(loan.beneficiary as any).firstName} ${(loan.beneficiary as any).lastName}` : '',
-      beneficiaryNameAr: loan.beneficiary ? `${(loan.beneficiary as any).lastNameAr} ${(loan.beneficiary as any).firstNameAr}` : '',
       beneficiaryReference: (loan.beneficiary as any)?.reference || '',
     };
 

@@ -8,7 +8,7 @@ export function printReceipt(
   rows: string,
   amountClass: string, amount: string, wordsAr: string, wordsFr: string,
   signLeft: string, signRight: string,
-  assocNameAr?: string,
+  assocName?: string,
   dir: 'ltr' | 'rtl' = 'rtl',
   lang: string = 'ar',
 ) {
@@ -44,7 +44,7 @@ export function printReceipt(
 </head>
 <body>
 <div class="page"><div class="receipt">
-  <div class="hdr"><h1>🕌 ${assocNameAr || t('app.title')}</h1><span class="sub">${subtitle}</span></div>
+  <div class="hdr"><h1>🕌 ${assocName || t('app.title')}</h1><span class="sub">${subtitle}</span></div>
   <div class="info">${rows}</div>
   <div class="amt" style="${amountClass}"><div class="num">${amount}</div><div class="words">${wordsAr}<span class="fr">${wordsFr}</span></div></div>
   <div class="sign"><div><span class="label">${signLeft}</span><div class="line"></div></div><div><span class="label">${signRight}</span><div class="line"></div></div></div>
@@ -90,19 +90,17 @@ export const FULL_CARD_CSS = `
 `
 
 export function printBeneficiaryCard(params: {
-  assocNameAr: string;
+  assocName: string;
   reference: string;
-  lastNameAr: string;
-  firstNameAr: string;
-  firstName: string;
   lastName: string;
+  firstName: string;
   nationalCardNumber: string;
   phone: string;
   dateOfBirth: string;
   ageDisplay: string;
   attribut: string;
   gender: string;
-  caisseNameAr: string;
+  caisseName: string;
   situation?: string;
   childrenHtml: string;
   labels?: Record<string, string>;
@@ -112,12 +110,11 @@ export function printBeneficiaryCard(params: {
   const l = params.labels || {
     title: "بطاقة مستفيد",
     personalInfo: "المعلومات الشخصية",
-    nameAr: "الاسم بالعربية",
+    fullName: "الاسم الكامل",
     attribut: "الصفة",
     birthDate: "تاريخ الميلاد",
     idNumber: "رقم البطاقة الوطنية",
     fund: "الصندوق",
-    nameLatin: "الاسم باللاتينية",
     gender: "الجنس",
     age: "العمر",
     phone: "الهاتف",
@@ -162,19 +159,18 @@ export function printBeneficiaryCard(params: {
     @media print { .no-print { display: none; } }
   </style>
   </head><body>
-  <div class="hdr"><h1>🕌 ${params.assocNameAr || t('app.title')}</h1><span class="sub">Carte Bénéficiaire — ${params.reference || ''}</span></div>
+  <div class="hdr"><h1>🕌 ${params.assocName || t('app.title')}</h1><span class="sub">Carte Bénéficiaire — ${params.reference || ''}</span></div>
   <div class="section">
     <div class="section-title">${l.personalInfo}</div>
     <div class="info">
       <div class="col">
-        <div class="border-row"><span class="lbl">${l.nameAr}</span><span class="val">${params.lastNameAr} ${params.firstNameAr}</span></div>
+        <div class="border-row"><span class="lbl">${l.fullName}</span><span class="val">${params.lastName} ${params.firstName}</span></div>
         <div class="border-row"><span class="lbl">${l.attribut}</span><span class="val">${params.attribut}</span></div>
         <div class="border-row"><span class="lbl">${l.birthDate}</span><span class="val">${params.dateOfBirth}</span></div>
         <div class="border-row"><span class="lbl">${l.idNumber}</span><span class="val">${params.nationalCardNumber || '—'}</span></div>
-        <div class="border-row"><span class="lbl">${l.fund}</span><span class="val">${params.caisseNameAr || '—'}</span></div>
+        <div class="border-row"><span class="lbl">${l.fund}</span><span class="val">${params.caisseName || '—'}</span></div>
       </div>
       <div class="col">
-        <div class="border-row"><span class="lbl">${l.nameLatin}</span><span class="val">${params.firstName} ${params.lastName}</span></div>
         <div class="border-row"><span class="lbl">${l.gender}</span><span class="val">${params.gender}</span></div>
         <div class="border-row"><span class="lbl">${l.age}</span><span class="val">${params.ageDisplay}</span></div>
         <div class="border-row"><span class="lbl">${l.phone}</span><span class="val">${params.phone}</span></div>
@@ -197,7 +193,7 @@ export function printBeneficiaryCard(params: {
  * Professional A4 analytics report for experts — portrait mode, margins, full layout.
  */
 export function printAnalyticsReport(params: {
-  assocNameAr: string;
+  assocName: string;
   title: string;
   periodLabel: string;
   dateLabel: string;
@@ -250,7 +246,7 @@ export function printAnalyticsReport(params: {
   if (!w) return
   const html = `<!DOCTYPE html><html dir="${d}" lang="${ln}"><head><meta charset="UTF-8"><title>${params.title}</title><style>${REPORT_CSS}</style></head><body>
   <div class="header">
-    <h1>🕌 ${params.assocNameAr}</h1>
+    <h1>🕌 ${params.assocName}</h1>
     <div class="sub">${params.title}</div>
     <div class="period">${params.dateLabel} — ${params.periodLabel}</div>
   </div>

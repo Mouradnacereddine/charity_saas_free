@@ -19,7 +19,7 @@ const router = Router();
 // Creates an Association + admin User, OR joins via invite token
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { associationName, associationNameAr, email, password, adminName, adminNameAr, inviteToken } = req.body;
+    const { associationName, email, password, adminName, locale, inviteToken } = req.body;
 
     if (!email || !password) {
       res.status(400).json({ error: 'Email and password are required' });
@@ -58,7 +58,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             email,
             password: hashedPassword,
             name: adminName || token.name || '',
-            nameAr: adminNameAr || token.nameAr || '',
             role: token.role,
             status: 'approved',
           },
@@ -86,7 +85,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
           id: result.id,
           email: result.email,
           name: result.name,
-          nameAr: result.nameAr,
           role: result.role,
           associationId: result.associationId,
         },
@@ -95,7 +93,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     }
 
     // --- Original registration path: create new association ---
-    if (!associationName || !associationNameAr || !adminName || !adminNameAr) {
+    if (!associationName || !adminName) {
       res.status(400).json({ error: 'All fields are required' });
       return;
     }
@@ -112,7 +110,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       const association = await tx.association.create({
         data: {
           name: associationName,
-          nameAr: associationNameAr,
+          locale: ['ar', 'fr', 'en'].includes(locale) ? locale : 'ar',
           email,
           password: hashedPassword,
         },
@@ -124,7 +122,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
           email,
           password: hashedPassword,
           name: adminName,
-          nameAr: adminNameAr,
           role: 'admin',
         },
       });
@@ -147,7 +144,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         id: result.user.id,
         email: result.user.email,
         name: result.user.name,
-        nameAr: result.user.nameAr,
         role: result.user.role,
         associationId: result.user.associationId,
       },
@@ -206,7 +202,6 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         email: user.email,
         name: user.name,
-        nameAr: user.nameAr,
         role: user.role,
         associationId: user.associationId,
       },
@@ -272,7 +267,6 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
         id: true,
         email: true,
         name: true,
-        nameAr: true,
         role: true,
         status: true,
         associationId: true,
@@ -290,7 +284,7 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
       select: {
         id: true,
         name: true,
-        nameAr: true,
+        locale: true,
         email: true,
         logoUrl: true,
         createdAt: true,
@@ -312,26 +306,47 @@ router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Pro
 // PUT /api/auth/association/name — update association name (admin only)
 router.put('/association/name', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
     const associationId = req.user!.associationId;
 
-    if (!nameAr || typeof nameAr !== 'string' || !nameAr.trim()) {
-      res.status(400).json({ error: 'الاسم بالعربية مطلوب' });
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      res.status(400).json({ error: 'الاسم مطلوب' });
       return;
     }
 
     const association = await prisma.association.update({
       where: { id: associationId },
-      data: {
-        name: name || nameAr,
-        nameAr,
-      },
-      select: { id: true, name: true, nameAr: true, email: true, logoUrl: true, createdAt: true },
+      data: { name },
+      select: { id: true, name: true, locale: true, email: true, logoUrl: true, createdAt: true },
     });
 
     res.json(association);
   } catch (error) {
     console.error('Error updating association name:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/auth/association/locale — update association locale (admin only)
+router.put('/association/locale', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { locale } = req.body;
+    const associationId = req.user!.associationId;
+
+    if (!['ar', 'fr', 'en'].includes(locale)) {
+      res.status(400).json({ error: 'Invalid locale' });
+      return;
+    }
+
+    const association = await prisma.association.update({
+      where: { id: associationId },
+      data: { locale },
+      select: { id: true, name: true, locale: true, email: true, logoUrl: true, createdAt: true },
+    });
+
+    res.json(association);
+  } catch (error) {
+    console.error('Error updating association locale:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -350,7 +365,7 @@ router.put('/association/logo', requireAuth, requireAdmin, async (req: AuthReque
     const association = await prisma.association.update({
       where: { id: associationId },
       data: { logoUrl },
-      select: { id: true, name: true, nameAr: true, email: true, logoUrl: true, createdAt: true },
+      select: { id: true, name: true, locale: true, email: true, logoUrl: true, createdAt: true },
     });
 
     res.json(association);
@@ -367,7 +382,7 @@ router.put('/association/logo', requireAuth, requireAdmin, async (req: AuthReque
 // POST /api/auth/invite — admin generates an invite link
 router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { role, name, nameAr } = req.body;
+    const { role, name } = req.body;
     const associationId = req.user!.associationId;
 
     const normalizedRole = role || 'user';
@@ -390,7 +405,6 @@ router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: 
         token,
         role: normalizedRole as any,
         name: name || '',
-        nameAr: nameAr || '',
         expiresAt,
       },
     });
@@ -422,7 +436,6 @@ router.get('/invites', requireAuth, requireAdmin, async (req: AuthRequest, res: 
         id: true,
         role: true,
         name: true,
-        nameAr: true,
         token: true,
         expiresAt: true,
         usedAt: true,
@@ -476,7 +489,7 @@ router.get('/invite/:token', async (req: Request, res: Response): Promise<void> 
     const invite = await prisma.inviteToken.findUnique({
       where: { token },
       include: {
-        association: { select: { name: true, nameAr: true } },
+        association: { select: { name: true, locale: true } },
       },
     });
 
@@ -496,9 +509,8 @@ router.get('/invite/:token', async (req: Request, res: Response): Promise<void> 
     res.json({
       role: invite.role,
       name: invite.name,
-      nameAr: invite.nameAr,
       associationName: invite.association.name,
-      associationNameAr: invite.association.nameAr,
+      associationLocale: invite.association.locale,
     });
   } catch (error) {
     console.error('Error looking up invite:', error);
@@ -513,11 +525,11 @@ router.get('/invite/:token', async (req: Request, res: Response): Promise<void> 
 // POST /api/auth/users/create — admin creates a user directly
 router.post('/users/create', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { email, password, name, nameAr, role } = req.body;
+    const { email, password, name, role } = req.body;
     const associationId = req.user!.associationId;
 
-    if (!email || !password || !nameAr) {
-      res.status(400).json({ error: 'البريد الإلكتروني، كلمة المرور، والاسم بالعربية مطلوبون' });
+    if (!email || !password || !name) {
+      res.status(400).json({ error: 'البريد الإلكتروني، كلمة المرور، والاسم مطلوبون' });
       return;
     }
 
@@ -540,8 +552,7 @@ router.post('/users/create', requireAuth, requireAdmin, async (req: AuthRequest,
         associationId,
         email,
         password: hashedPassword,
-        name: name || nameAr,
-        nameAr,
+        name,
         role: normalizedRole as any,
         status: 'approved',
       },
@@ -549,7 +560,6 @@ router.post('/users/create', requireAuth, requireAdmin, async (req: AuthRequest,
         id: true,
         email: true,
         name: true,
-        nameAr: true,
         role: true,
         status: true,
         createdAt: true,
@@ -574,7 +584,6 @@ router.get('/users', requireAuth, requireAdmin, async (req: AuthRequest, res: Re
         id: true,
         email: true,
         name: true,
-        nameAr: true,
         role: true,
         status: true,
         createdAt: true,
@@ -630,7 +639,6 @@ router.put('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, res
         id: true,
         email: true,
         name: true,
-        nameAr: true,
         role: true,
         status: true,
       },
@@ -679,7 +687,7 @@ router.delete('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, 
 // mode: 'login' → only if user exists, 'register' → create new association
 router.post('/google', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { credential, inviteToken, mode, associationName, associationNameAr } = req.body;
+    const { credential, inviteToken, mode, associationName, locale } = req.body;
 
     if (!credential) {
       res.status(400).json({ error: 'Google credential is required' });
@@ -751,7 +759,6 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
               email: googleEmail,
               password: '',
               name: token.name || googleName,
-              nameAr: token.nameAr || googleName,
               role: token.role,
               status: 'approved',
             },
@@ -770,12 +777,12 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
         // mode is 'register' (or no mode but user didn't exist) — create new association
         const assocResult = await prisma.$transaction(async (tx) => {
           const assocName = associationName || googleName;
-          const assocNameAr = associationNameAr || associationName || googleName;
+          const normalizedLocale = ['ar', 'fr', 'en'].includes(locale) ? locale : 'ar';
 
           const assoc = await tx.association.create({
             data: {
               name: assocName,
-              nameAr: assocNameAr,
+              locale: normalizedLocale,
               email: googleEmail,
               password: '',
             },
@@ -787,7 +794,6 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
               email: googleEmail,
               password: '',
               name: googleName,
-              nameAr: googleName,
               role: 'admin',
             },
           });
@@ -815,7 +821,6 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         email: user.email,
         name: user.name,
-        nameAr: user.nameAr,
         role: user.role,
         associationId: user.associationId,
         picture: googlePicture,

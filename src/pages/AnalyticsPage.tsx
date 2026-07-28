@@ -123,7 +123,7 @@ export default function AnalyticsPage() {
       });
       return {
         id: c.id,
-        nameAr: c.nameAr,
+        name: c.name,
         actualBalance: c.balance,          // real balance from database
         periodCredits,
         periodDebits,
@@ -175,7 +175,7 @@ export default function AnalyticsPage() {
     const share = stats.credits > 0 ? (maxAmount / stats.credits) * 100 : 0;
 
     return {
-      nameAr: maxDonor ? `${maxDonor.firstNameAr} ${maxDonor.lastNameAr}` : null,
+      name: maxDonor ? `${maxDonor.firstName} ${maxDonor.lastName}` : null,
       amount: maxAmount,
       share,
       isRisk: share > 50,
@@ -199,7 +199,7 @@ export default function AnalyticsPage() {
     const caisse = caisses.find((c) => c.id === caisseId);
     if (!caisse) return t('common.general');
     const sub = caisse.subCategories?.find((s) => s.id === subId);
-    return sub ? sub.nameAr : 'عام';
+    return sub ? sub.name : 'عام';
   };
 
   const groupedByCaisse = useMemo(() => {
@@ -227,7 +227,7 @@ export default function AnalyticsPage() {
     filteredTx.forEach((tx) => {
       const subNameAr = getSubCategoryNameAr(tx.caisseId, tx.subCategoryId);
       const caisse = caisses.find((c) => c.id === tx.caisseId);
-      const caisseNameAr = caisse ? caisse.nameAr : t('caisses.noFunds');
+      const caisseNameAr = caisse ? caisse.name : t('caisses.noFunds');
       const key = `${tx.caisseId}-${tx.subCategoryId || 'general'}`;
       if (!groups[key]) {
         groups[key] = {
@@ -250,7 +250,7 @@ export default function AnalyticsPage() {
   const logTx = useMemo(() => {
     return filteredTx.filter((tx) => {
       const matchesSearch =
-        (tx.descriptionAr || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tx.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (tx.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (tx.receiptNumber && tx.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCaisse = logCaisseFilter === '' || tx.caisseId === logCaisseFilter;
@@ -325,17 +325,17 @@ export default function AnalyticsPage() {
                 caisseBreakdown.forEach((c: any) => {
                   const sum = c.periodCredits + c.periodDebits;
                   const credPct = sum > 0 ? (c.periodCredits / sum) * 100 : 0;
-                  bodyRows += `<div class="bar-row"><span class="bar-label">${c.nameAr}</span><div class="bar-track"><div class="bar-cred" style="width:${credPct}%"></div><div class="bar-deb" style="width:${100 - credPct}%"></div></div><span class="bar-amt">${formatCurrency(c.periodFlow)}</span></div>`;
+                  bodyRows += `<div class="bar-row"><span class="bar-label">${c.name}</span><div class="bar-track"><div class="bar-cred" style="width:${credPct}%"></div><div class="bar-deb" style="width:${100 - credPct}%"></div></div><span class="bar-amt">${formatCurrency(c.periodFlow)}</span></div>`;
                 });
                 bodyRows += `<div class="section-title">${t('analytics.detailedLog')}</div><div class="section"><table class="data-table"><thead><tr><th>${t('common.date')}</th><th>${t('dashboard.type')}</th><th>${t('common.amount')}</th><th>${t('receipt.description')}</th><th>${t('dashboard.fund')}</th></tr></thead><tbody>`;
                 filteredTx.slice(0, 20).forEach((tx: any) => {
                   const caisse = caisses.find((c: any) => c.id === tx.caisseId);
-                  bodyRows += `<tr><td>${formatDate(tx.date)}</td><td>${tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</td><td class="${tx.type === 'credit' ? 'credit' : 'debit'}">${formatCurrency(tx.amount)}</td><td>${tx.descriptionAr || '—'}</td><td>${caisse?.nameAr || '—'}</td></tr>`;
+                  bodyRows += `<tr><td>${formatDate(tx.date)}</td><td>${tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</td><td class="${tx.type === 'credit' ? 'credit' : 'debit'}">${formatCurrency(tx.amount)}</td><td>${tx.description || '—'}</td><td>${caisse?.name || '—'}</td></tr>`;
                 });
                 bodyRows += '</tbody></table></div>';
                 const isLtr = i18nInstance.language !== 'ar';
                 printAnalyticsReport({
-                  assocNameAr: association?.nameAr || t('app.title'),
+                  assocName: association?.name || t('app.title'),
                   title: t('analytics.title'),
                   periodLabel:  quickFilter === 'this_month' ? t('analytics.currentMonth') : quickFilter === 'last_3_months' ? t('analytics.last3Months') : quickFilter === 'this_year' ? t('analytics.currentYear') : `${startDate} ${t('medical.toDate').toLowerCase()} ${endDate}`,
                   dateLabel: new Date().toLocaleDateString(i18nInstance.language === 'ar' ? 'ar-DZ' : i18nInstance.language === 'fr' ? 'fr-DZ' : 'en-DZ'),
@@ -567,7 +567,7 @@ export default function AnalyticsPage() {
             return (
               <div key={c.id} className="p-4 bg-muted border border-border rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
-                  <span className="font-bold text-foreground">{c.nameAr}</span>
+                  <span className="font-bold text-foreground">{c.name}</span>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                     c.actualBalance >= 0 ? 'bg-success/10 text-success-foreground' : 'bg-destructive/10 text-destructive'
                   }`}>
@@ -644,7 +644,7 @@ export default function AnalyticsPage() {
                     <h4 className="font-bold">{t('analytics.fundDeficit')}</h4>
                     <SmartText
                       i18nKey="analytics.deficitText"
-                      values={{ funds: deficits.map((d) => d.nameAr).join('، ') }}
+                      values={{ funds: deficits.map((d) => d.name).join('، ') }}
                       className="mt-1 text-xs text-destructive leading-relaxed"
                     />
                   </div>
@@ -660,7 +660,7 @@ export default function AnalyticsPage() {
                   <SmartText
                     i18nKey="analytics.donorRiskText"
                     values={{
-                      donor: donorConcentration.nameAr,
+                      donor: donorConcentration.name,
                       share: donorConcentration.share.toFixed(1),
                       amount: formatCurrency(donorConcentration.amount),
                     }}
@@ -743,7 +743,7 @@ export default function AnalyticsPage() {
               <div key={group.caisse?.id || 'unknown'} className="border border-border rounded-lg overflow-hidden bg-card">
                 <div className="bg-muted px-4 py-3 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-foreground font-bold text-base">{group.caisse?.nameAr || t('caisses.noFunds')}</span>
+                    <span className="text-foreground font-bold text-base">{group.caisse?.name || t('caisses.noFunds')}</span>
                     <span className="text-xs text-muted-foreground/70">({group.caisse?.reference || '—'})</span>
                   </div>
                   <div className="flex gap-4 text-xs font-semibold">
@@ -777,7 +777,7 @@ export default function AnalyticsPage() {
                             </Badge>
                           </td>
                           <td className="py-2 px-4 text-muted-foreground">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
-                          <td className="py-2 px-4 text-foreground font-medium">{localizedDesc(tx.description, tx.descriptionAr)}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{localizedDesc(tx.description, tx.description)}</td>
                           <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
@@ -803,8 +803,8 @@ export default function AnalyticsPage() {
               <div key={idx} className="border border-border rounded-lg overflow-hidden bg-card">
                 <div className="bg-muted px-4 py-3 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <span className="text-foreground font-bold text-sm">{t('analytics.logSubcategory')}: {group.subNameAr}</span>
-                    <span className="text-xs text-muted-foreground/70 mr-2">({group.caisseNameAr})</span>
+                    <span className="text-foreground font-bold text-sm">{t('analytics.logSubcategory')}: {group.subName}</span>
+                    <span className="text-xs text-muted-foreground/70 mr-2">({group.caisseName})</span>
                   </div>
                   <div className="flex gap-4 text-xs font-semibold">
                     <span className="text-success-foreground">{t('analytics.totalIncome')}: +{formatCurrency(group.credits)}</span>
@@ -835,7 +835,7 @@ export default function AnalyticsPage() {
                               {tx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}
                             </Badge>
                           </td>
-                          <td className="py-2 px-4 text-foreground font-medium">{localizedDesc(tx.description, tx.descriptionAr)}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{localizedDesc(tx.description, tx.description)}</td>
                           <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>
@@ -876,7 +876,7 @@ export default function AnalyticsPage() {
               >
                 <option value="">{t('analytics.filterAllFunds')}</option>
                 {caisses.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nameAr}</option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
               <select
@@ -951,9 +951,9 @@ export default function AnalyticsPage() {
                             </Badge>
                           </td>
                           <td className="py-2 px-4 text-muted-foreground font-mono" dir="ltr">{tx.receiptNumber || '—'}</td>
-                          <td className="py-2 px-4 text-foreground font-medium">{caisse ? caisse.nameAr : '—'}</td>
+                          <td className="py-2 px-4 text-foreground font-medium">{caisse ? caisse.name : '—'}</td>
                           <td className="py-2 px-4 text-muted-foreground">{getSubCategoryNameAr(tx.caisseId, tx.subCategoryId)}</td>
-                          <td className="py-2 px-4 text-foreground">{localizedDesc(tx.description, tx.descriptionAr)}</td>
+                          <td className="py-2 px-4 text-foreground">{localizedDesc(tx.description, tx.description)}</td>
                           <td className="py-2 px-4 text-muted-foreground">{formatDate(tx.date)}</td>
                           <td className="py-2 px-4">
                             <Badge variant={tx.fundSource === 'banque' ? 'info' : 'warning'}>

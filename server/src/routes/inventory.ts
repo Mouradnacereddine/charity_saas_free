@@ -23,7 +23,6 @@ router.get('/articles', async (req: AuthRequest, res: Response): Promise<void> =
       const term = String(search);
       where.OR = [
         { name: { contains: term, mode: 'insensitive' } },
-        { nameAr: { contains: term, mode: 'insensitive' } },
         { reference: { contains: term, mode: 'insensitive' } },
       ];
     }
@@ -49,7 +48,7 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
   try {
     const associationId = req.user!.associationId;
     const {
-      reference, name, nameAr, description, descriptionAr,
+      reference, name, description,
       categoryId, category, quantity, storageLocationId, storageLocation,
       notes, status, statusId,
     } = req.body;
@@ -57,7 +56,7 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
     const resolvedCategoryId = categoryId || category;
     const resolvedStorageLocationId = storageLocationId || storageLocation;
 
-    if (!name || !nameAr || !resolvedCategoryId || quantity === undefined || !resolvedStorageLocationId) {
+    if (!name || !resolvedCategoryId || quantity === undefined || !resolvedStorageLocationId) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
@@ -88,9 +87,7 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
         associationId,
         reference: ref,
         name,
-        nameAr,
         description,
-        descriptionAr,
         categoryId: resolvedCategoryId,
         quantity: parseInt(quantity, 10),
         availableQuantity: parseInt(quantity, 10),
@@ -148,7 +145,7 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
     }
 
     const {
-      reference, name, nameAr, description, descriptionAr,
+      reference, name, description,
       categoryId, category, quantity, availableQuantity, status, statusId,
       storageLocationId, storageLocation, isPermanent, notes,
     } = req.body;
@@ -156,9 +153,7 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
     const data: any = {};
     if (reference !== undefined) data.reference = reference;
     if (name !== undefined) data.name = name;
-    if (nameAr !== undefined) data.nameAr = nameAr;
     if (description !== undefined) data.description = description;
-    if (descriptionAr !== undefined) data.descriptionAr = descriptionAr;
     if (categoryId !== undefined) data.categoryId = categoryId;
     if (category !== undefined) data.categoryId = category;
     if (quantity !== undefined) {
@@ -269,15 +264,15 @@ router.get('/article-categories', async (req: AuthRequest, res: Response): Promi
 router.post('/article-categories', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
 
-    if (!name || !nameAr) {
-      res.status(400).json({ error: 'Missing required fields: name, nameAr' });
+    if (!name) {
+      res.status(400).json({ error: 'Missing required field: name' });
       return;
     }
 
     const category = await prisma.articleCategory.create({
-      data: { associationId, name, nameAr },
+      data: { associationId, name },
     });
 
     res.status(201).json(category);
@@ -302,10 +297,9 @@ router.put('/article-categories/:id', async (req: AuthRequest, res: Response): P
       return;
     }
 
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
     const data: any = {};
     if (name !== undefined) data.name = name;
-    if (nameAr !== undefined) data.nameAr = nameAr;
 
     const category = await prisma.articleCategory.update({
       where: { id },
@@ -372,15 +366,15 @@ router.get('/storage-locations', async (req: AuthRequest, res: Response): Promis
 router.post('/storage-locations', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
 
-    if (!name || !nameAr) {
-      res.status(400).json({ error: 'Missing required fields: name, nameAr' });
+    if (!name) {
+      res.status(400).json({ error: 'Missing required field: name' });
       return;
     }
 
     const location = await prisma.storageLocation.create({
-      data: { associationId, name, nameAr },
+      data: { associationId, name },
     });
 
     res.status(201).json(location);
@@ -405,10 +399,9 @@ router.put('/storage-locations/:id', async (req: AuthRequest, res: Response): Pr
       return;
     }
 
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
     const data: any = {};
     if (name !== undefined) data.name = name;
-    if (nameAr !== undefined) data.nameAr = nameAr;
 
     const location = await prisma.storageLocation.update({
       where: { id },
@@ -461,7 +454,7 @@ router.get('/school-grades', async (req: AuthRequest, res: Response): Promise<vo
 
     const grades = await prisma.schoolGrade.findMany({
       where: { associationId },
-      orderBy: { nameAr: 'asc' },
+      orderBy: { name: 'asc' },
     });
 
     res.json(grades);
@@ -475,18 +468,17 @@ router.get('/school-grades', async (req: AuthRequest, res: Response): Promise<vo
 router.post('/school-grades', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
 
-    if (!nameAr) {
-      res.status(400).json({ error: 'nameAr is required' });
+    if (!name) {
+      res.status(400).json({ error: 'name is required' });
       return;
     }
 
     const grade = await prisma.schoolGrade.create({
       data: {
         associationId,
-        name: name || nameAr,
-        nameAr,
+        name,
         createdAt: new Date(),
       },
     });
@@ -513,10 +505,9 @@ router.put('/school-grades/:id', async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
     const data: any = {};
     if (name !== undefined) data.name = name;
-    if (nameAr !== undefined) data.nameAr = nameAr;
 
     const grade = await prisma.schoolGrade.update({
       where: { id },
@@ -578,15 +569,15 @@ router.get('/article-statuses', async (req: AuthRequest, res: Response): Promise
 router.post('/article-statuses', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { name, nameAr, description, descriptionAr, isPermanent } = req.body;
+    const { name, description, isPermanent } = req.body;
 
-    if (!name || !nameAr) {
-      res.status(400).json({ error: 'Missing required fields: name, nameAr' });
+    if (!name) {
+      res.status(400).json({ error: 'Missing required field: name' });
       return;
     }
 
     const status = await prisma.articleStatusType.create({
-      data: { associationId, name, nameAr, description, descriptionAr, isPermanent: isPermanent ?? false },
+      data: { associationId, name, description, isPermanent: isPermanent ?? false },
     });
 
     res.status(201).json(status);
@@ -611,12 +602,10 @@ router.put('/article-statuses/:id', async (req: AuthRequest, res: Response): Pro
       return;
     }
 
-    const { name, nameAr, description, descriptionAr, isPermanent } = req.body;
+    const { name, description, isPermanent } = req.body;
     const data: any = {};
     if (name !== undefined) data.name = name;
-    if (nameAr !== undefined) data.nameAr = nameAr;
     if (description !== undefined) data.description = description;
-    if (descriptionAr !== undefined) data.descriptionAr = descriptionAr;
     if (isPermanent !== undefined) data.isPermanent = isPermanent;
 
     const status = await prisma.articleStatusType.update({

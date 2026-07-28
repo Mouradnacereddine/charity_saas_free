@@ -29,8 +29,6 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     if (search) {
       const term = String(search);
       where.OR = [
-        { firstNameAr: { contains: term, mode: 'insensitive' } },
-        { lastNameAr: { contains: term, mode: 'insensitive' } },
         { firstName: { contains: term, mode: 'insensitive' } },
         { lastName: { contains: term, mode: 'insensitive' } },
         { phone: { contains: term } },
@@ -40,7 +38,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     const doctors = await prisma.doctor.findMany({
       where,
       include: {
-        specialty: { select: { id: true, name: true, nameAr: true } },
+        specialty: { select: { id: true, name: true } },
         _count: { select: { referrals: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -62,7 +60,7 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     const doctor = await prisma.doctor.findFirst({
       where: { id, associationId },
       include: {
-        specialty: { select: { id: true, name: true, nameAr: true } },
+        specialty: { select: { id: true, name: true } },
         _count: { select: { referrals: true } },
       },
     });
@@ -207,8 +205,8 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
         beneficiary: {
           select: {
             id: true,
-            firstNameAr: true,
-            lastNameAr: true,
+            firstName: true,
+            lastName: true,
             reference: true,
           },
         },
@@ -222,7 +220,7 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
       beneficiary: r.beneficiary
         ? {
             id: r.beneficiary.id,
-            nameAr: `${r.beneficiary.lastNameAr} ${r.beneficiary.firstNameAr}`,
+            name: `${r.beneficiary.lastName} ${r.beneficiary.firstName}`,
             reference: r.beneficiary.reference,
           }
         : null,
@@ -248,10 +246,10 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { firstName, lastName, firstNameAr, lastNameAr, phone, email, specialtyId, address, notes } = req.body;
+    const { firstName, lastName, phone, email, specialtyId, address, notes } = req.body;
 
-    if (!firstNameAr || !lastNameAr || !phone) {
-      res.status(400).json({ error: 'الاسم بالعربية ورقم الهاتف مطلوبان' });
+    if (!firstName || !lastName || !phone) {
+      res.status(400).json({ error: 'الاسم ورقم الهاتف مطلوبان' });
       return;
     }
 
@@ -259,17 +257,15 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
       data: {
         associationId,
         reference: generateDocRef(),
-        firstName: firstName || firstNameAr,
-        lastName: lastName || lastNameAr,
-        firstNameAr,
-        lastNameAr,
+        firstName,
+        lastName,
         phone,
         email,
         specialtyId: specialtyId || undefined,
         address,
         notes,
       },
-      include: { specialty: { select: { id: true, name: true, nameAr: true } } },
+      include: { specialty: { select: { id: true, name: true } } },
     });
 
     res.status(201).json(doctor);
@@ -294,13 +290,11 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const { firstName, lastName, firstNameAr, lastNameAr, phone, email, specialtyId, address, notes } = req.body;
+    const { firstName, lastName, phone, email, specialtyId, address, notes } = req.body;
 
     const data: any = {};
     if (firstName !== undefined) data.firstName = firstName;
     if (lastName !== undefined) data.lastName = lastName;
-    if (firstNameAr !== undefined) data.firstNameAr = firstNameAr;
-    if (lastNameAr !== undefined) data.lastNameAr = lastNameAr;
     if (phone !== undefined) data.phone = phone;
     if (email !== undefined) data.email = email;
     if (specialtyId !== undefined) data.specialtyId = specialtyId;
@@ -310,7 +304,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     const doctor = await prisma.doctor.update({
       where: { id },
       data,
-      include: { specialty: { select: { id: true, name: true, nameAr: true } } },
+      include: { specialty: { select: { id: true, name: true } } },
     });
 
     res.json(doctor);
@@ -377,15 +371,15 @@ router.get('/specialties/list', async (req: AuthRequest, res: Response): Promise
 router.post('/specialties', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
 
-    if (!name || !nameAr) {
-      res.status(400).json({ error: 'Missing required fields' });
+    if (!name) {
+      res.status(400).json({ error: 'Missing required field: name' });
       return;
     }
 
     const specialty = await prisma.doctorSpecialty.create({
-      data: { associationId, name, nameAr },
+      data: { associationId, name },
     });
 
     res.status(201).json(specialty);
@@ -410,10 +404,9 @@ router.put('/specialties/:id', async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
-    const { name, nameAr } = req.body;
+    const { name } = req.body;
     const data: any = {};
     if (name !== undefined) data.name = name;
-    if (nameAr !== undefined) data.nameAr = nameAr;
 
     const specialty = await prisma.doctorSpecialty.update({
       where: { id },

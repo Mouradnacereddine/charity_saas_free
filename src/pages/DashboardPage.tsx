@@ -78,9 +78,8 @@ export default function DashboardPage() {
               {stats.caissesBalances.map((caisse: any) => (
                 <StatCard
                   key={caisse.id}
-                  title={caisse.nameAr}
+                  title={caisse.name}
                   value={formatCurrency(caisse.balance)}
-                  subtitle={caisse.name}
                   icon={caisse.balance >= 0 ? <Banknote className="w-6 h-6" /> : <Wallet className="w-6 h-6" />}
                   color={caisse.balance >= 0 ? 'bg-primary' : 'bg-destructive'}
                 />
@@ -124,7 +123,7 @@ export default function DashboardPage() {
                       </td>
                       <td className="py-3 px-4 text-muted-foreground font-mono text-xs hidden xl:table-cell" dir="ltr">{tx.receiptNumber || '—'}</td>
                       <td className="py-3 px-4 hidden md:table-cell">
-                        <span className="text-foreground">{tx.caisse?.nameAr || '—'}</span>
+                        <span className="text-foreground">{tx.caisse?.name || '—'}</span>
                       </td>
                       <td className="py-3 px-4">
                         <span className={`font-semibold ${tx.type === 'credit' ? 'text-success' : 'text-destructive'}`}>
@@ -132,12 +131,12 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-foreground hidden lg:table-cell">
-                        {tx.type === 'credit' && tx.donor ? `${tx.donor.lastNameAr} ${tx.donor.firstNameAr}` : '—'}
+                        {tx.type === 'credit' && tx.donor ? `${tx.donor.lastName} ${tx.donor.firstName}` : '—'}
                       </td>
                       <td className="py-3 px-4 text-foreground hidden lg:table-cell">
-                        {tx.type === 'debit' && tx.beneficiary ? `${tx.beneficiary.lastNameAr} ${tx.beneficiary.firstNameAr}` : '—'}
+                        {tx.type === 'debit' && tx.beneficiary ? `${tx.beneficiary.lastName} ${tx.beneficiary.firstName}` : '—'}
                       </td>
-                      <td className="py-3 px-4 text-foreground hidden sm:table-cell">{localizedDesc(tx.description, tx.descriptionAr)}</td>
+                      <td className="py-3 px-4 text-foreground hidden sm:table-cell">{localizedDesc(tx.description)}</td>
                       <td className="py-3 px-4 hidden sm:table-cell">
                         {(tx.status || 'completed') === 'pending' ? (
                           <Badge variant="warning">{t('dashboard.pending')}</Badge>
@@ -169,15 +168,15 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted rounded-lg p-4">
               <div><p className="text-xs text-muted-foreground">{t('dashboard.type')}</p><p className="font-medium text-foreground">{detailTx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('common.amount')}</p><p className={`font-bold text-lg ${detailTx.type === 'credit' ? 'text-success' : 'text-destructive'}`}>{formatCurrency(detailTx.amount)}</p></div>
-              <div><p className="text-xs text-muted-foreground">{t('dashboard.fund')}</p><p className="font-medium text-foreground">{detailTx.caisse?.nameAr || detailTx.caisseId || '—'}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('dashboard.fund')}</p><p className="font-medium text-foreground">{detailTx.caisse?.name || detailTx.caisseId || '—'}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('dashboard.source')}</p><p className="font-medium text-foreground">{detailTx.fundSource === 'banque' ? t('dashboard.bank') : t('dashboard.cash')}</p></div>
               {detailTx.type === 'credit' && detailTx.donor && (
-                <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('dashboard.donor')}</p><p className="font-medium text-foreground">{detailTx.donor.lastNameAr} {detailTx.donor.firstNameAr}</p></div>
+                <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('dashboard.donor')}</p><p className="font-medium text-foreground">{detailTx.donor.lastName} {detailTx.donor.firstName}</p></div>
               )}
               {detailTx.type === 'debit' && detailTx.beneficiary && (
-                <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</p><p className="font-medium text-foreground">{detailTx.beneficiary.lastNameAr} {detailTx.beneficiary.firstNameAr}</p></div>
+                <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</p><p className="font-medium text-foreground">{detailTx.beneficiary.lastName} {detailTx.beneficiary.firstName}</p></div>
               )}
-              {(detailTx.descriptionAr || detailTx.description) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{localizedDesc(detailTx.description, detailTx.descriptionAr)}</p></div>}
+              {detailTx.description && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{localizedDesc(detailTx.description)}</p></div>}
               {detailTx.receiptNumber && <div><p className="text-xs text-muted-foreground">{t('dashboard.receiptNo')}</p><p className="font-mono text-foreground" dir="ltr">{detailTx.receiptNumber}</p></div>}
               <div><p className="text-xs text-muted-foreground">{t('common.date')}</p><p className="font-medium text-foreground">{formatDate(detailTx.date)}</p></div>
             </div>

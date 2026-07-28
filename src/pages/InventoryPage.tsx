@@ -50,9 +50,7 @@ const LOAN_STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'danger' | 'd
 }
 
 const EMPTY_ARTICLE_FORM = {
-  nameAr: '',
   name: '',
-  descriptionAr: '',
   description: '',
   category: '',
   quantity: 1,
@@ -233,14 +231,10 @@ function SettingsTab() { const { t, i18n } = useTranslation();
   const [editLocName, setEditLocName] = useState('')
 
   // Status form state
-  const [newStsNameAr, setNewStsNameAr] = useState('')
   const [newStsName, setNewStsName] = useState('')
-  const [newStsDescAr, setNewStsDescAr] = useState('')
   const [newStsDesc, setNewStsDesc] = useState('')
   const [editStsId, setEditStsId] = useState<string | null>(null)
-  const [editStsNameAr, setEditStsNameAr] = useState('')
   const [editStsName, setEditStsName] = useState('')
-  const [editStsDescAr, setEditStsDescAr] = useState('')
   const [editStsDesc, setEditStsDesc] = useState('')
   const [newStsIsPermanent, setNewStsIsPermanent] = useState(false)
   const [editStsIsPermanent, setEditStsIsPermanent] = useState(false)
@@ -318,11 +312,9 @@ function SettingsTab() { const { t, i18n } = useTranslation();
   // ---- Status CRUD ----
 
   const handleAddStatus = async () => {
-    if (!newStsNameAr.trim()) return
-    await createSts.mutateAsync({ name: newStsName.trim(), nameAr: newStsNameAr.trim(), description: newStsDesc.trim() || undefined, descriptionAr: newStsDescAr.trim() || undefined })
-    setNewStsNameAr('')
+    if (!newStsName.trim()) return
+    await createSts.mutateAsync({ name: newStsName.trim(), description: newStsDesc.trim() || undefined })
     setNewStsName('')
-    setNewStsDescAr('')
     setNewStsDesc('')
   }
 
@@ -333,27 +325,21 @@ function SettingsTab() { const { t, i18n } = useTranslation();
 
   const startEditStatus = (sts: ArticleStatus) => {
     setEditStsId(sts.id)
-    setEditStsNameAr(sts.nameAr)
     setEditStsName(sts.name)
-    setEditStsDescAr(sts.descriptionAr || '')
     setEditStsDesc(sts.description || '')
   }
 
   const handleUpdateStatus = async () => {
-    if (!editStsId || !editStsNameAr.trim()) return
-    await updateSts.mutateAsync({ id: editStsId, data: { name: editStsName.trim(), nameAr: editStsNameAr.trim(), description: editStsDesc.trim() || undefined, descriptionAr: editStsDescAr.trim() || undefined } })
+    if (!editStsId || !editStsName.trim()) return
+    await updateSts.mutateAsync({ id: editStsId, data: { name: editStsName.trim(), description: editStsDesc.trim() || undefined } })
     setEditStsId(null)
-    setEditStsNameAr('')
     setEditStsName('')
-    setEditStsDescAr('')
     setEditStsDesc('')
   }
 
   const cancelEditStatus = () => {
     setEditStsId(null)
-    setEditStsNameAr('')
     setEditStsName('')
-    setEditStsDescAr('')
     setEditStsDesc('')
   }
 
@@ -579,18 +565,15 @@ function SettingsTab() { const { t, i18n } = useTranslation();
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <Input
-              labelAr={t('common.status')}
-              value={newStsNameAr}
-              onChange={(e) => {
-                setNewStsNameAr(e.target.value)
-                setNewStsName(e.target.value)
-              }}
-              placeholder={t('inventory.nameArPlaceholder')}
+              label={t('common.status')}
+              value={newStsName}
+              onChange={(e) => setNewStsName(e.target.value)}
+              placeholder={t('inventory.namePlaceholder')}
               required
             />
           </div>
           <div className="flex items-end">
-            <Button onClick={handleAddStatus} disabled={!newStsNameAr.trim()}>
+            <Button onClick={handleAddStatus} disabled={!newStsName.trim()}>
               <Plus className="w-4 h-4" />{t('common.add')}
             </Button>
           </div>
@@ -616,15 +599,15 @@ function SettingsTab() { const { t, i18n } = useTranslation();
                         <td className="py-3 px-4">
                           <input
                             type="text"
-                            value={editStsNameAr}
-                            onChange={(e) => setEditStsNameAr(e.target.value)}
+                            value={editStsName}
+                            onChange={(e) => setEditStsName(e.target.value)}
                             className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                             autoFocus
                           />
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
-                            <Button size="sm" onClick={handleUpdateStatus} disabled={!editStsNameAr.trim()}>
+                            <Button size="sm" onClick={handleUpdateStatus} disabled={!editStsName.trim()}>
 {t("common.save")}
                             </Button>
                             <Button size="sm" variant="secondary" onClick={cancelEditStatus}>
@@ -718,11 +701,11 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
 
     const matchesSearch =
       !st ||
-      a.nameAr.includes(st) ||
       a.name.toLowerCase().includes(st.toLowerCase()) ||
-      catNameAr.includes(st) ||
+      a.nameAr.toLowerCase().includes(st.toLowerCase()) ||
+      catNameAr.toLowerCase().includes(st.toLowerCase()) ||
       (a.reference || '').toLowerCase().includes(st.toLowerCase()) ||
-      (typeof acat.category === 'object' ? acat.category.nameAr?.includes(st) : (acat.category || '').toLowerCase().includes(st.toLowerCase()))
+      (typeof acat.category === 'object' ? acat.category.nameAr?.toLowerCase().includes(st.toLowerCase()) : (acat.category || '').toLowerCase().includes(st.toLowerCase()))
     const matchesCategory =
       !committedFilters.category || (typeof acat.category === 'object' ? acat.category.id === committedFilters.category : acat.category === committedFilters.category)
     const matchesStatus = !committedFilters.status || a.status === committedFilters.status
@@ -750,7 +733,6 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
     setForm({
       nameAr: article.nameAr,
       name: article.name,
-      descriptionAr: article.descriptionAr || '',
       description: article.description || '',
       category: resolveId(article.category),
       quantity: article.quantity,
@@ -775,15 +757,12 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
     const data = {
       nameAr: form.nameAr,
       name: form.name,
-      descriptionAr: form.descriptionAr || undefined,
       description: form.description || undefined,
       category: form.category,
-      categoryAr: '',  // kept for backward compatibility with existing data
       quantity: form.quantity,
       status: form.statusId ? 'disponible' : (form.status || 'disponible'),
       statusId: form.statusId || undefined,
       storageLocation: form.storageLocation,
-      storageLocationAr: '',  // kept for backward compatibility with existing data
       isPermanent: form.isPermanent,
       notes: form.notes || undefined,
     }
@@ -966,7 +945,7 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted rounded-lg p-4">
               <div><p className="text-xs text-muted-foreground">{t('inventory.nameAr')}</p><p className="font-medium">{form.nameAr}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('inventory.nameLatin')}</p><p className="font-medium">{form.name}</p></div>
-              {form.descriptionAr && <div><p className="text-xs text-muted-foreground">{t('doctors.arabicLabel')}</p><p className="font-medium">{form.descriptionAr}</p></div>}
+              {form.description && <div><p className="text-xs text-muted-foreground">{t('doctors.arabicLabel')}</p><p className="font-medium">{form.description}</p></div>}
               {form.description && <div><p className="text-xs text-muted-foreground">{t('inventory.descriptionLatin')}</p><p className="font-medium">{form.description}</p></div>}
               <div><p className="text-xs text-muted-foreground">{t('inventory.category')}</p><p className="font-medium">{categories.find((c) => c.id === form.category)?.nameAr || '—'}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('inventory.quantity')}</p><p className="font-medium">{form.quantity}</p></div>
@@ -1070,13 +1049,12 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
     const st = committedLoanFilters.searchTerm
     const matchesSearch =
       !st ||
-      (l.beneficiaryNameAr || '').includes(st) ||
       (l.beneficiaryName || '').toLowerCase().includes(st.toLowerCase())
     const matchesStatus = !committedLoanFilters.status || l.status === committedLoanFilters.status
     const matchesBeneficiary =
       !committedLoanFilters.beneficiary ||
       l.beneficiaryId === committedLoanFilters.beneficiary ||
-      (l.beneficiaryNameAr || '').includes(committedLoanFilters.beneficiary) ||
+      (l.beneficiaryName || '').toLowerCase().includes((committedLoanFilters.beneficiary || '').toLowerCase()) ||
       (l.beneficiaryName || '').toLowerCase().includes(committedLoanFilters.beneficiary.toLowerCase())
     const matchesDateFrom = !committedLoanFilters.dateFrom || l.loanDate >= committedLoanFilters.dateFrom
     const matchesDateTo = !committedLoanFilters.dateTo || l.loanDate <= committedLoanFilters.dateTo
@@ -1088,7 +1066,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   // Pre-computed beneficiary options for SearchableSelect
   const beneficiaryOptions = beneficiaries.map((b: Beneficiary) => ({
     value: b.id,
-    label: `${b.lastNameAr} ${b.firstNameAr} (${b.firstName} ${b.lastName})`,
+    label: `${b.lastName} ${b.firstName}`,
   }))
 
   const loanStatusOptions = [
@@ -1125,7 +1103,6 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
         return {
           articleId: li.articleId,
           articleName: article?.name || '',
-          articleNameAr: article?.nameAr || '',
           quantity: li.quantity,
           returnedQuantity: 0,
           conditionOnLoan: li.conditionOnLoan,
@@ -1136,7 +1113,6 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       reference: generateLoanReference(),
       beneficiaryId: beneficiary.id,
       beneficiaryName: `${beneficiary.firstName} ${beneficiary.lastName}`,
-      beneficiaryNameAr: `${beneficiary.lastNameAr} ${beneficiary.firstNameAr}`,
       beneficiaryReference: beneficiary.reference,
       items,
       status: 'en_cours',
@@ -1224,7 +1200,6 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       data: {
         articleId: newItemArticleId,
         articleName: article.name,
-        articleNameAr: article.nameAr,
         quantity: newItemQuantity,
         returnedQuantity: 0,
         conditionOnLoan: newItemCondition,
@@ -1271,7 +1246,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
   const handlePrintLoan = (loan: Loan) => {
     const itemsHtml = loan.items.map((item: any) =>
-      `<div class="row"><span class="lbl">${t('common.article')}</span><span class="val">${item.articleNameAr || item.articleName} <i>×${item.quantity}</i></span></div>`
+      `<div class="row"><span class="lbl">${t('common.article')}</span><span class="val">${item.articleName} <i>×${item.quantity}</i></span></div>`
     ).join('')
 
     const statusLabel = loanStatusLabels[loan.status] || loan.status
@@ -1281,7 +1256,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       'Détail du Prêt',
       `<div class="col">
         <div class="row"><span class="lbl">{t('inventory.refCode')}</span><span class="val">${loan.reference || '—'}</span></div>
-        <div class="row"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${loan.beneficiaryNameAr}</span></div>
+        <div class="row"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${loan.beneficiaryName}</span></div>
         <div class="row"><span class="lbl">${t('medical.beneficiaryRef')}</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
         <div class="row"><span class="lbl">{t('common.status')}</span><span class="val">${statusLabel}</span></div>
         <div class="row"><span class="lbl">${t('inventory.loanDate')}</span><span class="val">${formatDate(loan.loanDate)}</span></div>
@@ -1391,7 +1366,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                     <td className="py-3 px-4 font-semibold text-primary" dir="ltr">
                       {loan.reference || '—'}
                     </td>
-                    <td className="py-3 px-4 font-medium text-foreground">{loan.beneficiaryNameAr}</td>
+                    <td className="py-3 px-4 font-medium text-foreground">{loan.beneficiaryName}</td>
                     <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell" dir="ltr">
                       {loan.beneficiaryReference || '—'}
                     </td>
@@ -1546,7 +1521,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="text-sm font-semibold text-foreground">{t("medical.beneficiary")}</h4>
-                  <p className="text-sm text-foreground">{selectedLoan.beneficiaryNameAr}</p>
+                  <p className="text-sm text-foreground">{selectedLoan.beneficiaryName}</p>
                   <p className="text-xs text-muted-foreground" dir="ltr">{t('medical.beneficiaryRef')}: {selectedLoan.beneficiaryReference || '—'}</p>
                 </div>
                 <div className="text-left">
@@ -1599,8 +1574,8 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   <tbody>
                     {selectedLoan.items.map((item) => (
                       <tr key={item.articleId} className="border-b border-border">
-                        <td className="py-2 px-3 text-foreground">{item.articleNameAr || item.articleName}</td>
-                        <td className="py-2 px-3 text-muted-foreground">{item.categoryNameAr || item.categoryName || '—'}</td>
+                        <td className="py-2 px-3 text-foreground">{item.articleName}</td>
+                        <td className="py-2 px-3 text-muted-foreground">{item.categoryName || '—'}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.quantity}</td>
                         <td className="py-2 px-3">
                           <span
@@ -1655,7 +1630,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                     <div key={entry.articleId} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-muted rounded-lg">
                       <div className="space-y-1">
                         <label className="block text-xs font-medium text-muted-foreground">{t('inventory.category')}</label>
-                        <p className="text-sm font-medium text-foreground">{loanItem.articleNameAr}</p>
+                        <p className="text-sm font-medium text-foreground">{loanItem.articleName}</p>
                         <p className="text-xs text-muted-foreground/70">{t('finance.remainingAmount')}: {remaining}</p>
                       </div>
                       <Input

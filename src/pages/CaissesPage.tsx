@@ -42,23 +42,19 @@ export default function CaissesPage() {
 
   // Form states
   const [name, setName] = useState('');
-  const [nameAr, setNameAr] = useState('');
   const [subName, setSubName] = useState('');
-  const [subNameAr, setSubNameAr] = useState('');
 
   const handleAddCaisse = async () => {
-    if (!nameAr.trim()) return;
-    await createMutation.mutateAsync({ name: name || nameAr, nameAr, reference: generateCaisseReference() });
+    if (!name.trim()) return;
+    await createMutation.mutateAsync({ name, reference: generateCaisseReference() });
     setName('');
-    setNameAr('');
     setShowAddModal(false);
   };
 
   const handleUpdateCaisse = async () => {
-    if (!editCaisse || !nameAr.trim()) return;
-    await updateMutation.mutateAsync({ id: editCaisse.id, data: { name: name || nameAr, nameAr } });
+    if (!editCaisse || !name.trim()) return;
+    await updateMutation.mutateAsync({ id: editCaisse.id, data: { name } });
     setName('');
-    setNameAr('');
     setEditCaisse(null);
   };
 
@@ -69,30 +65,28 @@ export default function CaissesPage() {
   };
 
   const handleAddSubCategory = async () => {
-    if (!showSubCatModal || !subNameAr.trim()) return;
+    if (!showSubCatModal || !subName.trim()) return;
     const caisse = caisses.find((c: Caisse) => c.id === showSubCatModal);
     if (!caisse) return;
     const newSub: SubCategory = {
       id: generateId(),
-      name: subName || subNameAr,
-      nameAr: subNameAr.trim(),
+      name: subName,
     };
     await updateMutation.mutateAsync({
       id: showSubCatModal,
       data: { subCategories: [...(caisse.subCategories || []), newSub] },
     });
     setSubName('');
-    setSubNameAr('');
     setShowSubCatModal(null);
   };
 
   const handleUpdateSubCategory = async () => {
-    if (!editSubCat || !subNameAr.trim()) return;
+    if (!editSubCat || !subName.trim()) return;
     const caisse = caisses.find((c: Caisse) => c.id === editSubCat.caisseId);
     if (!caisse) return;
     const updatedSubs = (caisse.subCategories || []).map((s: SubCategory) =>
       s.id === editSubCat.subCat.id
-        ? { ...s, name: subName || subNameAr, nameAr: subNameAr.trim() }
+        ? { ...s, name: subName }
         : s
     );
     await updateMutation.mutateAsync({
@@ -100,7 +94,6 @@ export default function CaissesPage() {
       data: { subCategories: updatedSubs },
     });
     setSubName('');
-    setSubNameAr('');
     setEditSubCat(null);
   };
 
@@ -118,13 +111,11 @@ export default function CaissesPage() {
 
   const openEditCaisse = (caisse: Caisse) => {
     setName(caisse.name);
-    setNameAr(caisse.nameAr);
     setEditCaisse(caisse);
   };
 
   const openEditSubCat = (caisseId: string, subCat: SubCategory) => {
     setSubName(subCat.name);
-    setSubNameAr(subCat.nameAr);
     setEditSubCat({ caisseId, subCat });
   };
 
@@ -159,7 +150,7 @@ export default function CaissesPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground">{caisse.nameAr}</h3>
+                      <h3 className="font-semibold text-foreground">{caisse.name}</h3>
                       <span className="text-xs text-primary/70 font-mono" dir="ltr">{caisse.reference || '—'}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">{caisse.name}</p>
@@ -212,7 +203,7 @@ export default function CaissesPage() {
                       >
                         <div className="flex items-center gap-2">
                           <Tag className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-sm text-foreground">{sub.nameAr}</span>
+                          <span className="text-sm text-foreground">{sub.name}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <button
@@ -241,28 +232,22 @@ export default function CaissesPage() {
       {/* Add Caisse Modal */}
       <Modal
         isOpen={showAddModal}
-        onClose={() => { setShowAddModal(false); setName(''); setNameAr(''); }}
+        onClose={() => { setShowAddModal(false); setName(''); }}
         title={t('caisses.addFundTitle')}
       >
         <div className="space-y-4">
           <Input
-            labelAr={t('caisses.nameAr')}
-            value={nameAr}
-            onChange={(e) => setNameAr(e.target.value)}
-            placeholder={t('caisses.nameArPlaceholder', 'مثال: صندوق الزكاة')}
-          />
-          <Input
-            labelAr={t('caisses.nameLatin')}
+            label={t('caisses.name')}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={t('caisses.nameArPlaceholder')}
-            dir="ltr"
+            placeholder={t('caisses.namePlaceholder', 'مثال: صندوق الزكاة')}
+            required
           />
           <div className="flex gap-3 justify-end">
-            <Button variant="secondary" onClick={() => { setShowAddModal(false); setName(''); setNameAr(''); }}>
+            <Button variant="secondary" onClick={() => { setShowAddModal(false); setName(''); }}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleAddCaisse} disabled={!nameAr.trim()}>
+            <Button onClick={handleAddCaisse} disabled={!name.trim()}>
               {t('common.add')}
             </Button>
           </div>
@@ -272,26 +257,21 @@ export default function CaissesPage() {
       {/* Edit Caisse Modal */}
       <Modal
         isOpen={!!editCaisse}
-        onClose={() => { setEditCaisse(null); setName(''); setNameAr(''); }}
+        onClose={() => { setEditCaisse(null); setName(''); }}
         title={t('caisses.editFundTitle')}
       >
         <div className="space-y-4">
           <Input
-            labelAr={t('caisses.nameAr')}
-            value={nameAr}
-            onChange={(e) => setNameAr(e.target.value)}
-          />
-          <Input
-            labelAr={t('caisses.nameLatin')}
+            label={t('caisses.name')}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            dir="ltr"
+            required
           />
           <div className="flex gap-3 justify-end">
-            <Button variant="secondary" onClick={() => { setEditCaisse(null); setName(''); setNameAr(''); }}>
+            <Button variant="secondary" onClick={() => { setEditCaisse(null); setName(''); }}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleUpdateCaisse} disabled={!nameAr.trim()}>
+            <Button onClick={handleUpdateCaisse} disabled={!name.trim()}>
               {t('caisses.saveChanges')}
             </Button>
           </div>
@@ -301,28 +281,22 @@ export default function CaissesPage() {
       {/* Add Sub-Category Modal */}
       <Modal
         isOpen={!!showSubCatModal}
-        onClose={() => { setShowSubCatModal(null); setSubName(''); setSubNameAr(''); }}
+        onClose={() => { setShowSubCatModal(null); setSubName(''); }}
         title={t('caisses.addCategoryTitle')}
       >
         <div className="space-y-4">
           <Input
-            labelAr={t('caisses.categoryNameAr')}
-            value={subNameAr}
-            onChange={(e) => setSubNameAr(e.target.value)}
-            placeholder={t('caisses.categoryNameArPlaceholder', 'مثال: تحاليل طبية')}
-          />
-          <Input
-            labelAr={t('caisses.categoryNameLatin')}
+            label={t('caisses.categoryName')}
             value={subName}
             onChange={(e) => setSubName(e.target.value)}
-            placeholder={t('caisses.categoryNameArPlaceholder')}
-            dir="ltr"
+            placeholder={t('caisses.categoryNamePlaceholder', 'مثال: تحاليل طبية')}
+            required
           />
           <div className="flex gap-3 justify-end">
-            <Button variant="secondary" onClick={() => { setShowSubCatModal(null); setSubName(''); setSubNameAr(''); }}>
+            <Button variant="secondary" onClick={() => { setShowSubCatModal(null); setSubName(''); }}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleAddSubCategory} disabled={!subNameAr.trim()}>
+            <Button onClick={handleAddSubCategory} disabled={!subName.trim()}>
               {t('common.add')}
             </Button>
           </div>
@@ -332,26 +306,21 @@ export default function CaissesPage() {
       {/* Edit Sub-Category Modal */}
       <Modal
         isOpen={!!editSubCat}
-        onClose={() => { setEditSubCat(null); setSubName(''); setSubNameAr(''); }}
+        onClose={() => { setEditSubCat(null); setSubName(''); }}
         title={t('caisses.editCategoryTitle')}
       >
         <div className="space-y-4">
           <Input
-            labelAr={t('caisses.categoryNameAr')}
-            value={subNameAr}
-            onChange={(e) => setSubNameAr(e.target.value)}
-          />
-          <Input
-            labelAr={t('caisses.categoryNameLatin')}
+            label={t('caisses.categoryName')}
             value={subName}
             onChange={(e) => setSubName(e.target.value)}
-            dir="ltr"
+            required
           />
           <div className="flex gap-3 justify-end">
-            <Button variant="secondary" onClick={() => { setEditSubCat(null); setSubName(''); setSubNameAr(''); }}>
+            <Button variant="secondary" onClick={() => { setEditSubCat(null); setSubName(''); }}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleUpdateSubCategory} disabled={!subNameAr.trim()}>
+            <Button onClick={handleUpdateSubCategory} disabled={!subName.trim()}>
               {t('caisses.saveChanges')}
             </Button>
           </div>

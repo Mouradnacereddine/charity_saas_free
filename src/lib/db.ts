@@ -36,12 +36,12 @@ class AssociationDB extends Dexie {
     super('AssociationCharitableDB');
     this.version(5).stores({
       beneficiaries:
-        'id, reference, firstName, lastName, firstNameAr, lastNameAr, phone, nationalCardNumber, attribut, caisseId, subCategoryId, dateOfBirth, createdAt',
+        'id, reference, firstName, lastName, phone, nationalCardNumber, attribut, caisseId, subCategoryId, dateOfBirth, createdAt',
       donors:
-        'id, reference, firstName, lastName, firstNameAr, lastNameAr, phone, totalDonated, createdAt',
+        'id, reference, firstName, lastName, phone, totalDonated, createdAt',
       transactions:
         'id, type, fundSource, caisseId, subCategoryId, bankAccountId, donorId, beneficiaryId, date, amount, createdAt',
-      caisses: 'id, name, nameAr, createdAt',
+      caisses: 'id, name, createdAt',
       bankAccounts: 'id, bankName, accountNumber, rib, createdAt',
       articles:
         'id, reference, name, nameAr, category, status, storageLocation, isPermanent, createdAt',

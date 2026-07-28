@@ -21,8 +21,6 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       where.OR = [
         { firstName: { contains: t, mode: 'insensitive' } },
         { lastName: { contains: t, mode: 'insensitive' } },
-        { firstNameAr: { contains: t, mode: 'insensitive' } },
-        { lastNameAr: { contains: t, mode: 'insensitive' } },
         { reference: { contains: t, mode: 'insensitive' } },
         { phone: { contains: t, mode: 'insensitive' } },
         { email: { contains: t, mode: 'insensitive' } },
@@ -50,7 +48,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       where: { donorId: { in: donorIds } },
     });
     const countMap = new Map<string, number>();
-    const distributionMap = new Map<string, { caisses: { id: string; nameAr: string; subCategories: { id: string; nameAr: string; name?: string; total: number }[]; total: number }[]; totalAmount: number }>();
+    const distributionMap = new Map<string, { caisses: { id: string; name: string; subCategories: { id: string; name: string; total: number }[]; total: number }[]; totalAmount: number }>();
 
     for (const r of receipts) {
       // Increment count
@@ -66,7 +64,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         const rAny = r as any;
       let caisse = dist.caisses.find((c) => c.id === rAny.caisseId);
       if (!caisse) {
-        caisse = { id: rAny.caisseId, nameAr: rAny.caisseNameAr || '', subCategories: [], total: 0 };
+        caisse = { id: rAny.caisseId, name: rAny.caisseName || '', subCategories: [], total: 0 };
         dist.caisses.push(caisse);
       }
       caisse.total += Number(rAny.amount);
@@ -74,7 +72,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       if (rAny.subCategoryId) {
         let sub = caisse.subCategories.find((s) => s.id === rAny.subCategoryId);
         if (!sub) {
-          sub = { id: rAny.subCategoryId, nameAr: rAny.subCategoryNameAr || rAny.subCategoryName || '', name: rAny.subCategoryName || undefined, total: 0 };
+          sub = { id: rAny.subCategoryId, name: rAny.subCategoryName || '', total: 0 };
           caisse.subCategories.push(sub);
         }
         sub.total += Number(rAny.amount);
@@ -114,13 +112,13 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
-      reference: refInput, firstName, lastName, firstNameAr, lastNameAr,
+      reference: refInput, firstName, lastName,
       phone, email, address, gender, totalDonated, notes,
     } = req.body;
 
     const reference = refInput || generateRef('DON');
 
-    if (!firstName || !lastName || !firstNameAr || !lastNameAr || !phone) {
+    if (!firstName || !lastName || !phone) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
@@ -131,8 +129,6 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
         reference,
         firstName,
         lastName,
-        firstNameAr,
-        lastNameAr,
         phone,
         email,
         address,
@@ -196,7 +192,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     }
 
     const {
-      reference, firstName, lastName, firstNameAr, lastNameAr,
+      reference, firstName, lastName,
       phone, email, address, totalDonated, notes, gender,
     } = req.body;
 
@@ -204,8 +200,6 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     if (reference !== undefined) data.reference = reference;
     if (firstName !== undefined) data.firstName = firstName;
     if (lastName !== undefined) data.lastName = lastName;
-    if (firstNameAr !== undefined) data.firstNameAr = firstNameAr;
-    if (lastNameAr !== undefined) data.lastNameAr = lastNameAr;
     if (phone !== undefined) data.phone = phone;
     if (email !== undefined) data.email = email;
     if (address !== undefined) data.address = address;

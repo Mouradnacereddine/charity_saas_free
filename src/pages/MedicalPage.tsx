@@ -195,10 +195,10 @@ export default function MedicalPage() {
     if (!beneficiary) return;
 
     const childrenData = selectedChildren.map((childId: string) => {
-      const child = (beneficiary.children || []).find((c: any) => c.id === childId || `${c.firstNameAr} ${c.lastNameAr}` === childId);
+      const child = (beneficiary.children || []).find((c: any) => c.id === childId || `${c.firstName} ${c.lastName}` === childId);
       return child ? {
         id: child.id || childId,
-        nameAr: `${child.lastNameAr || ''} ${child.firstNameAr || ''}`.trim(),
+        nameAr: `${child.lastName || ''} ${child.firstName || ''}`.trim(),
         name: `${child.firstName || ''} ${child.lastName || ''}`.trim(),
         age: calculateAge(child.dateOfBirth).displayAr,
         gender: child.gender || 'male',
@@ -209,7 +209,7 @@ export default function MedicalPage() {
       await createMedicalReferral.mutateAsync({
         beneficiaryId,
         beneficiaryName: `${beneficiary.firstName} ${beneficiary.lastName}`,
-        beneficiaryNameAr: `${beneficiary.lastNameAr} ${beneficiary.firstNameAr}`,
+        beneficiaryNameAr: `${beneficiary.lastName} ${beneficiary.firstName}`,
         caisseId,
         subCategoryId: subCategoryId || undefined,
         doctorId,
@@ -247,7 +247,7 @@ export default function MedicalPage() {
 
     const childrenHtml = referral.children && Array.isArray(referral.children) && referral.children.length > 0
       ? referral.children.map((c: any) => {
-          const nameAr = c.nameAr || `${c.lastNameAr || ''} ${c.firstNameAr || ''}`.trim() || '—'
+          const nameAr = c.nameAr || `${c.lastName || ''} ${c.firstName || ''}`.trim() || '—'
           let ageDisplay = ''
           try {
             if (c.dateOfBirth) {
@@ -306,21 +306,21 @@ export default function MedicalPage() {
   <div class="info-grid">
     <div class="info-item"><span class="lbl">${t('doctors.refCode')}</span><span class="val">${referral.reference || '—'}</span></div>
     <div class="info-item"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(referral.date)}</span></div>
-    <div class="info-item"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${referral.beneficiaryNameAr}</span></div>
+    <div class="info-item"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${referral.beneficiaryName}</span></div>
     <div class="info-item"><span class="lbl">${t('medical.beneficiaryRef')}</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
     ${fullBeneficiary?.nationalCardNumber ? `<div class="info-item"><span class="lbl">${t('receipt.idNumber')}</span><span class="val">${fullBeneficiary.nationalCardNumber}</span></div>` : ''}
     ${ageDisplay ? `<div class="info-item"><span class="lbl">${t('receipt.age')} / ${t('receipt.gender')}</span><span class="val">${ageDisplay} — ${genderDisplay}</span></div>` : ''}
-    <div class="info-item"><span class="lbl">${t('medical.doctor')}</span><span class="val">${referral.doctorNameAr || (referral.doctor ? referral.doctor.lastNameAr + ' ' + referral.doctor.firstNameAr : '')}${referral.doctor?.specialty?.nameAr ? ` (${referral.doctor.specialty.nameAr})` : ''}</span></div>
+    <div class="info-item"><span class="lbl">${t('medical.doctor')}</span><span class="val">${referral.doctorName || (referral.doctor ? referral.doctor.lastName + ' ' + referral.doctor.firstName : '')}${referral.doctor?.specialty?.nameAr ? ` (${referral.doctor.specialty.nameAr})` : ''}</span></div>
     ${referral.doctor?.address ? `<div class="info-item"><span class="lbl">${t('medical.doctorAddress')}</span><span class="val">${referral.doctor.address}</span></div>` : ''}
-    ${referral.analysisTypeAr ? `<div class="info-item"><span class="lbl">${t('medical.analysisType')}</span><span class="val">${referral.analysisTypeAr}</span></div>` : ''}
-    ${referral.hospitalAr ? `<div class="info-item"><span class="lbl">${t('medical.hospital')}</span><span class="val">${referral.hospitalAr}</span></div>` : ''}
+    ${referral.analysisType ? `<div class="info-item"><span class="lbl">${t('medical.analysisType')}</span><span class="val">${referral.analysisType}</span></div>` : ''}
+    ${referral.hospital ? `<div class="info-item"><span class="lbl">${t('medical.hospital')}</span><span class="val">${referral.hospital}</span></div>` : ''}
     ${caisseRow ? `<div class="info-item">${caisseRow}</div>` : ''}
     ${subCatRow ? `<div class="info-item">${subCatRow}</div>` : ''}
   </div>
   ${childrenHtml ? `<div class="section-title">${t('medical.childrenReferral')}</div><div class="children-grid">${childrenHtml}</div>` : ''}
   ${referral.notes ? `<div class="section-title">${t('common.notes')}</div><div class="info-item" style="width:100%"><span class="val">${referral.notes}</span></div>` : ''}
   ${referral.amount > 0
-    ? `<div class="amt"><div class="num">${formatCurrency(referral.amount)}</div><div class="words">${referral.amountInWordsAr && !referral.amountInWordsAr.match(/^\d/) ? referral.amountInWordsAr : numberToArabicWords(referral.amount)}</div></div>`
+    ? `<div class="amt"><div class="num">${formatCurrency(referral.amount)}</div><div class="words">${referral.amountInWords && !referral.amountInWords.match(/^\d/) ? referral.amountInWords : numberToArabicWords(referral.amount)}</div></div>`
     : `<div class="amt" style="background:#fef9e7"><div class="words" style="font-size:9px;color:#b8860b;font-weight:600">${t('medical.pendingAmount')}</div></div>`
   }
   <div class="sign-section">
@@ -339,12 +339,12 @@ export default function MedicalPage() {
   const appliedTerm = committedSearchTerm.toLowerCase();
   const filteredReferrals = referrals.filter((r: MedicalReferral) => {
     if (appliedTerm && !(
-      (r.beneficiaryNameAr || '').includes(appliedTerm) ||
+      (r.beneficiaryName || '').includes(appliedTerm) ||
       (r.beneficiaryName || '').toLowerCase().includes(appliedTerm) ||
-      (r.doctorNameAr || (r.doctor ? `${r.doctor.lastNameAr} ${r.doctor.firstNameAr}` : '')).includes(appliedTerm) ||
+      (r.doctorName || (r.doctor ? `${r.doctor.lastName} ${r.doctor.firstName}` : '')).includes(appliedTerm) ||
       (r.doctorName || (r.doctor ? `${r.doctor.firstName} ${r.doctor.lastName}` : '')).toLowerCase().includes(appliedTerm) ||
-      (r.analysisTypeAr || '').includes(appliedTerm) ||
-      (r.hospitalAr || '').includes(appliedTerm) ||
+      (r.analysisType || '').includes(appliedTerm) ||
+      (r.hospital || '').includes(appliedTerm) ||
       (r.reference || '').toLowerCase().includes(appliedTerm)
     )) return false;
 
@@ -356,10 +356,10 @@ export default function MedicalPage() {
     if (committedDateFrom && r.date < committedDateFrom) return false;
     if (committedDateTo && r.date > committedDateTo) return false;
 
-    const docNameAr = r.doctorNameAr || (r.doctor ? `${r.doctor.lastNameAr} ${r.doctor.firstNameAr}` : '');
+    const docNameAr = r.doctorName || (r.doctor ? `${r.doctor.lastName} ${r.doctor.firstName}` : '');
     if (committedDoctor && !docNameAr.includes(committedDoctor)) return false;
 
-    if (committedAnalysis && !(r.analysisTypeAr?.includes(committedAnalysis))) return false;
+    if (committedAnalysis && !(r.analysisType?.includes(committedAnalysis))) return false;
     if (committedStatus && (r.status || 'pending') !== committedStatus) return false;
 
     const docSpecialtyAr = r.doctor?.specialty?.nameAr || '';
@@ -430,8 +430,8 @@ export default function MedicalPage() {
                 value={filterDoctor}
                 onChange={setFilterDoctor}
                 options={allDoctors.map((d: any) => ({
-                  value: `${d.lastNameAr} ${d.firstNameAr}`,
-                  label: `${d.lastNameAr} ${d.firstNameAr}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''}`,
+                  value: `${d.lastName} ${d.firstName}`,
+                  label: `${d.lastName} ${d.firstName}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''}`,
                 }))}
                 placeholder={t('doctors.specialtyPlaceholder')}
               />
@@ -504,10 +504,10 @@ export default function MedicalPage() {
                   return (
                   <tr key={referral.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setShowDetailModal(referral)}>
                     <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{referral.reference || '—'}</td>
-                    <td className="py-3 px-4 font-medium">{referral.beneficiaryNameAr}</td>
+                    <td className="py-3 px-4 font-medium">{referral.beneficiaryName}</td>
                     <td className="py-3 px-4 hidden lg:table-cell font-mono text-xs" dir="ltr">{benef?.nationalCardNumber || '—'}</td>
-                    <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorNameAr || (referral.doctor ? `${referral.doctor.lastNameAr} ${referral.doctor.firstNameAr}` : '—')}</td>
-                    <td className="py-3 px-4 hidden md:table-cell">{referral.analysisTypeAr || '—'}</td>
+                    <td className="py-3 px-4 hidden sm:table-cell">{referral.doctorName || (referral.doctor ? `${referral.doctor.lastName} ${referral.doctor.firstName}` : '—')}</td>
+                    <td className="py-3 px-4 hidden md:table-cell">{referral.analysisType || '—'}</td>
                     <td className="py-3 px-4 font-medium">{referral.amount > 0 ? <span className="text-primary">{formatCurrency(referral.amount)}</span> : <Badge variant="warning">{t('medical.pendingAmountLabel')}</Badge>}</td>
                     <td className="py-3 px-4 hidden sm:table-cell">
                       {(referral.status || 'pending') === 'pending' ? <Badge variant="warning">{t('dashboard.pending')}</Badge> :
@@ -536,7 +536,7 @@ export default function MedicalPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SearchableSelect labelAr={t('medical.beneficiary')} value={beneficiaryId} onChange={setBeneficiaryId}
-              options={beneficiaries.map((b: Beneficiary) => ({ value: b.id, label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})` }))} />
+              options={beneficiaries.map((b: Beneficiary) => ({ value: b.id, label: `${b.lastName} ${b.firstName} (${b.reference || ''})` }))} />
             <SearchableSelect labelAr={t('dashboard.fund')} value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
               options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))} />
           </div>
@@ -553,13 +553,13 @@ export default function MedicalPage() {
               <label className="block text-sm font-medium text-foreground mb-2">{t('medical.childrenReferralDesc')}</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-border rounded-lg bg-muted">
                 {selectedBeneficiary.children.map((child: any, idx: number) => {
-                  const childKey = child.id || `${child.firstNameAr} ${child.lastNameAr}_${idx}`;
+                  const childKey = child.id || `${child.firstName} ${child.lastName}_${idx}`;
                   return (
                     <label key={idx} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white cursor-pointer transition-colors">
                       <input type="checkbox" checked={selectedChildren.includes(childKey)}
                         onChange={() => setSelectedChildren(prev => prev.includes(childKey) ? prev.filter(id => id !== childKey) : [...prev, childKey])}
                         className="w-4 h-4 text-primary rounded" />
-                      <span className="text-sm text-foreground">{child.lastNameAr} {child.firstNameAr}</span>
+                      <span className="text-sm text-foreground">{child.lastName} {child.firstName}</span>
                       {child.dateOfBirth && <span className="text-xs text-muted-foreground/70">({calculateAge(child.dateOfBirth).displayAr})</span>}
                       <span className="text-xs text-muted-foreground/70">{child.gender === 'female' ? t('common.female') : t('common.male')}</span>
                     </label>
@@ -579,7 +579,7 @@ export default function MedicalPage() {
             <SearchableSelect labelAr={t('medical.doctor')} value={doctorId} onChange={setDoctorId}
               options={allDoctors.map((d: any) => ({
                 value: d.id,
-                label: `${d.lastNameAr} ${d.firstNameAr}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''} | ${d.phone}${d.address ? ' - ' + d.address : ''}`,
+                label: `${d.lastName} ${d.firstName}${d.specialty ? ' (' + d.specialty.nameAr + ')' : ''} | ${d.phone}${d.address ? ' - ' + d.address : ''}`,
               }))}
               placeholder={t('doctors.specialtyPlaceholder')} />
           </div>
@@ -622,14 +622,14 @@ export default function MedicalPage() {
           <div className="space-y-4">
             <div className="bg-muted rounded-lg p-4 space-y-3">
               <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.referenceLabel')}</span><span className="font-semibold text-primary" dir="ltr">{showDetailModal.reference || '—'}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.beneficiaryLabel')}</span><span className="font-medium text-foreground">{showDetailModal.beneficiaryNameAr} <span dir="ltr" className="text-xs text-muted-foreground/70">({showDetailModal.beneficiaryReference || ''})</span></span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.beneficiaryLabel')}</span><span className="font-medium text-foreground">{showDetailModal.beneficiaryName} <span dir="ltr" className="text-xs text-muted-foreground/70">({showDetailModal.beneficiaryReference || ''})</span></span></div>
               {(() => {
                 const b = beneficiaries.find((b: Beneficiary) => b.id === showDetailModal.beneficiaryId);
                 return b?.nationalCardNumber ? <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.nationalCardLabel')}</span><span className="font-medium text-foreground" dir="ltr">{b.nationalCardNumber}</span></div> : null;
               })()}
-              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.doctor')}</span><span className="font-medium text-foreground">{showDetailModal.doctorNameAr || (showDetailModal.doctor ? `${showDetailModal.doctor.lastNameAr} ${showDetailModal.doctor.firstNameAr}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-muted-foreground/70 mr-2">({showDetailModal.doctor.specialty.nameAr})</span> : ''}</span></div>
-              {showDetailModal.analysisTypeAr && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.analysisType')}</span><span className="font-medium text-foreground">{showDetailModal.analysisTypeAr}</span></div>}
-              {showDetailModal.hospitalAr && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.hospital')}</span><span className="font-medium text-foreground">{showDetailModal.hospitalAr}</span></div>}
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.doctor')}</span><span className="font-medium text-foreground">{showDetailModal.doctorName || (showDetailModal.doctor ? `${showDetailModal.doctor.lastName} ${showDetailModal.doctor.firstName}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-muted-foreground/70 mr-2">({showDetailModal.doctor.specialty.nameAr})</span> : ''}</span></div>
+              {showDetailModal.analysisType && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.analysisType')}</span><span className="font-medium text-foreground">{showDetailModal.analysisType}</span></div>}
+              {showDetailModal.hospital && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.hospital')}</span><span className="font-medium text-foreground">{showDetailModal.hospital}</span></div>}
               <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('common.date')}</span><span className="font-medium text-foreground">{formatDate(showDetailModal.date)}</span></div>
               {showDetailModal.children && Array.isArray(showDetailModal.children) && showDetailModal.children.length > 0 && (
                 <div className="flex justify-between items-center">

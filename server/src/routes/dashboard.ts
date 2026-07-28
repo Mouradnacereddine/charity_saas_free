@@ -32,7 +32,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     // Financial data — only for admins
     let totalBankBalance = 0;
     let totalCashBalance = 0;
-    let caissesBalances: { id: string; name: string; nameAr: string; balance: any }[] = [];
+    let caissesBalances: { id: string; name: string; balance: any }[] = [];
     let recentTransactions: any[] = [];
 
     if (isAdmin) {
@@ -50,7 +50,6 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       caissesBalances = caisses.map((c) => ({
         id: c.id,
         name: c.name,
-        nameAr: c.nameAr,
         balance: c.balance,
       }));
 

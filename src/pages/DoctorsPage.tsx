@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { formatDate } from '../utils/helpers';
+import { dirForInput } from '../utils/localized';
+import { useAuth } from '../hooks/useAuth';
 import { Plus, Search, Filter, Eye, Edit, Trash2, Stethoscope, Settings, Phone, Mail, MapPin, Activity, Calendar } from 'lucide-react';
 import type { Doctor, DoctorSpecialty, DoctorStats } from '../types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +14,7 @@ const MONTH_KEYS = ['analytics.january','analytics.february','analytics.march','
 
 export default function DoctorsPage() {
   const { t } = useTranslation();
+  const { association } = useAuth();
   const queryClient = useQueryClient();
   const { data: doctors = [], isLoading } = useDoctors();
   const { data: specialties = [] } = useDoctorSpecialties();
@@ -35,8 +38,6 @@ export default function DoctorsPage() {
   const [committedAddress, setCommittedAddress] = useState('');
 
   // Form states
-  const [firstNameAr, setFirstNameAr] = useState('');
-  const [lastNameAr, setLastNameAr] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -46,11 +47,9 @@ export default function DoctorsPage() {
   const [notes, setNotes] = useState('');
 
   // Settings form states
-  const [newSpecAr, setNewSpecAr] = useState('');
-  const [newSpecFr, setNewSpecFr] = useState('');
+  const [newSpec, setNewSpec] = useState('');
   const [editSpecId, setEditSpecId] = useState<string | null>(null);
-  const [editSpecAr, setEditSpecAr] = useState('');
-  const [editSpecFr, setEditSpecFr] = useState('');
+  const [editSpec, setEditSpec] = useState('');
 
   // Stats detail
   const [statsDoctorId, setStatsDoctorId] = useState<string | null>(null);
@@ -59,8 +58,6 @@ export default function DoctorsPage() {
   const monthNames = MONTH_KEYS.map(k => t(k));
 
   const resetForm = () => {
-    setFirstNameAr('');
-    setLastNameAr('');
     setFirstName('');
     setLastName('');
     setPhone('');
@@ -78,8 +75,6 @@ export default function DoctorsPage() {
 
   const openEditForm = (doc: Doctor) => {
     setEditingId(doc.id);
-    setFirstNameAr(doc.firstNameAr);
-    setLastNameAr(doc.lastNameAr);
     setFirstName(doc.firstName);
     setLastName(doc.lastName);
     setPhone(doc.phone);
@@ -91,12 +86,10 @@ export default function DoctorsPage() {
   };
 
   const handleSave = async () => {
-    if (!lastNameAr.trim()) return;
+    if (!lastName.trim()) return;
     const data = {
-      firstNameAr: firstNameAr.trim(),
-      lastNameAr: lastNameAr.trim(),
-      firstName: firstName.trim() || lastNameAr.trim(),
-      lastName: lastName.trim() || '',
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       phone: phone.trim(),
       email: email.trim() || undefined,
       specialtyId: specialtyId || undefined,
@@ -138,22 +131,22 @@ export default function DoctorsPage() {
 
   const filteredDoctors = doctors.filter((d: Doctor) => {
     const term = committedSearchTerm.toLowerCase();
-    if (term && !`${d.firstNameAr} ${d.lastNameAr} ${d.phone} ${d.email || ''} ${d.address || ''}`.includes(term)) return false;
+    if (term && !`${d.firstName} ${d.lastName} ${d.phone} ${d.email || ''} ${d.address || ''}`.includes(term)) return false;
     if (committedSpecialtyId && d.specialtyId !== committedSpecialtyId) return false;
-    if (committedAddress && !(d.addressAr || d.address || '').includes(committedAddress)) return false;
+    if (committedAddress && !(d.address || d.address || '').includes(committedAddress)) return false;
     return true;
   });
 
   // ---- Specialties CRUD ----
   const handleAddSpecialty = async () => {
-    if (!newSpecAr.trim()) return;
-    await createSpecialty.mutateAsync({ name: newSpecFr.trim() || newSpecAr.trim(), nameAr: newSpecAr.trim() });
-    setNewSpecAr(''); setNewSpecFr('');
+    if (!newSpec.trim()) return;
+    await createSpecialty.mutateAsync({ name: newSpec.trim() });
+    setNewSpec('');
   };
   const handleUpdateSpecialty = async () => {
-    if (!editSpecId || !editSpecAr.trim()) return;
-    await updateSpecialty.mutateAsync({ id: editSpecId, data: { name: editSpecFr.trim(), nameAr: editSpecAr.trim() } });
-    setEditSpecId(null); setEditSpecAr(''); setEditSpecFr('');
+    if (!editSpecId || !editSpec.trim()) return;
+    await updateSpecialty.mutateAsync({ id: editSpecId, data: { name: editSpec.trim() } });
+    setEditSpecId(null); setEditSpec('');
   };
   const handleDeleteSpecialty = async (id: string) => {
     if (!window.confirm(t('doctors.confirmDeleteSpecialty'))) return;
@@ -175,9 +168,9 @@ export default function DoctorsPage() {
         <Card titleAr={t('doctors.advancedSearch')}>
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <SearchableSelect labelAr={t('doctors.specialty')} value={filterSpecialtyId} onChange={setFilterSpecialtyId}
-                options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.nameAr }))} />
-              <Input labelAr={t('doctors.address')} value={filterAddress} onChange={(e) => setFilterAddress(e.target.value)} placeholder={t('doctors.searchAddressPlaceholder')} />
+              <SearchableSelect label={t('doctors.specialty')} value={filterSpecialtyId} onChange={setFilterSpecialtyId}
+                options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.name }))} />
+              <Input label={t('doctors.address')} value={filterAddress} onChange={(e) => setFilterAddress(e.target.value)} placeholder={t('doctors.searchAddressPlaceholder')} />
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={applyFilters}><Search className="w-4 h-4" /> {t('common.search')}</Button>
@@ -210,9 +203,9 @@ export default function DoctorsPage() {
                   <tr key={doc.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => { setShowDetailModal(doc); setStatsDoctorId(doc.id); }}>
                     <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{doc.reference}</td>
-                    <td className="py-3 px-4 font-medium">{doc.lastNameAr} {doc.firstNameAr}</td>
-                    <td className="py-3 px-4 hidden sm:table-cell text-muted-foreground">{doc.specialty?.nameAr || '—'}</td>
-                    <td className="py-3 px-4 hidden lg:table-cell text-muted-foreground max-w-[200px] truncate" title={doc.addressAr || doc.address || '—'}>{doc.addressAr || doc.address || '—'}</td>
+                    <td className="py-3 px-4 font-medium">{doc.lastName} {doc.firstName}</td>
+                    <td className="py-3 px-4 hidden sm:table-cell text-muted-foreground">{doc.specialty?.name || '—'}</td>
+                    <td className="py-3 px-4 hidden lg:table-cell text-muted-foreground max-w-[200px] truncate" title={doc.address || doc.address || '—'}>{doc.address || doc.address || '—'}</td>
                     <td className="py-3 px-4 hidden md:table-cell text-muted-foreground" dir="ltr">{doc.phone}</td>
                     <td className="py-3 px-4 text-center hidden lg:table-cell">
                       <Badge variant="info">{doc._count?.referrals ?? 0}</Badge>
@@ -249,37 +242,33 @@ export default function DoctorsPage() {
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('doctors.sectionName')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr={t('doctors.lastNameAr')} value={lastNameAr} onChange={(e) => setLastNameAr(e.target.value)} placeholder={t('doctors.lastNameArPlaceholder')} required />
-              <Input labelAr={t('doctors.firstNameAr')} value={firstNameAr} onChange={(e) => setFirstNameAr(e.target.value)} placeholder={t('doctors.firstNameArPlaceholder')} required />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-              <Input labelAr={t('doctors.lastNameLatin')} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder={t('doctors.lastNameArPlaceholder')} dir="ltr" />
-              <Input labelAr={t('doctors.firstNameLatin')} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder={t('doctors.firstNameArPlaceholder')} dir="ltr" />
+              <Input label={t('doctors.lastName')} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder={t('doctors.lastNamePlaceholder')} required dir={dirForInput(association?.locale)} />
+              <Input label={t('doctors.firstName')} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder={t('doctors.firstNamePlaceholder')} required dir={dirForInput(association?.locale)} />
             </div>
           </div>
 
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('doctors.contactInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr={t('doctors.phone')} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05XX XX XX XX" dir="ltr" required />
-              <Input labelAr={t('doctors.email')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="doctor@example.com" dir="ltr" />
+              <Input label={t('doctors.phone')} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05XX XX XX XX" dir="ltr" required />
+              <Input label={t('doctors.email')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="doctor@example.com" dir="ltr" />
             </div>
           </div>
 
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{t('doctors.additionalInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SearchableSelect labelAr={t('doctors.specialty')} value={specialtyId} onChange={setSpecialtyId}
-                options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.nameAr }))}
+              <SearchableSelect label={t('doctors.specialty')} value={specialtyId} onChange={setSpecialtyId}
+                options={specialties.map((s: DoctorSpecialty) => ({ value: s.id, label: s.name }))}
                 placeholder={t('doctors.specialtyPlaceholder')} />
-              <Input labelAr={t('doctors.address')} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t('doctors.addressPlaceholder')} />
+              <Input label={t('doctors.address')} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t('doctors.addressPlaceholder')} />
             </div>
-            <TextArea labelAr={t('common.notes')} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <TextArea label={t('common.notes')} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
           <div className="flex gap-3 justify-end border-t border-border pt-4">
             <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>{t('common.cancel')}</Button>
-            <Button onClick={handleSave} disabled={!lastNameAr.trim() || !phone.trim() || createDoctor.isPending || updateDoctor.isPending}>
+            <Button onClick={handleSave} disabled={!lastName.trim() || !phone.trim() || createDoctor.isPending || updateDoctor.isPending}>
               {editingId ? t('common.update') : t('common.add')}
             </Button>
           </div>
@@ -288,15 +277,15 @@ export default function DoctorsPage() {
 
       {/* Detail Modal */}
       <Modal isOpen={!!showDetailModal} onClose={() => { setShowDetailModal(null); setStatsDoctorId(null); }}
-        title={showDetailModal ? `${showDetailModal.lastNameAr} ${showDetailModal.firstNameAr}` : ''} size="lg">
+        title={showDetailModal ? `${showDetailModal.lastName} ${showDetailModal.firstName}` : ''} size="lg">
         {showDetailModal && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('doctors.refCode')}</span><span className="font-medium" dir="ltr">{showDetailModal.reference}</span></div>
-              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('doctors.fullName')}</span><span className="font-medium">{showDetailModal.lastNameAr} {showDetailModal.firstNameAr}</span></div>
+              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('doctors.fullName')}</span><span className="font-medium">{showDetailModal.lastName} {showDetailModal.firstName}</span></div>
               <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground"><Phone className="inline w-3 h-3 ml-1" />{t('doctors.phone')}</span><span className="font-medium" dir="ltr">{showDetailModal.phone}</span></div>
               <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground"><Mail className="inline w-3 h-3 ml-1" />{t('doctors.email')}</span><span className="font-medium" dir="ltr">{showDetailModal.email || '—'}</span></div>
-              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('doctors.specialty')}</span><span className="font-medium">{showDetailModal.specialty?.nameAr || '—'}</span></div>
+              <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('doctors.specialty')}</span><span className="font-medium">{showDetailModal.specialty?.name || '—'}</span></div>
               <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground"><MapPin className="inline w-3 h-3 ml-1" />{t('doctors.address')}</span><span className="font-medium">{showDetailModal.address || '—'}</span></div>
             </div>
             {showDetailModal.notes && <div className="bg-muted rounded-lg p-3 text-sm"><span className="text-muted-foreground">{t('common.notes')}</span><p className="mt-1">{showDetailModal.notes}</p></div>}
@@ -385,7 +374,7 @@ export default function DoctorsPage() {
                           {doctorStats.referralBeneficiaries?.map((r: any) => (
                             <tr key={r.id} className="border-b border-border">
                               <td className="py-1 px-2 text-muted-foreground">{formatDate(r.date)}</td>
-                              <td className="py-1 px-2 text-foreground">{r.beneficiary?.nameAr || '—'}</td>
+                              <td className="py-1 px-2 text-foreground">{r.beneficiary?.name || '—'}</td>
                               <td className="py-1 px-2 text-muted-foreground font-mono" dir="ltr">{r.beneficiary?.reference || '—'}</td>
                               <td className="py-1 px-2 text-center">
                                 <Badge variant={r.status === 'completed' ? 'success' : r.status === 'pending' ? 'warning' : 'danger'}>
@@ -426,30 +415,27 @@ export default function DoctorsPage() {
         </h3>
         <p className="text-sm text-muted-foreground mb-4">{t('doctors.manageSpecialties')}</p>
         <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
-          <Input labelAr={t('doctors.nameAr')} value={newSpecAr} onChange={(e) => setNewSpecAr(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} />
-          <Input labelAr={t('doctors.nameLatin')} value={newSpecFr} onChange={(e) => setNewSpecFr(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} dir="ltr" />
-          <Button onClick={handleAddSpecialty} disabled={!newSpecAr.trim()}>{t('common.add')}</Button>
+          <Input label={t('doctors.sectionName')} value={newSpec} onChange={(e) => setNewSpec(e.target.value)} placeholder={t('doctors.nameArPlaceholder')} dir={dirForInput(association?.locale)} />
+          <Button onClick={handleAddSpecialty} disabled={!newSpec.trim()}>{t('common.add')}</Button>
         </div>
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('doctors.arabicLabel')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('doctors.latinLabel')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('doctors.sectionName')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">{t('doctors.doctorCount')}</th>
                   <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {specialties.length === 0 ? (
-                  <tr><td colSpan={4} className="py-8 text-center text-muted-foreground/70">{t('doctors.noSpecialties')}</td></tr>
+                  <tr><td colSpan={3} className="py-8 text-center text-muted-foreground/70">{t('doctors.noSpecialties')}</td></tr>
                 ) : specialties.map((s: DoctorSpecialty) => (
                   <tr key={s.id} className="border-b border-border hover:bg-muted">
                     {editSpecId === s.id ? (
                       <>
-                        <td className="py-2 px-4"><input value={editSpecAr} onChange={(e) => setEditSpecAr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" /></td>
-                        <td className="py-2 px-4"><input value={editSpecFr} onChange={(e) => setEditSpecFr(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir="ltr" /></td>
+                        <td className="py-2 px-4"><input value={editSpec} onChange={(e) => setEditSpec(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(association?.locale)} /></td>
                         <td className="py-2 px-4 hidden sm:table-cell" />
                         <td className="py-2 px-4 text-center flex gap-1 justify-center">
                           <Button size="sm" onClick={handleUpdateSpecialty}>{t('common.save')}</Button>
@@ -458,11 +444,10 @@ export default function DoctorsPage() {
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 font-medium text-foreground">{s.nameAr}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{s.name}</td>
+                        <td className="py-3 px-4 font-medium text-foreground">{s.name}</td>
                         <td className="py-3 px-4 hidden sm:table-cell"><Badge>{s._count?.doctors ?? 0}</Badge></td>
                         <td className="py-3 px-4 text-center">
-                          <button onClick={() => { setEditSpecId(s.id); setEditSpecAr(s.nameAr); setEditSpecFr(s.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditSpecId(s.id); setEditSpec(s.name); }} className="p-1.5 text-muted-foreground/70 hover:text-primary rounded"><Edit className="w-4 h-4" /></button>
                           <button onClick={() => handleDeleteSpecialty(s.id)} className="p-1.5 text-muted-foreground/70 hover:text-danger-500 rounded"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </>

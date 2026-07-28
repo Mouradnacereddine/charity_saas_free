@@ -9,7 +9,6 @@ interface UserData {
   id: string;
   email: string;
   name: string;
-  nameAr: string;
   role: 'admin' | 'treasurer' | 'user';
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
@@ -19,7 +18,6 @@ interface InviteData {
   id: string;
   role: 'admin' | 'treasurer' | 'user';
   name: string | null;
-  nameAr: string | null;
   token: string;
   inviteLink: string | null;
   expiresAt: string;
@@ -59,7 +57,6 @@ function getInviteStatus(inv: InviteData): 'pending' | 'expired' | 'used' {
 function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [nameAr, setNameAr] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<'user' | 'treasurer'>('user');
   const [result, setResult] = useState<{ inviteLink: string } | null>(null);
@@ -91,7 +88,6 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
   };
 
   const reset = () => {
-    setNameAr('');
     setName('');
     setRole('user');
     setResult(null);
@@ -106,14 +102,13 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
   const handleSubmit = () => {
     setError('');
-    if (!nameAr.trim()) {
+    if (!name.trim()) {
       setError(t('users.nameRequired'));
       return;
     }
     inviteMutation.mutate({
       role,
-      name: name.trim() || nameAr.trim(),
-      nameAr: nameAr.trim(),
+      name: name.trim(),
     });
   };
 
@@ -124,9 +119,8 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
           <>
             <p className="text-sm text-muted-foreground">{t('users.inviteUserDescription')}</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input labelAr={t('users.nameAr')} value={nameAr} onChange={(e) => setNameAr(e.target.value)} placeholder={t('users.nameArPlaceholder')} required />
-              <Input labelAr={t('users.nameLatin')} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('users.nameArPlaceholder')} dir="ltr" />
+            <div className="grid grid-cols-1 gap-4">
+              <Input label={t('users.name')} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('users.namePlaceholder')} required />
             </div>
 
             <div>
@@ -155,7 +149,7 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
             <div className="flex gap-2 justify-end pt-2">
               <Button variant="secondary" onClick={handleClose}>{t('common.cancel')}</Button>
-              <Button onClick={handleSubmit} disabled={!nameAr.trim() || inviteMutation.isPending}>
+              <Button onClick={handleSubmit} disabled={!name.trim() || inviteMutation.isPending}>
                 {inviteMutation.isPending ? t('users.creating') : t('users.createInviteLink')}
               </Button>
             </div>
@@ -364,10 +358,10 @@ export default function UsersPage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs">
-                              {user.nameAr?.charAt(0) || '?'}
+                              {user.name?.charAt(0) || '?'}
                             </div>
                             <div>
-                              <p className="font-medium text-foreground">{user.nameAr}</p>
+                              <p className="font-medium text-foreground">{user.name}</p>
                               <p className="text-xs text-muted-foreground">{user.name}</p>
                             </div>
                           </div>
@@ -456,7 +450,7 @@ export default function UsersPage() {
                       const status = getInviteStatus(inv);
                       return (
                         <tr key={inv.id} className="border-b border-border hover:bg-muted transition-colors">
-                          <td className="py-3 px-4 font-medium text-foreground">{inv.nameAr || t('users.pendingInvite')}</td>
+                          <td className="py-3 px-4 font-medium text-foreground">{inv.name || t('users.pendingInvite')}</td>
                           <td className="py-3 px-4">
                             <Badge variant={ROLE_BADGE_VARIANT[inv.role] || 'default'}>
                               {ROLE_LABELS[inv.role] || inv.role}

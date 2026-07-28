@@ -135,9 +135,10 @@ function AppContent() {
       activePage={activePage}
       onNavigate={navigate}
       breadcrumbs={breadcrumbs}
-      associationNameAr={association?.nameAr}
+      associationName={association?.name}
+      associationLocale={association?.locale}
       associationLogoUrl={association?.logoUrl}
-      userNameAr={user?.nameAr}
+      userName={user?.name}
       userRole={user?.role}
       isAdmin={isAdmin}
       onLogout={logout}

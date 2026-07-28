@@ -109,8 +109,6 @@ function applyFilter(beneficiaries: Beneficiary[], filter: BeneficiaryFilter): B
       (b) =>
         b.firstName.toLowerCase().includes(term) ||
         b.lastName.toLowerCase().includes(term) ||
-        b.firstNameAr.includes(term) ||
-        b.lastNameAr.includes(term) ||
         b.nationalCardNumber.includes(term) ||
         b.phone.includes(term)
     );
