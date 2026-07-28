@@ -15,7 +15,7 @@ import type { Transaction, BankAccount, Caisse, Beneficiary, Donor, DonationAllo
 // ---- Bank Account Modal ----
 
 interface BankAccountFormData {
-  bankNameAr: string
+  bankName: string
   accountNumber: string
   rib: string
   iban: string
@@ -23,7 +23,7 @@ interface BankAccountFormData {
 }
 
 const emptyBankForm: BankAccountFormData = {
-  bankNameAr: '',
+  bankName: '',
   accountNumber: '',
   rib: '',
   iban: '',
@@ -43,7 +43,7 @@ function BankAccountModal({
   initialData: BankAccountFormData
   onSave: (data: BankAccountFormData) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [form, setForm] = useState<BankAccountFormData>(initialData)
 
   useEffect(() => {
@@ -64,11 +64,11 @@ function BankAccountModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          labelAr={t('finance.bankName')}
+          label={t('finance.bankName')}
           value={form.bankName}
-          onChange={(e) => setForm({ ...form, bankNameAr: e.target.value })}
+          onChange={(e) => setForm({ ...form, bankName: e.target.value })}
           required
-          dir="rtl"
+          dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
         />
         <Input
           labelAr={t('finance.accountNumber')}
