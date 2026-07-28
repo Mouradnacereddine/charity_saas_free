@@ -127,14 +127,14 @@ export function Layout({
 
       {/* Sidebar */}
       <aside
-        className={`bg-card text-card-foreground border-border ${
+        className={`bg-sidebar text-sidebar-foreground border-sidebar-border ${
           isRtl ? 'border-l' : 'border-r'
         } flex flex-col transition-all duration-300 ${
           sidebarOpen ? 'fixed inset-y-0 z-50 w-64' : 'hidden'
         } lg:flex lg:relative lg:z-auto ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
         dir={isRtl ? 'rtl' : 'ltr'}
       >
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
           {(!sidebarCollapsed || sidebarOpen) && (
             <div className="flex items-center gap-2 min-w-0">
               {associationLogoUrl ? (
@@ -158,7 +158,7 @@ export function Layout({
               setSidebarOpen(false);
               toggleSidebar();
             }}
-            className="p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+            className="p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
             aria-label={sidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : sidebarCollapsed ? (isRtl ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />) : (isRtl ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />)}
@@ -178,8 +178,8 @@ export function Layout({
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
+                    ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent'
                 }`}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -191,16 +191,16 @@ export function Layout({
         </nav>
 
         {/* User menu (footer of sidebar) */}
-        <div className="border-t border-border p-3">
+        <div className="border-t border-sidebar-border p-3">
           <DropdownMenu>
-            <DropdownMenuTrigger className="w-full flex items-center gap-2 p-2 rounded-lg text-foreground hover:bg-muted transition-colors">
-              <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-secondary-foreground font-semibold shrink-0">
+            <DropdownMenuTrigger className="w-full flex items-center gap-2 p-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
+              <div className="w-8 h-8 bg-sidebar-accent rounded-full flex items-center justify-center text-sidebar-accent-foreground font-semibold shrink-0">
                 {(userName || '?').charAt(0).toUpperCase()}
               </div>
               {(!sidebarCollapsed || sidebarOpen) && (
                 <div className="flex-1 text-start min-w-0">
                   <p className="text-sm font-medium truncate">{userName || t('userMenu.defaultName')}</p>
-                  <p className="text-xs text-muted-foreground truncate">{roleLabel}</p>
+                  <p className="text-xs text-sidebar-foreground/60 truncate">{roleLabel}</p>
                 </div>
               )}
             </DropdownMenuTrigger>
