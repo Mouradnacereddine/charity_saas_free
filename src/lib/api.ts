@@ -22,6 +22,7 @@ api.interceptors.request.use((config) => {
 // endpoints always return objects. This guards against `a.filter is not a function`
 // and `o.find is not a function` runtime crashes when the backend returns
 // something unexpected (error wrapper, pagination envelope, etc.).
+const LIST_ENDPOINT_RE = /^[^?]*\/(articles|article-categories|storage-locations|article-statuses|school-grades|caisses|beneficiaries|donors|doctors|finance\/transactions|finance\/bank-accounts|finance\/allocations|medical\/referrals|medical\/analysis-types|medical\/hospitals|loans|notifications|auth\/users|auth\/invites|beneficiary-attributs|loans|users|invites)/(\?|$)/;
 api.interceptors.response.use(
   (response) => {
     const url: string = response.config?.url || '';
@@ -29,11 +30,7 @@ api.interceptors.response.use(
     // Endpoints that conventionally return a list: if the body is not already
     // an array, attempt to extract a known envelope (e.g. { data: [...] }).
     // Endpoints that conventionally return a single object: leave as-is.
-    // We detect "list" endpoints by URL prefix to avoid over-correcting.
-    const isListEndpoint =
-      /\/(articles|article-categories|storage-locations|article-statuses|school-grades|caisses|beneficiaries|donors|doctors|finance\/transactions|finance\/bank-accounts|finance\/allocations|medical\/referrals|medical\/analysis-types|medical\/hospitals|loans|notifications|auth\/users|auth\/invites|beneficiary-attributs)/(\?|$|[\d/])/.test(url) ||
-      /\/auth\/users\b/.test(url);
-    if (isListEndpoint) {
+    if (LIST_ENDPOINT_RE.test(url)) {
       response.data = asArray(data);
     }
     return response;
