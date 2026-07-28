@@ -254,6 +254,14 @@ export default function FinancePage() {
     currentPage * pageSize
   )
 
+  // ---- Pending Reset Effect ----
+  // La case "Transaction en attente" est reservee aux dons donateur -> beneficiaire
+  useEffect(() => {
+    if (!(txType === 'credit' && txDonorId && txBeneficiaryId)) {
+      setTxPending(false)
+    }
+  }, [txType, txDonorId, txBeneficiaryId])
+
   // ---- Handlers ----
   const handleOpenAddBank = () => {
     setEditingBankId(null)
@@ -844,15 +852,19 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
             </div>
           )}
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={txPending}
-                onChange={(e) => setTxPending(e.target.checked)}
-                className="w-4 h-4 text-warning-foreground focus:ring-amber-500 rounded"
-              />
-              <span className="text-sm text-muted-foreground">{t('finance.pendingTx')}</span>
-            </label>
+            {txType === 'credit' && txDonorId && txBeneficiaryId ? (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={txPending}
+                  onChange={(e) => setTxPending(e.target.checked)}
+                  className="w-4 h-4 text-warning-foreground focus:ring-amber-500 rounded"
+                />
+                <span className="text-sm text-muted-foreground">{t('finance.pendingTx')}</span>
+              </label>
+            ) : (
+              <div />
+            )}
             <Button type="submit" disabled={txSubmitting || amountNum <= 0 || !txCaisseId}>
               {txSubmitting ? t('common.saving') : t('finance.saveTransaction')}
             </Button>
