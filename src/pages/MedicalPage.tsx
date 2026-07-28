@@ -377,7 +377,7 @@ export default function MedicalPage() {
         <Card titleAr={t('beneficiaries.advancedSearch')}>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <SearchableSelect
-                labelAr={t('dashboard.fund')}
+                label={t('dashboard.fund')}
                 value={filterCaisseId}
                 onChange={setFilterCaisseId}
                 options={caisses.map((c: Caisse) => ({
@@ -416,7 +416,7 @@ export default function MedicalPage() {
                 />
               </div>
               <SearchableSelect
-                labelAr={t('medical.doctorName')}
+                label={t('medical.doctorName')}
                 value={filterDoctor}
                 onChange={setFilterDoctor}
                 options={allDoctors.map((d: any) => ({
@@ -426,7 +426,7 @@ export default function MedicalPage() {
                 placeholder={t('doctors.specialtyPlaceholder')}
               />
               <SearchableSelect
-                labelAr={t('medical.analysisType')}
+                label={t('medical.analysisType')}
                 value={filterAnalysis}
                 onChange={setFilterAnalysis}
                 options={analysisTypes.map((a: any) => ({
@@ -436,7 +436,7 @@ export default function MedicalPage() {
                 placeholder={t('doctors.specialtyPlaceholder')}
               />
               <SearchableSelect
-                labelAr={t('doctors.specialty')}
+                label={t('doctors.specialty')}
                 value={filterSpecialty}
                 onChange={setFilterSpecialty}
                 options={specialties.map((s: any) => ({
@@ -446,7 +446,7 @@ export default function MedicalPage() {
                 placeholder={t('doctors.specialtyPlaceholder')}
               />
               <SearchableSelect
-                labelAr={t('common.status')}
+                label={t('common.status')}
                 options={[
                   { value: '', label: t('common.all') },
                   { value: 'pending', label: t('dashboard.pending') },
@@ -525,9 +525,9 @@ export default function MedicalPage() {
       <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); resetForm(); }} title={t('medical.addReferral')} size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableSelect labelAr={t('medical.beneficiary')} value={beneficiaryId} onChange={setBeneficiaryId}
+            <SearchableSelect label={t('medical.beneficiary')} value={beneficiaryId} onChange={setBeneficiaryId}
               options={beneficiaries.map((b: Beneficiary) => ({ value: b.id, label: `${b.lastName} ${b.firstName} (${b.reference || ''})` }))} />
-            <SearchableSelect labelAr={t('dashboard.fund')} value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
+            <SearchableSelect label={t('dashboard.fund')} value={caisseId} onChange={(val) => { setCaisseId(val); setSubCategoryId(''); }}
               options={caisses.map((c: Caisse) => ({ value: c.id, label: c.name }))} />
           </div>
           {selectedBeneficiary && (
@@ -562,11 +562,11 @@ export default function MedicalPage() {
             const sc = caisses.find((c: Caisse) => c.id === caisseId)
             const subs = sc?.subCategories || []
             if (subs.length === 0) return null
-            return <SearchableSelect labelAr={t('medical.subCategory')} value={subCategoryId} onChange={setSubCategoryId}
+            return <SearchableSelect label={t('medical.subCategory')} value={subCategoryId} onChange={setSubCategoryId}
               options={subs.map((s: SubCategory) => ({ value: s.id, label: s.name }))} />
           })()}
           <div className="md:col-span-2">
-            <SearchableSelect labelAr={t('medical.doctor')} value={doctorId} onChange={setDoctorId}
+            <SearchableSelect label={t('medical.doctor')} value={doctorId} onChange={setDoctorId}
               options={allDoctors.map((d: any) => ({
                 value: d.id,
                 label: `${d.lastName} ${d.firstName}${d.specialty ? ' (' + d.specialty.name + ')' : ''} | ${d.phone}${d.address ? ' - ' + d.address : ''}`,
@@ -581,10 +581,10 @@ export default function MedicalPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Input labelAr={t('medical.amountOptional')} type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
+              <Input label={t('medical.amountOptional')} type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
               {amount > 0 && <p className="text-xs text-muted-foreground mt-1">{numberToWords(amount)}</p>}
             </div>
-            <Input labelAr={t('common.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <Input label={t('common.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           <div className="flex items-center gap-3 p-3 bg-warning/10 border border-warning/30 rounded-lg">
             <input
@@ -598,7 +598,7 @@ export default function MedicalPage() {
               {t('medical.noPaymentCheck')}
             </label>
           </div>
-          <TextArea labelAr={t('common.notes')} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <TextArea label={t('common.notes')} value={notes} onChange={(e) => setNotes(e.target.value)} />
           <div className="flex gap-3 justify-end pt-4">
             <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>{t('common.cancel')}</Button>
             <Button onClick={handleAddReferral} disabled={!beneficiaryId || !caisseId || !doctorId}>{t('medical.addReferral')}</Button>
@@ -688,7 +688,7 @@ export default function MedicalPage() {
             <Modal isOpen={confirmingId === showDetailModal.id} onClose={() => setConfirmingId(null)} title={t('medical.confirmReferral')} size="sm">
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">{t('medical.confirmAmount')}</p>
-                <Input labelAr={t('common.amount')} type="number" value={confirmAmount} onChange={(e) => setConfirmAmount(e.target.value)} min={0} />
+                <Input label={t('common.amount')} type="number" value={confirmAmount} onChange={(e) => setConfirmAmount(e.target.value)} min={0} />
                 {Number(confirmAmount) > 0 && <p className="text-xs text-muted-foreground">{numberToWords(Number(confirmAmount))}</p>}
                 <div className="flex gap-2 justify-end">
                   <Button variant="secondary" onClick={() => setConfirmingId(null)}>{t('common.cancel')}</Button>

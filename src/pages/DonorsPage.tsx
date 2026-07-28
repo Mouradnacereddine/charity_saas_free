@@ -232,15 +232,11 @@ export default function DonorsPage() {
             <Input label={t('donors.firstName')} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder={t('donors.firstNamePlaceholder')} required dir={dirForInput(association?.locale)} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input labelAr={t('donors.lastNameLatin')} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder={t('donors.lastNamePlaceholder')} dir="ltr" />
-            <Input labelAr={t('donors.firstNameLatin')} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder={t('donors.firstNamePlaceholder')} dir="ltr" />
+            <Input label={t('donors.phone')} type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="05XX XX XX XX" dir="ltr" required />
+            <Input label={t('donors.email')} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@example.com" dir="ltr" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input labelAr={t('donors.phone')} type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="05XX XX XX XX" dir="ltr" required />
-            <Input labelAr={t('donors.email')} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@example.com" dir="ltr" />
-          </div>
-          <Input labelAr={t('common.address')} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('donors.addressPlaceholder')} />
-          <TextArea labelAr={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          <Input label={t('donors.address')} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('donors.addressPlaceholder')} />
+          <TextArea label={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           <div className="flex gap-3 justify-end border-t border-border pt-4">
             <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>{t('common.cancel')}</Button>
             <Button onClick={handleSave} disabled={!form.lastName.trim() || !form.phone.trim() || createDonor.isPending || updateDonor.isPending}>
