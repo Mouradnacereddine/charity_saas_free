@@ -1439,7 +1439,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
               {t('beneficiaries.sectionSettings')}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">{t('beneficiaries.settingsDesc')}</p>
-            <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-4">
               <Input label={t('beneficiaries.name')} value={newAttrName} onChange={(e) => setNewAttrName(e.target.value)} placeholder={t('beneficiaries.attributPlaceholder')} dir={dirForInput(i18n.language)} />
               <Button onClick={handleAddAttribut} disabled={!newAttrName.trim()}>{t('common.add')}</Button>
             </div>
@@ -1487,7 +1487,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><spa
               {t('beneficiaries.schoolGradesSection')}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">{t('beneficiaries.addSchoolGrade')}</p>
-            <div className="flex flex-col sm:flex-row gap-3 items-end mb-4">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-4">
               <Input label={t('beneficiaries.sectionName')} value={newGradeName} onChange={(e) => setNewGradeName(e.target.value)} placeholder={t('beneficiaries.gradePlaceholder')} dir={dirForInput(i18n.language)} />
               <Button onClick={handleAddGrade} disabled={!newGradeName.trim()}>{t('common.add')}</Button>
             </div>
