@@ -71,7 +71,7 @@ function BankAccountModal({
           dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
         />
         <Input
-          labelAr={t('finance.accountNumber')}
+          label={t('finance.accountNumber')}
           value={form.accountNumber}
           onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
           required
@@ -79,7 +79,7 @@ function BankAccountModal({
           className="text-left"
         />
         <Input
-          labelAr={t('finance.rib')}
+          label={t('finance.rib')}
           value={form.rib}
           onChange={(e) => setForm({ ...form, rib: e.target.value })}
           required
@@ -87,7 +87,7 @@ function BankAccountModal({
           className="text-left"
         />
         <Input
-          labelAr={t('finance.iban')}
+          label={t('finance.iban')}
           value={form.iban}
           onChange={(e) => setForm({ ...form, iban: e.target.value })}
           required
@@ -95,7 +95,7 @@ function BankAccountModal({
           className="text-left"
         />
         <Input
-          labelAr={t('finance.swift')}
+          label={t('finance.swift')}
           value={form.swift}
           onChange={(e) => setForm({ ...form, swift: e.target.value })}
           required
@@ -206,8 +206,8 @@ export default function FinancePage() {
 
   const filteredAllocations = allocations.filter((a: DonationAllocation) => {
     const c = committedAllocSearch
-    if (c.donor && !(a.donor.lastNameAr.includes(c.donor) || a.donor.firstNameAr.includes(c.donor))) return false
-    if (c.beneficiary && !(a.beneficiary.lastNameAr.includes(c.beneficiary) || a.beneficiary.firstNameAr.includes(c.beneficiary))) return false
+    if (c.donor && !(a.donor.lastName.includes(c.donor) || a.donor.firstName.includes(c.donor))) return false
+    if (c.beneficiary && !(a.beneficiary.lastName.includes(c.beneficiary) || a.beneficiary.firstName.includes(c.beneficiary))) return false
     if (c.caisseId && a.creditTransaction?.caisseId !== c.caisseId) return false
     if (c.minAmount && a.amount < Number(c.minAmount)) return false
     if (c.maxAmount && a.amount > Number(c.maxAmount)) return false
@@ -266,7 +266,7 @@ export default function FinancePage() {
     if (!account) return
     setEditingBankId(id)
     setBankFormData({
-      bankNameAr: account.bankName,
+      bankName: account.bankName,
       accountNumber: account.accountNumber,
       rib: account.rib,
       iban: account.iban,
@@ -280,7 +280,7 @@ export default function FinancePage() {
       await updateBankAccount.mutateAsync({
         id: editingBankId,
         data: {
-          bankNameAr: data.bankName,
+          bankName: data.bankName,
           bankName: data.bankName,
           accountNumber: data.accountNumber,
           rib: data.rib,
@@ -291,7 +291,7 @@ export default function FinancePage() {
     } else {
       await createBankAccount.mutateAsync({
         bankName: data.bankName,
-        bankNameAr: data.bankName,
+        bankName: data.bankName,
         accountNumber: data.accountNumber,
         rib: data.rib,
         iban: data.iban,
@@ -304,8 +304,8 @@ export default function FinancePage() {
 
   const handlePrintReceipt = (tx: any) => {
     const caisse = caisses.find((c: Caisse) => c.id === tx.caisseId)
-    const subCat = caisse?.subCategories.find((s: { id: string; name: string; nameAr: string }) => s.id === tx.subCategoryId)
-    const subCatRow = subCat ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${subCat.nameAr}</span></div>` : ''
+    const subCat = caisse?.subCategories.find((s: { id: string; name: string; name: string }) => s.id === tx.subCategoryId)
+    const subCatRow = subCat ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${subCat.name}</span></div>` : ''
 
     // Generate proper amount in words at print time (handles old data with numeric-only strings)
     const amount = typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)
@@ -320,13 +320,13 @@ export default function FinancePage() {
         t('receipt.title'), 'Reçu de Don',
         `<div class="col"><div class="row"><span class="lbl">${t('receipt.receiptNo')}</span><span class="val">${tx.receiptNumber || '—'}</span></div>
 <div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
-<div class="row"><span class="lbl">${t('dashboard.donor')}</span><span class="val">${donor ? `${donor.lastNameAr} ${donor.firstNameAr}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div></div>
-<div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
+<div class="row"><span class="lbl">${t('dashboard.donor')}</span><span class="val">${donor ? `${donor.lastName} ${donor.firstName}` : '—'} <i>${donor ? `${donor.firstName} ${donor.lastName}` : ''}</i></span></div></div>
+<div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.name || '—'}</span></div>${subCatRow}
 ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description')}</span><span class="val">${tx.description}</span></div>` : ''}</div>`,
         'color:#16a34a',
         formatCurrency(amount), wordsAr, wordsFr,
         t('donors.donorSignature'), t('receipt.stampSignature'),
-        association?.nameAr,
+        association?.name,
         isLtr ? 'ltr' : 'rtl',
         i18n.language
       )
@@ -336,14 +336,14 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
         t('receipt.expenseTitle'), 'Bon de Sortie',
         `<div class="col"><div class="row"><span class="lbl">${t('receipt.receiptNo')}</span><span class="val">${tx.receiptNumber || '—'}</span></div>
 <div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
-<div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${benef ? `${benef.lastNameAr} ${benef.firstNameAr}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div></div>
-<div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.nameAr || '—'}</span></div>${subCatRow}
+<div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${benef ? `${benef.lastName} ${benef.firstName}` : '—'} <i>${benef ? `${benef.firstName} ${benef.lastName}` : ''}</i></span></div></div>
+<div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.name || '—'}</span></div>${subCatRow}
 <div class="row"><span class="lbl">${t('dashboard.source')}</span><span class="val">${tx.fundSource === 'banque' ? t('dashboard.bank') : t('dashboard.cash')}</span></div>
 ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description')}</span><span class="val">${tx.description}</span></div>` : ''}</div>`,
         'background:#fff0f0;color:#dc2626',
         `- ${formatCurrency(amount)}`, wordsAr, wordsFr,
         t('receipt.beneficiarySignature'), t('receipt.stampSignature'),
-        association?.nameAr,
+        association?.name,
         isLtr ? 'ltr' : 'rtl',
         i18n.language
       )
@@ -360,7 +360,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
         type: txType,
         amount: amountNum,
         amountInWords: numberToFrenchWords(amountNum),
-        amountInWordsAr: numberToArabicWords(amountNum),
+        amountInWords: numberToArabicWords(amountNum),
         fundSource: txFundSource,
         caisseId: txCaisseId,
         subCategoryId: txSubCategoryId || undefined,
@@ -369,7 +369,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
         beneficiaryId: txBeneficiaryId || undefined,
         allocationId: txType === 'debit' ? txAllocationId || undefined : undefined,
         description: txDescription,
-        descriptionAr: txDescription,
+        description: txDescription,
         date: new Date().toISOString().split('T')[0],
         status: txPending ? 'pending' : 'completed',
       })
@@ -563,25 +563,25 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
         {allocFilterOpen && (
           <div className="mb-4 p-4 bg-muted rounded-lg border border-border space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <Input labelAr={t('dashboard.donor')} value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} placeholder={t('common.search')} />
-              <Input labelAr={t('dashboard.beneficiary')} value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} placeholder={t('common.search')} />
-              <SearchableSelect labelAr={t('dashboard.fund')} value={allocCaisseId} onChange={setAllocCaisseId} options={caisses.map((c: any) => ({ value: c.id, label: c.nameAr }))} />
-              <Input labelAr={t('medical.amountFrom')} value={allocMinAmount} onChange={(e) => setAllocMinAmount(e.target.value)} type="number" placeholder="0" />
-              <Input labelAr={t('medical.amountTo')} value={allocMaxAmount} onChange={(e) => setAllocMaxAmount(e.target.value)} type="number" placeholder="0" />
-              <SearchableSelect labelAr={t('finance.remainingAmount')} value={allocRemaining} onChange={setAllocRemaining} options={[
+              <Input label={t('dashboard.donor')} value={allocDonorName} onChange={(e) => setAllocDonorName(e.target.value)} placeholder={t('common.search')} />
+              <Input label={t('dashboard.beneficiary')} value={allocBeneficiaryName} onChange={(e) => setAllocBeneficiaryName(e.target.value)} placeholder={t('common.search')} />
+              <SearchableSelect label={t('dashboard.fund')} value={allocCaisseId} onChange={setAllocCaisseId} options={caisses.map((c: any) => ({ value: c.id, label: c.name }))} />
+              <Input label={t('medical.amountFrom')} value={allocMinAmount} onChange={(e) => setAllocMinAmount(e.target.value)} type="number" placeholder="0" />
+              <Input label={t('medical.amountTo')} value={allocMaxAmount} onChange={(e) => setAllocMaxAmount(e.target.value)} type="number" placeholder="0" />
+              <SearchableSelect label={t('finance.remainingAmount')} value={allocRemaining} onChange={setAllocRemaining} options={[
                 { value: '', label: t('common.all') },
                 { value: 'zero', label: t('dashboard.fullyDisbursed') },
                 { value: 'positive', label: t('finance.remaining') },
                 { value: 'distributed', label: t('finance.disbursed') },
                 { value: 'not_distributed', label: t('finance.notDisbursed') },
               ]} />
-              <SearchableSelect labelAr={t('finance.originalDonationStatus')} value={allocStatus} onChange={setAllocStatus} options={[
+              <SearchableSelect label={t('finance.originalDonationStatus')} value={allocStatus} onChange={setAllocStatus} options={[
                 { value: '', label: t('common.all') },
                 { value: 'pending', label: t('dashboard.pending') },
                 { value: 'completed', label: t('dashboard.completed') },
                 { value: 'cancelled', label: t('dashboard.cancelled') },
               ]} />
-              <Input labelAr={t('common.notes')} value={allocNotes} onChange={(e) => setAllocNotes(e.target.value)} placeholder={t('common.search')} />
+              <Input label={t('common.notes')} value={allocNotes} onChange={(e) => setAllocNotes(e.target.value)} placeholder={t('common.search')} />
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={applyAllocFilters}><Search className="w-4 h-4" /> {t('common.search')}</Button>
@@ -612,9 +612,9 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   return (
                   <tr key={a.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setSelectedAlloc(a)}>
                     <td className="py-3 px-4 text-muted-foreground font-mono text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
-                    <td className="py-3 px-4 font-medium">{a.donor.lastNameAr} {a.donor.firstNameAr}</td>
-                    <td className="py-3 px-4 font-medium text-foreground">{a.beneficiary.lastNameAr} {a.beneficiary.firstNameAr}</td>
-                    <td className="py-3 px-4 hidden md:table-cell text-foreground">{allocCaisse?.nameAr || '—'}</td>
+                    <td className="py-3 px-4 font-medium">{a.donor.lastName} {a.donor.firstName}</td>
+                    <td className="py-3 px-4 font-medium text-foreground">{a.beneficiary.lastName} {a.beneficiary.firstName}</td>
+                    <td className="py-3 px-4 hidden md:table-cell text-foreground">{allocCaisse?.name || '—'}</td>
                     <td className="py-3 px-4"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
                     <td className="py-3 px-4">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
                     <td className="py-3 px-4">{(() => {
@@ -640,9 +640,9 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
         {selectedAlloc && (
           <div className="space-y-4">
             <div className="bg-muted rounded-lg p-4 space-y-3">
-              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.donor')}</span><span className="font-medium text-foreground">{selectedAlloc.donor.lastNameAr} {selectedAlloc.donor.firstNameAr}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</span><span className="font-medium text-foreground">{selectedAlloc.beneficiary.lastNameAr} {selectedAlloc.beneficiary.firstNameAr}</span></div>
-              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{(() => { const ac = caisses.find((c: any) => c.id === selectedAlloc.creditTransaction?.caisseId); return ac?.nameAr || '—'; })()}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.donor')}</span><span className="font-medium text-foreground">{selectedAlloc.donor.lastName} {selectedAlloc.donor.firstName}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</span><span className="font-medium text-foreground">{selectedAlloc.beneficiary.lastName} {selectedAlloc.beneficiary.firstName}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{(() => { const ac = caisses.find((c: any) => c.id === selectedAlloc.creditTransaction?.caisseId); return ac?.name || '—'; })()}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('common.amount')}</span><span className="font-bold text-success">{formatCurrency(selectedAlloc.amount)}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('finance.remainingAmount')}</span><span className="font-medium">{selectedAlloc.remainingAmount > 0 ? formatCurrency(selectedAlloc.remainingAmount) : t('dashboard.fullyDisbursed')}</span></div>
               {selectedAlloc.notes && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('common.notes')}</span><span className="font-medium text-foreground">{selectedAlloc.notes}</span></div>}
@@ -729,7 +729,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {txFundSource === 'banque' && (
               <SearchableSelect
-                labelAr={t('finance.editBankAccount')}
+                label={t('finance.editBankAccount')}
                 value={txBankAccountId}
                 onChange={setTxBankAccountId}
                 options={bankAccounts.map((a: BankAccount) => ({
@@ -740,7 +740,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
               />
             )}
             <SearchableSelect
-              labelAr={t('dashboard.fund')}
+              label={t('dashboard.fund')}
               value={txCaisseId}
               onChange={(val) => {
                 setTxCaisseId(val)
@@ -748,18 +748,18 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
               }}
               options={caisses.map((c: Caisse) => ({
                 value: c.id,
-                label: c.nameAr,
+                label: c.name,
               }))}
               required
             />
             {subCategories.length > 0 && (
               <SearchableSelect
-                labelAr={t('medical.subCategory')}
+                label={t('medical.subCategory')}
                 value={txSubCategoryId}
                 onChange={setTxSubCategoryId}
-                options={subCategories.map((sc: { id: string; name: string; nameAr: string }) => ({
+                options={subCategories.map((sc: { id: string; name: string; name: string }) => ({
                   value: sc.id,
-                  label: sc.nameAr,
+                  label: sc.name,
                 }))}
               />
             )}
@@ -775,7 +775,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   onChange={setTxDonorId}
                   options={donors.map((d: Donor) => ({
                     value: d.id,
-                    label: `${d.lastNameAr} ${d.firstNameAr} (${d.reference || ''})`,
+                    label: `${d.lastName} ${d.firstName} (${d.reference || ''})`,
                   }))}
                 />
                 <SearchableSelect
@@ -784,7 +784,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   onChange={setTxBeneficiaryId}
                   options={beneficiaries.map((b: Beneficiary) => ({
                     value: b.id,
-                    label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})`,
+                    label: `${b.lastName} ${b.firstName} (${b.reference || ''})`,
                   }))}
                 />
               </>
@@ -796,7 +796,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 onChange={setTxBeneficiaryId}
                 options={beneficiaries.map((b: Beneficiary) => ({
                   value: b.id,
-                  label: `${b.lastNameAr} ${b.firstNameAr} (${b.reference || ''})`,
+                  label: `${b.lastName} ${b.firstName} (${b.reference || ''})`,
                 }))}
               />
             )}
@@ -806,7 +806,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Input
-                labelAr={t('common.amount')}
+                label={t('common.amount')}
                 type="number"
                 min="0"
                 step="0.01"
@@ -829,7 +829,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
 
           {/* Description */}
           <TextArea
-            labelAr={t('common.description')}
+            label={t('common.description')}
             value={txDescription}
             onChange={(e) => setTxDescription(e.target.value)}
             dir="rtl"
@@ -895,7 +895,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Select
-                labelAr={t('common.status')}
+                label={t('common.status')}
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
                 options={[
@@ -904,7 +904,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 ]}
               />
               <Select
-                labelAr={t('dashboard.source')}
+                label={t('dashboard.source')}
                 value={filterFundSource}
                 onChange={(e) => setFilterFundSource(e.target.value)}
                 options={[
@@ -913,13 +913,13 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 ]}
               />
               <Select
-                labelAr={t('dashboard.fund')}
+                label={t('dashboard.fund')}
                 value={filterCaisseId}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterCaisseId(e.target.value)}
-                options={caisses.map((c: Caisse) => ({ value: c.id, label: c.nameAr }))}
+                options={caisses.map((c: Caisse) => ({ value: c.id, label: c.name }))}
               />
               <Select
-                labelAr={t('common.status')}
+                label={t('common.status')}
                 value={filterTxStatus}
                 onChange={(e) => setFilterTxStatus(e.target.value)}
                 options={[
@@ -929,7 +929,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 ]}
               />
               <Input
-                labelAr={t('analytics.fromDate')}
+                label={t('analytics.fromDate')}
                 type="date"
                 value={filterDateFrom}
                 onChange={(e) => setFilterDateFrom(e.target.value)}
@@ -937,7 +937,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 className="text-left"
               />
               <Input
-                labelAr={t('analytics.toDate')}
+                label={t('analytics.toDate')}
                 type="date"
                 value={filterDateTo}
                 onChange={(e) => setFilterDateTo(e.target.value)}
@@ -945,7 +945,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 className="text-left"
               />
               <Input
-                labelAr={t('medical.amountFrom')}
+                label={t('medical.amountFrom')}
                 type="number"
                 min="0"
                 value={filterMinAmount}
@@ -954,7 +954,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 className="text-left"
               />
               <Input
-                labelAr={t('medical.amountTo')}
+                label={t('medical.amountTo')}
                 type="number"
                 min="0"
                 value={filterMaxAmount}
@@ -1075,12 +1075,12 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                           })()}
                         </td>
                         <td className="py-3 px-3 text-foreground">
-                          {txDonor ? `${txDonor.lastNameAr} ${txDonor.firstNameAr}` : '—'}
+                          {txDonor ? `${txDonor.lastName} ${txDonor.firstName}` : '—'}
                         </td>
                         <td className="py-3 px-3 text-foreground">
-                          {txBenef ? `${txBenef.lastNameAr} ${txBenef.firstNameAr}` : '—'}
+                          {txBenef ? `${txBenef.lastName} ${txBenef.firstName}` : '—'}
                         </td>
-                        <td className="py-3 px-3 text-muted-foreground hidden sm:table-cell">{caisse?.nameAr ?? '-'}</td>
+                        <td className="py-3 px-3 text-muted-foreground hidden sm:table-cell">{caisse?.name ?? '-'}</td>
                         <td className="py-3 px-3 text-muted-foreground max-w-[160px] truncate hidden lg:table-cell">
                           {localizedDesc(tx.description, tx.description) || '-'}
                         </td>
@@ -1239,11 +1239,11 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   }
                   return <Badge variant="success">{t('dashboard.completed')}</Badge>;
                 })()}</p></div>
-                <div><p className="text-xs text-muted-foreground">{t('dashboard.fund')}</p><p className="font-medium text-foreground">{caisse?.nameAr || '—'}</p></div>
+                <div><p className="text-xs text-muted-foreground">{t('dashboard.fund')}</p><p className="font-medium text-foreground">{caisse?.name || '—'}</p></div>
                 <div><p className="text-xs text-muted-foreground">{t('dashboard.source')}</p><p className="font-medium">{detailTx.fundSource === 'banque' ? t('dashboard.bank') : t('finance.cashFund')}</p></div>
                 {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-muted-foreground">{t('finance.bankAccounts')}</p><p className="font-medium">{bankAcc.bankName}</p></div>}
-                {donor && <div><p className="text-xs text-muted-foreground">{t('dashboard.donor')}</p><p className="font-medium">{donor.lastNameAr} {donor.firstNameAr}</p></div>}
-                {benef && <div><p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</p><p className="font-medium">{benef.lastNameAr} {benef.firstNameAr}</p></div>}
+                {donor && <div><p className="text-xs text-muted-foreground">{t('dashboard.donor')}</p><p className="font-medium">{donor.lastName} {donor.firstName}</p></div>}
+                {benef && <div><p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</p><p className="font-medium">{benef.lastName} {benef.firstName}</p></div>}
                 {(detailTx.description || detailTx.description) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{localizedDesc(detailTx.description, detailTx.description)}</p></div>}
                 <div><p className="text-xs text-muted-foreground">{t('dashboard.receiptNo')}</p><p className="font-mono text-foreground" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
                 <div><p className="text-xs text-muted-foreground">{t('common.date')}</p><p className="font-medium text-foreground">{formatDate(detailTx.date)}</p></div>
