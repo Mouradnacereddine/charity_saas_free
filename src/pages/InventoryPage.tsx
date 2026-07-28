@@ -617,6 +617,7 @@ function SettingsTab() {
 // ============================================================
 
 function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; statusLabels: Record<string, string> }) { const { t, i18n } = useTranslation();
+  const { association } = useAuth();
   const { data: articles = [], isLoading: loading } = useArticles()
   const { data: categories = [] } = useArticleCategories()
   const { data: locations = [] } = useStorageLocations()
