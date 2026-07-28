@@ -10,6 +10,7 @@ import { useMedicalReferrals, useCreateMedicalReferral, useDeleteMedicalReferral
 import { useBeneficiaries } from '../hooks/useBeneficiaries';
 import { api, doctorsApi, financeApi } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
+import { dirForInput } from '../utils/localized';
 
 export default function MedicalPage() {
   const { t, i18n } = useTranslation();
