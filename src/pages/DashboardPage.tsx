@@ -23,13 +23,12 @@ export default function DashboardPage() {
     definitif: t('inventory.final'),
   }
 
-  // Overdue loans: active loans with at least one item past its expected return date
-  const overdueLoans = allLoans.filter((loan: Loan) => {
-    if (loan.status === 'retourne' || loan.status === 'definitif') return false
-    return loan.items.some((item) => {
-      if (!item.expectedReturnDate) return false
-      return new Date(item.expectedReturnDate) < new Date()
-    })
+  // Overdue items: all items from active loans past their expected return date
+  const overdueItems = allLoans.flatMap((loan: Loan) => {
+    if (loan.status === 'retourne' || loan.status === 'definitif') return []
+    return loan.items
+      .filter((item) => item.expectedReturnDate && new Date(item.expectedReturnDate) < new Date())
+      .map((item) => ({ ...item, loanRef: loan.reference, loanId: loan.id, beneficiaryName: loan.beneficiaryName }))
   })
 
   if (isLoading) {
@@ -208,49 +207,41 @@ export default function DashboardPage() {
       </Modal>
 
       {/* Overdue Loans */}
-      {overdueLoans.length > 0 && (
+      {overdueItems.length > 0 && (
         <Card titleAr={t('dashboard.overdueLoans')}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.refCode')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.article')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.beneficiary')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('dashboard.daysOverdue')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
-                {overdueLoans.slice(0, 10).map((loan: Loan) => {
-                  const daysOverdue = loan.expectedReturnDate
-                    ? Math.floor((new Date().getTime() - new Date(loan.expectedReturnDate).getTime()) / (1000 * 60 * 60 * 24))
-                    : 0
-                  const totalQty = loan.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+                {overdueItems.slice(0, 15).map((item: any, idx: number) => {
+                  const daysOverdue = Math.floor((new Date().getTime() - new Date(item.expectedReturnDate!).getTime()) / (1000 * 60 * 60 * 24))
                   return (
-                    <tr key={loan.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setDetailLoan(loan)}>
-                      <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{loan.reference || '—'}</td>
-                      <td className="py-3 px-4 font-medium text-foreground">{loan.beneficiaryName}</td>
-                      <td className="py-3 px-4 text-destructive font-medium">{formatDate(loan.expectedReturnDate!)}</td>
-                      <td className="py-3 px-4 text-muted-foreground">{totalQty}</td>
+                    <tr key={`${item.loanId}-${item.articleId}`} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setDetailLoan(allLoans.find((l: Loan) => l.id === item.loanId)!)}>
+                      <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{item.loanRef || '—'}</td>
+                      <td className="py-3 px-4 font-medium text-foreground">{item.articleName}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{item.beneficiaryName}</td>
+                      <td className="py-3 px-4 text-destructive font-medium">{formatDate(item.expectedReturnDate)}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{item.quantity}</td>
                       <td className="py-3 px-4">
                         <Badge variant="danger">{daysOverdue} {t('common.days')}</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <button onClick={(e) => { e.stopPropagation(); setDetailLoan(loan); }}
-                          className="p-1 text-muted-foreground/70 hover:text-primary transition-colors" title={t("common.details")}>
-                          <Eye className="w-4 h-4" />
-                        </button>
                       </td>
                     </tr>
                   )
                 })}
               </tbody>
             </table>
-            {overdueLoans.length > 10 && (
+            {overdueItems.length > 15 && (
               <p className="text-xs text-muted-foreground text-center pt-2">
-                {t('dashboard.andMore', { count: overdueLoans.length - 10 })}
+                {t('dashboard.andMore', { count: overdueItems.length - 15 })}
               </p>
             )}
           </div>

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatDate, generateLoanReference } from '../utils/helpers'
 import { dirForInput } from '../utils/localized'
-import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin, Printer } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin, Printer, ChevronDown, ChevronUp } from 'lucide-react'
 import { printReceipt } from '../lib/receipt'
 import { useAuth } from '../hooks/useAuth'
 import type { Article, Loan, LoanItem, ArticleCategory, ArticleStatus, StorageLocation, Beneficiary } from '../types'
@@ -979,6 +979,15 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
+  const [expandedLoans, setExpandedLoans] = useState<Set<string>>(new Set())
+
+  const toggleExpandLoan = (id: string) => {
+    setExpandedLoans(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
 
   // Expose actions to parent header buttons
   useEffect(() => {
@@ -1303,6 +1312,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
+                  <th className="w-8"></th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.refCode')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.beneficiary')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden lg:table-cell">{t('medical.beneficiaryRef')}</th>
@@ -1318,8 +1328,17 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                 </tr>
               </thead>
               <tbody>
-                {filteredLoans.map((loan: Loan) => (
-                  <tr key={loan.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => openLoanDetail(loan)}>
+                {filteredLoans.map((loan: Loan) => {
+                  const isExpanded = expandedLoans.has(loan.id)
+                  return (
+                  <React.Fragment key={loan.id}>
+                  <tr className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => openLoanDetail(loan)}>
+                    <td className="py-3 px-2 text-muted-foreground">
+                      <button onClick={(e) => { e.stopPropagation(); toggleExpandLoan(loan.id); }}
+                        className="p-1 hover:text-primary transition-colors">
+                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                    </td>
                     <td className="py-3 px-4 font-semibold text-primary" dir="ltr">
                       {loan.reference || '—'}
                     </td>
@@ -1346,7 +1365,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                       {(() => {
                         const dates = loan.items.map(i => i.expectedReturnDate).filter(Boolean);
                         if (dates.length === 0) return '—';
-                        const earliest = dates.sort()[0];
+                        const earliest = [...dates].sort()[0];
                         return formatDate(earliest!);
                       })()}
                     </td>
@@ -1356,7 +1375,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                         const dates = loan.items.map(i => i.expectedReturnDate).filter(Boolean);
                         if (dates.length === 0) return <span className="text-muted-foreground/50">—</span>;
                         const now = new Date();
-                        const earliest = dates.sort()[0]!;
+                        const earliest = [...dates].sort()[0]!;
                         if (new Date(earliest) < now) return <Badge variant="danger">{t('inventory.overdue')}</Badge>;
                         return <Badge variant="info">{t('inventory.onTime')}</Badge>;
                       })()}
@@ -1374,7 +1393,55 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                       </button>
                     </td>
                   </tr>
-                ))}
+                  {isExpanded && (
+                    <tr key={`${loan.id}-items`} className="bg-muted/50">
+                      <td colSpan={13} className="p-0">
+                        <div className="px-6 py-3">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="border-b border-border">
+                                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.article')}</th>
+                                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
+                                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.returnedItems')}</th>
+                                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('finance.remainingAmount')}</th>
+                                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
+                                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.status')}</th>
+                                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.situation')}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {loan.items.map((item) => {
+                                const itemOverdue = item.expectedReturnDate && new Date(item.expectedReturnDate) < new Date()
+                                return (
+                                <tr key={item.articleId} className="border-b border-border/50">
+                                  <td className="py-2 px-3 font-medium text-foreground">{item.articleName}</td>
+                                  <td className="py-2 px-3 text-muted-foreground">{item.quantity}</td>
+                                  <td className="py-2 px-3">
+                                    <span className={item.returnedQuantity >= item.quantity ? 'text-success font-medium' : item.returnedQuantity > 0 ? 'text-warning font-medium' : 'text-muted-foreground'}>
+                                      {item.returnedQuantity}
+                                    </span>
+                                  </td>
+                                  <td className="py-2 px-3 text-muted-foreground">{item.quantity - item.returnedQuantity}</td>
+                                  <td className="py-2 px-3 text-muted-foreground">{item.expectedReturnDate ? formatDate(item.expectedReturnDate) : '—'}</td>
+                                  <td className="py-2 px-3">
+                                    {item.returnedQuantity >= item.quantity ? <Badge variant="success">{t('inventory.settled')}</Badge> : <Badge variant="info">{t('inventory.ongoing')}</Badge>}
+                                  </td>
+                                  <td className="py-2 px-3">
+                                    {loan.status === 'retourne' || loan.status === 'definitif' ? <Badge variant="success">{t('inventory.settled')}</Badge> :
+                                     !item.expectedReturnDate ? <span className="text-muted-foreground/50">—</span> :
+                                     itemOverdue ? <Badge variant="danger">{t('inventory.overdue')}</Badge> :
+                                     <Badge variant="info">{t('inventory.onTime')}</Badge>}
+                                  </td>
+                                </tr>
+                              )})}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
+                )})}
               </tbody>
             </table>
           </div>
