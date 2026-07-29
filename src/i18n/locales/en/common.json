@@ -62,7 +62,8 @@
     "amount": "Amount",
     "done": "Done",
     "error": "Error",
-    "article": "Article"
+    "article": "Article",
+    "days": "day(s)"
   },
   "settings": {
     "title": "Association Settings",

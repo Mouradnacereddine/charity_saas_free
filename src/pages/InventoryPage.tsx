@@ -1203,7 +1203,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
   const handlePrintLoan = (loan: Loan) => {
     const itemsHtml = loan.items.map((item: any) =>
-      `<div class="row"><span class="lbl"> {t('common.article')}</span><span class="val">${item.articleName} <i>×${item.quantity}</i></span></div>`
+      `<div class="row"><span class="lbl">${t('common.article')}</span><span class="val">${item.articleName} <i>×${item.quantity}</i></span></div>`
     ).join('')
 
     const statusLabel = loanStatusLabels[loan.status] || loan.status
@@ -1212,13 +1212,13 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       t('inventory.loanDetails'),
       t('inventory.loanDetails'),
       `<div class="col">
-        <div class="row"><span class="lbl"> {t('inventory.refCode')}</span><span class="val">${loan.reference || '—'}</span></div>
-        <div class="row"><span class="lbl"> {t('medical.beneficiary')}</span><span class="val">${loan.beneficiaryName}</span></div>
-        <div class="row"><span class="lbl"> {t('medical.beneficiaryRef')}</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
-        <div class="row"><span class="lbl"> {t('common.status')}</span><span class="val">${statusLabel}</span></div>
-        <div class="row"><span class="lbl"> {t('inventory.loanDate')}</span><span class="val">${formatDate(loan.loanDate)}</span></div>
-        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl"> {t('inventory.expectedReturnDate')}</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
-        ${loan.actualReturnDate ? `<div class="row"><span class="lbl"> {t('inventory.actualReturnDate')}</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
+        <div class="row"><span class="lbl">${t('inventory.refCode')}</span><span class="val">${loan.reference || '—'}</span></div>
+        <div class="row"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${loan.beneficiaryName}</span></div>
+        <div class="row"><span class="lbl">${t('medical.beneficiaryRef')}</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
+        <div class="row"><span class="lbl">${t('common.status')}</span><span class="val">${statusLabel}</span></div>
+        <div class="row"><span class="lbl">${t('inventory.loanDate')}</span><span class="val">${formatDate(loan.loanDate)}</span></div>
+        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl">${t('inventory.expectedReturnDate')}</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
+        ${loan.actualReturnDate ? `<div class="row"><span class="lbl">${t('inventory.actualReturnDate')}</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
        </div>
        <div class="col">
         ${itemsHtml}
