@@ -218,25 +218,22 @@ export default function DashboardPage() {
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.beneficiary')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('dashboard.daysOverdue')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.situation')}</th>
                 </tr>
               </thead>
               <tbody>
-                {overdueItems.slice(0, 15).map((item: any, idx: number) => {
-                  const daysOverdue = Math.floor((new Date().getTime() - new Date(item.expectedReturnDate!).getTime()) / (1000 * 60 * 60 * 24))
-                  return (
-                    <tr key={`${item.loanId}-${item.articleId}`} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setDetailLoan(allLoans.find((l: Loan) => l.id === item.loanId)!)}>
-                      <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{item.loanRef || '—'}</td>
-                      <td className="py-3 px-4 font-medium text-foreground">{item.articleName}</td>
-                      <td className="py-3 px-4 text-muted-foreground">{item.beneficiaryName}</td>
-                      <td className="py-3 px-4 text-destructive font-medium">{formatDate(item.expectedReturnDate)}</td>
-                      <td className="py-3 px-4 text-muted-foreground">{item.quantity}</td>
-                      <td className="py-3 px-4">
-                        <Badge variant="danger">{daysOverdue} {t('common.days')}</Badge>
-                      </td>
-                    </tr>
-                  )
-                })}
+                {overdueItems.slice(0, 15).map((item: any) => (
+                  <tr key={`${item.loanId}-${item.articleId}`} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setDetailLoan(allLoans.find((l: Loan) => l.id === item.loanId)!)}>
+                    <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{item.loanRef || '—'}</td>
+                    <td className="py-3 px-4 font-medium text-foreground">{item.articleName}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{item.beneficiaryName}</td>
+                    <td className="py-3 px-4 text-destructive font-medium">{formatDate(item.expectedReturnDate)}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{item.quantity}</td>
+                    <td className="py-3 px-4">
+                      <Badge variant="danger">{t('inventory.overdue')}</Badge>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
             {overdueItems.length > 15 && (

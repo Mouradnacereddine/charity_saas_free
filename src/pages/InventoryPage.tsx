@@ -1322,7 +1322,6 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.status')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.loanDate')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.situation')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.actualReturnDate')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
@@ -1369,17 +1368,6 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                         return formatDate(earliest!);
                       })()}
                     </td>
-                    <td className="py-3 px-4">
-                      {(() => {
-                        if (loan.status === 'retourne' || loan.status === 'definitif') return <Badge variant="success">{t('inventory.settled')}</Badge>;
-                        const dates = loan.items.map(i => i.expectedReturnDate).filter(Boolean);
-                        if (dates.length === 0) return <span className="text-muted-foreground/50">—</span>;
-                        const now = new Date();
-                        const earliest = [...dates].sort()[0]!;
-                        if (new Date(earliest) < now) return <Badge variant="danger">{t('inventory.overdue')}</Badge>;
-                        return <Badge variant="info">{t('inventory.onTime')}</Badge>;
-                      })()}
-                    </td>
                     <td className="py-3 px-4 text-muted-foreground">
                       {loan.actualReturnDate ? formatDate(loan.actualReturnDate) : '—'}
                     </td>
@@ -1395,7 +1383,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   </tr>
                   {isExpanded && (
                     <tr key={`${loan.id}-items`} className="bg-muted/50">
-                      <td colSpan={13} className="p-0">
+                      <td colSpan={12} className="p-0">
                         <div className="px-6 py-3">
                           <table className="w-full text-xs">
                             <thead>
