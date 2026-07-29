@@ -259,7 +259,7 @@ export function printAnalyticsReport(params: {
   <div class="section">
     ${params.bodyRows}
   </div>
-  <div class="footer">${l.generatedBy} — ${new Date().toLocaleDateString(ln === 'ar' ? 'ar-DZ' : ln === 'fr' ? 'fr-DZ' : 'en-DZ')}</div>
+  <div class="footer">${l.generatedBy} — ${new Date().toLocaleDateString(ln === 'en' ? 'en-US' : 'fr-FR')}</div>
   <button class="no-print" onclick="window.print()">${l.printReport}</button>
 </body></html>`
   w.document.write(html)

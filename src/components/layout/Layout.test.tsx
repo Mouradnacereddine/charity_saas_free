@@ -64,7 +64,7 @@ describe('Layout', () => {
     // The layout renders the date using ar-DZ locale with weekday, year, month, day
     // We verify the date container exists with Arabic text (day names / month names)
     const today = new Date()
-    const expectedDate = today.toLocaleDateString('ar-DZ', {
+    const expectedDate = today.toLocaleDateString('fr-FR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

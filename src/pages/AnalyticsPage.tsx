@@ -338,7 +338,7 @@ export default function AnalyticsPage() {
                   assocName: association?.name || t('app.title'),
                   title: t('analytics.title'),
                   periodLabel:  quickFilter === 'this_month' ? t('analytics.currentMonth') : quickFilter === 'last_3_months' ? t('analytics.last3Months') : quickFilter === 'this_year' ? t('analytics.currentYear') : `${startDate} ${t('medical.toDate').toLowerCase()} ${endDate}`,
-                  dateLabel: new Date().toLocaleDateString(i18nInstance.language === 'ar' ? 'ar-DZ' : i18nInstance.language === 'fr' ? 'fr-DZ' : 'en-DZ'),
+                  dateLabel: new Date().toLocaleDateString(i18nInstance.language === 'en' ? 'en-US' : 'fr-FR'),
                   credits: formatCurrency(totalCredits),
                   debits: formatCurrency(totalDebits),
                   balance: formatCurrency(totalCredits - totalDebits),

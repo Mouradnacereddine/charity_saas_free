@@ -292,7 +292,7 @@ export function Layout({
               </DropdownMenuContent>
             </DropdownMenu>
             <div className="text-xs sm:text-sm text-muted-foreground">
-              {new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-DZ' : i18n.language === 'fr' ? 'fr-DZ' : 'en-DZ', {
+              {new Date().toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'fr-FR', {
                 weekday: 'short',
                 year: 'numeric',
                 month: 'short',

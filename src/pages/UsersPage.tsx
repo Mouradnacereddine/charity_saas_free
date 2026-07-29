@@ -284,7 +284,7 @@ export default function UsersPage() {
   };
 
   const isLoading = activeTab === 'users' ? usersLoading : invitesLoading;
-  const locale = i18n.language === 'ar' ? 'ar-DZ' : i18n.language === 'fr' ? 'fr-DZ' : 'en-DZ';
+  const locale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
 
   return (
     <div className="space-y-6">

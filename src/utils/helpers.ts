@@ -173,9 +173,9 @@ export function numberToFrenchWords(amount: number): string {
  */
 function getLocale(): string {
   const lang = i18n.language;
-  if (lang === 'ar') return 'ar-DZ';
-  if (lang === 'fr') return 'fr-DZ';
-  return 'en-DZ';
+  // Arabe et francais -> format francais, anglais -> format US
+  if (lang === 'en') return 'en-US';
+  return 'fr-FR';
 }
 
 export function formatCurrency(amount: number): string {
