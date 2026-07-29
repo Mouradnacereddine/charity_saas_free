@@ -987,8 +987,8 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
   // Create loan form state
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState('')
-  const [loanItems, setLoanItems] = useState<{ articleId: string; quantity: number; conditionOnLoan: string }[]>([])
-  const [expectedReturnDate, setExpectedReturnDate] = useState('')
+  const [loanItems, setLoanItems] = useState<{ articleId: string; quantity: number; conditionOnLoan: string; expectedReturnDate: string }[]>([])
+  // expectedReturnDate is now per-item in loanItems
   const [loanNotes, setLoanNotes] = useState('')
 
   // Return items form state
@@ -1036,7 +1036,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   // ---- Create Loan ----
 
   const addLoanItemRow = () => {
-    setLoanItems([...loanItems, { articleId: '', quantity: 1, conditionOnLoan: '' }])
+    setLoanItems([...loanItems, { articleId: '', quantity: 1, conditionOnLoan: '', expectedReturnDate: '' }])
   }
 
   const updateLoanItemRow = (index: number, field: string, value: string | number) => {
@@ -1063,6 +1063,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
           quantity: li.quantity,
           returnedQuantity: 0,
           conditionOnLoan: li.conditionOnLoan,
+          expectedReturnDate: li.expectedReturnDate || undefined,
         }
       })
 
@@ -1074,14 +1075,12 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       items,
       status: 'en_cours',
       loanDate: new Date().toISOString().split('T')[0],
-      expectedReturnDate: expectedReturnDate || undefined,
       notes: loanNotes || undefined,
     })
 
     setShowCreateModal(false)
     setSelectedBeneficiaryId('')
     setLoanItems([])
-    setExpectedReturnDate('')
     setLoanNotes('')
   }
 
@@ -1379,7 +1378,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       {/* ============ CREATE LOAN MODAL ============ */}
       <Modal
         isOpen={showCreateModal}
-        onClose={() => { setShowCreateModal(false); setSelectedBeneficiaryId(''); setLoanItems([]); setExpectedReturnDate(''); setLoanNotes(''); }}
+        onClose={() => { setShowCreateModal(false); setSelectedBeneficiaryId(''); setLoanItems([]); setLoanNotes(''); }}
         title={t("inventory.newLoan")}
         size="xl"
       >
@@ -1396,15 +1395,6 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             required
           />
 
-          {/* Expected return date */}
-          <Input
-            label={t('inventory.expectedReturnDate')}
-            type="date"
-            value={expectedReturnDate}
-            onChange={(e) => setExpectedReturnDate(e.target.value)}
-            dir="ltr"
-          />
-
           {/* Dynamic items list */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -1417,8 +1407,8 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             {loanItems.length === 0 && (
               <p className="text-sm text-muted-foreground/70">{t('inventory.noArticles')}</p>
             )}
-            {loanItems.map((item: { articleId: string; quantity: number; conditionOnLoan: string }, index: number) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-muted rounded-lg">
+            {loanItems.map((item: { articleId: string; quantity: number; conditionOnLoan: string; expectedReturnDate: string }, index: number) => (
+              <div key={index} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 p-3 bg-muted rounded-lg">
                 <SearchableSelect
                   labelAr={t('common.article')}
                   value={item.articleId}
@@ -1440,6 +1430,15 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   value={item.quantity}
                   onChange={(e) => updateLoanItemRow(index, 'quantity', parseInt(e.target.value) || 1)}
                 />
+                <div>
+                  <Input
+                    label={t('inventory.expectedReturnDate')}
+                    type="date"
+                    value={item.expectedReturnDate}
+                    onChange={(e) => updateLoanItemRow(index, 'expectedReturnDate', e.target.value)}
+                    dir="ltr"
+                  />
+                </div>
                 <SearchableSelect
                   labelAr={t("inventory.loanStatusAtLoan")}
                   value={item.conditionOnLoan}
@@ -1541,6 +1540,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.returnedItems')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('finance.remainingAmount')}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.loanStatusAtLoan')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.loanStatusAtReturn')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.situation')}</th>
@@ -1566,14 +1566,15 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                           </span>
                         </td>
                         <td className="py-2 px-3 text-muted-foreground">{item.quantity - item.returnedQuantity}</td>
+                        <td className="py-2 px-3 text-muted-foreground">{item.expectedReturnDate ? formatDate(item.expectedReturnDate) : '—'}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.conditionOnLoan || '—'}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.conditionOnReturn || '—'}</td>
                         <td className="py-2 px-3">
                           {(() => {
                             if (selectedLoan.status === 'retourne' || selectedLoan.status === 'definitif') return <Badge variant="success">{t('inventory.settled')}</Badge>;
-                            if (!selectedLoan.expectedReturnDate) return <span className="text-muted-foreground/50">—</span>;
+                            if (!item.expectedReturnDate) return <span className="text-muted-foreground/50">—</span>;
                             const now = new Date();
-                            const expected = new Date(selectedLoan.expectedReturnDate);
+                            const expected = new Date(item.expectedReturnDate);
                             if (expected < now) return <Badge variant="danger">{t('inventory.overdue')}</Badge>;
                             return <Badge variant="info">{t('inventory.onTime')}</Badge>;
                           })()}

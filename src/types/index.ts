@@ -281,6 +281,7 @@ export interface LoanItem {
   returnedQuantity: number;
   conditionOnLoan: string;
   conditionOnReturn?: string;
+  expectedReturnDate?: string;
 }
 
 // ---- Loan ----
