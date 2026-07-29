@@ -5,7 +5,7 @@ import { useDashboardStats } from '../hooks/useDashboard'
 import { useLoans } from '../hooks/useInventory'
 import { useAuth } from '../hooks/useAuth'
 import { formatCurrency, formatDate, localizedDesc } from '../utils/helpers'
-import { Wallet, Banknote, Users, HeartHandshake, Package, Handshake, AlertTriangle, Eye } from 'lucide-react'
+import { Wallet, Banknote, Users, HeartHandshake, Package, Handshake, AlertTriangle, Eye, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
 import type { Loan } from '../types'
 
 export default function DashboardPage() {
