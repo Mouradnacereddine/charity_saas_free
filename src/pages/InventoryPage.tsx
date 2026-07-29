@@ -548,7 +548,7 @@ function SettingsTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">${t('common.status')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.status')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
               </thead>
@@ -844,12 +844,12 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">${t('inventory.refCode')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.refCode')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.sectionName')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">{t('inventory.category')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.available')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">${t('common.status')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.status')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">{t('inventory.storageLocation')}</th>
                   <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
@@ -1203,7 +1203,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
   const handlePrintLoan = (loan: Loan) => {
     const itemsHtml = loan.items.map((item: any) =>
-      `<div class="row"><span class="lbl">${t('common.article')}</span><span class="val">${item.articleName} <i>×${item.quantity}</i></span></div>`
+      `<div class="row"><span class="lbl"> {t('common.article')}</span><span class="val">${item.articleName} <i>×${item.quantity}</i></span></div>`
     ).join('')
 
     const statusLabel = loanStatusLabels[loan.status] || loan.status
@@ -1212,20 +1212,20 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       t('inventory.loanDetails'),
       t('inventory.loanDetails'),
       `<div class="col">
-        <div class="row"><span class="lbl">${t('inventory.refCode')}</span><span class="val">${loan.reference || '—'}</span></div>
-        <div class="row"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${loan.beneficiaryName}</span></div>
-        <div class="row"><span class="lbl">$${t('medical.beneficiaryRef')}</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
-        <div class="row"><span class="lbl">${t('common.status')}</span><span class="val">${statusLabel}</span></div>
-        <div class="row"><span class="lbl">${t('inventory.loanDate')}</span><span class="val">${formatDate(loan.loanDate)}</span></div>
-        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl">${t('inventory.expectedReturnDate')}</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
-        ${loan.actualReturnDate ? `<div class="row"><span class="lbl">${t('inventory.actualReturnDate')}</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
+        <div class="row"><span class="lbl"> {t('inventory.refCode')}</span><span class="val">${loan.reference || '—'}</span></div>
+        <div class="row"><span class="lbl"> {t('medical.beneficiary')}</span><span class="val">${loan.beneficiaryName}</span></div>
+        <div class="row"><span class="lbl"> {t('medical.beneficiaryRef')}</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
+        <div class="row"><span class="lbl"> {t('common.status')}</span><span class="val">${statusLabel}</span></div>
+        <div class="row"><span class="lbl"> {t('inventory.loanDate')}</span><span class="val">${formatDate(loan.loanDate)}</span></div>
+        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl"> {t('inventory.expectedReturnDate')}</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
+        ${loan.actualReturnDate ? `<div class="row"><span class="lbl"> {t('inventory.actualReturnDate')}</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
        </div>
        <div class="col">
         ${itemsHtml}
        </div>`,
       loan.status === 'definitif' ? 'color:#dc2626' : loan.status === 'retourne' ? 'color:#16a34a' : 'color:#2563eb',
       loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0).toString(),
-      `{t('inventory.totalSummary')}: ${loan.items.length} {t('inventory.articles')} — ${loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)} {t('inventory.pieces')} — ${statusLabel}`,
+      `${t('inventory.totalSummary')}: ${loan.items.length} ${t('inventory.articles')} — ${loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)} ${t('inventory.pieces')} — ${statusLabel}`,
       '',
       t('receipt.beneficiarySign'),
       t('receipt.stampSignature'),
@@ -1304,13 +1304,13 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">${t('inventory.refCode')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.refCode')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.beneficiary')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden lg:table-cell">${t('medical.beneficiaryRef')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden lg:table-cell">{t('medical.beneficiaryRef')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.returnedItems')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">{t('finance.remainingAmount')}</th>
-                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">${t('common.status')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.status')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.loanDate')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.situation')}</th>
@@ -1425,7 +1425,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   onChange={(val) => updateLoanItemRow(index, 'articleId', val)}
                   options={availableArticles.map((a: Article) => ({
                     value: a.id,
-                    label: `${a.name} (${t('inventory.available')}: ${a.availableQuantity})`,
+                    label: `${a.name} ({t('inventory.available')}: ${a.availableQuantity})`,
                   }))}
                 />
                 <Input
@@ -1496,7 +1496,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                 <div>
                   <h4 className="text-sm font-semibold text-foreground">{t("medical.beneficiary")}</h4>
                   <p className="text-sm text-foreground">{selectedLoan.beneficiaryName}</p>
-                  <p className="text-xs text-muted-foreground" dir="ltr">${t('medical.beneficiaryRef')}: {selectedLoan.beneficiaryReference || '—'}</p>
+                  <p className="text-xs text-muted-foreground" dir="ltr">{t('medical.beneficiaryRef')}: {selectedLoan.beneficiaryReference || '—'}</p>
                 </div>
                 <div className="text-left">
                   <span className="text-xs text-muted-foreground">{t("inventory.loanRefCode")}</span>
@@ -1509,12 +1509,12 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                 </div>
               </div>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span>{t('inventory.loanDate')}: {formatDate(selectedLoan.loanDate)}</span>
+                <span> {t('inventory.loanDate')}: {formatDate(selectedLoan.loanDate)}</span>
                 {selectedLoan.expectedReturnDate && (
-                  <span>{t('inventory.expectedReturnDate')}: {formatDate(selectedLoan.expectedReturnDate)}</span>
+                  <span> {t('inventory.expectedReturnDate')}: {formatDate(selectedLoan.expectedReturnDate)}</span>
                 )}
                 {selectedLoan.actualReturnDate && (
-                  <span>{t('inventory.actualReturnDate')}: {formatDate(selectedLoan.actualReturnDate)}</span>
+                  <span> {t('inventory.actualReturnDate')}: {formatDate(selectedLoan.actualReturnDate)}</span>
                 )}
               </div>
             </div>
@@ -1536,7 +1536,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.article')}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground"> {t('common.article')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.category')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.returnedItems')}</th>
@@ -1667,7 +1667,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                     onChange={setNewItemArticleId}
                     options={availableArticles.map((a: Article) => ({
                       value: a.id,
-                      label: `${a.name} (${t('inventory.available')}: ${a.availableQuantity})`,
+                      label: `${a.name} ({t('inventory.available')}: ${a.availableQuantity})`,
                     }))}
                   />
                   <Input
