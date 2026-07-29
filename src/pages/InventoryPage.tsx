@@ -1343,15 +1343,21 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                     </td>
                     <td className="py-3 px-4 text-muted-foreground">{formatDate(loan.loanDate)}</td>
                     <td className="py-3 px-4 text-muted-foreground">
-                      {loan.expectedReturnDate ? formatDate(loan.expectedReturnDate) : '—'}
+                      {(() => {
+                        const dates = loan.items.map(i => i.expectedReturnDate).filter(Boolean);
+                        if (dates.length === 0) return '—';
+                        const earliest = dates.sort()[0];
+                        return formatDate(earliest!);
+                      })()}
                     </td>
                     <td className="py-3 px-4">
                       {(() => {
                         if (loan.status === 'retourne' || loan.status === 'definitif') return <Badge variant="success">{t('inventory.settled')}</Badge>;
-                        if (!loan.expectedReturnDate) return <span className="text-muted-foreground/50">—</span>;
+                        const dates = loan.items.map(i => i.expectedReturnDate).filter(Boolean);
+                        if (dates.length === 0) return <span className="text-muted-foreground/50">—</span>;
                         const now = new Date();
-                        const expected = new Date(loan.expectedReturnDate);
-                        if (expected < now) return <Badge variant="danger">{t('inventory.overdue')}</Badge>;
+                        const earliest = dates.sort()[0]!;
+                        if (new Date(earliest) < now) return <Badge variant="danger">{t('inventory.overdue')}</Badge>;
                         return <Badge variant="info">{t('inventory.onTime')}</Badge>;
                       })()}
                     </td>

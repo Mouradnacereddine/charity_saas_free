@@ -23,11 +23,13 @@ export default function DashboardPage() {
     definitif: t('inventory.final'),
   }
 
-  // Overdue loans: active loans (en_cours / partiellement_retourne) past expected return date
+  // Overdue loans: active loans with at least one item past its expected return date
   const overdueLoans = allLoans.filter((loan: Loan) => {
     if (loan.status === 'retourne' || loan.status === 'definitif') return false
-    if (!loan.expectedReturnDate) return false
-    return new Date(loan.expectedReturnDate) < new Date()
+    return loan.items.some((item) => {
+      if (!item.expectedReturnDate) return false
+      return new Date(item.expectedReturnDate) < new Date()
+    })
   })
 
   if (isLoading) {
