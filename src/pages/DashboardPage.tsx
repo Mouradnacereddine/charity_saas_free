@@ -16,6 +16,13 @@ export default function DashboardPage() {
   const [detailTx, setDetailTx] = useState<any>(null)
   const [detailLoan, setDetailLoan] = useState<Loan | null>(null)
 
+  const loanStatusLabels: Record<string, string> = {
+    en_cours: t('inventory.ongoing'),
+    partiellement_retourne: t('inventory.partiallyReturned'),
+    retourne: t('inventory.final'),
+    definitif: t('inventory.final'),
+  }
+
   // Overdue loans: active loans (en_cours / partiellement_retourne) past expected return date
   const overdueLoans = allLoans.filter((loan: Loan) => {
     if (loan.status === 'retourne' || loan.status === 'definitif') return false
@@ -255,7 +262,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted rounded-lg p-4">
               <div><p className="text-xs text-muted-foreground">{t('inventory.refCode')}</p><p className="font-mono text-foreground" dir="ltr">{detailLoan.reference || '—'}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('medical.beneficiary')}</p><p className="font-medium text-foreground">{detailLoan.beneficiaryName}</p></div>
-              <div><p className="text-xs text-muted-foreground">{t('common.status')}</p><p className="font-medium text-foreground">{t('inventory.' + detailLoan.status) || detailLoan.status}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('common.status')}</p><p className="font-medium text-foreground">{loanStatusLabels[detailLoan.status] || detailLoan.status}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('inventory.loanDate')}</p><p className="font-medium text-foreground">{formatDate(detailLoan.loanDate)}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('inventory.expectedReturnDate')}</p><p className="font-medium text-foreground">{detailLoan.expectedReturnDate ? formatDate(detailLoan.expectedReturnDate) : '—'}</p></div>
               {detailLoan.actualReturnDate && <div><p className="text-xs text-muted-foreground">{t('inventory.actualReturnDate')}</p><p className="font-medium text-foreground">{formatDate(detailLoan.actualReturnDate)}</p></div>}

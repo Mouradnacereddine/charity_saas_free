@@ -1536,7 +1536,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-start py-2 px-3 font-medium text-muted-foreground"> {t('common.article')}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.article')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.category')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.returnedItems')}</th>
@@ -1569,13 +1569,14 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                         <td className="py-2 px-3 text-muted-foreground">{item.conditionOnLoan || '—'}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.conditionOnReturn || '—'}</td>
                         <td className="py-2 px-3">
-                          {item.returnedQuantity >= item.quantity ? (
-                            <Badge variant="success">{t('inventory.settled')}</Badge>
-                          ) : item.returnedQuantity > 0 ? (
-                            <Badge variant="warning">{t('inventory.partiallyReturned')}</Badge>
-                          ) : (
-                            <Badge variant="info">{t('inventory.ongoing')}</Badge>
-                          )}
+                          {(() => {
+                            if (selectedLoan.status === 'retourne' || selectedLoan.status === 'definitif') return <Badge variant="success">{t('inventory.settled')}</Badge>;
+                            if (!selectedLoan.expectedReturnDate) return <span className="text-muted-foreground/50">—</span>;
+                            const now = new Date();
+                            const expected = new Date(selectedLoan.expectedReturnDate);
+                            if (expected < now) return <Badge variant="danger">{t('inventory.overdue')}</Badge>;
+                            return <Badge variant="info">{t('inventory.onTime')}</Badge>;
+                          })()}
                         </td>
                       </tr>
                     ))}
