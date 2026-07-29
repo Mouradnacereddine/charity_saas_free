@@ -1495,6 +1495,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   <Input
                     label={t('inventory.expectedReturnDate')}
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     value={item.expectedReturnDate}
                     onChange={(e) => updateLoanItemRow(index, 'expectedReturnDate', e.target.value)}
                     dir="ltr"
