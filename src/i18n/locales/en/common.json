@@ -128,7 +128,10 @@
     "completed": "Completed",
     "fullyDisbursed": "Fully Disbursed",
     "partiallyDisbursed": "Partially Disbursed",
-    "active": "Active"
+    "active": "Active",
+    "overdueLoans": "Overdue Loans",
+    "daysOverdue": "Days Overdue",
+    "andMore": "And {{count}} more..."
   },
   "caisses": {
     "title": "Fund Management",
@@ -422,6 +425,10 @@
     "noLoans": "No loans yet",
     "addStatus": "Statuses",
     "noStatuses": "No statuses yet",
+    "situation": "Situation",
+    "settled": "Settled",
+    "overdue": "Overdue",
+    "onTime": "On Time",
     "allStatuses": "All Statuses"
   },
   "medical": {

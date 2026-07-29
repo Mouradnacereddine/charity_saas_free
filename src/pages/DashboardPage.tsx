@@ -1,16 +1,27 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { StatCard, Card, Modal, Badge, Button, LoadingSpinner } from '../components/common/UI'
+import { StatCard, Card, Badge, LoadingSpinner, Button, Modal } from '../components/common/UI'
 import { useDashboardStats } from '../hooks/useDashboard'
+import { useLoans } from '../hooks/useInventory'
 import { useAuth } from '../hooks/useAuth'
 import { formatCurrency, formatDate, localizedDesc } from '../utils/helpers'
-import { Wallet, Banknote, Users, HeartHandshake, Package, Handshake, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
+import { Wallet, Banknote, Users, HeartHandshake, Package, Handshake, AlertTriangle, Eye } from 'lucide-react'
+import type { Loan } from '../types'
 
 export default function DashboardPage() {
   const { t, i18n } = useTranslation()
   const { data: stats, isLoading } = useDashboardStats()
+  const { data: allLoans = [] } = useLoans()
   const { isAdmin } = useAuth()
   const [detailTx, setDetailTx] = useState<any>(null)
+  const [detailLoan, setDetailLoan] = useState<Loan | null>(null)
+
+  // Overdue loans: active loans (en_cours / partiellement_retourne) past expected return date
+  const overdueLoans = allLoans.filter((loan: Loan) => {
+    if (loan.status === 'retourne' || loan.status === 'definitif') return false
+    if (!loan.expectedReturnDate) return false
+    return new Date(loan.expectedReturnDate) < new Date()
+  })
 
   if (isLoading) {
     return <LoadingSpinner />
@@ -182,6 +193,76 @@ export default function DashboardPage() {
             </div>
             <div className="flex justify-end gap-2">
               <Button size="sm" variant="secondary" onClick={() => setDetailTx(null)}>{t('common.close')}</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Overdue Loans */}
+      {overdueLoans.length > 0 && (
+        <Card titleAr={t('dashboard.overdueLoans')}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.refCode')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('medical.beneficiary')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('dashboard.daysOverdue')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {overdueLoans.slice(0, 10).map((loan: Loan) => {
+                  const daysOverdue = loan.expectedReturnDate
+                    ? Math.floor((new Date().getTime() - new Date(loan.expectedReturnDate).getTime()) / (1000 * 60 * 60 * 24))
+                    : 0
+                  const totalQty = loan.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+                  return (
+                    <tr key={loan.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setDetailLoan(loan)}>
+                      <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{loan.reference || '—'}</td>
+                      <td className="py-3 px-4 font-medium text-foreground">{loan.beneficiaryName}</td>
+                      <td className="py-3 px-4 text-destructive font-medium">{formatDate(loan.expectedReturnDate!)}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{totalQty}</td>
+                      <td className="py-3 px-4">
+                        <Badge variant="danger">{daysOverdue} {t('common.days')}</Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <button onClick={(e) => { e.stopPropagation(); setDetailLoan(loan); }}
+                          className="p-1 text-muted-foreground/70 hover:text-primary transition-colors" title={t("common.details")}>
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            {overdueLoans.length > 10 && (
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                {t('dashboard.andMore', { count: overdueLoans.length - 10 })}
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Loan Detail Modal */}
+      <Modal isOpen={!!detailLoan} onClose={() => setDetailLoan(null)} title={t('inventory.loanDetails')} size="md">
+        {detailLoan && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted rounded-lg p-4">
+              <div><p className="text-xs text-muted-foreground">{t('inventory.refCode')}</p><p className="font-mono text-foreground" dir="ltr">{detailLoan.reference || '—'}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('medical.beneficiary')}</p><p className="font-medium text-foreground">{detailLoan.beneficiaryName}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('common.status')}</p><p className="font-medium text-foreground">{t('inventory.' + detailLoan.status) || detailLoan.status}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('inventory.loanDate')}</p><p className="font-medium text-foreground">{formatDate(detailLoan.loanDate)}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('inventory.expectedReturnDate')}</p><p className="font-medium text-foreground">{detailLoan.expectedReturnDate ? formatDate(detailLoan.expectedReturnDate) : '—'}</p></div>
+              {detailLoan.actualReturnDate && <div><p className="text-xs text-muted-foreground">{t('inventory.actualReturnDate')}</p><p className="font-medium text-foreground">{formatDate(detailLoan.actualReturnDate)}</p></div>}
+              {detailLoan.notes && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.notes')}</p><p className="font-medium text-foreground">{detailLoan.notes}</p></div>}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setDetailLoan(null)}>{t('common.close')}</Button>
             </div>
           </div>
         )}

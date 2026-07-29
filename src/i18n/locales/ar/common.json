@@ -128,7 +128,10 @@
     "completed": "مكتمل",
     "fullyDisbursed": "مصرف بالكامل",
     "partiallyDisbursed": "مصرف جزئياً",
-    "active": "نشط"
+    "active": "نشط",
+    "overdueLoans": "الديون غير المسددة",
+    "daysOverdue": "أيام التأخير",
+    "andMore": "و{{count}} أخرى..."
   },
   "caisses": {
     "title": "إدارة الصناديق",
@@ -414,6 +417,10 @@
     "noLoans": "لا توجد إعارات",
     "addStatus": "الحالات",
     "noStatuses": "لا توجد حالات بعد",
+    "situation": "الوضع",
+    "settled": "تم التسوية",
+    "overdue": "متأخر",
+    "onTime": "في الوقت المحدد",
     "allStatuses": "كل الحالات"
   },
   "medical": {

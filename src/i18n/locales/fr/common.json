@@ -129,7 +129,10 @@
     "completed": "Terminé",
     "fullyDisbursed": "Entièrement décaissé",
     "partiallyDisbursed": "Partiellement décaissé",
-    "active": "Actif"
+    "active": "Actif",
+    "overdueLoans": "Prêts non restitués",
+    "daysOverdue": "Jours de retard",
+    "andMore": "Et {{count}} autres..."
   },
   "caisses": {
     "title": "Gestion des caisses",
@@ -422,6 +425,10 @@
     "noLoans": "Aucun prêt pour le moment",
     "addStatus": "Statuts",
     "noStatuses": "Aucun statut pour le moment",
+    "situation": "Situation",
+    "settled": "Réglé",
+    "overdue": "En retard",
+    "onTime": "Dans les temps",
     "allStatuses": "Tous les statuts"
   },
   "medical": {

@@ -1312,6 +1312,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.status')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.loanDate')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.situation')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.actualReturnDate')}</th>
                   <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
                 </tr>
@@ -1343,6 +1344,16 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                     <td className="py-3 px-4 text-muted-foreground">{formatDate(loan.loanDate)}</td>
                     <td className="py-3 px-4 text-muted-foreground">
                       {loan.expectedReturnDate ? formatDate(loan.expectedReturnDate) : '—'}
+                    </td>
+                    <td className="py-3 px-4">
+                      {(() => {
+                        if (loan.status === 'retourne' || loan.status === 'definitif') return <Badge variant="success">{t('inventory.settled')}</Badge>;
+                        if (!loan.expectedReturnDate) return <span className="text-muted-foreground/50">—</span>;
+                        const now = new Date();
+                        const expected = new Date(loan.expectedReturnDate);
+                        if (expected < now) return <Badge variant="danger">{t('inventory.overdue')}</Badge>;
+                        return <Badge variant="info">{t('inventory.onTime')}</Badge>;
+                      })()}
                     </td>
                     <td className="py-3 px-4 text-muted-foreground">
                       {loan.actualReturnDate ? formatDate(loan.actualReturnDate) : '—'}
@@ -1379,12 +1390,18 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             onChange={(val) => {
               setSelectedBeneficiaryId(val)
               const b = beneficiaries.find((ben: Beneficiary) => ben.id === val)
-              if (b) {
-              } else {
-              }
             }}
             options={beneficiaryOptions}
             required
+          />
+
+          {/* Expected return date */}
+          <Input
+            label={t('inventory.expectedReturnDate')}
+            type="date"
+            value={expectedReturnDate}
+            onChange={(e) => setExpectedReturnDate(e.target.value)}
+            dir="ltr"
           />
 
           {/* Dynamic items list */}
