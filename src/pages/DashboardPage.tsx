@@ -254,7 +254,7 @@ export default function DashboardPage() {
               <div><p className="text-xs text-muted-foreground">{t('medical.beneficiary')}</p><p className="font-medium text-foreground">{detailLoan.beneficiaryName}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('common.status')}</p><p className="font-medium text-foreground">{loanStatusLabels[detailLoan.status] || detailLoan.status}</p></div>
               <div><p className="text-xs text-muted-foreground">{t('inventory.loanDate')}</p><p className="font-medium text-foreground">{formatDate(detailLoan.loanDate)}</p></div>
-              <div><p className="text-xs text-muted-foreground">{t('inventory.expectedReturnDate')}</p><p className="font-medium text-foreground">{detailLoan.expectedReturnDate ? formatDate(detailLoan.expectedReturnDate) : '—'}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t('inventory.expectedReturnDate')}</p><p className="font-medium text-foreground">{(() => { const dates = detailLoan.items.map((i: any) => i.expectedReturnDate).filter(Boolean); if (dates.length === 0) return '—'; return formatDate([...dates].sort()[0]); })()}</p></div>
               {detailLoan.actualReturnDate && <div><p className="text-xs text-muted-foreground">{t('inventory.actualReturnDate')}</p><p className="font-medium text-foreground">{formatDate(detailLoan.actualReturnDate)}</p></div>}
               {detailLoan.notes && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.notes')}</p><p className="font-medium text-foreground">{detailLoan.notes}</p></div>}
             </div>
