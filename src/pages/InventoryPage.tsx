@@ -1412,7 +1412,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                                   <td className="py-2 px-3 text-muted-foreground">{item.quantity - item.returnedQuantity}</td>
                                   <td className="py-2 px-3 text-muted-foreground">{item.expectedReturnDate ? formatDate(item.expectedReturnDate) : '—'}</td>
                                   <td className="py-2 px-3">
-                                    {item.returnedQuantity >= item.quantity ? <Badge variant="success">{t('inventory.settled')}</Badge> : <Badge variant="info">{t('inventory.ongoing')}</Badge>}
+                                    {item.returnedQuantity >= item.quantity ? <Badge variant="success">{t('inventory.settled')}</Badge> : item.returnedQuantity > 0 ? <Badge variant="warning">{t('inventory.partiallyReturned')}</Badge> : <Badge variant="info">{t('inventory.unreturned')}</Badge>}
                                   </td>
                                   <td className="py-2 px-3">
                                     {loan.status === 'retourne' || loan.status === 'definitif' ? <Badge variant="success">{t('inventory.settled')}</Badge> :

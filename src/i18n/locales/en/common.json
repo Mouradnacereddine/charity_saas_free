@@ -428,6 +428,7 @@
     "noStatuses": "No statuses yet",
     "situation": "Due Status",
     "settled": "Settled",
+    "unreturned": "Not Returned",
     "overdue": "Overdue",
     "onTime": "On Time",
     "allStatuses": "All Statuses"

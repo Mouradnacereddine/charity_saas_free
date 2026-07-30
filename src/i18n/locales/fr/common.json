@@ -428,6 +428,7 @@
     "noStatuses": "Aucun statut pour le moment",
     "situation": "Délai",
     "settled": "Réglé",
+    "unreturned": "Non restitué",
     "overdue": "En retard",
     "onTime": "Dans les temps",
     "allStatuses": "Tous les statuts"
