@@ -962,6 +962,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   const [committedLoanFilters, setCommittedLoanFilters] = useState({ searchTerm: '', status: '', articleStatus: '', beneficiary: '', dateFrom: '', dateTo: '' })
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterStatus, setFilterStatus] = useState('')
+  const [filterArticleStatus, setFilterArticleStatus] = useState('')
   const [filterBeneficiary, setFilterBeneficiary] = useState('')
   const [filterDateFrom, setFilterDateFrom] = useState('')
   const [filterDateTo, setFilterDateTo] = useState('')
@@ -973,10 +974,11 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   const resetLoanFilters = () => {
     setSearchTerm('')
     setFilterStatus('')
+    setFilterArticleStatus('')
     setFilterBeneficiary('')
     setFilterDateFrom('')
     setFilterDateTo('')
-    setCommittedLoanFilters({ searchTerm: '', status: '', beneficiary: '', dateFrom: '', dateTo: '' })
+    setCommittedLoanFilters({ searchTerm: '', status: '', articleStatus: '', beneficiary: '', dateFrom: '', dateTo: '' })
   }
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
