@@ -1605,6 +1605,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.expectedReturnDate')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.loanStatusAtLoan')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.loanStatusAtReturn')}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.status')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.situation')}</th>
                     </tr>
                   </thead>
@@ -1631,6 +1632,9 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                         <td className="py-2 px-3 text-muted-foreground">{item.expectedReturnDate ? formatDate(item.expectedReturnDate) : '—'}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.conditionOnLoan || '—'}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.conditionOnReturn || '—'}</td>
+                        <td className="py-2 px-3">
+                          {item.returnedQuantity >= item.quantity ? <Badge variant="success">{t('inventory.settled')}</Badge> : item.returnedQuantity > 0 ? <Badge variant="warning">{t('inventory.partiallyReturned')}</Badge> : <Badge variant="info">{t('inventory.unreturned')}</Badge>}
+                        </td>
                         <td className="py-2 px-3">
                           {(() => {
                             if (selectedLoan.status === 'retourne' || selectedLoan.status === 'definitif') return <Badge variant="success">{t('inventory.settled')}</Badge>;
