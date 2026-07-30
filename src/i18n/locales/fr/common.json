@@ -431,7 +431,9 @@
     "unreturned": "Non restitué",
     "overdue": "En retard",
     "onTime": "Dans les temps",
-    "allStatuses": "Tous les statuts"
+    "allStatuses": "Tous les statuts",
+    "loanStatus": "Statut du prêt",
+    "articleStatus": "Statut de l'article"
   },
   "medical": {
     "title": "Orientation médicale",

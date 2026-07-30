@@ -423,7 +423,9 @@
     "unreturned": "غير مسترجع",
     "overdue": "متأخر",
     "onTime": "في الوقت المحدد",
-    "allStatuses": "كل الحالات"
+    "allStatuses": "كل الحالات",
+    "loanStatus": "حالة الإعارة",
+    "articleStatus": "حالة المقال"
   },
   "medical": {
     "title": "التوجيه الطبي",

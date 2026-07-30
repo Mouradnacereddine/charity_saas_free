@@ -431,7 +431,9 @@
     "unreturned": "Not Returned",
     "overdue": "Overdue",
     "onTime": "On Time",
-    "allStatuses": "All Statuses"
+    "allStatuses": "All Statuses",
+    "loanStatus": "Loan Status",
+    "articleStatus": "Article Status"
   },
   "medical": {
     "title": "Medical Referral",

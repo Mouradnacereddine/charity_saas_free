@@ -637,6 +637,7 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
   }>({ searchTerm: '', category: '', status: '', storage: '', type: '' })
   const [filterCategory, setFilterCategory] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [filterArticleStatus, setFilterArticleStatus] = useState('')
   const [filterStorage, setFilterStorage] = useState('')
   const [filterType, setFilterType] = useState('')
   const [showModal, setShowModal] = useState(false)
@@ -651,6 +652,7 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
     setFilterSearchTerm('')
     setFilterCategory('')
     setFilterStatus('')
+    setFilterArticleStatus('')
     setFilterStorage('')
     setFilterType('')
     setCommittedFilters({ searchTerm: '', category: '', status: '', storage: '', type: '' })
@@ -957,7 +959,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   const markLoanDefinitive = useMarkLoanDefinitive()
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [committedLoanFilters, setCommittedLoanFilters] = useState({ searchTerm: '', status: '', beneficiary: '', dateFrom: '', dateTo: '' })
+  const [committedLoanFilters, setCommittedLoanFilters] = useState({ searchTerm: '', status: '', articleStatus: '', beneficiary: '', dateFrom: '', dateTo: '' })
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterStatus, setFilterStatus] = useState('')
   const [filterBeneficiary, setFilterBeneficiary] = useState('')
@@ -965,7 +967,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   const [filterDateTo, setFilterDateTo] = useState('')
 
   const applyLoanFilters = () => {
-    setCommittedLoanFilters({ searchTerm, status: filterStatus, beneficiary: filterBeneficiary, dateFrom: filterDateFrom, dateTo: filterDateTo })
+    setCommittedLoanFilters({ searchTerm, status: filterStatus, articleStatus: filterArticleStatus, beneficiary: filterBeneficiary, dateFrom: filterDateFrom, dateTo: filterDateTo })
   }
 
   const resetLoanFilters = () => {
@@ -1024,7 +1026,13 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       (l.beneficiaryName || '').toLowerCase().includes(committedLoanFilters.beneficiary.toLowerCase())
     const matchesDateFrom = !committedLoanFilters.dateFrom || l.loanDate >= committedLoanFilters.dateFrom
     const matchesDateTo = !committedLoanFilters.dateTo || l.loanDate <= committedLoanFilters.dateTo
-    return matchesSearch && matchesStatus && matchesBeneficiary && matchesDateFrom && matchesDateTo
+    const matchesArticleStatus = !committedLoanFilters.articleStatus || l.items.some((item) => {
+      if (committedLoanFilters.articleStatus === 'settled') return item.returnedQuantity >= item.quantity
+      if (committedLoanFilters.articleStatus === 'partiallyReturned') return item.returnedQuantity > 0 && item.returnedQuantity < item.quantity
+      if (committedLoanFilters.articleStatus === 'unreturned') return item.returnedQuantity === 0
+      return true
+    })
+    return matchesSearch && matchesStatus && matchesBeneficiary && matchesDateFrom && matchesDateTo && matchesArticleStatus
   })
 
   const availableArticles = articles.filter((a: Article) => a.availableQuantity > 0 && !a.isPermanent)
@@ -1263,10 +1271,22 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
         <Card titleAr={t("inventory.advancedSearch")}>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <SearchableSelect
-              labelAr={t('common.status')}
+              labelAr={t('inventory.loanStatus')}
               value={filterStatus}
               onChange={setFilterStatus}
               options={loanStatusOptions}
+              placeholder={t('common.all')}
+            />
+            <SearchableSelect
+              labelAr={t('inventory.articleStatus')}
+              value={filterArticleStatus}
+              onChange={setFilterArticleStatus}
+              options={[
+                { value: '', label: t('common.all') },
+                { value: 'settled', label: t('inventory.settled') },
+                { value: 'partiallyReturned', label: t('inventory.partiallyReturned') },
+                { value: 'unreturned', label: t('inventory.unreturned') },
+              ]}
               placeholder={t('common.all')}
             />
             <SearchableSelect
