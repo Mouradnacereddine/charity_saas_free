@@ -5,7 +5,7 @@ import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptySta
 import { formatDate, generateLoanReference } from '../utils/helpers'
 import { dirForInput } from '../utils/localized'
 import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin, Printer, ChevronDown, ChevronUp, ClipboardCheck, ClipboardList } from 'lucide-react'
-import { printReceipt, printInventoryReport } from '../lib/receipt'
+import { printInventoryReport } from '../lib/receipt'
 import { useAuth } from '../hooks/useAuth'
 import type { Article, Loan, LoanItem, ArticleCategory, ArticleStatus, StorageLocation, Beneficiary, StockTake, StockTakeItem } from '../types'
 import {
@@ -1249,7 +1249,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       },
     })
 
-    if (updated && updated.items) setSelectedLoan(updated)
+    if (updatedLoan && updatedLoan.items) setSelectedLoan(updatedLoan)
     setShowAddItemForm(false)
   }
 
@@ -1279,35 +1279,64 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   // ---- Print Loan ----
 
   const handlePrintLoan = (loan: Loan) => {
-    const itemsHtml = loan.items.map((item: any) =>
-      `<div class="row"><span class="lbl">${t('common.article')}</span><span class="val">${item.articleName} <i>×${item.quantity}</i></span></div>`
-    ).join('')
-
     const statusLabel = loanStatusLabels[loan.status] || loan.status
 
-    printReceipt(
-      t('inventory.loanDetails'),
-      t('inventory.loanDetails'),
-      `<div class="col">
-        <div class="row"><span class="lbl">${t('inventory.refCode')}</span><span class="val">${loan.reference || '—'}</span></div>
-        <div class="row"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${loan.beneficiaryName}</span></div>
-        <div class="row"><span class="lbl">${t('medical.beneficiaryRef')}</span><span class="val">${loan.beneficiaryReference || '—'}</span></div>
-        <div class="row"><span class="lbl">${t('common.status')}</span><span class="val">${statusLabel}</span></div>
-        <div class="row"><span class="lbl">${t('inventory.loanDate')}</span><span class="val">${formatDate(loan.loanDate)}</span></div>
-        ${loan.expectedReturnDate ? `<div class="row"><span class="lbl">${t('inventory.expectedReturnDate')}</span><span class="val">${formatDate(loan.expectedReturnDate)}</span></div>` : ''}
-        ${loan.actualReturnDate ? `<div class="row"><span class="lbl">${t('inventory.actualReturnDate')}</span><span class="val">${formatDate(loan.actualReturnDate)}</span></div>` : ''}
-       </div>
-       <div class="col">
-        ${itemsHtml}
-       </div>`,
-      loan.status === 'definitif' ? 'color:#dc2626' : loan.status === 'retourne' ? 'color:#16a34a' : 'color:#2563eb',
-      loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0).toString(),
-      `${t('inventory.totalSummary')}: ${loan.items.length} ${t('inventory.articles')} — ${loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)} ${t('inventory.pieces')} — ${statusLabel}`,
-      '',
-      t('receipt.beneficiarySign'),
-      t('receipt.stampSignature'),
-      association?.name
-    )
+    // Impression A4 professionnelle (même format que l'inventaire)
+    const tableHeader = [
+      t('inventory.refCode'),
+      t('inventory.sectionName'),
+      t('inventory.category'),
+      t('inventory.quantity'),
+      t('inventory.returnedItems'),
+      t('finance.remainingAmount'),
+      t('inventory.expectedReturnDate'),
+      t('common.status'),
+    ].map((h) => `<th>${h}</th>`).join('')
+
+    const bodyRows = loan.items.map((item: any) => {
+      const remaining = item.quantity - (item.returnedQuantity || 0)
+      const itemStatus =
+        (item.returnedQuantity || 0) >= item.quantity
+          ? t('inventory.settled')
+          : (item.returnedQuantity || 0) > 0
+            ? t('inventory.partiallyReturned')
+            : t('inventory.unreturned')
+      return `<tr>
+        <td>${item.articleReference || '—'}</td>
+        <td>${item.articleName}</td>
+        <td>${item.categoryName || '—'}</td>
+        <td>${item.quantity}</td>
+        <td>${item.returnedQuantity || 0}</td>
+        <td>${remaining}</td>
+        <td>${item.expectedReturnDate ? formatDate(item.expectedReturnDate) : '—'}</td>
+        <td>${itemStatus}</td>
+      </tr>`
+    }).join('')
+
+    const totalItems = loan.items.reduce((sum: number, item: any) => sum + item.quantity, 0)
+    const totalReturned = loan.items.reduce((sum: number, item: any) => sum + (item.returnedQuantity || 0), 0)
+
+    const summaryHtml = `
+      <div class="kpi"><div class="kpi-label">${t('inventory.articles')}</div><div class="kpi-value">${loan.items.length}</div></div>
+      <div class="kpi"><div class="kpi-label">${t('inventory.quantity')}</div><div class="kpi-value">${totalItems}</div></div>
+      <div class="kpi"><div class="kpi-label">${t('inventory.returnedItems')}</div><div class="kpi-value">${totalReturned}</div></div>
+    `
+
+    printInventoryReport({
+      assocName: association?.name || '',
+      title: `${t('inventory.loanDetails')} — ${loan.beneficiaryName || ''}`,
+      reference: loan.reference || '',
+      dateLabel: `${t('medical.beneficiary')}: ${loan.beneficiaryName || '—'} — ${t('medical.beneficiaryRef')}: ${loan.beneficiaryReference || '—'} — ${t('inventory.loanDate')}: ${formatDate(loan.loanDate)}`,
+      summaryHtml,
+      tableHeader,
+      bodyRows,
+      footer: `${t('receipt.generatedBy')} — ${new Date().toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'fr-FR')}`,
+      signLeft: t('receipt.beneficiarySign'),
+      signRight: t('receipt.stampSignature'),
+      labels: { printReport: t('receipt.print'), generatedBy: t('receipt.generatedBy') },
+      dir: i18n.language === 'ar' ? 'rtl' : 'ltr',
+      lang: i18n.language,
+    })
   }
 
   if (loading) return <LoadingSpinner />
