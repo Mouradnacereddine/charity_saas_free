@@ -23,11 +23,11 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Enrichir les items avec les noms d'articles + catégories depuis la base
+    // Enrichir les items avec les noms, références et catégories d'articles depuis la base
     const allArticles = await prisma.article.findMany({
       where: { associationId },
       select: {
-        id: true, name: true,
+        id: true, name: true, reference: true,
         category: { select: { id: true, name: true } },
       },
     });
@@ -40,6 +40,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         return {
           ...item,
           articleName: article?.name || '',
+          articleReference: article?.reference || '',
           categoryName: article?.category?.name || '',
         };
       }),
@@ -147,8 +148,23 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
+    const articles = await prisma.article.findMany({
+      where: { associationId },
+      select: { id: true, name: true, reference: true, category: { select: { name: true } } },
+    });
+    const articleMap = new Map(articles.map((a) => [a.id, a]));
+
     const result = {
       ...loan,
+      items: ((loan.items as any[]) || []).map((item: any) => {
+        const article = articleMap.get(item.articleId);
+        return {
+          ...item,
+          articleName: article?.name || item.articleName || '',
+          articleReference: article?.reference || item.articleReference || '',
+          categoryName: article?.category?.name || item.categoryName || '',
+        };
+      }),
       beneficiaryName: loan.beneficiary ? `${(loan.beneficiary as any).firstName} ${(loan.beneficiary as any).lastName}` : '',
       beneficiaryReference: (loan.beneficiary as any)?.reference || '',
     };

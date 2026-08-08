@@ -1076,9 +1076,16 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
   const filteredLoans = loans.filter((l: Loan) => {
     const st = committedLoanFilters.searchTerm
+    // Recherche : bénéficiaire, référence du prêt, OU nom/référence d'un article du prêt
     const matchesSearch =
       !st ||
-      (l.beneficiaryName || '').toLowerCase().includes(st.toLowerCase())
+      (l.beneficiaryName || '').toLowerCase().includes(st.toLowerCase()) ||
+      (l.beneficiaryReference || '').toLowerCase().includes(st.toLowerCase()) ||
+      (l.reference || '').toLowerCase().includes(st.toLowerCase()) ||
+      (l.items || []).some((item) =>
+        (item.articleName || '').toLowerCase().includes(st.toLowerCase()) ||
+        (item.articleReference || '').toLowerCase().includes(st.toLowerCase())
+      )
     const matchesStatus = !committedLoanFilters.status || l.status === committedLoanFilters.status
     const matchesBeneficiary =
       !committedLoanFilters.beneficiary ||
@@ -1500,6 +1507,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                           <table className="w-full text-xs">
                             <thead>
                               <tr className="border-b border-border">
+                                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.refCode')}</th>
                                 <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.article')}</th>
                                 <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
                                 <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.returnedItems')}</th>
@@ -1514,6 +1522,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                                 const itemOverdue = item.expectedReturnDate && new Date(item.expectedReturnDate) < new Date()
                                 return (
                                 <tr key={item.itemKey ?? item.articleId} className="border-b border-border/50">
+                                  <td className="py-2 px-3 font-medium text-primary" dir="ltr">{item.articleReference || '—'}</td>
                                   <td className="py-2 px-3 font-medium text-foreground">{item.articleName}</td>
                                   <td className="py-2 px-3 text-muted-foreground">{item.quantity}</td>
                                   <td className="py-2 px-3">
@@ -1709,6 +1718,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.refCode')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.article')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.category')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.quantity')}</th>
@@ -1725,6 +1735,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   <tbody>
                     {selectedLoan.items.map((item) => (
                       <tr key={item.itemKey ?? item.articleId} className="border-b border-border">
+                        <td className="py-2 px-3 font-medium text-primary" dir="ltr">{item.articleReference || '—'}</td>
                         <td className="py-2 px-3 text-foreground">{item.articleName}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.categoryName || '—'}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.quantity}</td>
