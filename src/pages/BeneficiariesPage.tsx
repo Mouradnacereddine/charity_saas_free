@@ -1256,13 +1256,13 @@ export default function BeneficiariesPage() {
                                 const wordsAr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToArabicWords(amount)
                                 const wordsFr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToFrenchWords(amount)
                                 printReceipt(
-                                  t('receipt.expenseTitle'), 'Bon de Sortie',
+                                  t('receipt.expenseTitle'), t('beneficiaries.expenseReceipt'),
                                   `<div class="col"><div class="row"><span class="lbl">${t('beneficiaries.receiptNo')}</span><span class="val">${tx.id.slice(0, 8) || '—'}</span></div>
-<div class="row"><span class="lbl">{t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
+<div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(tx.date)}</span></div>
 <div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${selectedBeneficiary?.lastName || ''} ${selectedBeneficiary?.firstName || ''}</span></div></div>
-<div class="col"><div class="row"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse?.name || '—'}</span></div>
+<div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.name || '—'}</span></div>
 <div class="row"><span class="lbl">${t('dashboard.source')}</span><span class="val">${tx.fundSource === 'banque' ? t('beneficiaries.bankLabel') : t('beneficiaries.cashLabel')}</span></div>
-${tx.description ? `<div class="row"><span class="lbl">{t('common.description')}</span><span class="val">${tx.description}</span></div>` : ''}</div>`,
+${tx.description ? `<div class="row"><span class="lbl">${t('common.description')}</span><span class="val">${tx.description}</span></div>` : ''}</div>`,
                                   'background:#fff0f0;color:#dc2626',
                                   `- ${formatCurrency(amount)}`, wordsAr, wordsFr,
                                   t('receipt.beneficiarySign'), t('receipt.stampSignature'),
@@ -1329,22 +1329,22 @@ ${tx.description ? `<div class="row"><span class="lbl">{t('common.description')}
                                 e.stopPropagation();
                                 const caisse = caisses.find((c: any) => c.id === ref.caisseId)
                                 const subCat = caisse?.subCategories.find((s: any) => s.id === ref.subCategoryId)
-                                const caisseRow = caisse ? `<div class="row"><span class="lbl">{t('dashboard.fund')}</span><span class="val">${caisse.name}</span></div>` : ''
+                                const caisseRow = caisse ? `<div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse.name}</span></div>` : ''
                                 const subCatRow = subCat ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${subCat.name}</span></div>` : ''
                                 const childrenHtml = ref.children && Array.isArray(ref.children) && ref.children.length > 0
                                   ? `<div class="row"><span class="lbl">${t('beneficiaries.referralChildren')}</span><span class="val">${ref.children.map((c: any) => c.name).join(', ')}</span></div>`
                                   : ''
                                 printReceipt(
-                                  t('medical.referralDetails'), 'Orientation Médicale',
-                                  `<div class="col"><div class="row"><span class="lbl">{t('doctors.refCode')}</span><span class="val">${ref.reference || '—'}</span></div>
+                                  t('medical.referralDetails'), t('medical.title'),
+                                  `<div class="col"><div class="row"><span class="lbl">${t('doctors.refCode')}</span><span class="val">${ref.reference || '—'}</span></div>
 <div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${ref.beneficiaryName || ''}</span></div>
 <div class="row"><span class="lbl">${t('medical.doctor')}</span><span class="val">${ref.doctorName}</span></div>
 ${ref.analysisType ? `<div class="row"><span class="lbl">${t('medical.analysisType')}</span><span class="val">${ref.analysisType}</span></div>` : ''}</div>
 <div class="col">${caisseRow}${subCatRow}
-<div class="row"><span class="lbl">{t('common.date')}</span><span class="val">${formatDate(ref.date)}</span></div>
+<div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(ref.date)}</span></div>
 ${ref.hospital ? `<div class="row"><span class="lbl">${t('medical.hospital')}</span><span class="val">${ref.hospital}</span></div>` : ''}
 ${childrenHtml}
-${ref.notes ? `<div class="row"><span class="lbl">{t('common.notes')}</span><span class="val">${ref.notes}</span></div>` : ''}</div>`,
+${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><span class="val">${ref.notes}</span></div>` : ''}</div>`,
                                   'color:#2563eb',
                                   formatCurrency(ref.amount), ref.amountInWords || '', '',
                                   t('medical.presidentSignature'), t('medical.assocStamp'),

@@ -44,7 +44,7 @@ export function printReceipt(
 </head>
 <body>
 <div class="page"><div class="receipt">
-  <div class="hdr"><h1>🕌 ${assocName || t('app.title')}</h1><span class="sub">${subtitle}</span></div>
+  <div class="hdr"><h1>🕌 ${assocName || ''}</h1><span class="sub">${subtitle}</span></div>
   <div class="info">${rows}</div>
   <div class="amt" style="${amountClass}"><div class="num">${amount}</div><div class="words">${wordsAr}<span class="fr">${wordsFr}</span></div></div>
   <div class="sign"><div><span class="label">${signLeft}</span><div class="line"></div></div><div><span class="label">${signRight}</span><div class="line"></div></div></div>
@@ -159,7 +159,7 @@ export function printBeneficiaryCard(params: {
     @media print { .no-print { display: none; } }
   </style>
   </head><body>
-  <div class="hdr"><h1>🕌 ${params.assocName || t('app.title')}</h1><span class="sub">${l.title} — ${params.reference || ''}</span></div>
+  <div class="hdr"><h1>🕌 ${params.assocName || ''}</h1><span class="sub">${l.title} — ${params.reference || ''}</span></div>
   <div class="section">
     <div class="section-title">${l.personalInfo}</div>
     <div class="info">

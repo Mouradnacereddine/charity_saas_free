@@ -130,7 +130,20 @@ export default function DonorsPage() {
                       <p className="text-sm font-medium">{formatDate(r.date)}</p>
                       <p className="text-xs text-muted-foreground">{r.caisse?.nameAr} - {formatCurrency(r.amount)}</p>
                     </div>
-                    <Button size="sm" variant="ghost" onClick={() => printReceipt({ receipt: r, association: association || undefined, wordsAr: numberToArabicWords(r.amount), wordsFr: numberToFrenchWords(r.amount) })}>
+                    <Button size="sm" variant="ghost" onClick={() => printReceipt(
+                        t('donors.receiptTitle'), t('donors.receiptTitle'),
+                        `<div class="col"><div class="row"><span class="lbl">${t('receipt.receiptNo')}</span><span class="val">${r.receiptNumber || '—'}</span></div>
+<div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(r.date)}</span></div>
+<div class="row"><span class="lbl">${t('dashboard.donor')}</span><span class="val">${r.donorName || '—'}</span></div></div>
+<div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${r.caisseName || '—'}</span></div>
+${r.subCategoryName ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${r.subCategoryName}</span></div>` : ''}</div>`,
+                        'color:#16a34a',
+                        formatCurrency(r.amount), numberToArabicWords(r.amount), numberToFrenchWords(r.amount),
+                        t('donors.donorSignature'), t('receipt.stampSignature'),
+                        association?.name,
+                        i18n.language === 'ar' ? 'rtl' : 'ltr',
+                        i18n.language
+                      )}>
                       <Printer className="w-4 h-4" />
                     </Button>
                   </div>
