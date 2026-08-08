@@ -4,10 +4,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatDate, generateLoanReference } from '../utils/helpers'
 import { dirForInput } from '../utils/localized'
-import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin, Printer, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin, Printer, ChevronDown, ChevronUp, ClipboardCheck, ClipboardList } from 'lucide-react'
 import { printReceipt } from '../lib/receipt'
 import { useAuth } from '../hooks/useAuth'
-import type { Article, Loan, LoanItem, ArticleCategory, ArticleStatus, StorageLocation, Beneficiary } from '../types'
+import type { Article, Loan, LoanItem, ArticleCategory, ArticleStatus, StorageLocation, Beneficiary, StockTake, StockTakeItem } from '../types'
 import {
   useArticles,
   useCreateArticle,
@@ -31,6 +31,12 @@ import {
   useCreateStatus,
   useUpdateStatus,
   useDeleteStatus,
+  useStockTakes,
+  useStockTake,
+  useCreateStockTake,
+  useSaveStockTakeItems,
+  useCompleteStockTake,
+  useCancelStockTake,
 } from '../hooks/useInventory'
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
 
@@ -48,6 +54,12 @@ const LOAN_STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'danger' | 'd
   partiellement_retourne: 'warning',
   retourne: 'default',
   definitif: 'default',
+}
+
+const STOCK_TAKE_STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'danger' | 'default' | 'info'> = {
+  in_progress: 'warning',
+  completed: 'success',
+  cancelled: 'danger',
 }
 
 const EMPTY_ARTICLE_FORM = {
@@ -112,9 +124,10 @@ export default function InventoryPage() {
     definitif: t('inventory.final'),
   }
   const { association } = useAuth()
-  const [activeTab, setActiveTab] = useState<'stock' | 'loans' | 'settings'>('stock')
+  const [activeTab, setActiveTab] = useState<'stock' | 'loans' | 'settings' | 'inventory'>('stock')
   const stockActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
   const loansActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
+  const inventoryActions = useRef<{ addItem: () => void }>({ addItem: () => {} })
 
   return (
     <div className="space-y-6">
@@ -123,7 +136,7 @@ export default function InventoryPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('inventory.title')}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {activeTab === 'stock' ? t('inventory.subtitleStock') : activeTab === 'loans' ? t('inventory.subtitleLoans') : t('inventory.subtitleSettings')}
+            {activeTab === 'stock' ? t('inventory.subtitleStock') : activeTab === 'loans' ? t('inventory.subtitleLoans') : activeTab === 'inventory' ? t('inventory.subtitleInventory') : t('inventory.subtitleSettings')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -146,6 +159,11 @@ export default function InventoryPage() {
                 <Plus className="w-4 h-4" /> {t('inventory.newLoan')}
               </Button>
             </>
+          )}
+          {activeTab === 'inventory' && (
+            <Button size="sm" onClick={() => inventoryActions.current.addItem()}>
+              <ClipboardCheck className="w-4 h-4" /> {t('inventory.newStockTake')}
+            </Button>
           )}
         </div>
       </div>
@@ -186,6 +204,17 @@ export default function InventoryPage() {
             <Settings className="inline-block w-4 h-4 ml-2" />
             {t('inventory.tabSettings')}
           </button>
+          <button
+            onClick={() => setActiveTab('inventory')}
+            className={`flex-1 sm:flex-initial pb-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
+              activeTab === 'inventory'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            <ClipboardList className="inline-block w-4 h-4 ml-2" />
+            {t('inventory.tabInventory')}
+          </button>
         </nav>
       </div>
 
@@ -193,6 +222,8 @@ export default function InventoryPage() {
         <StockTab actionsRef={stockActions} statusLabels={STATUS_LABELS} />
       ) : activeTab === 'loans' ? (
         <LoansTab actionsRef={loansActions} statusLabels={STATUS_LABELS} loanStatusLabels={loanStatusLabels} />
+      ) : activeTab === 'inventory' ? (
+        <InventoryTab actionsRef={inventoryActions} />
       ) : (
         <SettingsTab />
       )}
@@ -1813,5 +1844,377 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
         )}
       </Modal>
     </>
+  )
+}
+
+// ============================================================
+// INVENTORY TAB (Inventaire / جرد المخزون)
+// ============================================================
+
+function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ addItem: () => void }> }) {
+  const { t } = useTranslation();
+  const { data: stockTakes = [], isLoading } = useStockTakes()
+  const createStockTake = useCreateStockTake()
+  const completeStockTake = useCompleteStockTake()
+  const cancelStockTake = useCancelStockTake()
+
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [newNotes, setNewNotes] = useState('')
+  const [selectedTakeId, setSelectedTakeId] = useState<string | null>(null)
+
+  const stockTakeStatusLabels: Record<string, string> = {
+    in_progress: t('inventory.inventoryInProgress'),
+    completed: t('inventory.inventoryCompleted'),
+    cancelled: t('inventory.inventoryCancelled'),
+  }
+
+  useEffect(() => {
+    actionsRef.current = { addItem: () => setShowCreateModal(true) }
+  })
+
+  const handleCreate = async () => {
+    try {
+      const { data } = await createStockTake.mutateAsync({ notes: newNotes.trim() || undefined })
+      setShowCreateModal(false)
+      setNewNotes('')
+      setSelectedTakeId(data.id)
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('inventory.newStockTake'))
+    }
+  }
+
+  const handleComplete = async (id: string) => {
+    if (!window.confirm(t('inventory.confirmCompleteStockTake'))) return
+    try {
+      await completeStockTake.mutateAsync(id)
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('inventory.completeStockTake'))
+    }
+  }
+
+  const handleCancel = async (id: string) => {
+    if (!window.confirm(t('inventory.confirmCancelStockTake'))) return
+    await cancelStockTake.mutateAsync(id)
+  }
+
+  if (isLoading) return <LoadingSpinner />
+
+  return (
+    <>
+      {/* List of sessions */}
+      <Card titleAr={t("inventory.inventoryList")}>
+        {stockTakes.length === 0 ? (
+          <EmptyState message={t('inventory.noStockTakes')} icon={<ClipboardCheck className="w-12 h-12" />} />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.stockTakeRef')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('common.status')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">{t('inventory.countedItems')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">{t('inventory.totalDiff')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.startedAt')}</th>
+                  <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t('inventory.completedAt')}</th>
+                  <th className="text-center py-3 px-4 font-medium text-muted-foreground">{t('common.actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stockTakes.map((st: StockTake) => {
+                  const itemCount = st.itemCount ?? st.items?.length ?? 0
+                  const diffCount = st.diffCount ?? (st.items || []).filter((i) => i.counted !== null && i.counted !== undefined && i.counted !== i.theoretical).length
+                  return (
+                  <tr key={st.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setSelectedTakeId(st.id)}>
+                    <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{st.reference || '—'}</td>
+                    <td className="py-3 px-4">
+                      <Badge variant={STOCK_TAKE_STATUS_VARIANTS[st.status] || 'default'}>
+                        {stockTakeStatusLabels[st.status] || st.status}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{diffCount}/{itemCount}</td>
+                    <td className="py-3 px-4 hidden md:table-cell">
+                      <span className={diffCount > 0 ? 'text-warning font-medium' : 'text-success font-medium'}>
+                        {diffCount > 0 ? `${diffCount} ${t('inventory.diff')}` : t('inventory.settled')}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground">{formatDate(st.startedAt)}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{st.completedAt ? formatDate(st.completedAt) : '—'}</td>
+                    <td className="py-3 px-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setSelectedTakeId(st.id); }}
+                          className="p-1.5 text-muted-foreground/70 hover:text-primary transition-colors"
+                          title={t('common.details')}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        {st.status === 'in_progress' && (
+                          <>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleComplete(st.id); }}
+                              className="p-1.5 text-muted-foreground/70 hover:text-success transition-colors"
+                              title={t('inventory.completeStockTake')}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleCancel(st.id); }}
+                              className="p-1.5 text-muted-foreground/70 hover:text-danger-600 transition-colors"
+                              title={t('inventory.cancelStockTake')}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {/* Create modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => { setShowCreateModal(false); setNewNotes('') }}
+        title={t("inventory.newStockTake")}
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">{t('inventory.inventoryHint')}</p>
+          <TextArea
+            labelAr={t('common.notes')}
+            value={newNotes}
+            onChange={(e) => setNewNotes(e.target.value)}
+            placeholder={t('common.notes')}
+          />
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleCreate}>{t('inventory.newStockTake')}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Counting screen */}
+      <StockTakeCounter id={selectedTakeId} onClose={() => setSelectedTakeId(null)} />
+    </>
+  )
+}
+
+// ============================================================
+// STOCK TAKE COUNTER — notification screen (écran de comptage)
+// ============================================================
+
+function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => void }) {
+  const { t } = useTranslation();
+  const { association } = useAuth();
+  const { data: stockTake } = useStockTake(id)
+  const saveItems = useSaveStockTakeItems()
+  const completeStockTake = useCompleteStockTake()
+  const cancelStockTake = useCancelStockTake()
+
+  // Local mirrored counted values
+  const [counts, setCounts] = useState<Record<string, number | ''>>({})
+  const [saving, setSaving] = useState(false)
+
+  const items: StockTakeItem[] = (stockTake?.items as StockTakeItem[]) || []
+
+  // Sync local state when detail loads
+  useEffect(() => {
+    if (stockTake) {
+      const init: Record<string, number | ''> = {}
+      for (const it of (stockTake.items as StockTakeItem[]) || []) {
+        init[it.articleId] = it.counted === null || it.counted === undefined ? '' : it.counted
+      }
+      setCounts(init)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stockTake?.id])
+
+  if (!stockTake) return null
+
+  const theoreticalTotal = items.reduce((s, it) => s + (it.theoretical || 0), 0)
+  const countedTotal = items.reduce((s, it) => {
+    const v = counts[it.articleId]
+    return s + (typeof v === 'number' ? v : 0)
+  }, 0)
+  const diffTotal = countedTotal - theoreticalTotal
+  const countedCount = items.filter((it) => counts[it.articleId] !== '' && counts[it.articleId] !== undefined && counts[it.articleId] !== null).length
+
+  const allCounted = countedCount === items.length
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await saveItems.mutateAsync({
+        id: stockTake.id,
+        items: items.map((it) => ({
+          articleId: it.articleId,
+          counted: counts[it.articleId] === '' ? undefined : Number(counts[it.articleId]),
+        })),
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleComplete = async () => {
+    if (!window.confirm(t('inventory.confirmCompleteStockTake'))) return
+    try {
+      await completeStockTake.mutateAsync(stockTake.id)
+      onClose()
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('inventory.completeStockTake'))
+    }
+  }
+
+  const handleCancel = async () => {
+    if (!window.confirm(t('inventory.confirmCancelStockTake'))) return
+    try {
+      await cancelStockTake.mutateAsync(stockTake.id)
+      onClose()
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('inventory.cancelStockTake'))
+    }
+  }
+
+  const handlePrint = () => {
+    const rowsHtml = items.map((it) => {
+      const counted = counts[it.articleId] === '' ? null : Number(counts[it.articleId])
+      const diff = counted === null ? null : counted - (it.theoretical || 0)
+      return `<div class="row"><span class="lbl">${it.articleName}</span><span class="val">${t('inventory.theoretical')}: ${it.theoretical} → ${t('inventory.counted')}: ${counted ?? '—'} <i>(${t('inventory.diff')}: ${diff === null ? '—' : diff > 0 ? '+' + diff : diff})</i></span></div>`
+    }).join('')
+
+    printReceipt(
+      t('inventory.inventoryList'),
+      stockTake.reference,
+      `<div class="col">
+        <div class="row"><span class="lbl">${t('inventory.stockTakeRef')}</span><span class="val">${stockTake.reference || '—'}</span></div>
+        <div class="row"><span class="lbl">${t('inventory.startedAt')}</span><span class="val">${formatDate(stockTake.startedAt)}</span></div>
+        ${stockTake.completedAt ? `<div class="row"><span class="lbl">${t('inventory.completedAt')}</span><span class="val">${formatDate(stockTake.completedAt)}</span></div>` : ''}
+       </div>
+       <div class="col">
+        ${rowsHtml}
+       </div>`,
+      '',
+      `${theoreticalTotal} → ${countedTotal}`,
+      `${t('inventory.totalDiff')}: ${diffTotal}`,
+      '',
+      t('receipt.beneficiarySign'),
+      t('receipt.stampSignature'),
+      association?.name
+    )
+  }
+
+  const isCompleted = stockTake.status === 'completed' || stockTake.status === 'cancelled'
+  const statusLabel = stockTake.status === 'in_progress'
+    ? t('inventory.inventoryInProgress')
+    : stockTake.status === 'completed'
+      ? t('inventory.inventoryCompleted')
+      : t('inventory.inventoryCancelled')
+
+  return (
+    <Modal isOpen onClose={onClose} title={t('inventory.inventoryList')} size="xl">
+      <div className="space-y-4">
+        {/* Info bar */}
+        <div className="bg-muted rounded-lg p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-foreground" dir="ltr">{stockTake.reference || '—'}</p>
+            <p className="text-xs text-muted-foreground">
+              {t('inventory.startedAt')}: {formatDate(stockTake.startedAt)}
+              {stockTake.completedAt ? ` — ${t('inventory.completedAt')}: ${formatDate(stockTake.completedAt)}` : ''}
+            </p>
+          </div>
+          <Badge variant={STOCK_TAKE_STATUS_VARIANTS[stockTake.status] || 'default'}>{statusLabel}</Badge>
+        </div>
+
+        <p className="text-sm text-muted-foreground">{t('inventory.inventoryHint')}</p>
+
+        {!isCompleted && (
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm text-muted-foreground">
+              {t('inventory.countedItems')}: <span className="font-medium text-foreground">{countedCount}/{items.length}</span>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {t('inventory.totalDiff')}: <span className={diffTotal === 0 ? 'text-success font-medium' : 'text-warning font-medium'} dir="ltr">{diffTotal > 0 ? '+' + diffTotal : diffTotal}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Items table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.sectionName')}</th>
+                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.status')}</th>
+                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.theoretical')}</th>
+                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.counted')}</th>
+                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.diff')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it) => {
+                const counted = counts[it.articleId] !== '' && counts[it.articleId] !== undefined && counts[it.articleId] !== null ? Number(counts[it.articleId]) : null
+                const diff = counted === null ? null : counted - (it.theoretical || 0)
+                return (
+                  <tr key={it.articleId} className="border-b border-border/50">
+                    <td className="py-2 px-3 font-medium text-foreground">{it.articleName}</td>
+                    <td className="py-2 px-3 text-muted-foreground">{it.status || '—'}</td>
+                    <td className="py-2 px-3 text-muted-foreground" dir="ltr">{it.theoretical ?? ''}</td>
+                    <td className="py-2 px-3">
+                      <input
+                        type="number"
+                        min={0}
+                        disabled={isCompleted}
+                        value={counts[it.articleId]}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setCounts((prev) => ({ ...prev, [it.articleId]: v === '' ? '' : Math.max(0, parseInt(v) || 0) }))
+                        }}
+                        className="w-24 px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        dir="ltr"
+                      />
+                    </td>
+                    <td className="py-2 px-3">
+                      <span className={`font-medium ${diff === null ? 'text-muted-foreground' : diff === 0 ? 'text-success' : 'text-warning'}`} dir="ltr">
+                        {diff === null ? '—' : diff > 0 ? `+${diff}` : diff}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {!isCompleted ? (
+          <div className="flex flex-wrap justify-end gap-2 pt-4 border-t border-border">
+            <Button size="sm" variant="secondary" onClick={handlePrint}>
+              <Printer className="w-4 h-4" /> {t('inventory.printInventory')}
+            </Button>
+            <Button size="sm" variant="secondary" onClick={handleCancel}>
+              <Trash2 className="w-4 h-4" /> {t('inventory.cancelStockTake')}
+            </Button>
+            <Button size="sm" variant="secondary" onClick={handleSave} disabled={saving}>
+              {saving ? t('common.saving') : t('inventory.validateStockTake')}
+            </Button>
+            <Button size="sm" onClick={handleComplete} disabled={!allCounted}>
+              <ClipboardCheck className="w-4 h-4" /> {t('inventory.completeStockTake')}
+            </Button>
+          </div>
+        ) : (
+          <div className="flex justify-end gap-2 pt-4 border-t border-border">
+            <Button size="sm" variant="secondary" onClick={handlePrint}>
+              <Printer className="w-4 h-4" /> {t('inventory.printInventory')}
+            </Button>
+          </div>
+        )}
+      </div>
+    </Modal>
   )
 }

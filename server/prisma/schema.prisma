@@ -50,6 +50,12 @@ enum LoanStatus {
   definitif
 }
 
+enum StockTakeStatus {
+  in_progress
+  completed
+  cancelled
+}
+
 // ============================================
 // MODELS
 // ============================================
@@ -87,6 +93,7 @@ model Association {
   donationAllocations  DonationAllocation[]
   notifications        Notification[]
   inviteTokens         InviteToken[]
+  stockTakes           StockTake[]
 
   @@index([email])
 }
@@ -331,6 +338,24 @@ model Loan {
 
   @@index([associationId])
   @@index([beneficiaryId])
+  @@index([status])
+}
+
+model StockTake {
+  id            String          @id @default(uuid())
+  associationId String
+  reference     String
+  status        StockTakeStatus @default(in_progress)
+  items         Json            @default("[]")
+  notes         String?
+  startedAt     DateTime        @default(now())
+  completedAt   DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId])
   @@index([status])
 }
 

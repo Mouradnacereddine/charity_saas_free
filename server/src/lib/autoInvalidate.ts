@@ -25,6 +25,7 @@ const PATH_TO_RESOURCE: Record<string, string[]> = {
   '/inventory/storage-locations': ['storage-locations'],
   '/inventory/school-grades': ['school-grades'],
   '/inventory/article-statuses': ['article-statuses'],
+  '/inventory/stock-takes': ['stock-takes', 'articles'],
   '/loans': ['loans'],
   '/doctors': ['doctors'],
   '/doctors/specialties': ['doctor-specialties'],

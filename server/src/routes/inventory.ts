@@ -656,4 +656,245 @@ router.delete('/article-statuses/:id', async (req: AuthRequest, res: Response): 
   }
 });
 
+// ========================================================================
+// STOCK TAKES (Inventaire / جرد المخزون)
+// ========================================================================
+//
+// Une session d'inventaire fige un instantané du stock DISPONIBLE
+// (availableQuantity) de tous les articles. L'opérateur saisit les
+// quantités réellement comptées ; à la validation, seule la quantité
+// disponible est ajustée par delta (jamais la quantité totale `quantity`,
+// jamais les prêts en cours).
+
+// POST /api/inventory/stock-takes — create session (snapshot)
+router.post('/stock-takes', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const associationId = req.user!.associationId;
+    const { notes } = req.body;
+
+    const articles = await prisma.article.findMany({
+      where: { associationId },
+      select: { id: true, reference: true, name: true, availableQuantity: true, status: true },
+    });
+
+    if (articles.length === 0) {
+      res.status(400).json({ error: 'لا توجد مقالات للجرد' });
+      return;
+    }
+
+    const items = articles.map((a) => ({
+      articleId: a.id,
+      articleReference: a.reference,
+      articleName: a.name,
+      theoretical: a.availableQuantity,
+      counted: null,
+      diff: null,
+      status: a.status,
+    }));
+
+    const stockTake = await prisma.stockTake.create({
+      data: {
+        associationId,
+        reference: generateRef('STK'),
+        items,
+        notes: notes || null,
+      },
+    });
+
+    res.status(201).json(stockTake);
+  } catch (error) {
+    console.error('Error creating stock take:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/inventory/stock-takes — list sessions (summary, no items payload)
+router.get('/stock-takes', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const associationId = req.user!.associationId;
+
+    const stockTakes = await prisma.stockTake.findMany({
+      where: { associationId },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+
+    const result = stockTakes.map((st: any) => {
+      const items: any[] = st.items || [];
+      const diffCount = items.filter((i: any) => i.counted !== null && i.counted !== undefined && i.counted !== i.theoretical).length;
+      return {
+        ...st,
+        itemCount: items.length,
+        diffCount,
+      };
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error listing stock takes:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/inventory/stock-takes/:id — detail (theoretical frozen at snapshot)
+router.get('/stock-takes/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const stockTake = await prisma.stockTake.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!stockTake) {
+      res.status(404).json({ error: 'Stock take not found' });
+      return;
+    }
+
+    res.json(stockTake);
+  } catch (error) {
+    console.error('Error getting stock take:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/inventory/stock-takes/:id/items — save counted quantities (in_progress only)
+router.put('/stock-takes/:id/items', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+    const { items } = req.body;
+
+    if (!items || !Array.isArray(items)) {
+      res.status(400).json({ error: 'Items array is required' });
+      return;
+    }
+
+    const stockTake = await prisma.stockTake.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!stockTake) {
+      res.status(404).json({ error: 'Stock take not found' });
+      return;
+    }
+    if (stockTake.status !== 'in_progress') {
+      res.status(400).json({ error: 'Stock take is already closed' });
+      return;
+    }
+
+    const currentItems: any[] = (stockTake.items as any[]) || [];
+    const updated = currentItems.map((it: any) => {
+      const incoming = items.find((x: any) => x.articleId === it.articleId);
+      if (incoming && typeof incoming.counted === 'number' && incoming.counted >= 0) {
+        const counted = Math.trunc(incoming.counted);
+        it.counted = counted;
+        it.diff = counted - (it.theoretical ?? 0);
+      }
+      return it;
+    });
+
+    const saved = await prisma.stockTake.update({
+      where: { id },
+      data: { items: updated },
+    });
+
+    res.json(saved);
+  } catch (error) {
+    console.error('Error saving stock take items:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/inventory/stock-takes/:id/complete — validate & apply deltas
+router.post('/stock-takes/:id/complete', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const stockTake = await prisma.stockTake.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!stockTake) {
+      res.status(404).json({ error: 'Stock take not found' });
+      return;
+    }
+    if (stockTake.status !== 'in_progress') {
+      res.status(400).json({ error: 'Stock take is already closed' });
+      return;
+    }
+
+    const items: any[] = (stockTake.items as any[]) || [];
+    const missing = items.filter((i: any) => i.counted === null || i.counted === undefined);
+    if (missing.length > 0) {
+      res.status(400).json({ error: 'جرد غير مكتمل: بعض الأصناف لم يتم عدها' });
+      return;
+    }
+
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        for (const item of items) {
+          const article = await tx.article.findFirst({
+            where: { id: item.articleId, associationId },
+          });
+          if (!article) continue; // article deleted mid-count — keep snapshot, skip delta
+
+          const delta = (item.counted ?? 0) - (item.theoretical ?? 0);
+          if (delta === 0) continue;
+
+          await tx.article.update({
+            where: { id: article.id },
+            data: { availableQuantity: Math.max(0, article.availableQuantity + delta) },
+          });
+        }
+
+        return tx.stockTake.update({
+          where: { id },
+          data: { status: 'completed', completedAt: new Date() },
+        });
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error completing stock take:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  } catch (error) {
+    console.error('Error completing stock take:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/inventory/stock-takes/:id — cancel (in_progress only, no stock impact)
+router.delete('/stock-takes/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const stockTake = await prisma.stockTake.findFirst({
+      where: { id, associationId },
+    });
+
+    if (!stockTake) {
+      res.status(404).json({ error: 'Stock take not found' });
+      return;
+    }
+    if (stockTake.status !== 'in_progress') {
+      res.status(400).json({ error: 'Stock take is already closed' });
+      return;
+    }
+
+    await prisma.stockTake.update({
+      where: { id },
+      data: { status: 'cancelled', completedAt: new Date() },
+    });
+
+    res.json({ message: 'Stock take cancelled successfully' });
+  } catch (error) {
+    console.error('Error cancelling stock take:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

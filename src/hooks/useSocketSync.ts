@@ -20,6 +20,7 @@ const RESOURCE_TO_QUERY_KEYS: Record<string, string[]> = {
   'storage-locations': ['storage-locations'],
   'school-grades': ['school-grades'],
   'article-statuses': ['article-statuses'],
+  'stock-takes': ['stock-takes', 'articles'],
   loans: ['loans'],
   'medical-referrals': ['medical-referrals'],
   'analysis-types': ['analysis-types'],
@@ -62,6 +63,7 @@ export function useSocketSync() {
         queryClient.invalidateQueries({ queryKey: ['storage-locations'] });
         queryClient.invalidateQueries({ queryKey: ['school-grades'] });
         queryClient.invalidateQueries({ queryKey: ['article-statuses'] });
+        queryClient.invalidateQueries({ queryKey: ['stock-takes'] });
         queryClient.invalidateQueries({ queryKey: ['loans'] });
         queryClient.invalidateQueries({ queryKey: ['medical-referrals'] });
         queryClient.invalidateQueries({ queryKey: ['analysis-types'] });

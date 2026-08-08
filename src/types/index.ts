@@ -302,6 +302,35 @@ export interface Loan {
   updatedAt: Date;
 }
 
+// ---- Stock Take (Inventaire / جرد المخزون) ----
+
+export type StockTakeStatus = 'in_progress' | 'completed' | 'cancelled';
+
+export interface StockTakeItem {
+  articleId: string;
+  articleReference?: string;
+  articleName: string;
+  theoretical: number; // snapshot de availableQuantity au moment de l'ouverture
+  counted: number | null;
+  diff: number | null; // counted - theoretical
+  status?: string; // statut d'article au moment du snapshot
+}
+
+export interface StockTake {
+  id: string;
+  reference: string;
+  status: StockTakeStatus;
+  items: StockTakeItem[];
+  notes?: string;
+  startedAt: string; // ISO date string
+  completedAt?: string; // ISO date string
+  createdAt: string;
+  updatedAt: string;
+  // Remplis seulement dans la liste (GET /stock-takes)
+  itemCount?: number;
+  diffCount?: number;
+}
+
 // ---- Medical Referral ----
 
 export interface MedicalReferral {

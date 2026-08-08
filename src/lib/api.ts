@@ -30,6 +30,7 @@ const LIST_ENDPOINTS = [
   'storage-locations',
   'article-statuses',
   'school-grades',
+  'stock-takes',
   'caisses',
   'beneficiaries',
   'donors',
@@ -228,6 +229,14 @@ export const inventoryApi = {
   createStatus: (data: any) => api.post('/inventory/article-statuses', data),
   updateStatus: (id: string, data: any) => api.put(`/inventory/article-statuses/${id}`, data),
   deleteStatus: (id: string) => api.delete(`/inventory/article-statuses/${id}`),
+  // ---- Stock Take (Inventaire / جرد المخزون) ----
+  stockTakes: (params?: Record<string, string>) => api.get('/inventory/stock-takes', { params }),
+  getStockTake: (id: string) => api.get(`/inventory/stock-takes/${id}`),
+  createStockTake: (data: { notes?: string }) => api.post('/inventory/stock-takes', data),
+  saveStockTakeItems: (id: string, items: { articleId: string; counted?: number }[]) =>
+    api.put(`/inventory/stock-takes/${id}/items`, { items }),
+  completeStockTake: (id: string) => api.post(`/inventory/stock-takes/${id}/complete`),
+  cancelStockTake: (id: string) => api.delete(`/inventory/stock-takes/${id}`),
 };
 
 export const loansApi = {

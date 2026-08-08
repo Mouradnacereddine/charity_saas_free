@@ -239,3 +239,67 @@ export function useDeleteSchoolGrade() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['school-grades'] }),
   });
 }
+
+// ---- Stock Takes (Inventaire / جرد المخزون) ----
+export function useStockTakes(params?: Record<string, string>) {
+  return useQuery({
+    queryKey: ['stock-takes', params],
+    queryFn: async () => {
+      const res = await inventoryApi.stockTakes(params);
+      return asArray(res.data);
+    },
+  });
+}
+
+export function useStockTake(id: string | null) {
+  return useQuery({
+    queryKey: ['stock-takes', id],
+    queryFn: async () => {
+      const res = await inventoryApi.getStockTake(id!);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateStockTake() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inventoryApi.createStockTake,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['stock-takes'] }),
+  });
+}
+
+export function useSaveStockTakeItems() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, items }: { id: string; items: { articleId: string; counted?: number }[] }) =>
+      inventoryApi.saveStockTakeItems(id, items),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['stock-takes'] });
+      qc.invalidateQueries({ queryKey: ['stock-takes', vars.id] });
+    },
+  });
+}
+
+export function useCompleteStockTake() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inventoryApi.completeStockTake,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['stock-takes'] });
+      qc.invalidateQueries({ queryKey: ['articles'] });
+    },
+  });
+}
+
+export function useCancelStockTake() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inventoryApi.cancelStockTake,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['stock-takes'] });
+      qc.invalidateQueries({ queryKey: ['articles'] });
+    },
+  });
+}
