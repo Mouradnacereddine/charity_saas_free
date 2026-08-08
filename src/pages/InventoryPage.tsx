@@ -106,6 +106,33 @@ function getDefaultFrenchName(arName: string): string {
   return map[arName] || arName
 }
 
+export interface StockTakeFilter {
+  search: string;
+  category: string;
+  storage: string;
+  status: string;
+}
+
+/**
+ * Pure filtering of a stock-take's items — extracted for unit testing.
+ * Match sur nom, référence, catégorie, lieu (recherche libre) + catégorie/lieu/statut.
+ */
+export function filterStockTakeItems(items: StockTakeItem[], filters: StockTakeFilter): StockTakeItem[] {
+  const q = (filters.search || '').trim().toLowerCase()
+  return items.filter((it) => {
+    const matchesSearch =
+      !q ||
+      (it.articleName || '').toLowerCase().includes(q) ||
+      (it.articleReference || '').toLowerCase().includes(q) ||
+      (it.categoryName || '').toLowerCase().includes(q) ||
+      (it.storageName || '').toLowerCase().includes(q)
+    const matchesCategory = !filters.category || it.categoryId === filters.category
+    const matchesStorage = !filters.storage || it.storageLocationId === filters.storage
+    const matchesStatus = !filters.status || it.status === filters.status
+    return matchesSearch && matchesCategory && matchesStorage && matchesStatus
+  })
+}
+
 // ---- Component ----
 
 export default function InventoryPage() {
@@ -2019,6 +2046,8 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
   const { t } = useTranslation();
   const { association } = useAuth();
   const { data: stockTake } = useStockTake(id)
+  const { data: categories = [] } = useArticleCategories()
+  const { data: locations = [] } = useStorageLocations()
   const saveItems = useSaveStockTakeItems()
   const completeStockTake = useCompleteStockTake()
   const cancelStockTake = useCancelStockTake()
@@ -2027,9 +2056,22 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
   const [counts, setCounts] = useState<Record<string, number | ''>>({})
   const [saving, setSaving] = useState(false)
 
+  // Advanced search state (homogène avec StockTab)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterSearch, setFilterSearch] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [filterStorage, setFilterStorage] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [committedFilters, setCommittedFilters] = useState({
+    search: '',
+    category: '',
+    storage: '',
+    status: '',
+  })
+
   const items: StockTakeItem[] = (stockTake?.items as StockTakeItem[]) || []
 
-  // Sync local state when detail loads
+  // Sync saved counts (and reset nothing else) when detail loads
   useEffect(() => {
     if (stockTake) {
       const init: Record<string, number | ''> = {}
@@ -2042,6 +2084,33 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
   }, [stockTake?.id])
 
   if (!stockTake) return null
+
+  // ---- Advanced filtering (same pattern as StockTab) ----
+  const applyFilters = () => {
+    setCommittedFilters({ search: filterSearch, category: filterCategory, storage: filterStorage, status: filterStatus })
+  }
+  const resetFilters = () => {
+    setFilterSearch('')
+    setFilterCategory('')
+    setFilterStorage('')
+    setFilterStatus('')
+    setCommittedFilters({ search: '', category: '', storage: '', status: '' })
+  }
+
+  const filteredItems = filterStockTakeItems(items, committedFilters)
+
+  const categoryOptions = categories.map((c: ArticleCategory) => ({
+    value: c.id,
+    label: c.name,
+  }))
+  const locationOptions = locations.map((l: StorageLocation) => ({
+    value: l.id,
+    label: l.name,
+  }))
+  const statusOptions = Array.from(new Set(items.map((it) => it.status || '').filter(Boolean))).map((s) => ({
+    value: s,
+    label: s,
+  }))
 
   const theoreticalTotal = items.reduce((s, it) => s + (it.theoretical || 0), 0)
   const countedTotal = items.reduce((s, it) => {
@@ -2087,7 +2156,13 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
       await completeStockTake.mutateAsync(stockTake.id)
       onClose()
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('inventory.completeStockTake'))
+      const serverMsg = err?.response?.data?.error || ''
+      // Si le serveur signale un comptage incomplet (message en dur en arabe), on affiche en français
+      if (serverMsg && serverMsg.includes('لم يتم عدها')) {
+        alert(t('inventory.remainingToCount'))
+      } else {
+        alert(serverMsg || err?.message || t('inventory.completeStockTake'))
+      }
     } finally {
       setSaving(false)
     }
@@ -2166,12 +2241,76 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
           </div>
         )}
 
+        {/* Advanced search — filter bar */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
+              <input
+                type="text"
+                placeholder={t('inventory.searchArticle')}
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }}
+                className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => setFilterOpen((v) => !v)}>
+              <Filter className="w-4 h-4" /> {t('inventory.advancedSearch')}
+            </Button>
+            <Button size="sm" onClick={applyFilters}>
+              <Search className="w-4 h-4" /> {t('common.search')}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={resetFilters}>
+              {t('doctors.reset')}
+            </Button>
+          </div>
+
+          {filterOpen && (
+            <Card titleAr={t("inventory.advancedSearch")}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <SearchableSelect
+                  labelAr={t('inventory.category')}
+                  value={filterCategory}
+                  onChange={setFilterCategory}
+                  options={[{ value: '', label: t('common.all') }, ...categoryOptions]}
+                  placeholder={t('common.all')}
+                />
+                <SearchableSelect
+                  labelAr={t('inventory.storageLocation')}
+                  value={filterStorage}
+                  onChange={setFilterStorage}
+                  options={[{ value: '', label: t('common.all') }, ...locationOptions]}
+                  placeholder={t('common.all')}
+                />
+                <SearchableSelect
+                  labelAr={t('common.status')}
+                  value={filterStatus}
+                  onChange={setFilterStatus}
+                  options={[{ value: '', label: t('common.all') }, ...statusOptions]}
+                  placeholder={t('common.all')}
+                />
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button size="sm" onClick={applyFilters}>
+                  <Search className="w-4 h-4" /> {t('common.search')}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={resetFilters}>
+                  {t('doctors.reset')}
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
+
         {/* Items table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
                 <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.sectionName')}</th>
+                <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.category')}</th>
+                <th className="text-start py-2 px-3 font-medium text-muted-foreground hidden md:table-cell">{t('inventory.storageLocation')}</th>
                 <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.status')}</th>
                 <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.theoretical')}</th>
                 <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.counted')}</th>
@@ -2179,36 +2318,48 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
               </tr>
             </thead>
             <tbody>
-              {items.map((it) => {
-                const counted = counts[it.articleId] !== '' && counts[it.articleId] !== undefined && counts[it.articleId] !== null ? Number(counts[it.articleId]) : null
-                const diff = counted === null ? null : counted - (it.theoretical || 0)
-                return (
-                  <tr key={it.articleId} className="border-b border-border/50">
-                    <td className="py-2 px-3 font-medium text-foreground">{it.articleName}</td>
-                    <td className="py-2 px-3 text-muted-foreground">{it.status || '—'}</td>
-                    <td className="py-2 px-3 text-muted-foreground" dir="ltr">{it.theoretical ?? ''}</td>
-                    <td className="py-2 px-3">
-                      <input
-                        type="number"
-                        min={0}
-                        disabled={isCompleted}
-                        value={counts[it.articleId]}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setCounts((prev) => ({ ...prev, [it.articleId]: v === '' ? '' : Math.max(0, parseInt(v) || 0) }))
-                        }}
-                        className="w-24 px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                        dir="ltr"
-                      />
-                    </td>
-                    <td className="py-2 px-3">
-                      <span className={`font-medium ${diff === null ? 'text-muted-foreground' : diff === 0 ? 'text-success' : 'text-warning'}`} dir="ltr">
-                        {diff === null ? '—' : diff > 0 ? `+${diff}` : diff}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
+              {filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-muted-foreground">{t('inventory.noArticles')}</td>
+                </tr>
+              ) : (
+                filteredItems.map((it) => {
+                  const artReference = it.articleReference || ''
+                  const counted = counts[it.articleId] !== '' && counts[it.articleId] !== undefined && counts[it.articleId] !== null ? Number(counts[it.articleId]) : null
+                  const diff = counted === null ? null : counted - (it.theoretical || 0)
+                  return (
+                    <tr key={it.articleId} className="border-b border-border/50">
+                      <td className="py-2 px-3 font-medium text-foreground">
+                        {it.articleName}
+                        {artReference && <span className="block text-xs text-muted-foreground" dir="ltr">{artReference}</span>}
+                      </td>
+                      <td className="py-2 px-3 text-muted-foreground">{it.categoryName || '—'}</td>
+                      <td className="py-2 px-3 text-muted-foreground hidden md:table-cell">{it.storageName || '—'}</td>
+                      <td className="py-2 px-3 text-muted-foreground">{it.status || '—'}</td>
+                      <td className="py-2 px-3 text-muted-foreground" dir="ltr">{it.theoretical ?? ''}</td>
+                      <td className="py-2 px-3">
+                        <input
+                          type="number"
+                          min={0}
+                          disabled={isCompleted}
+                          value={counts[it.articleId]}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setCounts((prev) => ({ ...prev, [it.articleId]: v === '' ? '' : Math.max(0, parseInt(v) || 0) }))
+                          }}
+                          className="w-24 px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                          dir="ltr"
+                        />
+                      </td>
+                      <td className="py-2 px-3">
+                        <span className={`font-medium ${diff === null ? 'text-muted-foreground' : diff === 0 ? 'text-success' : 'text-warning'}`} dir="ltr">
+                          {diff === null ? '—' : diff > 0 ? `+${diff}` : diff}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
             </tbody>
           </table>
         </div>

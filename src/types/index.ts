@@ -310,6 +310,10 @@ export interface StockTakeItem {
   articleId: string;
   articleReference?: string;
   articleName: string;
+  categoryId?: string | null;
+  categoryName?: string;
+  storageLocationId?: string | null;
+  storageName?: string;
   theoretical: number; // snapshot de availableQuantity au moment de l'ouverture
   counted: number | null;
   diff: number | null; // counted - theoretical

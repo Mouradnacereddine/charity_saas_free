@@ -674,7 +674,15 @@ router.post('/stock-takes', async (req: AuthRequest, res: Response): Promise<voi
 
     const articles = await prisma.article.findMany({
       where: { associationId },
-      select: { id: true, reference: true, name: true, availableQuantity: true, status: true },
+      select: {
+        id: true,
+        reference: true,
+        name: true,
+        availableQuantity: true,
+        status: true,
+        category: { select: { id: true, name: true } },
+        storageLocation: { select: { id: true, name: true } },
+      },
     });
 
     if (articles.length === 0) {
@@ -686,6 +694,10 @@ router.post('/stock-takes', async (req: AuthRequest, res: Response): Promise<voi
       articleId: a.id,
       articleReference: a.reference,
       articleName: a.name,
+      categoryId: a.category?.id || null,
+      categoryName: a.category?.name || '',
+      storageLocationId: a.storageLocation?.id || null,
+      storageName: a.storageLocation?.name || '',
       theoretical: a.availableQuantity,
       counted: null,
       diff: null,
