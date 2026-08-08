@@ -1233,7 +1233,10 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
     const category = (article as any).category
     const categoryName = typeof category === 'object' && category ? (category as any).name || '' : ''
 
-    await addItemToLoan.mutateAsync({
+    // La mutation renvoie le prêt mis à jour (items incluant le nouvel article).
+    // On met à jour selectedLoan directement depuis la réponse → actualisation
+    // instantanée de la fenêtre « Détails du prêt », sans dépendre du cache.
+    const updatedLoan = await addItemToLoan.mutateAsync({
       id: selectedLoan.id,
       data: {
         articleId: newItemArticleId,
@@ -1246,12 +1249,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       },
     })
 
-    await queryClient.invalidateQueries({ queryKey: ['loans'] })
-    const loansData = queryClient.getQueryData<Loan[]>(['loans'])
-    if (loansData) {
-      const updated = loansData.find((l) => l.id === selectedLoan.id)
-      if (updated) setSelectedLoan(updated)
-    }
+    if (updated && updated.items) setSelectedLoan(updated)
     setShowAddItemForm(false)
   }
 
@@ -1261,13 +1259,9 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
     if (!selectedLoan) return
     if (!window.confirm(t('inventory.confirmRemoveItemFromLoan'))) return
 
-    await removeItemFromLoan.mutateAsync({ id: selectedLoan.id, itemKey })
-    await queryClient.invalidateQueries({ queryKey: ['loans'] })
-    const loansData = queryClient.getQueryData<Loan[]>(['loans'])
-    if (loansData) {
-      const updated = loansData.find((l) => l.id === selectedLoan.id)
-      if (updated) setSelectedLoan(updated)
-    }
+    // Le serveur renvoie le prêt mis à jour → actualisation instantanée du détail.
+    const updatedLoan = await removeItemFromLoan.mutateAsync({ id: selectedLoan.id, itemKey })
+    if (updatedLoan && updatedLoan.items) setSelectedLoan(updatedLoan)
   }
 
   // ---- Mark Definitive ----
