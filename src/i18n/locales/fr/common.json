@@ -742,6 +742,7 @@
     "fund": "Caisse",
     "generatedBy": "Généré par le système de l'association",
     "personalInfo": "Informations personnelles",
+    "fullName": "Nom complet",
     "name": "Nom",
     "gender": "Sexe",
     "age": "Âge",
