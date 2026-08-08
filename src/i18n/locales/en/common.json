@@ -373,6 +373,7 @@
     "newLoan": "Create New Loan",
     "loanDetails": "Loan Details",
     "searchLoan": "Search a loan, beneficiary or article...",
+    "searchStockTake": "Search inventory by reference...",
     "refCode": "Reference Code",
     "category": "Category",
     "quantity": "Quantity",

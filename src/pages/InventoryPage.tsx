@@ -1954,10 +1954,46 @@ function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ add
   const [newNotes, setNewNotes] = useState('')
   const [selectedTakeId, setSelectedTakeId] = useState<string | null>(null)
 
+  // --- Advanced search (homogène avec StockTab / LoansTab) ---
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterSearch, setFilterSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterDateFrom, setFilterDateFrom] = useState('')
+  const [filterDateTo, setFilterDateTo] = useState('')
+  const [committedFilters, setCommittedFilters] = useState({
+    search: '',
+    status: '',
+    dateFrom: '',
+    dateTo: '',
+  })
+
   const stockTakeStatusLabels: Record<string, string> = {
     in_progress: t('inventory.inventoryInProgress'),
     completed: t('inventory.inventoryCompleted'),
     cancelled: t('inventory.inventoryCancelled'),
+  }
+
+  const filteredStockTakes = stockTakes.filter((st: StockTake) => {
+    const q = committedFilters.search.trim().toLowerCase()
+    const matchesSearch =
+      !q ||
+      (st.reference || '').toLowerCase().includes(q)
+    const matchesStatus = !committedFilters.status || st.status === committedFilters.status
+    const started = st.startedAt ? st.startedAt.slice(0, 10) : ''
+    const matchesDateFrom = !committedFilters.dateFrom || started >= committedFilters.dateFrom
+    const matchesDateTo = !committedFilters.dateTo || started <= committedFilters.dateTo
+    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo
+  })
+
+  const applyFilters = () => {
+    setCommittedFilters({ search: filterSearch, status: filterStatus, dateFrom: filterDateFrom, dateTo: filterDateTo })
+  }
+  const resetFilters = () => {
+    setFilterSearch('')
+    setFilterStatus('')
+    setFilterDateFrom('')
+    setFilterDateTo('')
+    setCommittedFilters({ search: '', status: '', dateFrom: '', dateTo: '' })
   }
 
   useEffect(() => {
@@ -1999,9 +2035,72 @@ function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ add
 
   return (
     <>
+      {/* Advanced search bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
+          <input
+            type="text"
+            placeholder={t('inventory.searchStockTake')}
+            value={filterSearch}
+            onChange={(e) => setFilterSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }}
+            className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <Button variant="secondary" size="sm" onClick={() => setFilterOpen((v) => !v)}>
+          <Filter className="w-4 h-4" /> {t('inventory.advancedSearch')}
+        </Button>
+        <Button size="sm" onClick={applyFilters}>
+          <Search className="w-4 h-4" /> {t('common.search')}
+        </Button>
+        <Button variant="secondary" size="sm" onClick={resetFilters}>
+          {t('doctors.reset')}
+        </Button>
+      </div>
+
+      {filterOpen && (
+        <Card titleAr={t("inventory.advancedSearch")}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <SearchableSelect
+              labelAr={t('common.status')}
+              value={filterStatus}
+              onChange={setFilterStatus}
+              options={[
+                { value: '', label: t('common.all') },
+                { value: 'in_progress', label: t('inventory.inventoryInProgress') },
+                { value: 'completed', label: t('inventory.inventoryCompleted') },
+                { value: 'cancelled', label: t('inventory.inventoryCancelled') },
+              ]}
+              placeholder={t('common.all')}
+            />
+            <Input
+              labelAr={t('analytics.fromDate')}
+              type="date"
+              value={filterDateFrom}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+            />
+            <Input
+              labelAr={t('analytics.toDate')}
+              type="date"
+              value={filterDateTo}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button size="sm" onClick={applyFilters}>
+              <Search className="w-4 h-4" /> {t('common.search')}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={resetFilters}>
+              {t('doctors.reset')}
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* List of sessions */}
       <Card titleAr={t("inventory.inventoryList")}>
-        {stockTakes.length === 0 ? (
+        {filteredStockTakes.length === 0 ? (
           <EmptyState message={t('inventory.noStockTakes')} icon={<ClipboardCheck className="w-12 h-12" />} />
         ) : (
           <div className="overflow-x-auto">
@@ -2018,7 +2117,7 @@ function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ add
                 </tr>
               </thead>
               <tbody>
-                {stockTakes.map((st: StockTake) => {
+                {filteredStockTakes.map((st: StockTake) => {
                   const itemCount = st.itemCount ?? st.items?.length ?? 0
                   const diffCount = st.diffCount ?? (st.items || []).filter((i) => i.counted !== null && i.counted !== undefined && i.counted !== i.theoretical).length
                   return (
