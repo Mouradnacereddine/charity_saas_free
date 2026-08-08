@@ -457,7 +457,9 @@
     "inventoryInProgress": "En cours",
     "inventoryCompleted": "Terminé",
     "inventoryCancelled": "Annulé",
-    "inventoryHint": "La quantité de référence est la quantité disponible au début du comptage. Les prêts en cours sont exclus."
+    "inventoryHint": "La quantité de référence est la quantité disponible au début du comptage. Les prêts en cours sont exclus.",
+    "stockTakeBy": "Responsable de l'inventaire",
+    "associationResponsible": "Responsable de l'association"
   },
   "medical": {
     "title": "Orientation médicale",

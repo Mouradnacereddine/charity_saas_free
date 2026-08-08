@@ -5,7 +5,7 @@ import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptySta
 import { formatDate, generateLoanReference } from '../utils/helpers'
 import { dirForInput } from '../utils/localized'
 import { Plus, Search, Eye, Edit, Trash2, Package, RotateCcw, ArrowLeftRight, CheckCircle, Filter, Settings, FolderTree, MapPin, Printer, ChevronDown, ChevronUp, ClipboardCheck, ClipboardList } from 'lucide-react'
-import { printReceipt } from '../lib/receipt'
+import { printReceipt, printInventoryReport } from '../lib/receipt'
 import { useAuth } from '../hooks/useAuth'
 import type { Article, Loan, LoanItem, ArticleCategory, ArticleStatus, StorageLocation, Beneficiary, StockTake, StockTakeItem } from '../types'
 import {
@@ -2043,7 +2043,7 @@ function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ add
 // ============================================================
 
 function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => void }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { association } = useAuth();
   const { data: stockTake } = useStockTake(id)
   const { data: categories = [] } = useArticleCategories()
@@ -2179,31 +2179,59 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
   }
 
   const handlePrint = () => {
-    const rowsHtml = items.map((it) => {
-      const counted = counts[it.articleId] === '' ? null : Number(counts[it.articleId])
+    // Tableau A4 pleine page — colonnes : réf, nom, catégorie, lieu, théorique, compté, écart
+    const tableHeader = [
+      t('inventory.refCode'),
+      t('inventory.sectionName'),
+      t('inventory.category'),
+      t('inventory.storageLocation'),
+      t('inventory.theoretical'),
+      t('inventory.counted'),
+      t('inventory.diff'),
+    ].map((h) => `<th>${h}</th>`).join('')
+
+    const bodyRows = items.map((it) => {
+      const counted = counts[it.articleId] !== '' && counts[it.articleId] !== undefined && counts[it.articleId] !== null ? Number(counts[it.articleId]) : null
       const diff = counted === null ? null : counted - (it.theoretical || 0)
-      return `<div class="row"><span class="lbl">${it.articleName}</span><span class="val">${t('inventory.theoretical')}: ${it.theoretical} → ${t('inventory.counted')}: ${counted ?? '—'} <i>(${t('inventory.diff')}: ${diff === null ? '—' : diff > 0 ? '+' + diff : diff})</i></span></div>`
+      const diffCell = diff === null
+        ? '—'
+        : diff === 0
+          ? '0'
+          : diff > 0
+            ? `<span class="diff-pos">+${diff}</span>`
+            : `<span class="diff-neg">${diff}</span>`
+      return `<tr>
+        <td>${it.articleReference || '—'}</td>
+        <td>${it.articleName}</td>
+        <td>${it.categoryName || '—'}</td>
+        <td>${it.storageName || '—'}</td>
+        <td>${it.theoretical ?? ''}</td>
+        <td>${counted ?? '—'}</td>
+        <td>${diffCell}</td>
+      </tr>`
     }).join('')
 
-    printReceipt(
-      t('inventory.inventoryList'),
-      stockTake.reference,
-      `<div class="col">
-        <div class="row"><span class="lbl">${t('inventory.stockTakeRef')}</span><span class="val">${stockTake.reference || '—'}</span></div>
-        <div class="row"><span class="lbl">${t('inventory.startedAt')}</span><span class="val">${formatDate(stockTake.startedAt)}</span></div>
-        ${stockTake.completedAt ? `<div class="row"><span class="lbl">${t('inventory.completedAt')}</span><span class="val">${formatDate(stockTake.completedAt)}</span></div>` : ''}
-       </div>
-       <div class="col">
-        ${rowsHtml}
-       </div>`,
-      '',
-      `${theoreticalTotal} → ${countedTotal}`,
-      `${t('inventory.totalDiff')}: ${diffTotal}`,
-      '',
-      t('receipt.beneficiarySign'),
-      t('receipt.stampSignature'),
-      association?.name
-    )
+    const summaryHtml = `
+      <div class="kpi"><div class="kpi-label">${t('inventory.theoretical')}</div><div class="kpi-value">${theoreticalTotal}</div></div>
+      <div class="kpi"><div class="kpi-label">${t('inventory.counted')}</div><div class="kpi-value">${countedTotal}</div></div>
+      <div class="kpi"><div class="kpi-label">${t('inventory.totalDiff')}</div><div class="kpi-value ${diffTotal > 0 ? 'pos' : diffTotal < 0 ? 'neg' : ''}">${diffTotal > 0 ? '+' + diffTotal : diffTotal}</div></div>
+    `
+
+    printInventoryReport({
+      assocName: association?.name || '',
+      title: t('inventory.inventoryList'),
+      reference: stockTake.reference || '',
+      dateLabel: `${t('inventory.startedAt')}: ${formatDate(stockTake.startedAt)}${stockTake.completedAt ? ` — ${t('inventory.completedAt')}: ${formatDate(stockTake.completedAt)}` : ''}`,
+      summaryHtml,
+      tableHeader,
+      bodyRows,
+      footer: `${t('receipt.generatedBy')} — ${new Date().toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'fr-FR')}`,
+      signLeft: t('inventory.stockTakeBy'),
+      signRight: t('inventory.associationResponsible'),
+      labels: { printReport: t('receipt.print'), generatedBy: t('receipt.generatedBy') },
+      dir: i18n.language === 'ar' ? 'rtl' : 'ltr',
+      lang: i18n.language,
+    })
   }
 
   const isCompleted = stockTake.status === 'completed' || stockTake.status === 'cancelled'

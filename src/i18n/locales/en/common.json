@@ -457,7 +457,9 @@
     "inventoryInProgress": "In progress",
     "inventoryCompleted": "Completed",
     "inventoryCancelled": "Cancelled",
-    "inventoryHint": "The reference quantity is the available quantity at count start. Active loans are excluded."
+    "inventoryHint": "The reference quantity is the available quantity at count start. Active loans are excluded.",
+    "stockTakeBy": "Inventory officer",
+    "associationResponsible": "Association responsible"
   },
   "medical": {
     "title": "Medical Referral",

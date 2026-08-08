@@ -265,3 +265,88 @@ export function printAnalyticsReport(params: {
   w.document.write(html)
   w.document.close()
 }
+
+/**
+ * Professional A4 inventory report (procès-verbal d'inventaire).
+ * Pleine page, multi-pages si beaucoup d'articles, en-tête d'association,
+ * tableau des articles, résumé des écarts et signatures du responsable de
+ * l'inventaire + du responsable de l'association.
+ */
+export function printInventoryReport(params: {
+  assocName: string;
+  title: string;
+  reference: string;
+  dateLabel: string;
+  summaryHtml: string;   // KPI : théorique / compté / écart
+  tableHeader: string;   // lignes <th>
+  bodyRows: string;      // lignes <tr>
+  footer: string;
+  signLeft: string;      // ex: Responsable de l'inventaire
+  signRight: string;     // ex: Responsable de l'association
+  labels?: Record<string, string>;
+  lang?: string;
+  dir?: 'ltr' | 'rtl';
+}) {
+  const l = params.labels || {
+    printReport: 'طباعة التقرير',
+    generatedBy: 'تم إنشاؤه بواسطة نظام الجمعية',
+  };
+  const d = params.dir || 'rtl';
+  const ln = params.lang || 'ar';
+
+  const REPORT_CSS = `
+    @page { size: A4 portrait; margin: 16mm 14mm 16mm 14mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: ${d}; font-size: 11px; color: #1a1a1a; background: #fff; line-height: 1.5; }
+    .header { text-align: center; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 3px double #2563eb; }
+    .header h1 { font-size: 19px; color: #1e40af; margin: 0 0 2px; }
+    .header .sub { font-size: 12px; color: #374151; font-weight: 600; }
+    .header .meta { font-size: 10px; color: #6b7280; margin-top: 4px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .kpi { border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 10px; background: #fafafa; text-align: center; }
+    .kpi .kpi-label { font-size: 9px; color: #6b7280; font-weight: 600; }
+    .kpi .kpi-value { font-size: 15px; font-weight: 700; margin-top: 2px; }
+    .kpi .kpi-value.neg { color: #dc2626; }
+    .kpi .kpi-value.pos { color: #16a34a; }
+    .section { margin-bottom: 12px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+    .data-table thead { display: table-header-group; }
+    .data-table thead th { background: #2563eb; color: #fff; padding: 5px 6px; text-align: center; font-weight: 600; font-size: 8.5px; border: 1px solid #1d4ed8; }
+    .data-table tbody td { padding: 4px 6px; border: 1px solid #d1d5db; text-align: center; }
+    .data-table tbody tr:nth-child(even) { background: #f9fafb; }
+    .data-table tbody tr { page-break-inside: avoid; }
+    .diff-pos { color: #16a34a; font-weight: 700; }
+    .diff-neg { color: #dc2626; font-weight: 700; }
+    .sign { display: flex; justify-content: space-between; margin-top: 34px; page-break-inside: avoid; }
+    .sign > div { text-align: center; width: 40%; }
+    .sign .label { font-size: 9px; color: #6b7280; }
+    .sign .line { border-top: 1px solid #444; height: 40px; }
+    .footer { text-align: center; margin-top: 20px; padding-top: 8px; border-top: 1px solid #d1d5db; font-size: 9px; color: #9ca3af; }
+    .no-print { display: block; width: 220px; margin: 20px auto; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-align: center; }
+    @media print { .no-print { display: none; } }
+  `
+  const w = window.open('', '_blank')
+  if (!w) return
+  const html = `<!DOCTYPE html><html dir="${d}" lang="${ln}"><head><meta charset="UTF-8"><title>${params.title}</title><style>${REPORT_CSS}</style></head><body>
+  <div class="header">
+    <h1>🕌 ${params.assocName}</h1>
+    <div class="sub">${params.title}</div>
+    <div class="meta">${params.reference} — ${params.dateLabel}</div>
+  </div>
+  <div class="kpi-grid">${params.summaryHtml}</div>
+  <div class="section">
+    <table class="data-table">
+      <thead><tr>${params.tableHeader}</tr></thead>
+      <tbody>${params.bodyRows}</tbody>
+    </table>
+  </div>
+  <div class="sign">
+    <div><span class="label">${params.signLeft}</span><div class="line"></div></div>
+    <div><span class="label">${params.signRight}</span><div class="line"></div></div>
+  </div>
+  <div class="footer">${params.footer}</div>
+  <button class="no-print" onclick="window.print()">${l.printReport}</button>
+</body></html>`
+  w.document.write(html)
+  w.document.close()
+}

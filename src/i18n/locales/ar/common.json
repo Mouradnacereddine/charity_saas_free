@@ -449,7 +449,9 @@
     "inventoryInProgress": "قيد الجرد",
     "inventoryCompleted": "مكتمل",
     "inventoryCancelled": "ملغي",
-    "inventoryHint": "الكمية المرجعية هي الكمية المتاحة عند بداية الجرد. الإعارات الجارية غير مشمولة."
+    "inventoryHint": "الكمية المرجعية هي الكمية المتاحة عند بداية الجرد. الإعارات الجارية غير مشمولة.",
+    "stockTakeBy": "المسؤول عن الجرد",
+    "associationResponsible": "مسؤول الجمعية"
   },
   "medical": {
     "title": "التوجيه الطبي",
