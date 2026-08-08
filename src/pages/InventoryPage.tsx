@@ -154,7 +154,7 @@ export default function InventoryPage() {
   const [activeTab, setActiveTab] = useState<'stock' | 'loans' | 'settings' | 'inventory'>('stock')
   const stockActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
   const loansActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
-  const inventoryActions = useRef<{ addItem: () => void }>({ addItem: () => {} })
+  const inventoryActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
 
   return (
     <div className="space-y-6">
@@ -188,9 +188,14 @@ export default function InventoryPage() {
             </>
           )}
           {activeTab === 'inventory' && (
-            <Button size="sm" onClick={() => inventoryActions.current.addItem()}>
-              <ClipboardCheck className="w-4 h-4" /> {t('inventory.newStockTake')}
-            </Button>
+            <>
+              <Button variant="secondary" size="sm" onClick={() => inventoryActions.current.toggleFilter()}>
+                <Filter className="w-4 h-4" /> {t('inventory.advancedSearch')}
+              </Button>
+              <Button size="sm" onClick={() => inventoryActions.current.addItem()}>
+                <ClipboardCheck className="w-4 h-4" /> {t('inventory.newStockTake')}
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -1943,7 +1948,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 // INVENTORY TAB (Inventaire / جرد المخزون)
 // ============================================================
 
-function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ addItem: () => void }> }) {
+function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }> }) {
   const { t } = useTranslation();
   const { data: stockTakes = [], isLoading } = useStockTakes()
   const createStockTake = useCreateStockTake()
@@ -1997,7 +2002,7 @@ function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ add
   }
 
   useEffect(() => {
-    actionsRef.current = { addItem: () => setShowCreateModal(true) }
+    actionsRef.current = { toggleFilter: () => setFilterOpen((v) => !v), addItem: () => setShowCreateModal(true) }
   })
 
   const handleCreate = async () => {
@@ -2035,28 +2040,17 @@ function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ add
 
   return (
     <>
-      {/* Advanced search bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
-          <input
-            type="text"
-            placeholder={t('inventory.searchStockTake')}
-            value={filterSearch}
-            onChange={(e) => setFilterSearch(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }}
-            className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <Button variant="secondary" size="sm" onClick={() => setFilterOpen((v) => !v)}>
-          <Filter className="w-4 h-4" /> {t('inventory.advancedSearch')}
-        </Button>
-        <Button size="sm" onClick={applyFilters}>
-          <Search className="w-4 h-4" /> {t('common.search')}
-        </Button>
-        <Button variant="secondary" size="sm" onClick={resetFilters}>
-          {t('doctors.reset')}
-        </Button>
+      {/* Search bar (pattern homogène stock/loans) */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
+        <input
+          type="text"
+          placeholder={t('inventory.searchStockTake')}
+          value={filterSearch}
+          onChange={(e) => setFilterSearch(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') applyFilters(); }}
+          className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        />
       </div>
 
       {filterOpen && (
