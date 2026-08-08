@@ -1887,6 +1887,7 @@ function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ add
     if (!window.confirm(t('inventory.confirmCompleteStockTake'))) return
     try {
       await completeStockTake.mutateAsync(id)
+      setSelectedTakeId(null)
     } catch (err: any) {
       alert(err?.response?.data?.error || err?.message || t('inventory.completeStockTake'))
     }
@@ -1894,7 +1895,12 @@ function InventoryTab({ actionsRef }: { actionsRef: React.MutableRefObject<{ add
 
   const handleCancel = async (id: string) => {
     if (!window.confirm(t('inventory.confirmCancelStockTake'))) return
-    await cancelStockTake.mutateAsync(id)
+    try {
+      await cancelStockTake.mutateAsync(id)
+      setSelectedTakeId(null)
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('inventory.cancelStockTake'))
+    }
   }
 
   if (isLoading) return <LoadingSpinner />

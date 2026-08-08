@@ -253,12 +253,12 @@ export function useStockTakes(params?: Record<string, string>) {
 
 export function useStockTake(id: string | null) {
   return useQuery({
-    queryKey: ['stock-takes', id],
+    queryKey: ['stock-takes', 'detail', id],
     queryFn: async () => {
       const res = await inventoryApi.getStockTake(id!);
       return res.data;
     },
-    enabled: !!id,
+    enabled: !!id && id !== 'undefined' && id !== 'null',
   });
 }
 
