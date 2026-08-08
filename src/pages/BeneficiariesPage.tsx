@@ -463,7 +463,7 @@ export default function BeneficiariesPage() {
     // Children as inline grid items (no table, matches Orientation Médicale style)
     const childrenHtml = (b.children || []).length > 0
       ? `<div class="section"><div class="section-title">${t('beneficiaries.children')} (${b.children.length})</div>
-         <div class="info"><div class="col"><div class="row"><span class="lbl">${t('receipt.nameAr')}</span>
+         <div class="info"><div class="col"><div class="row"><span class="lbl">${t('receipt.fullName')}</span>
          ${b.children.map((ch: any) =>
            `<span class="val">${ch.lastName} ${ch.firstName}</span><br>`
          ).join('')}
@@ -494,13 +494,10 @@ export default function BeneficiariesPage() {
         title: t('receipt.beneficiaryCard'),
         personalInfo: t('receipt.personalInfo'),
         fullName: t('receipt.fullName'),
-        fullName: t('receipt.name'),
-        name: t('receipt.nameAr'),
         attribut: t('receipt.attribute'),
         birthDate: t('receipt.birthDate'),
         idNumber: t('receipt.idNumber'),
         fund: t('dashboard.fund'),
-        nameLatin: t('receipt.nameLatin'),
         gender: t('receipt.gender'),
         age: t('receipt.age'),
         phone: t('receipt.phone'),
@@ -641,8 +638,7 @@ export default function BeneficiariesPage() {
         <div class="section">
           <div class="section-title">${t("beneficiaries.personalInfo")}</div>
           <div class="info-grid">
-            <div class="item"><span class="lbl">${t('beneficiaries.nameAr')}</span><span class="val">${b.lastName} ${b.firstName}</span></div>
-            <div class="item"><span class="lbl">${t('beneficiaries.nameLatin')}</span><span class="val">${b.firstName} ${b.lastName}</span></div>
+            <div class="item"><span class="lbl">${t('receipt.fullName')}</span><span class="val">${b.lastName} ${b.firstName}</span></div>
             <div class="item"><span class="lbl">${t("receipt.idNumber")}</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
             <div class="item"><span class="lbl">${t("receipt.phone")}</span><span class="val">${b.phone}</span></div>
             <div class="item"><span class="lbl">${t("receipt.birthDate")}</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${getAgeDisplay(b.dateOfBirth)})` : '—'}</span></div>
