@@ -2070,11 +2070,26 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
 
   const handleComplete = async () => {
     if (!window.confirm(t('inventory.confirmCompleteStockTake'))) return
+    if (!allCounted) {
+      alert(t('inventory.remainingToCount'))
+      return
+    }
+    setSaving(true)
     try {
+      // Sauvegarder d'abord les quantités comptées, puis compléter l'inventaire
+      await saveItems.mutateAsync({
+        id: stockTake.id,
+        items: items.map((it) => ({
+          articleId: it.articleId,
+          counted: counts[it.articleId] === '' ? undefined : Number(counts[it.articleId]),
+        })),
+      })
       await completeStockTake.mutateAsync(stockTake.id)
       onClose()
     } catch (err: any) {
       alert(err?.response?.data?.error || err?.message || t('inventory.completeStockTake'))
+    } finally {
+      setSaving(false)
     }
   }
 
