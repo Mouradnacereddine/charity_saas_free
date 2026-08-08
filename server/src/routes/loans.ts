@@ -331,7 +331,10 @@ router.post('/:id/add-item', async (req: AuthRequest, res: Response): Promise<vo
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
-    const { articleId, quantity } = req.body;
+    const {
+      articleId, quantity,
+      articleName, categoryName, conditionOnLoan, returnedQuantity, expectedReturnDate,
+    } = req.body;
 
     if (!articleId || !quantity) {
       res.status(400).json({ error: 'articleId and quantity are required' });
@@ -372,13 +375,23 @@ router.post('/:id/add-item', async (req: AuthRequest, res: Response): Promise<vo
 
       // Check if article already exists in loan
       const existingItemIndex = currentItems.findIndex((i: any) => i.articleId === articleId);
+      const newQty = parseInt(quantity, 10);
       if (existingItemIndex >= 0) {
-        currentItems[existingItemIndex].quantity += parseInt(quantity, 10);
+        // Merge new attributes onto the existing line (source of truth = server)
+        currentItems[existingItemIndex].quantity += newQty;
+        if (articleName !== undefined) currentItems[existingItemIndex].articleName = articleName;
+        if (categoryName !== undefined) currentItems[existingItemIndex].categoryName = categoryName;
+        if (conditionOnLoan !== undefined) currentItems[existingItemIndex].conditionOnLoan = conditionOnLoan;
+        if (expectedReturnDate !== undefined) currentItems[existingItemIndex].expectedReturnDate = expectedReturnDate;
       } else {
         currentItems.push({
           articleId,
-          quantity: parseInt(quantity, 10),
-          returnedQuantity: 0,
+          articleName,
+          categoryName,
+          quantity: newQty,
+          returnedQuantity: returnedQuantity ?? 0,
+          conditionOnLoan,
+          expectedReturnDate,
         });
       }
 

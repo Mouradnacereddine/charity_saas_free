@@ -1072,6 +1072,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   const [newItemArticleId, setNewItemArticleId] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState(1)
   const [newItemCondition, setNewItemCondition] = useState('')
+  const [newItemExpectedReturnDate, setNewItemExpectedReturnDate] = useState('')
 
   const filteredLoans = loans.filter((l: Loan) => {
     const st = committedLoanFilters.searchTerm
@@ -1219,6 +1220,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
     setNewItemArticleId('')
     setNewItemQuantity(1)
     setNewItemCondition('')
+    setNewItemExpectedReturnDate('')
     setShowAddItemForm(true)
     setShowReturnForm(false)
   }
@@ -1228,14 +1230,19 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
     const article = articles.find((a: Article) => a.id === newItemArticleId)
     if (!article) return
 
+    const category = (article as any).category
+    const categoryName = typeof category === 'object' && category ? (category as any).name || '' : ''
+
     await addItemToLoan.mutateAsync({
       id: selectedLoan.id,
       data: {
         articleId: newItemArticleId,
         articleName: article.name,
+        categoryName,
         quantity: newItemQuantity,
         returnedQuantity: 0,
         conditionOnLoan: newItemCondition,
+        expectedReturnDate: newItemExpectedReturnDate || undefined,
       },
     })
 
@@ -1556,7 +1563,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                   onChange={(val) => updateLoanItemRow(index, 'articleId', val)}
                   options={availableArticles.map((a: Article) => ({
                     value: a.id,
-                    label: `${a.name} ({t('inventory.available')}: ${a.availableQuantity})`,
+                    label: `${a.name} (${t('inventory.available')}: ${a.availableQuantity})`,
                   }))}
                 />
                 <Input
@@ -1808,14 +1815,14 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             {showAddItemForm && (
               <div className="border border-border rounded-lg p-4 space-y-4">
                 <h4 className="text-sm font-semibold text-foreground">{t("inventory.addArticleToLoan")}</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <SearchableSelect
                     labelAr={t('common.article')}
                     value={newItemArticleId}
                     onChange={setNewItemArticleId}
                     options={availableArticles.map((a: Article) => ({
                       value: a.id,
-                      label: `${a.name} ({t('inventory.available')}: ${a.availableQuantity})`,
+                      label: `${a.name} (${t('inventory.available')}: ${a.availableQuantity})`,
                     }))}
                   />
                   <Input
@@ -1839,6 +1846,14 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                         ? statuses.map((s: ArticleStatus) => ({ value: s.name, label: s.name }))
                         : []
                     }
+                  />
+                  <Input
+                    labelAr={t('inventory.expectedReturnDate')}
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={newItemExpectedReturnDate}
+                    onChange={(e) => setNewItemExpectedReturnDate(e.target.value)}
+                    dir="ltr"
                   />
                 </div>
                 <div className="flex justify-end gap-3">
