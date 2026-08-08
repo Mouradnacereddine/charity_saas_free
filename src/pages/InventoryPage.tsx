@@ -1233,10 +1233,10 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
     const category = (article as any).category
     const categoryName = typeof category === 'object' && category ? (category as any).name || '' : ''
 
-    // La mutation renvoie le prêt mis à jour (items incluant le nouvel article).
-    // On met à jour selectedLoan directement depuis la réponse → actualisation
-    // instantanée de la fenêtre « Détails du prêt », sans dépendre du cache.
-    const updatedLoan = await addItemToLoan.mutateAsync({
+    // La mutation (loansApi.addItem) retourne la réponse Axios ; l'objet
+    // prêt à jour est dans `.data`. On met à jour selectedLoan pour une
+    // actualisation instantanée de la fenêtre « Détails du prêt ».
+    const resp = await addItemToLoan.mutateAsync({
       id: selectedLoan.id,
       data: {
         articleId: newItemArticleId,
@@ -1248,7 +1248,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
         expectedReturnDate: newItemExpectedReturnDate || undefined,
       },
     })
-
+    const updatedLoan = resp?.data
     if (updatedLoan && updatedLoan.items) setSelectedLoan(updatedLoan)
     setShowAddItemForm(false)
   }
@@ -1259,8 +1259,10 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
     if (!selectedLoan) return
     if (!window.confirm(t('inventory.confirmRemoveItemFromLoan'))) return
 
-    // Le serveur renvoie le prêt mis à jour → actualisation instantanée du détail.
-    const updatedLoan = await removeItemFromLoan.mutateAsync({ id: selectedLoan.id, itemKey })
+    // Le serveur renvoie le prêt mis à jour (Axios → `.data`) → actualisation
+    // instantanée du détail.
+    const resp = await removeItemFromLoan.mutateAsync({ id: selectedLoan.id, itemKey })
+    const updatedLoan = resp?.data
     if (updatedLoan && updatedLoan.items) setSelectedLoan(updatedLoan)
   }
 
