@@ -189,7 +189,7 @@ export function useAddItemToLoan() {
 export function useRemoveItemFromLoan() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, articleId }: { id: string; articleId: string }) => loansApi.removeItem(id, articleId),
+    mutationFn: ({ id, itemKey }: { id: string; itemKey: string }) => loansApi.removeItem(id, itemKey),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['loans'] });
       qc.invalidateQueries({ queryKey: ['articles'] });

@@ -1065,7 +1065,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
   // Return items form state
   const [showReturnForm, setShowReturnForm] = useState(false)
   const [isReturning, setIsReturning] = useState(false)
-  const [returnEntries, setReturnEntries] = useState<{ articleId: string; quantity: number; condition: string }[]>([])
+  const [returnEntries, setReturnEntries] = useState<{ itemKey: string; quantity: number; condition: string }[]>([])
 
   // Add item to existing loan form state
   const [showAddItemForm, setShowAddItemForm] = useState(false)
@@ -1180,7 +1180,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       selectedLoan.items
         .filter((item) => item.returnedQuantity < item.quantity)
         .map((item) => ({
-          articleId: item.articleId,
+          itemKey: item.itemKey ?? item.articleId,
           quantity: 0,
           condition: '',
         }))
@@ -1257,11 +1257,11 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
   // ---- Remove Item from Loan ----
 
-  const handleRemoveItem = async (articleId: string) => {
+  const handleRemoveItem = async (itemKey: string) => {
     if (!selectedLoan) return
     if (!window.confirm(t('inventory.confirmRemoveItemFromLoan'))) return
 
-    await removeItemFromLoan.mutateAsync({ id: selectedLoan.id, articleId })
+    await removeItemFromLoan.mutateAsync({ id: selectedLoan.id, itemKey })
     await queryClient.invalidateQueries({ queryKey: ['loans'] })
     const loansData = queryClient.getQueryData<Loan[]>(['loans'])
     if (loansData) {
@@ -1488,7 +1488,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                               {loan.items.map((item) => {
                                 const itemOverdue = item.expectedReturnDate && new Date(item.expectedReturnDate) < new Date()
                                 return (
-                                <tr key={item.articleId} className="border-b border-border/50">
+                                <tr key={item.itemKey ?? item.articleId} className="border-b border-border/50">
                                   <td className="py-2 px-3 font-medium text-foreground">{item.articleName}</td>
                                   <td className="py-2 px-3 text-muted-foreground">{item.quantity}</td>
                                   <td className="py-2 px-3">
@@ -1674,7 +1674,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                 {selectedLoan.items.map((item) => {
                   const art = articles.find((a: Article) => a.id === item.articleId)
                   return art ? (
-                    <span key={item.articleId} className="bg-muted px-2 py-1 rounded">
+                    <span key={item.itemKey ?? item.articleId} className="bg-muted px-2 py-1 rounded">
                       {art.name}: {t('inventory.quantity')} {art.quantity} | {t('inventory.available')} {art.availableQuantity}
                     </span>
                   ) : null
@@ -1694,11 +1694,12 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.loanStatusAtReturn')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('common.status')}</th>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{t('inventory.situation')}</th>
+                      <th className="text-center py-2 px-3 font-medium text-muted-foreground">{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedLoan.items.map((item) => (
-                      <tr key={item.articleId} className="border-b border-border">
+                      <tr key={item.itemKey ?? item.articleId} className="border-b border-border">
                         <td className="py-2 px-3 text-foreground">{item.articleName}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.categoryName || '—'}</td>
                         <td className="py-2 px-3 text-muted-foreground">{item.quantity}</td>
@@ -1732,6 +1733,17 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
                             return <Badge variant="info">{t('inventory.onTime')}</Badge>;
                           })()}
                         </td>
+                        <td className="py-2 px-3 text-center">
+                          {selectedLoan.status !== 'retourne' && selectedLoan.status !== 'definitif' && (
+                            <button
+                              onClick={() => handleRemoveItem(item.itemKey ?? item.articleId)}
+                              className="p-1.5 text-muted-foreground/70 hover:text-danger-600 transition-colors"
+                              title={t('common.remove')}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1761,12 +1773,14 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             {showReturnForm && (
               <div className="border border-border rounded-lg p-4 space-y-4">
                 <h4 className="text-sm font-semibold text-foreground">{t("inventory.returnItems")}</h4>
-                {returnEntries.map((entry: { articleId: string; quantity: number; condition: string }, index: number) => {
-                  const loanItem = selectedLoan.items.find((i) => i.articleId === entry.articleId)
+                {returnEntries.map((entry: { itemKey: string; quantity: number; condition: string }, index: number) => {
+                  const loanItem = selectedLoan.items.find(
+                    (i) => i.itemKey === entry.itemKey || (!i.itemKey && i.articleId === entry.itemKey)
+                  )
                   if (!loanItem) return null
                   const remaining = loanItem.quantity - loanItem.returnedQuantity
                   return (
-                    <div key={entry.articleId} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-muted rounded-lg">
+                    <div key={`${entry.itemKey}-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-muted rounded-lg">
                       <div className="space-y-1">
                         <label className="block text-xs font-medium text-muted-foreground">{t('inventory.category')}</label>
                         <p className="text-sm font-medium text-foreground">{loanItem.articleName}</p>

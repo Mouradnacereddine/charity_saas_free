@@ -79,7 +79,11 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
     }
 
     // Verify items exist and update available quantities
-    const loanItems: any[] = items;
+    // Chaque ligne d'item reçoit un identifiant d'occurrence unique (source de vérité).
+const loanItems: any[] = (items as any[]).map((item: any) => ({
+  ...item,
+  itemKey: crypto.randomUUID(),
+}));
     for (const item of loanItems) {
       const article = await prisma.article.findFirst({
         where: { id: item.articleId, associationId },
@@ -179,7 +183,13 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     const data: any = {};
     if (reference !== undefined) data.reference = reference;
     if (beneficiaryId !== undefined) data.beneficiaryId = beneficiaryId;
-    if (items !== undefined) data.items = items;
+    if (items !== undefined) {
+      // Garantir un itemKey sur chaque ligne reçue (protection contre la perte des clés)
+      data.items = (items as any[]).map((i: any) => ({
+        ...i,
+        itemKey: i.itemKey ?? crypto.randomUUID(),
+      }));
+    }
     if (status !== undefined) {
       const validLoanStatuses = ['en_cours', 'retourne', 'partiellement_retourne', 'definitif'];
       if (!validLoanStatuses.includes(status)) {
@@ -268,22 +278,27 @@ router.post('/:id/return', async (req: AuthRequest, res: Response): Promise<void
     const result = await prisma.$transaction(async (tx) => {
       // Process each returned item
       for (const returnItem of items) {
-        const { articleId, quantity, condition } = returnItem;
+        const { itemKey, articleId, quantity, condition } = returnItem;
+        const key = itemKey || articleId;
 
-        // Find the matching item in the loan
-        const loanItem = currentItems.find((i: any) => i.articleId === articleId);
+        // Find the matching item in the loan — par itemKey (occurrence précise),
+        // avec fallback articleId pour les prêts legacy sans itemKey.
+        const loanItem = key
+          ? currentItems.find((i: any) => i.itemKey === key) ||
+            currentItems.find((i: any) => !i.itemKey && i.articleId === key)
+          : undefined;
         if (!loanItem) {
-          throw new Error(`Article ${articleId} not found in loan`);
+          throw new Error(`Article ${key} not found in loan`);
         }
 
         // Update returned quantity
         const returnedQty = quantity || loanItem.quantity;
         loanItem.returnedQuantity = (loanItem.returnedQuantity || 0) + returnedQty;
-        if (condition) loanItem.returnCondition = condition;
+        if (condition) loanItem.conditionOnReturn = condition;
 
-        // Restore available quantity
+        // Restore available quantity (utilise l'article de la ligne ciblée)
         await tx.article.update({
-          where: { id: articleId },
+          where: { id: loanItem.articleId },
           data: { availableQuantity: { increment: returnedQty } },
         });
       }
@@ -372,26 +387,40 @@ router.post('/:id/add-item', async (req: AuthRequest, res: Response): Promise<vo
 
     const result = await prisma.$transaction(async (tx) => {
       const currentItems: any[] = loan.items as any[];
-
-      // Check if article already exists in loan
-      const existingItemIndex = currentItems.findIndex((i: any) => i.articleId === articleId);
       const newQty = parseInt(quantity, 10);
-      if (existingItemIndex >= 0) {
-        // Merge new attributes onto the existing line (source of truth = server)
-        currentItems[existingItemIndex].quantity += newQty;
-        if (articleName !== undefined) currentItems[existingItemIndex].articleName = articleName;
-        if (categoryName !== undefined) currentItems[existingItemIndex].categoryName = categoryName;
-        if (conditionOnLoan !== undefined) currentItems[existingItemIndex].conditionOnLoan = conditionOnLoan;
-        if (expectedReturnDate !== undefined) currentItems[existingItemIndex].expectedReturnDate = expectedReturnDate;
+      const newDate = expectedReturnDate ? String(expectedReturnDate) : undefined;
+
+      // Philosophie: chaque occurrence d'un article est une ligne distincte.
+      // Deux ajouts du MÊME article ne fusionnent que s'ils portent la MÊME
+      // date de retour prévue (ou si les deux n'en ont pas). Avec des dates
+      // différentes → deux lignes séparées (échéances indépendantes).
+      const matchIndex = currentItems.findIndex((i: any) => {
+        if (i.articleId !== articleId) return false;
+        const itemDate = i.expectedReturnDate ? String(i.expectedReturnDate) : undefined;
+        return itemDate === newDate;
+      });
+
+      if (matchIndex >= 0) {
+        // Fusion sur la même occurrence (même article + même date) : on somme
+        // et on rafraîchit les attributs clients sans écraser la date existante.
+        currentItems[matchIndex].quantity += newQty;
+        if (articleName !== undefined) currentItems[matchIndex].articleName = articleName;
+        if (categoryName !== undefined) currentItems[matchIndex].categoryName = categoryName;
+        if (conditionOnLoan !== undefined) currentItems[matchIndex].conditionOnLoan = conditionOnLoan;
+        // Si l'utilisateur fournit une date sur une ligne sans date, on l'applique ;
+        // sinon on garde la date existante (refus d'écraser une échéance).
+        if (newDate !== undefined) currentItems[matchIndex].expectedReturnDate = newDate;
       } else {
+        // Nouvelle occurrence → nouvel identifiant de ligne unique.
         currentItems.push({
+          itemKey: crypto.randomUUID(),
           articleId,
           articleName,
           categoryName,
           quantity: newQty,
           returnedQuantity: returnedQuantity ?? 0,
           conditionOnLoan,
-          expectedReturnDate,
+          expectedReturnDate: newDate,
         });
       }
 
@@ -415,10 +444,10 @@ router.post('/:id/add-item', async (req: AuthRequest, res: Response): Promise<vo
   }
 });
 
-// DELETE /api/loans/:id/remove-item/:articleId — remove item from loan
-router.delete('/:id/remove-item/:articleId', async (req: AuthRequest, res: Response): Promise<void> => {
+// DELETE /api/loans/:id/remove-item/:itemKey — remove one occurrence (line) from loan
+router.delete('/:id/remove-item/:itemKey', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id, articleId } = req.params;
+    const { id, itemKey } = req.params;
     const associationId = req.user!.associationId;
 
     const loan = await prisma.loan.findFirst({
@@ -436,7 +465,10 @@ router.delete('/:id/remove-item/:articleId', async (req: AuthRequest, res: Respo
     }
 
     const currentItems: any[] = loan.items as any[];
-    const itemIndex = currentItems.findIndex((i: any) => i.articleId === articleId);
+    // Cible une occurrence précise (itemKey) ; fallback articleId pour prêts legacy.
+    const itemIndex = currentItems.findIndex(
+      (i: any) => i.itemKey === itemKey || (!i.itemKey && i.articleId === itemKey)
+    );
 
     if (itemIndex < 0) {
       res.status(404).json({ error: 'Item not found in loan' });
@@ -449,7 +481,7 @@ router.delete('/:id/remove-item/:articleId', async (req: AuthRequest, res: Respo
       const remainingQuantity = removedItem.quantity - (removedItem.returnedQuantity || 0);
       if (remainingQuantity > 0) {
         await tx.article.update({
-          where: { id: articleId },
+          where: { id: removedItem.articleId },
           data: { availableQuantity: { increment: remainingQuantity } },
         });
       }

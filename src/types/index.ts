@@ -274,6 +274,7 @@ export interface Article {
 // ---- Loan Item (individual item in a loan) ----
 
 export interface LoanItem {
+  itemKey?: string; // clé d'occurrence unique générée par le serveur ; absente sur les anciens prêts (fallback articleId)
   articleId: string;
   articleName: string;
   categoryName?: string;

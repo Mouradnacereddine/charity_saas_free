@@ -245,7 +245,7 @@ export const loansApi = {
   create: (data: any) => api.post('/loans', data),
   returnItems: (id: string, items: any[]) => api.post(`/loans/${id}/return`, { items }),
   addItem: (id: string, data: any) => api.post(`/loans/${id}/add-item`, data),
-  removeItem: (id: string, articleId: string) => api.delete(`/loans/${id}/remove-item/${articleId}`),
+  removeItem: (id: string, itemKey: string) => api.delete(`/loans/${id}/remove-item/${itemKey}`),
   markDefinitive: (id: string) => api.put(`/loans/${id}/mark-definitive`),
 };
 

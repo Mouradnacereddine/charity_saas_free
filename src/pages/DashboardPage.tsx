@@ -223,7 +223,7 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 {overdueItems.slice(0, 15).map((item: any) => (
-                  <tr key={`${item.loanId}-${item.articleId}`} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setDetailLoan(allLoans.find((l: Loan) => l.id === item.loanId)!)}>
+                  <tr key={`${item.loanId}-${item.itemKey ?? item.articleId}`} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setDetailLoan(allLoans.find((l: Loan) => l.id === item.loanId)!)}>
                     <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{item.loanRef || '—'}</td>
                     <td className="py-3 px-4 font-medium text-foreground">{item.articleName}</td>
                     <td className="py-3 px-4 text-muted-foreground">{item.beneficiaryName}</td>
