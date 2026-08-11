@@ -236,13 +236,13 @@ export default function AuditLogPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-secondary/30">
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.date')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.user')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden md:table-cell">{t('audit.email')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden sm:table-cell">{t('audit.role')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.action')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden lg:table-cell">{t('audit.resource')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden xl:table-cell">{t('audit.description')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">{t('audit.date')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">{t('audit.user')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">{t('audit.email')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">{t('audit.role')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">{t('audit.action')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">{t('audit.resource')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.description')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -254,21 +254,21 @@ export default function AuditLogPage() {
                     <td className="py-3 px-4 font-medium text-foreground">
                       {log.userName || t('audit.unknownUser')}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell" dir="ltr">
+                    <td className="py-3 px-4 text-muted-foreground whitespace-nowrap" dir="ltr">
                       {log.userEmail || '—'}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
+                    <td className="py-3 px-4 text-muted-foreground whitespace-nowrap">
                       {ROLE_LABELS[log.userRole || ''] || log.userRole || '—'}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4 whitespace-nowrap">
                       <Badge variant={ACTION_BADGE[log.action] || 'default'}>
                         {t(`audit.actionLabel.${log.action}`, { defaultValue: log.action })}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell">
+                    <td className="py-3 px-4 text-muted-foreground whitespace-nowrap">
                       {t(`audit.resourceLabel.${log.resource}`, { defaultValue: log.resource })}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground hidden xl:table-cell">
+                    <td className="py-3 px-4 text-muted-foreground">
                       {log.description || '—'}
                     </td>
                   </tr>
