@@ -7,12 +7,12 @@ const router = Router();
 router.use(requireAuth);
 
 // GET /api/audit — journal d'audit de l'association (admin/super_admin uniquement)
-// Filtres : ?userId= &action= &resource= &from= &to= &page= &limit=
+// Filtres : ?userId= &userRole= &search= &action= &resource= &from= &to= &page= &limit=
 router.get('/', requirePermission('audit', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
-      userId, action, resource,
+      userId, userRole, search, action, resource,
       from, to,
       page = '1', limit = '50',
     } = req.query;
@@ -20,8 +20,18 @@ router.get('/', requirePermission('audit', 'read'), async (req: AuthRequest, res
     const where: any = { associationId };
 
     if (userId) where.userId = String(userId);
+    if (userRole) where.userRole = String(userRole);
     if (action) where.action = String(action);
     if (resource) where.resource = String(resource);
+
+    if (search) {
+      const term = String(search);
+      where.OR = [
+        { userName: { contains: term, mode: 'insensitive' } },
+        { description: { contains: term, mode: 'insensitive' } },
+        { resourceId: { contains: term, mode: 'insensitive' } },
+      ];
+    }
 
     if (from || to) {
       where.createdAt = {};

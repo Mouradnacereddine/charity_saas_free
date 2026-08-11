@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Badge, Input, Select, Button, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { useQuery } from '@tanstack/react-query';
 import { auditApi } from '../lib/api';
-import { ScrollText, Search } from 'lucide-react';
+import { ScrollText, Search, Filter } from 'lucide-react';
 import type { AuditLogResponse } from '../types';
 
 const ACTION_BADGE: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -15,6 +15,15 @@ const ACTION_BADGE: Record<string, 'default' | 'success' | 'warning' | 'danger' 
   login: 'default',
   logout: 'default',
   register: 'success',
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: 'super_admin',
+  admin: 'admin',
+  treasurer: 'treasurer',
+  stock_manager: 'stock_manager',
+  social_worker: 'social_worker',
+  volunteer: 'volunteer',
 };
 
 function formatDate(iso: string, locale: string) {
@@ -30,18 +39,33 @@ function formatDate(iso: string, locale: string) {
 
 export default function AuditLogPage() {
   const { t, i18n } = useTranslation();
-  const [queryParams, setQueryParams] = useState<Record<string, string> | undefined>(undefined);
-  const [userId, setUserId] = useState('');
-  const [action, setAction] = useState('');
-  const [resource, setResource] = useState('');
+
+  // ---- Recherche rapide (barre supérieure, touche Entrée) ----
+  const [searchTerm, setSearchTerm] = useState('');
+  const [committedSearch, setCommittedSearch] = useState('');
+
+  // ---- Filtres avancés ----
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterUserId, setFilterUserId] = useState('');
+  const [filterRole, setFilterRole] = useState('');
+  const [filterAction, setFilterAction] = useState('');
+  const [filterResource, setFilterResource] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [committedFilters, setCommittedFilters] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['audit', queryParams],
+    queryKey: ['audit', { ...committedFilters, search: committedSearch, page }],
     queryFn: async () => {
-      const params: Record<string, string> = { page: queryParams?.page || '1', limit: '50' };
-      if (queryParams?.userId) params.userId = queryParams.userId;
-      if (queryParams?.action) params.action = queryParams.action;
-      if (queryParams?.resource) params.resource = queryParams.resource;
+      const params: Record<string, string> = { page: String(page), limit: '50' };
+      if (committedSearch) params.search = committedSearch;
+      if (committedFilters.userId) params.userId = committedFilters.userId;
+      if (committedFilters.userRole) params.userRole = committedFilters.userRole;
+      if (committedFilters.action) params.action = committedFilters.action;
+      if (committedFilters.resource) params.resource = committedFilters.resource;
+      if (committedFilters.dateFrom) params.from = committedFilters.dateFrom;
+      if (committedFilters.dateTo) params.to = committedFilters.dateTo;
       const res = await auditApi.list(params);
       return res.data as AuditLogResponse;
     },
@@ -49,7 +73,7 @@ export default function AuditLogPage() {
 
   const logs = data?.logs ?? [];
   const total = data?.total ?? 0;
-  const page = data?.page ?? 1;
+  const currentPage = data?.page ?? 1;
   const totalPages = Math.max(1, Math.ceil(total / (data?.limit || 50)));
 
   const ACTION_OPTIONS = [
@@ -79,67 +103,134 @@ export default function AuditLogPage() {
     { value: 'allocation', label: t('audit.resourceAllocation') },
   ];
 
-  const buildParams = () => {
-    const params: Record<string, string> = { page: '1' };
-    if (userId) params.userId = userId;
-    if (action) params.action = action;
-    if (resource) params.resource = resource;
-    return params;
+  const ROLE_OPTIONS = [
+    { value: '', label: t('audit.allRoles') },
+    { value: 'super_admin', label: t('users.superAdmin') },
+    { value: 'admin', label: t('users.admin') },
+    { value: 'treasurer', label: t('users.treasurer') },
+    { value: 'stock_manager', label: t('users.stockManager') },
+    { value: 'social_worker', label: t('users.socialWorker') },
+    { value: 'volunteer', label: t('users.volunteer') },
+  ];
+
+  // Recherche rapide (barre supérieure)
+  const applySearch = () => {
+    setCommittedSearch(searchTerm);
+    setPage(1);
+  };
+  const resetSearch = () => {
+    setSearchTerm('');
+    setCommittedSearch('');
+    setPage(1);
   };
 
+  // Filtres avancés
   const applyFilters = () => {
-    setQueryParams(buildParams());
+    setCommittedFilters({
+      userId: filterUserId,
+      userRole: filterRole,
+      action: filterAction,
+      resource: filterResource,
+      dateFrom: filterDateFrom,
+      dateTo: filterDateTo,
+    });
+    setPage(1);
   };
-
   const resetFilters = () => {
-    setUserId('');
-    setAction('');
-    setResource('');
-    setQueryParams(undefined);
+    setFilterUserId('');
+    setFilterRole('');
+    setFilterAction('');
+    setFilterResource('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setCommittedFilters({});
+    setPage(1);
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-          <ScrollText size={22} />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+            <ScrollText size={22} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{t('audit.title')}</h1>
+            <p className="text-sm text-muted-foreground">{t('audit.subtitle')}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('audit.title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('audit.subtitle')}</p>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setFilterOpen((v) => !v)}>
+            <Filter className="w-4 h-4" /> {t('common.advancedSearch')}
+          </Button>
         </div>
       </div>
 
-      {/* Filtres */}
-      <Card>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Input
-            label={t('audit.filterUser')}
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            placeholder={t('audit.filterUserPlaceholder')}
-          />
-          <Select
-            label={t('audit.filterAction')}
-            value={action}
-            onChange={(e) => setAction(e.target.value)}
-            options={ACTION_OPTIONS}
-          />
-          <Select
-            label={t('audit.filterResource')}
-            value={resource}
-            onChange={(e) => setResource(e.target.value)}
-            options={RESOURCE_OPTIONS}
-          />
-          <div className="flex items-end gap-2">
-            <Button variant="primary" size="sm" onClick={applyFilters}>
+      {/* Barre de recherche rapide */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
+        <input
+          type="text"
+          placeholder={t('audit.searchPlaceholder')}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
+          className="w-full pr-10 pl-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+      </div>
+
+      {/* Filtres avancés */}
+      {filterOpen && (
+        <Card titleAr={t('common.advancedSearch')}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Input
+              label={t('audit.filterUser')}
+              value={filterUserId}
+              onChange={(e) => setFilterUserId(e.target.value)}
+              placeholder={t('audit.filterUserPlaceholder')}
+            />
+            <Select
+              label={t('audit.filterRole')}
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+              options={ROLE_OPTIONS}
+            />
+            <Select
+              label={t('audit.filterAction')}
+              value={filterAction}
+              onChange={(e) => setFilterAction(e.target.value)}
+              options={ACTION_OPTIONS}
+            />
+            <Select
+              label={t('audit.filterResource')}
+              value={filterResource}
+              onChange={(e) => setFilterResource(e.target.value)}
+              options={RESOURCE_OPTIONS}
+            />
+            <Input
+              label={t('audit.filterDateFrom')}
+              type="date"
+              value={filterDateFrom}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+            />
+            <Input
+              label={t('audit.filterDateTo')}
+              type="date"
+              value={filterDateTo}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button size="sm" onClick={applyFilters}>
               <Search className="w-4 h-4" /> {t('common.search')}
             </Button>
-            <Button variant="secondary" size="sm" onClick={resetFilters}>{t('audit.reset')}</Button>
+            <Button variant="secondary" size="sm" onClick={resetFilters}>
+              {t('common.reset')}
+            </Button>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {/* Liste des logs */}
       {isLoading ? (
@@ -154,10 +245,11 @@ export default function AuditLogPage() {
                 <tr className="border-b border-border bg-secondary/30">
                   <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.date')}</th>
                   <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.user')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.id')}</th>
                   <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden sm:table-cell">{t('audit.role')}</th>
                   <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.action')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.resource')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden md:table-cell">{t('audit.description')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden md:table-cell">{t('audit.resource')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden lg:table-cell">{t('audit.description')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,18 +261,21 @@ export default function AuditLogPage() {
                     <td className="py-3 px-4 font-medium text-foreground">
                       {log.userName || t('audit.unknownUser')}
                     </td>
+                    <td className="py-3 px-4 text-muted-foreground font-mono text-xs" dir="ltr">
+                      {log.userId || '—'}
+                    </td>
                     <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
-                      {log.userRole || '—'}
+                      {ROLE_LABELS[log.userRole || ''] || log.userRole || '—'}
                     </td>
                     <td className="py-3 px-4">
                       <Badge variant={ACTION_BADGE[log.action] || 'default'}>
                         {t(`audit.actionLabel.${log.action}`, { defaultValue: log.action })}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground">
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">
                       {t(`audit.resourceLabel.${log.resource}`, { defaultValue: log.resource })}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">
+                    <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell">
                       {log.description || '—'}
                     </td>
                   </tr>
@@ -199,19 +294,19 @@ export default function AuditLogPage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setQueryParams((p) => ({ ...(p || {}), page: String(Math.max(1, (p?.page ? parseInt(p.page, 10) : 1) - 1)) }))}
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
                   {t('audit.prev')}
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  {page} / {totalPages}
+                  {currentPage} / {totalPages}
                 </span>
                 <Button
                   variant="secondary"
                   size="sm"
-                  disabled={page >= totalPages}
-                  onClick={() => setQueryParams((p) => ({ ...(p || {}), page: String(Math.min(totalPages, (p?.page ? parseInt(p.page, 10) : 1) + 1)) }))}
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
                   {t('audit.next')}
                 </Button>
