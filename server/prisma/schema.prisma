@@ -568,6 +568,7 @@ model AuditLog {
   associationId String
   userId        String?
   userName      String?
+  userEmail     String?
   userRole      String?
   action        String   // create | update | delete | confirm | cancel | login | logout | register
   resource      String   // transaction | caisse | donor | beneficiary | article | loan | medical_referral | doctor | user

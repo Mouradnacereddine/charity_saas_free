@@ -28,6 +28,7 @@ router.get('/', requirePermission('audit', 'read'), async (req: AuthRequest, res
       const term = String(search);
       where.OR = [
         { userName: { contains: term, mode: 'insensitive' } },
+        { userEmail: { contains: term, mode: 'insensitive' } },
         { description: { contains: term, mode: 'insensitive' } },
         { resourceId: { contains: term, mode: 'insensitive' } },
       ];

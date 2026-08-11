@@ -452,6 +452,7 @@ export interface AuditLogEntry {
   associationId: string;
   userId: string | null;
   userName: string | null;
+  userEmail: string | null;
   userRole: string | null;
   action: string;
   resource: string;

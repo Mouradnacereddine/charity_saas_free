@@ -46,7 +46,6 @@ export default function AuditLogPage() {
 
   // ---- Filtres avancés ----
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterUserId, setFilterUserId] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterAction, setFilterAction] = useState('');
   const [filterResource, setFilterResource] = useState('');
@@ -60,7 +59,6 @@ export default function AuditLogPage() {
     queryFn: async () => {
       const params: Record<string, string> = { page: String(page), limit: '50' };
       if (committedSearch) params.search = committedSearch;
-      if (committedFilters.userId) params.userId = committedFilters.userId;
       if (committedFilters.userRole) params.userRole = committedFilters.userRole;
       if (committedFilters.action) params.action = committedFilters.action;
       if (committedFilters.resource) params.resource = committedFilters.resource;
@@ -127,7 +125,6 @@ export default function AuditLogPage() {
   // Filtres avancés
   const applyFilters = () => {
     setCommittedFilters({
-      userId: filterUserId,
       userRole: filterRole,
       action: filterAction,
       resource: filterResource,
@@ -137,7 +134,6 @@ export default function AuditLogPage() {
     setPage(1);
   };
   const resetFilters = () => {
-    setFilterUserId('');
     setFilterRole('');
     setFilterAction('');
     setFilterResource('');
@@ -184,12 +180,6 @@ export default function AuditLogPage() {
       {filterOpen && (
         <Card titleAr={t('common.advancedSearch')}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Input
-              label={t('audit.filterUser')}
-              value={filterUserId}
-              onChange={(e) => setFilterUserId(e.target.value)}
-              placeholder={t('audit.filterUserPlaceholder')}
-            />
             <Select
               label={t('audit.filterRole')}
               value={filterRole}
@@ -245,11 +235,11 @@ export default function AuditLogPage() {
                 <tr className="border-b border-border bg-secondary/30">
                   <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.date')}</th>
                   <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.user')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.id')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden md:table-cell">{t('audit.email')}</th>
                   <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden sm:table-cell">{t('audit.role')}</th>
                   <th className="text-start py-3 px-4 font-semibold text-muted-foreground">{t('audit.action')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden md:table-cell">{t('audit.resource')}</th>
-                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden lg:table-cell">{t('audit.description')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden lg:table-cell">{t('audit.resource')}</th>
+                  <th className="text-start py-3 px-4 font-semibold text-muted-foreground hidden xl:table-cell">{t('audit.description')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -261,8 +251,8 @@ export default function AuditLogPage() {
                     <td className="py-3 px-4 font-medium text-foreground">
                       {log.userName || t('audit.unknownUser')}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground font-mono text-xs" dir="ltr">
-                      {log.userId || '—'}
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell" dir="ltr">
+                      {log.userEmail || '—'}
                     </td>
                     <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
                       {ROLE_LABELS[log.userRole || ''] || log.userRole || '—'}
@@ -272,10 +262,10 @@ export default function AuditLogPage() {
                         {t(`audit.actionLabel.${log.action}`, { defaultValue: log.action })}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">
+                    <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell">
                       {t(`audit.resourceLabel.${log.resource}`, { defaultValue: log.resource })}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell">
+                    <td className="py-3 px-4 text-muted-foreground hidden xl:table-cell">
                       {log.description || '—'}
                     </td>
                   </tr>

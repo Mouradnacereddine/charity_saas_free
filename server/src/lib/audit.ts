@@ -10,28 +10,27 @@ import prisma from './prisma';
 //
 // L'échec d'un log ne doit jamais bloquer l'action principale.
 
-/** Cache mémoire des noms d'utilisateurs pour limiter les requêtes DB. */
-const userNameCache = new Map<string, string>();
+/** Cache mémoire des infos utilisateurs pour limiter les requêtes DB. */
+const userInfoCache = new Map<string, { name: string | null; email: string | null }>();
 
-async function resolveUserName(userId: string | undefined): Promise<string | null> {
-  if (!userId) return null;
+async function resolveUserInfo(userId: string | undefined): Promise<{ name: string | null; email: string | null }> {
+  if (!userId) return { name: null, email: null };
 
-  const cached = userNameCache.get(userId);
+  const cached = userInfoCache.get(userId);
   if (cached) return cached;
 
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { name: true },
+      select: { name: true, email: true },
     });
-    if (user) {
-      userNameCache.set(userId, user.name);
-      return user.name;
-    }
+    const info = { name: user?.name ?? null, email: user?.email ?? null };
+    userInfoCache.set(userId, info);
+    return info;
   } catch {
     // Ignore — on retourne null si la résolution échoue
   }
-  return null;
+  return { name: null, email: null };
 }
 
 export interface AuditInput {
@@ -52,12 +51,14 @@ export interface AuditInput {
 export async function logAudit(
   req: AuthRequest,
   input: AuditInput,
-  override?: { associationId?: string; userId?: string; userName?: string; userRole?: string },
+  override?: { associationId?: string; userId?: string; userName?: string; userEmail?: string; userRole?: string },
 ): Promise<void> {
   try {
     const associationId = override?.associationId ?? req.user?.associationId;
     const userId = override?.userId ?? req.user?.userId;
-    const userName = override?.userName ?? (await resolveUserName(userId));
+    const resolved = await resolveUserInfo(userId);
+    const userName = override?.userName ?? resolved.name;
+    const userEmail = override?.userEmail ?? resolved.email;
 
     if (!associationId) {
       console.warn('⚠️ Audit log skipped: no associationId');
@@ -69,6 +70,7 @@ export async function logAudit(
         associationId,
         userId: userId ?? null,
         userName,
+        userEmail,
         userRole: override?.userRole ?? req.user?.role ?? null,
         action: input.action,
         resource: input.resource,
