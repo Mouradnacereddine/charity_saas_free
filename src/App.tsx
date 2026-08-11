@@ -16,6 +16,7 @@ import DoctorsPage from './pages/DoctorsPage';
 import UsersPage from './pages/UsersPage';
 import AuthPage from './pages/AuthPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import AuditLogPage from './pages/AuditLogPage';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -42,6 +43,7 @@ const PAGE_NAMES: Record<string, string> = {
   doctors: 'nav.doctors',
   users: 'nav.users',
   analytics: 'nav.analytics',
+  audit: 'nav.audit',
 };
 
 function AppContent() {
@@ -130,6 +132,7 @@ function AppContent() {
       case 'doctors': return can('doctors', 'read') ? <DoctorsPage /> : <DashboardPage />;
       case 'users': return canView('users') ? <UsersPage /> : <DashboardPage />;
       case 'analytics': return canView('analytics') ? <AnalyticsPage /> : <DashboardPage />;
+      case 'audit': return can('audit', 'read') ? <AuditLogPage /> : <DashboardPage />;
       default: return <DashboardPage />;
     }
   };

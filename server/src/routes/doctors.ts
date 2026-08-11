@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
+import { logAudit } from '../lib/audit';
 import { config } from '../config';
 
 import { generateRef } from '../lib/ref';
@@ -264,8 +265,16 @@ router.post('/', requirePermission('doctors', 'create'), async (req: AuthRequest
         specialtyId: specialtyId || undefined,
         address,
         notes,
+        createdBy: req.user!.userId,
       },
       include: { specialty: { select: { id: true, name: true } } },
+    });
+
+    await logAudit(req, {
+      action: 'create',
+      resource: 'doctor',
+      resourceId: doctor.id,
+      description: `Médecin créé : ${firstName} ${lastName}`,
     });
 
     res.status(201).json(doctor);
@@ -300,11 +309,19 @@ router.put('/:id', requirePermission('doctors', 'update'), async (req: AuthReque
     if (specialtyId !== undefined) data.specialtyId = specialtyId;
     if (address !== undefined) data.address = address;
     if (notes !== undefined) data.notes = notes;
+    data.updatedBy = req.user!.userId;
 
     const doctor = await prisma.doctor.update({
       where: { id },
       data,
       include: { specialty: { select: { id: true, name: true } } },
+    });
+
+    await logAudit(req, {
+      action: 'update',
+      resource: 'doctor',
+      resourceId: doctor.id,
+      description: `Médecin modifié : ${firstName ?? existing.firstName} ${lastName ?? existing.lastName}`,
     });
 
     res.json(doctor);
@@ -340,6 +357,14 @@ router.delete('/:id', requirePermission('doctors', 'delete'), async (req: AuthRe
     }
 
     await prisma.doctor.delete({ where: { id } });
+
+    await logAudit(req, {
+      action: 'delete',
+      resource: 'doctor',
+      resourceId: id,
+      description: `Médecin supprimé : ${existing.firstName} ${existing.lastName}`,
+    });
+
     res.json({ message: 'Doctor deleted successfully' });
   } catch (error) {
     console.error('Error deleting doctor:', error);

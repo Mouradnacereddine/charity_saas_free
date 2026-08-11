@@ -444,3 +444,26 @@ export interface TransactionFilter {
   maxAmount?: number;
   searchTerm?: string;
 }
+
+// ---- Audit Log ----
+
+export interface AuditLogEntry {
+  id: string;
+  associationId: string;
+  userId: string | null;
+  userName: string | null;
+  userRole: string | null;
+  action: string;
+  resource: string;
+  resourceId: string | null;
+  description: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface AuditLogResponse {
+  logs: AuditLogEntry[];
+  total: number;
+  page: number;
+  limit: number;
+}

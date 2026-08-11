@@ -290,3 +290,7 @@ export const notificationsApi = {
   list: (params?: Record<string, string>) => api.get('/notifications', { params }),
   markRead: (id: string) => api.put(`/notifications/${id}/read`),
 };
+
+export const auditApi = {
+  list: (params?: Record<string, string>) => api.get('/audit', { params }),
+};

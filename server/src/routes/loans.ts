@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
+import { logAudit } from '../lib/audit';
 
 const router = Router();
 
@@ -111,6 +112,7 @@ const loanItems: any[] = (items as any[]).map((item: any) => ({
           loanDate: new Date(loanDate),
           expectedReturnDate: expectedReturnDate ? new Date(expectedReturnDate) : null,
           notes,
+          createdBy: req.user!.userId,
         },
       });
 
@@ -125,6 +127,7 @@ const loanItems: any[] = (items as any[]).map((item: any) => ({
       return loan;
     });
 
+    await logAudit(req, { action: 'create', resource: 'loan', resourceId: result.id, description: 'Prêt créé' });
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating loan:', error);
@@ -221,9 +224,10 @@ router.put('/:id', requirePermission('loans', 'update'), async (req: AuthRequest
 
     const loan = await prisma.loan.update({
       where: { id },
-      data,
+      data: { ...data, updatedBy: req.user!.userId },
     });
 
+    await logAudit(req, { action: 'update', resource: 'loan', resourceId: loan.id, description: 'Prêt modifié' });
     res.json(loan);
   } catch (error) {
     console.error('Error updating loan:', error);
@@ -256,6 +260,7 @@ router.delete('/:id', requirePermission('loans', 'delete'), async (req: AuthRequ
     }
 
     await prisma.loan.delete({ where: { id } });
+    await logAudit(req, { action: 'delete', resource: 'loan', resourceId: id, description: 'Prêt supprimé' });
     res.json({ message: 'Loan deleted successfully' });
   } catch (error) {
     console.error('Error deleting loan:', error);
@@ -346,6 +351,7 @@ router.post('/:id/return', requirePermission('loans', 'update'), async (req: Aut
       return updatedLoan;
     });
 
+    await logAudit(req, { action: 'update', resource: 'loan', resourceId: req.params.id, description: 'Retour partiel de prêt' });
     res.json(result);
   } catch (error: any) {
     console.error('Error processing loan return:', error);
@@ -453,6 +459,7 @@ router.post('/:id/add-item', requirePermission('loans', 'update'), async (req: A
       return updatedLoan;
     });
 
+    await logAudit(req, { action: 'update', resource: 'loan', resourceId: req.params.id, description: 'Article ajouté au prêt' });
     res.json(result);
   } catch (error) {
     console.error('Error adding item to loan:', error);
@@ -512,6 +519,7 @@ router.delete('/:id/remove-item/:itemKey', requirePermission('loans', 'update'),
       return updatedLoan;
     });
 
+    await logAudit(req, { action: 'update', resource: 'loan', resourceId: req.params.id, description: 'Article retiré du prêt' });
     res.json(result);
   } catch (error) {
     console.error('Error removing item from loan:', error);
@@ -547,6 +555,7 @@ router.put('/:id/mark-definitive', requirePermission('loans', 'update'), async (
       },
     });
 
+    await logAudit(req, { action: 'update', resource: 'loan', resourceId: updatedLoan.id, description: 'Prêt marqué définitif' });
     res.json(updatedLoan);
   } catch (error) {
     console.error('Error marking loan as definitive:', error);

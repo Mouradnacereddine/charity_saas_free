@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
+import { logAudit } from '../lib/audit';
 
 const router = Router();
 
@@ -135,7 +136,15 @@ router.post('/', requirePermission('donors', 'create'), async (req: AuthRequest,
         gender: gender || 'male',
         totalDonated: totalDonated || 0,
         notes,
+        createdBy: req.user!.userId,
       },
+    });
+
+    await logAudit(req, {
+      action: 'create',
+      resource: 'donor',
+      resourceId: donor.id,
+      description: `Donateur créé : ${firstName} ${lastName}`,
     });
 
     res.status(201).json(donor);
@@ -206,10 +215,18 @@ router.put('/:id', requirePermission('donors', 'update'), async (req: AuthReques
     if (totalDonated !== undefined) data.totalDonated = totalDonated;
     if (notes !== undefined) data.notes = notes;
     if (gender !== undefined) data.gender = gender;
+    data.updatedBy = req.user!.userId;
 
     const donor = await prisma.donor.update({
       where: { id },
       data,
+    });
+
+    await logAudit(req, {
+      action: 'update',
+      resource: 'donor',
+      resourceId: donor.id,
+      description: `Donateur modifié : ${firstName ?? existing.firstName} ${lastName ?? existing.lastName}`,
     });
 
     res.json(donor);
@@ -235,6 +252,14 @@ router.delete('/:id', requirePermission('donors', 'delete'), async (req: AuthReq
     }
 
     await prisma.donor.delete({ where: { id } });
+
+    await logAudit(req, {
+      action: 'delete',
+      resource: 'donor',
+      resourceId: id,
+      description: `Donateur supprimé : ${existing.firstName} ${existing.lastName}`,
+    });
+
     res.json({ message: 'Donor deleted successfully' });
   } catch (error) {
     console.error('Error deleting donor:', error);

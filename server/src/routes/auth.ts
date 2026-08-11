@@ -6,6 +6,7 @@ import prisma from '../lib/prisma';
 import { generateAccessToken, generateRefreshToken } from '../lib/jwt';
 import { requireAuth, requirePermission, requireUserManagement, AuthRequest } from '../middleware/auth';
 import { getInvitableRoles, getAssignableRoles } from '../lib/permissions';
+import { logAudit } from '../lib/audit';
 import { config } from '../config';
 import crypto from 'crypto';
 
@@ -79,6 +80,12 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       });
       const refreshToken = generateRefreshToken({ userId: result.id });
 
+      await logAudit(
+        req,
+        { action: 'register', resource: 'user', resourceId: result.id, description: 'Inscription (invitation)' },
+        { associationId: result.associationId, userId: result.id, userName: result.name, userRole: result.role },
+      );
+
       res.status(201).json({
         accessToken,
         refreshToken,
@@ -139,6 +146,12 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 
     const refreshToken = generateRefreshToken({ userId: result.user.id });
 
+    await logAudit(
+      req,
+      { action: 'register', resource: 'user', resourceId: result.user.id, description: 'Inscription (création association)' },
+      { associationId: result.user.associationId, userId: result.user.id, userName: result.user.name, userRole: result.user.role },
+    );
+
     res.status(201).json({
       accessToken,
       refreshToken,
@@ -196,6 +209,12 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     });
 
     const refreshToken = generateRefreshToken({ userId: user.id });
+
+    await logAudit(
+      req,
+      { action: 'login', resource: 'user', resourceId: user.id, description: 'Connexion' },
+      { associationId: user.associationId, userId: user.id, userName: user.name, userRole: user.role },
+    );
 
     res.json({
       accessToken,
@@ -303,6 +322,7 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
 
 // POST /api/auth/logout
 router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  await logAudit(req, { action: 'logout', resource: 'user', resourceId: req.user!.userId, description: 'Déconnexion' });
   res.json({ message: 'Logged out successfully' });
 });
 
@@ -411,6 +431,8 @@ router.post('/invite', requireAuth, requirePermission('users', 'create'), async 
 
     const inviteLink = `${config.frontendUrl}/#register?invite=${invite.token}`;
 
+    await logAudit(req, { action: 'create', resource: 'user', resourceId: invite.id, description: 'Invitation créée' });
+
     res.status(201).json({
       id: invite.id,
       role: invite.role,
@@ -474,6 +496,7 @@ router.delete('/invites/:id', requireAuth, requirePermission('users', 'delete'),
     }
 
     await prisma.inviteToken.delete({ where: { id } });
+    await logAudit(req, { action: 'delete', resource: 'user', resourceId: id, description: 'Invitation supprimée' });
     res.json({ message: 'تم إلغاء الدعوة' });
   } catch (error) {
     console.error('Error deleting invite:', error);
@@ -567,6 +590,8 @@ router.post('/users/create', requireAuth, requirePermission('users', 'create'), 
       },
     });
 
+    await logAudit(req, { action: 'create', resource: 'user', resourceId: user.id, description: 'Utilisateur créé', metadata: { createdBy: req.user!.userId } });
+
     res.status(201).json(user);
   } catch (error) {
     console.error('Error creating user:', error);
@@ -651,6 +676,8 @@ router.put('/users/:id', requireAuth, requirePermission('users', 'update'), requ
       },
     });
 
+    await logAudit(req, { action: 'update', resource: 'user', resourceId: updated.id, description: 'Utilisateur modifié' });
+
     res.json(updated);
   } catch (error) {
     console.error('Error updating user:', error);
@@ -679,6 +706,7 @@ router.delete('/users/:id', requireAuth, requirePermission('users', 'delete'), r
     }
 
     await prisma.user.delete({ where: { id } });
+    await logAudit(req, { action: 'delete', resource: 'user', resourceId: id, description: 'Utilisateur supprimé' });
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('Error deleting user:', error);
@@ -821,6 +849,12 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
     });
 
     const refreshTokenVal = generateRefreshToken({ userId: user.id });
+
+    await logAudit(
+      req,
+      { action: 'login', resource: 'user', resourceId: user.id, description: 'Connexion Google' },
+      { associationId: user.associationId, userId: user.id, userName: user.name, userRole: user.role },
+    );
 
     res.json({
       accessToken,

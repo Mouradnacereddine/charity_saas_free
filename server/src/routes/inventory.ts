@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
+import { logAudit } from '../lib/audit';
 
 const router = Router();
 
@@ -96,9 +97,11 @@ router.post('/articles', requirePermission('articles', 'create'), async (req: Au
         notes,
         status: finalStatus,
         statusId: statusId || undefined,
+        createdBy: req.user!.userId,
       },
     });
 
+    await logAudit(req, { action: 'create', resource: 'article', resourceId: article.id, description: 'Article créé' });
     res.status(201).json(article);
   } catch (error) {
     console.error('Error creating article:', error);
@@ -185,12 +188,14 @@ router.put('/articles/:id', requirePermission('articles', 'update'), async (req:
     if (storageLocation !== undefined) data.storageLocationId = storageLocation;
     if (isPermanent !== undefined) data.isPermanent = isPermanent;
     if (notes !== undefined) data.notes = notes;
+    data.updatedBy = req.user!.userId;
 
     const article = await prisma.article.update({
       where: { id },
       data,
     });
 
+    await logAudit(req, { action: 'update', resource: 'article', resourceId: article.id, description: 'Article modifié' });
     res.json(article);
   } catch (error) {
     console.error('Error updating article:', error);
@@ -232,6 +237,7 @@ router.delete('/articles/:id', requirePermission('articles', 'delete'), async (r
     }
 
     await prisma.article.delete({ where: { id } });
+    await logAudit(req, { action: 'delete', resource: 'article', resourceId: id, description: 'Article supprimé' });
     res.json({ message: 'Article deleted successfully' });
   } catch (error) {
     console.error('Error deleting article:', error);

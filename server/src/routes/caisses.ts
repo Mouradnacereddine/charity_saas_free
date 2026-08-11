@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
+import { logAudit } from '../lib/audit';
 
 const router = Router();
 
@@ -41,7 +42,15 @@ router.post('/', requirePermission('caisses', 'create'), async (req: AuthRequest
         name,
         balance: balance || 0,
         subCategories: subCategories || [],
+        createdBy: req.user!.userId,
       },
+    });
+
+    await logAudit(req, {
+      action: 'create',
+      resource: 'caisse',
+      resourceId: caisse.id,
+      description: `Caisse créée : ${name}`,
     });
 
     res.status(201).json(caisse);
@@ -95,10 +104,18 @@ router.put('/:id', requirePermission('caisses', 'update'), async (req: AuthReque
     if (name !== undefined) data.name = name;
     if (balance !== undefined) data.balance = balance;
     if (subCategories !== undefined) data.subCategories = subCategories;
+    data.updatedBy = req.user!.userId;
 
     const caisse = await prisma.caisse.update({
       where: { id },
       data,
+    });
+
+    await logAudit(req, {
+      action: 'update',
+      resource: 'caisse',
+      resourceId: caisse.id,
+      description: `Caisse modifiée : ${name ?? existing.name}`,
     });
 
     res.json(caisse);
@@ -124,6 +141,14 @@ router.delete('/:id', requirePermission('caisses', 'delete'), async (req: AuthRe
     }
 
     await prisma.caisse.delete({ where: { id } });
+
+    await logAudit(req, {
+      action: 'delete',
+      resource: 'caisse',
+      resourceId: id,
+      description: `Caisse supprimée : ${existing.name}`,
+    });
+
     res.json({ message: 'Caisse deleted successfully' });
   } catch (error) {
     console.error('Error deleting caisse:', error);

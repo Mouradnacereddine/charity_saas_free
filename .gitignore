@@ -24,6 +24,9 @@ server/.env.local
 # Vercel
 .vercel
 
+# Documents locaux (Word/PDF) — ne pas pousser sur GitHub
+docs/
+
 # Test outputs
 coverage
 .nyc_output

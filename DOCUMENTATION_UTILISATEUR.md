@@ -21,7 +21,7 @@
 
 ### Inviter des collaborateurs
 - Depuis le menu **Gestion des utilisateurs**, cliquez sur "Inviter un utilisateur"
-- Choisissez son rôle (administrateur, trésorier ou bénévole)
+- Choisissez son rôle : administrateur, trésorier, magasinier, assistant social ou bénévole (voir `ROLES_ET_PERMISSIONS.md` pour le détail des tâches de chaque rôle)
 - Copiez le lien d'invitation généré et partagez-le avec la personne concernée
 - Le lien expire automatiquement après la période définie
 
@@ -198,7 +198,7 @@ Pour chaque transaction :
 
 ### Invite team members
 - From the **User Management** menu, click "Invite User"
-- Choose their role (administrator, treasurer or volunteer)
+- Choose their role: admin, treasurer, stock manager, social worker, or volunteer (see `ROLES_ET_PERMISSIONS.md` for the details of each role's tasks)
 - Copy the generated invitation link and share it
 - The link expires after the set period
 

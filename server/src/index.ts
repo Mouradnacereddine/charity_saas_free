@@ -28,6 +28,7 @@ import dashboardRoutes from './routes/dashboard';
 import notificationsRoutes from './routes/notifications';
 import attributsRoutes from './routes/beneficiaryAttributs';
 import doctorsRoutes from './routes/doctors';
+import auditRoutes from './routes/audit';
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use('/api/doctors', autoInvalidate, doctorsRoutes);
 app.use('/api/dashboard', autoInvalidate, dashboardRoutes);
 app.use('/api/notifications', autoInvalidate, notificationsRoutes);
 app.use('/api/beneficiary-attributs', autoInvalidate, attributsRoutes);
+app.use('/api/audit', auditRoutes);
 
 // Socket.IO — only in non-serverless mode (require inside the block so it doesn't fail on Vercel)
 if (!process.env.VERCEL) {

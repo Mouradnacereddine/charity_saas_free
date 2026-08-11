@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
+import { logAudit } from '../lib/audit';
 
 const router = Router();
 
@@ -202,6 +203,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
           receiptNumber: ref,
           status: txStatus as any,
           date: date ? new Date(date) : new Date(),
+          createdBy: req.user!.userId,
         },
       });
 
@@ -323,6 +325,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
       return { transaction, receipt, allocation };
     });
 
+    await logAudit(req, { action: 'create', resource: 'transaction', resourceId: result.transaction.id, description: 'Transaction créée' });
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating transaction:', error);
@@ -396,9 +399,11 @@ router.post('/bank-accounts', requirePermission('bank_accounts', 'create'), asyn
         iban: iban || '',
         swift: swift || '',
         balance: balance || 0,
+        createdBy: req.user!.userId,
       },
     });
 
+    await logAudit(req, { action: 'create', resource: 'bank_account', resourceId: account.id, description: 'Compte bancaire créé' });
     res.status(201).json(account);
   } catch (error) {
     console.error('Error creating bank account:', error);
@@ -430,12 +435,14 @@ router.put('/bank-accounts/:id', requirePermission('bank_accounts', 'update'), a
     if (iban !== undefined) data.iban = iban;
     if (swift !== undefined) data.swift = swift;
     if (balance !== undefined) data.balance = balance;
+    data.updatedBy = req.user!.userId;
 
     const account = await prisma.bankAccount.update({
       where: { id },
       data,
     });
 
+    await logAudit(req, { action: 'update', resource: 'bank_account', resourceId: account.id, description: 'Compte bancaire modifié' });
     res.json(account);
   } catch (error) {
     console.error('Error updating bank account:', error);
@@ -459,6 +466,7 @@ router.delete('/bank-accounts/:id', requirePermission('bank_accounts', 'delete')
     }
 
     await prisma.bankAccount.delete({ where: { id } });
+    await logAudit(req, { action: 'delete', resource: 'bank_account', resourceId: id, description: 'Compte bancaire supprimé' });
     res.json({ message: 'Bank account deleted successfully' });
   } catch (error) {
     console.error('Error deleting bank account:', error);
@@ -548,7 +556,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       // Update status
       const updated = await prismaTx.transaction.update({
         where: { id },
-        data: { status: 'completed' },
+        data: { status: 'completed', updatedBy: req.user!.userId },
       });
 
       // =====================================================
@@ -672,6 +680,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       return updated;
     });
 
+    await logAudit(req, { action: 'confirm', resource: 'transaction', resourceId: result.id, description: 'Transaction confirmée' });
     res.json(result);
   } catch (error) {
     console.error('Error confirming transaction:', error);
@@ -702,7 +711,7 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
     const updated = await prisma.$transaction(async (prismaTx) => {
       const txUpdate = await prismaTx.transaction.update({
         where: { id },
-        data: { status: 'cancelled' },
+        data: { status: 'cancelled', updatedBy: req.user!.userId },
       });
 
       const amountNum = tx.amount;
@@ -737,6 +746,7 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
       return txUpdate;
     });
 
+    await logAudit(req, { action: 'cancel', resource: 'transaction', resourceId: updated.id, description: 'Transaction annulée' });
     res.json(updated);
   } catch (error) {
     console.error('Error cancelling transaction:', error);
@@ -863,6 +873,7 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
       return { debitTx, remaining: newRemaining };
     });
 
+    await logAudit(req, { action: 'create', resource: 'allocation', resourceId: result.debitTx?.id, description: 'Déboursement d’allocation' });
     res.status(201).json(result);
   } catch (error) {
     console.error('Error disbursing allocation:', error);
@@ -897,6 +908,7 @@ router.put('/allocations/:id/distribute', requirePermission('allocations', 'upda
       },
     });
 
+    await logAudit(req, { action: 'update', resource: 'allocation', resourceId: updated.id, description: 'Allocation distribuée' });
     res.json(updated);
   } catch (error) {
     console.error('Error distributing allocation:', error);

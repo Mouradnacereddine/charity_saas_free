@@ -97,6 +97,7 @@ model Association {
   notifications        Notification[]
   inviteTokens         InviteToken[]
   stockTakes           StockTake[]
+  auditLogs            AuditLog[]
 
   @@index([email])
 }
@@ -147,6 +148,8 @@ model Caisse {
   name          String
   balance       Decimal  @default(0)
   subCategories Json     @default("[]")
+  createdBy     String?
+  updatedBy     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -168,6 +171,8 @@ model BankAccount {
   iban          String
   swift         String
   balance       Decimal  @default(0)
+  createdBy     String?
+  updatedBy     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -194,6 +199,8 @@ model Beneficiary {
   children           Json     @default("[]")
   caisseId           String?
   subCategoryId      String?
+  createdBy          String?
+  updatedBy          String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -221,6 +228,8 @@ model Donor {
   gender        String?  @default("male")
   totalDonated  Decimal  @default(0)
   notes         String?
+  createdBy     String?
+  updatedBy     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -249,6 +258,8 @@ model Transaction {
   receiptNumber String?
   status        TransactionStatus @default(completed)
   date          DateTime
+  createdBy     String?
+  updatedBy     String?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
@@ -308,6 +319,8 @@ model Article {
   storageLocationId String?
   isPermanent       Boolean       @default(false)
   notes             String?
+  createdBy         String?
+  updatedBy         String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -334,6 +347,8 @@ model Loan {
   expectedReturnDate DateTime?
   actualReturnDate   DateTime?
   notes              String?
+  createdBy          String?
+  updatedBy          String?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
@@ -408,6 +423,8 @@ model Doctor {
   specialtyId   String?
   address       String?
   notes         String?
+  createdBy     String?
+  updatedBy     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -460,6 +477,8 @@ model MedicalReferral {
   date          DateTime
   notes         String?
   children      Json     @default("[]")
+  createdBy     String?
+  updatedBy     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -540,4 +559,26 @@ model DonationAllocation {
   @@index([associationId])
   @@index([donorId])
   @@index([beneficiaryId])
+}
+
+/// Journal d'audit : trace "qui a fait quoi" dans l'association.
+/// Seules les actions de modification sont journalisées (jamais les consultations).
+model AuditLog {
+  id            String   @id @default(uuid())
+  associationId String
+  userId        String?
+  userName      String?
+  userRole      String?
+  action        String   // create | update | delete | confirm | cancel | login | logout | register
+  resource      String   // transaction | caisse | donor | beneficiary | article | loan | medical_referral | doctor | user
+  resourceId    String?
+  description   String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@index([associationId, createdAt])
+  @@index([associationId, userId])
+  @@index([associationId, resource])
 }

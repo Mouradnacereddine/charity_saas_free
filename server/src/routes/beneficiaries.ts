@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
+import { logAudit } from '../lib/audit';
 
 const router = Router();
 
@@ -192,7 +193,15 @@ router.post('/', requirePermission('beneficiaries', 'create'), async (req: AuthR
         children: children || [],
         caisseId,
         subCategoryId,
+        createdBy: req.user!.userId,
       },
+    });
+
+    await logAudit(req, {
+      action: 'create',
+      resource: 'beneficiary',
+      resourceId: beneficiary.id,
+      description: `Bénéficiaire créé : ${firstName} ${lastName}`,
     });
 
     res.status(201).json(beneficiary);
@@ -262,10 +271,18 @@ router.put('/:id', requirePermission('beneficiaries', 'update'), async (req: Aut
     if (children !== undefined) data.children = children;
     if (caisseId !== undefined) data.caisseId = caisseId;
     if (subCategoryId !== undefined) data.subCategoryId = subCategoryId;
+    data.updatedBy = req.user!.userId;
 
     const beneficiary = await prisma.beneficiary.update({
       where: { id },
       data,
+    });
+
+    await logAudit(req, {
+      action: 'update',
+      resource: 'beneficiary',
+      resourceId: beneficiary.id,
+      description: `Bénéficiaire modifié : ${firstName ?? existing.firstName} ${lastName ?? existing.lastName}`,
     });
 
     res.json(beneficiary);
@@ -291,6 +308,14 @@ router.delete('/:id', requirePermission('beneficiaries', 'delete'), async (req: 
     }
 
     await prisma.beneficiary.delete({ where: { id } });
+
+    await logAudit(req, {
+      action: 'delete',
+      resource: 'beneficiary',
+      resourceId: id,
+      description: `Bénéficiaire supprimé : ${existing.firstName} ${existing.lastName}`,
+    });
+
     res.json({ message: 'Beneficiary deleted successfully' });
   } catch (error) {
     console.error('Error deleting beneficiary:', error);

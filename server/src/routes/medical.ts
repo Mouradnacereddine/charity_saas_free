@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
+import { logAudit } from '../lib/audit';
 
 const router = Router();
 
@@ -120,6 +121,7 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
       return tx.medicalReferral.create({
         data: {
           associationId,
+          createdBy: req.user!.userId,
           reference,
           beneficiaryId,
           caisseId,
@@ -137,6 +139,7 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
       });
     });
 
+    await logAudit(req, { action: 'create', resource: 'medical_referral', resourceId: referral.id, description: 'Orientation médicale créée' });
     res.status(201).json(referral);
   } catch (error: any) {
     if (error.message === 'INSUFFICIENT_BALANCE') {
@@ -238,10 +241,12 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
           amount: numericAmount,
           amountInWords: words,
           status: 'completed',
+          updatedBy: req.user!.userId,
         },
       });
     });
 
+    await logAudit(req, { action: 'confirm', resource: 'medical_referral', resourceId: referral.id, description: 'Orientation médicale confirmée' });
     res.json(referral);
   } catch (error: any) {
     if (error.message === 'INSUFFICIENT_BALANCE') {
@@ -275,9 +280,10 @@ router.put('/referrals/:id/cancel', requirePermission('medical_referrals', 'upda
 
     const referral = await prisma.medicalReferral.update({
       where: { id },
-      data: { status: 'cancelled' },
+      data: { status: 'cancelled', updatedBy: req.user!.userId },
     });
 
+    await logAudit(req, { action: 'cancel', resource: 'medical_referral', resourceId: referral.id, description: 'Orientation médicale annulée' });
     res.json(referral);
   } catch (error) {
     console.error('Error cancelling medical referral:', error);
@@ -320,12 +326,14 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
     if (date !== undefined) data.date = new Date(date);
     if (notes !== undefined) data.notes = notes;
     if (req.body.status !== undefined) data.status = req.body.status;
+    data.updatedBy = req.user!.userId;
 
     const referral = await prisma.medicalReferral.update({
       where: { id },
       data,
     });
 
+    await logAudit(req, { action: 'update', resource: 'medical_referral', resourceId: referral.id, description: 'Orientation médicale modifiée' });
     res.json(referral);
   } catch (error) {
     console.error('Error updating medical referral:', error);
@@ -357,6 +365,7 @@ router.delete('/referrals/:id', requirePermission('medical_referrals', 'delete')
     }
 
     await prisma.medicalReferral.delete({ where: { id } });
+    await logAudit(req, { action: 'delete', resource: 'medical_referral', resourceId: id, description: 'Orientation médicale supprimée' });
     res.json({ message: 'Medical referral deleted successfully' });
   } catch (error) {
     console.error('Error deleting medical referral:', error);

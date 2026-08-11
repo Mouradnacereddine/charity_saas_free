@@ -31,7 +31,8 @@ export type Resource =
   | 'specialties'
   | 'dashboard'
   | 'analytics'
-  | 'notifications';
+  | 'notifications'
+  | 'audit';
 
 export type Permission = `${Resource}:${Action}`;
 
@@ -123,6 +124,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   ...readOnly('dashboard'),
   ...readOnly('analytics'),
   ...crud('notifications'),
+  ...readOnly('audit'),
 ];
 
 const ALL_RESOURCES: Resource[] = [
@@ -131,7 +133,7 @@ const ALL_RESOURCES: Resource[] = [
   'articles', 'article_categories', 'storage_locations', 'article_statuses', 'school_grades', 'stock_takes', 'loans',
   'beneficiaries', 'beneficiary_attributs',
   'medical_referrals', 'analysis_types', 'hospitals', 'doctors', 'specialties',
-  'dashboard', 'analytics', 'notifications',
+  'dashboard', 'analytics', 'notifications', 'audit',
 ];
 
 const SUPER_ADMIN_PERMISSIONS: Permission[] = ALL_RESOURCES.flatMap((r) => crud(r));
