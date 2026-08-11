@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Badge, Input, Select, EmptyState, LoadingSpinner } from '../components/common/UI';
+import { Card, Badge, Input, Select, Button, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { useQuery } from '@tanstack/react-query';
 import { auditApi } from '../lib/api';
 import { ScrollText } from 'lucide-react';
