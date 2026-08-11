@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Badge, Input, Select, Button, EmptyState, LoadingSpinner } from '../components/common/UI';
+import { Card, Badge, Input, SearchableSelect, Button, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { useQuery } from '@tanstack/react-query';
 import { auditApi } from '../lib/api';
 import { ScrollText, Search, Filter } from 'lucide-react';
@@ -180,23 +180,26 @@ export default function AuditLogPage() {
       {filterOpen && (
         <Card titleAr={t('common.advancedSearch')}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Select
+            <SearchableSelect
               label={t('audit.filterRole')}
               value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
+              onChange={setFilterRole}
               options={ROLE_OPTIONS}
+              placeholder={t('audit.allRoles')}
             />
-            <Select
+            <SearchableSelect
               label={t('audit.filterAction')}
               value={filterAction}
-              onChange={(e) => setFilterAction(e.target.value)}
+              onChange={setFilterAction}
               options={ACTION_OPTIONS}
+              placeholder={t('audit.allActions')}
             />
-            <Select
+            <SearchableSelect
               label={t('audit.filterResource')}
               value={filterResource}
-              onChange={(e) => setFilterResource(e.target.value)}
+              onChange={setFilterResource}
               options={RESOURCE_OPTIONS}
+              placeholder={t('audit.allResources')}
             />
             <Input
               label={t('audit.filterDateFrom')}
