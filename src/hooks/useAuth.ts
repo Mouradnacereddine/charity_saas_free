@@ -71,12 +71,19 @@ export function useAuth() {
     window.location.hash = 'login';
   };
 
+  const role = data?.user?.role;
+
   return {
     user: data?.user ?? null,
     association: data?.association ?? null,
     isAuthenticated: !!token && !!data,
-    isAdmin: data?.user?.role === 'admin',
-    isTreasurer: data?.user?.role === 'treasurer',
+    isAdmin: role === 'admin' || role === 'super_admin',
+    isSuperAdmin: role === 'super_admin',
+    isTreasurer: role === 'treasurer',
+    isStockManager: role === 'stock_manager',
+    isSocialWorker: role === 'social_worker',
+    isVolunteer: role === 'volunteer',
+    role,
     isLoading,
     login: loginMutation.mutateAsync,
     register: registerMutation.mutateAsync,

@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 router.use(requireAuth);
@@ -8,7 +8,7 @@ router.use(requireAuth);
 const DUMMY_PHONE = '__ATTRIBUT_DUMMY__';
 
 // GET / — list all attributs (from dummy beneficiaries)
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', requirePermission('beneficiary_attributs', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -31,7 +31,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // POST / — create a new attribut value
-router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/', requirePermission('beneficiary_attributs', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { name, attribut } = req.body;
@@ -76,7 +76,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // PUT /:attribut — update an attribut (key + display name)
-router.put('/:attribut', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/:attribut', requirePermission('beneficiary_attributs', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { attribut } = req.params;
     const { name } = req.body;
@@ -105,7 +105,7 @@ router.put('/:attribut', async (req: AuthRequest, res: Response): Promise<void> 
 });
 
 // DELETE /:attribut — delete an attribut value
-router.delete('/:attribut', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/:attribut', requirePermission('beneficiary_attributs', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { attribut } = req.params;
     const associationId = req.user!.associationId;

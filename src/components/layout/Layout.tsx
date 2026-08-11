@@ -35,15 +35,15 @@ const LANGUAGES = [
 ];
 
 const navItems = [
-  { id: 'dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-  { id: 'analytics', labelKey: 'nav.analytics', icon: TrendingUp },
-  { id: 'finance', labelKey: 'nav.finance', icon: Wallet },
-  { id: 'caisses', labelKey: 'nav.caisses', icon: FolderOpen },
-  { id: 'beneficiaries', labelKey: 'nav.beneficiaries', icon: Users },
-  { id: 'donors', labelKey: 'nav.donors', icon: HeartHandshake },
-  { id: 'inventory', labelKey: 'nav.inventory', icon: Package },
-  { id: 'medical', labelKey: 'nav.medical', icon: Stethoscope },
-  { id: 'doctors', labelKey: 'nav.doctors', icon: Stethoscope },
+  { id: 'dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, resource: 'dashboard' },
+  { id: 'analytics', labelKey: 'nav.analytics', icon: TrendingUp, resource: 'analytics' },
+  { id: 'finance', labelKey: 'nav.finance', icon: Wallet, resource: 'transactions' },
+  { id: 'caisses', labelKey: 'nav.caisses', icon: FolderOpen, resource: 'caisses' },
+  { id: 'beneficiaries', labelKey: 'nav.beneficiaries', icon: Users, resource: 'beneficiaries' },
+  { id: 'donors', labelKey: 'nav.donors', icon: HeartHandshake, resource: 'donors' },
+  { id: 'inventory', labelKey: 'nav.inventory', icon: Package, resource: 'articles' },
+  { id: 'medical', labelKey: 'nav.medical', icon: Stethoscope, resource: 'medical_referrals' },
+  { id: 'doctors', labelKey: 'nav.doctors', icon: Stethoscope, resource: 'doctors' },
 ];
 
 export function Layout({
@@ -58,6 +58,7 @@ export function Layout({
   userRole,
   isAdmin,
   onLogout,
+  canAny,
 }: {
   children: ReactNode;
   activePage: string;
@@ -70,6 +71,7 @@ export function Layout({
   userRole?: string;
   isAdmin?: boolean;
   onLogout?: () => void;
+  canAny?: (resource: string) => boolean;
 }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
@@ -110,7 +112,13 @@ export function Layout({
     }
   };
 
-  const roleLabel = userRole === 'admin' ? t('userMenu.systemAdmin') : userRole === 'treasurer' ? t('userMenu.treasurer') : t('userMenu.volunteer');
+  const roleLabel =
+    userRole === 'super_admin' ? t('userMenu.systemAdmin')
+    : userRole === 'admin' ? t('userMenu.admin')
+    : userRole === 'treasurer' ? t('userMenu.treasurer')
+    : userRole === 'stock_manager' ? t('userMenu.stockManager')
+    : userRole === 'social_worker' ? t('userMenu.socialWorker')
+    : t('userMenu.volunteer');
   const isRtl = i18n.language === 'ar';
   const sidebarDir = isRtl ? 'right' : 'left';
   const headerDir = isRtl ? 'rtl' : 'ltr';
@@ -166,7 +174,7 @@ export function Layout({
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {navItems.map((item) => {
+          {navItems.filter((item) => !canAny || canAny(item.resource)).map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.id;
             return (

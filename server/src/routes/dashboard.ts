@@ -1,16 +1,17 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
 router.use(requireAuth);
 
 // GET /api/dashboard — aggregate stats
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', requirePermission('dashboard', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
-    const isAdmin = req.user!.role === 'admin';
+    // Données financières visibles par admin, super_admin et trésorier
+    const canViewFinance = ['admin', 'super_admin', 'treasurer'].includes(req.user!.role);
 
     // Always-available counts
     const totalBeneficiaries = await prisma.beneficiary.count({
@@ -35,7 +36,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     let caissesBalances: { id: string; name: string; balance: any }[] = [];
     let recentTransactions: any[] = [];
 
-    if (isAdmin) {
+    if (canViewFinance) {
       const bankAccounts = await prisma.bankAccount.findMany({
         where: { associationId },
       });

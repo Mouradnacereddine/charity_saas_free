@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/layout/Layout';
 import { useAuth } from './hooks/useAuth';
+import { usePermissions } from './hooks/usePermissions';
 import { useSocketSync } from './hooks/useSocketSync';
 import DashboardPage from './pages/DashboardPage';
 import FinancePage from './pages/FinancePage';
@@ -50,7 +51,8 @@ function AppContent() {
     const pageName = hash.split('?')[0].split('&')[0];
     return pageName && PAGE_NAMES[pageName] ? pageName : (localStorage.getItem('accessToken') ? 'dashboard' : 'login');
   });
-  const { user, association, isAuthenticated, isAdmin, isTreasurer, isLoading, logout } = useAuth();
+  const { user, association, isAuthenticated, isAdmin, isLoading, logout } = useAuth();
+  const { can } = usePermissions();
   const { t, i18n } = useTranslation();
 
   // Set html dir/lang based on selected language
@@ -116,17 +118,18 @@ function AppContent() {
   ];
 
   const renderPage = () => {
+    const canView = (resource: 'users' | 'analytics') => can(resource, 'read');
     switch (activePage) {
       case 'dashboard': return <DashboardPage />;
-      case 'finance': return <FinancePage />;
-      case 'caisses': return <CaissesPage />;
-      case 'beneficiaries': return <BeneficiariesPage />;
-      case 'donors': return <DonorsPage />;
-      case 'inventory': return <InventoryPage />;
-      case 'medical': return <MedicalPage />;
-      case 'doctors': return <DoctorsPage />;
-      case 'users': return isAdmin ? <UsersPage /> : <DashboardPage />;
-      case 'analytics': return (isAdmin || isTreasurer) ? <AnalyticsPage /> : <DashboardPage />;
+      case 'finance': return can('transactions', 'read') ? <FinancePage /> : <DashboardPage />;
+      case 'caisses': return can('caisses', 'read') ? <CaissesPage /> : <DashboardPage />;
+      case 'beneficiaries': return can('beneficiaries', 'read') ? <BeneficiariesPage /> : <DashboardPage />;
+      case 'donors': return can('donors', 'read') ? <DonorsPage /> : <DashboardPage />;
+      case 'inventory': return can('articles', 'read') ? <InventoryPage /> : <DashboardPage />;
+      case 'medical': return can('medical_referrals', 'read') ? <MedicalPage /> : <DashboardPage />;
+      case 'doctors': return can('doctors', 'read') ? <DoctorsPage /> : <DashboardPage />;
+      case 'users': return canView('users') ? <UsersPage /> : <DashboardPage />;
+      case 'analytics': return canView('analytics') ? <AnalyticsPage /> : <DashboardPage />;
       default: return <DashboardPage />;
     }
   };
@@ -143,6 +146,7 @@ function AppContent() {
       userRole={user?.role}
       isAdmin={isAdmin}
       onLogout={logout}
+      canAny={(resource) => can(resource as any, 'read') || can(resource as any, 'create')}
     >
       {renderPage()}
     </Layout>

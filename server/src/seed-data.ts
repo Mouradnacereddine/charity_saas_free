@@ -73,7 +73,7 @@ async function main() {
       password: '',
       name: 'Faycel',
       nameAr: 'فيصل',
-      role: 'user',
+      role: 'volunteer',
     },
   });
 
@@ -661,7 +661,7 @@ async function main() {
   // =====================================================================
   await prisma.inviteToken.create({
     data: {
-      associationId: aid, role: 'user',
+      associationId: aid, role: 'volunteer',
       name: 'Nouveau Benevole', nameAr: 'متطوع جديد',
       token: crypto.randomUUID(),
       expiresAt: new Date(now.getTime() + 7 * 86400000),

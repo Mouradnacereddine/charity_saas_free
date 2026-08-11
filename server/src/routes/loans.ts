@@ -1,13 +1,13 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
 router.use(requireAuth);
 
 // GET /api/loans — list
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', requirePermission('loans', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { status, beneficiaryId } = req.query;
@@ -56,7 +56,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // POST /api/loans — create
-router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/', requirePermission('loans', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
@@ -133,7 +133,7 @@ const loanItems: any[] = (items as any[]).map((item: any) => ({
 });
 
 // GET /api/loans/:id
-router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/:id', requirePermission('loans', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -177,7 +177,7 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // PUT /api/loans/:id — update
-router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/:id', requirePermission('loans', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -232,7 +232,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // DELETE /api/loans/:id
-router.delete('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/:id', requirePermission('loans', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -264,7 +264,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response): Promise<void> => 
 });
 
 // POST /api/loans/:id/return — partial item returns
-router.post('/:id/return', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/:id/return', requirePermission('loans', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -358,7 +358,7 @@ router.post('/:id/return', async (req: AuthRequest, res: Response): Promise<void
 });
 
 // POST /api/loans/:id/add-item — add item to existing loan
-router.post('/:id/add-item', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/:id/add-item', requirePermission('loans', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -461,7 +461,7 @@ router.post('/:id/add-item', async (req: AuthRequest, res: Response): Promise<vo
 });
 
 // DELETE /api/loans/:id/remove-item/:itemKey — remove one occurrence (line) from loan
-router.delete('/:id/remove-item/:itemKey', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/:id/remove-item/:itemKey', requirePermission('loans', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id, itemKey } = req.params;
     const associationId = req.user!.associationId;
@@ -520,7 +520,7 @@ router.delete('/:id/remove-item/:itemKey', async (req: AuthRequest, res: Respons
 });
 
 // PUT /api/loans/:id/mark-definitive
-router.put('/:id/mark-definitive', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/:id/mark-definitive', requirePermission('loans', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;

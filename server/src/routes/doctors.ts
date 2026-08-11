@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { config } from '../config';
 
 import { generateRef } from '../lib/ref';
@@ -19,7 +19,7 @@ function generateDocRef(): string {
 // ========================================================================
 
 // GET /api/doctors — list with filters and referral count
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', requirePermission('doctors', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { search, specialtyId } = req.query;
@@ -52,7 +52,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // GET /api/doctors/:id — detail
-router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/:id', requirePermission('doctors', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -78,7 +78,7 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // GET /api/doctors/:id/stats — patient statistics by period
-router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/:id/stats', requirePermission('doctors', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -243,7 +243,7 @@ router.get('/:id/stats', async (req: AuthRequest, res: Response): Promise<void> 
 });
 
 // POST /api/doctors — create
-router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/', requirePermission('doctors', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { firstName, lastName, phone, email, specialtyId, address, notes } = req.body;
@@ -276,7 +276,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // PUT /api/doctors/:id — update
-router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/:id', requirePermission('doctors', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -315,7 +315,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // DELETE /api/doctors/:id
-router.delete('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/:id', requirePermission('doctors', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -352,7 +352,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response): Promise<void> => 
 // ========================================================================
 
 // GET /api/doctors/specialties — list
-router.get('/specialties/list', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/specialties/list', requirePermission('specialties', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const specialties = await prisma.doctorSpecialty.findMany({
@@ -368,7 +368,7 @@ router.get('/specialties/list', async (req: AuthRequest, res: Response): Promise
 });
 
 // POST /api/doctors/specialties — create
-router.post('/specialties', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/specialties', requirePermission('specialties', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { name } = req.body;
@@ -390,7 +390,7 @@ router.post('/specialties', async (req: AuthRequest, res: Response): Promise<voi
 });
 
 // PUT /api/doctors/specialties/:id
-router.put('/specialties/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/specialties/:id', requirePermission('specialties', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -421,7 +421,7 @@ router.put('/specialties/:id', async (req: AuthRequest, res: Response): Promise<
 });
 
 // DELETE /api/doctors/specialties/:id
-router.delete('/specialties/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/specialties/:id', requirePermission('specialties', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;

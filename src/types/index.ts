@@ -18,7 +18,7 @@ export type LoanStatus = 'en_cours' | 'partiellement_retourne' | 'retourne' | 'd
 export type ChildHealthStatus = 'bonne_sante' | 'malade' | 'handicape' | 'autre';
 export type UserStatus = 'pending' | 'approved' | 'rejected';
 export type TransactionStatus = 'pending' | 'completed' | 'cancelled';
-export type Role = 'admin' | 'treasurer' | 'user';
+export type Role = 'super_admin' | 'admin' | 'treasurer' | 'stock_manager' | 'social_worker' | 'volunteer';
 export type Locale = 'ar' | 'fr' | 'en';
 
 // ---- Association ----
@@ -38,6 +38,7 @@ export interface User {
   email: string;
   name: string;
   role: Role;
+  isFounder?: boolean;
   status: UserStatus;
   association?: Association;
   createdAt: string;

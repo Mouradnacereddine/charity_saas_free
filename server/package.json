@@ -9,7 +9,9 @@
     "start": "node dist/index.js",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
-    "db:seed": "ts-node src/seed-data.ts"
+    "db:seed": "ts-node src/seed-data.ts",
+    "db:migrate-roles": "node prisma/migrate-roles.js",
+    "db:pre-migrate": "node prisma/pre-migrate-enum.js"
   },
   "keywords": [],
   "author": "",

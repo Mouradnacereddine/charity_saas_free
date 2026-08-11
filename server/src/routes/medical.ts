@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
 
 const router = Router();
@@ -12,7 +12,7 @@ router.use(requireAuth);
 // ========================================================================
 
 // GET /api/medical/referrals
-router.get('/referrals', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/referrals', requirePermission('medical_referrals', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { beneficiaryId } = req.query;
@@ -42,7 +42,7 @@ router.get('/referrals', async (req: AuthRequest, res: Response): Promise<void> 
 });
 
 // POST /api/medical/referrals
-router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/referrals', requirePermission('medical_referrals', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
@@ -149,7 +149,7 @@ router.post('/referrals', async (req: AuthRequest, res: Response): Promise<void>
 });
 
 // GET /api/medical/referrals/:id
-router.get('/referrals/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/referrals/:id', requirePermission('medical_referrals', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -172,7 +172,7 @@ router.get('/referrals/:id', async (req: AuthRequest, res: Response): Promise<vo
 });
 
 // PUT /api/medical/referrals/:id/confirm — complete a referral with doctor's amount
-router.put('/referrals/:id/confirm', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -254,7 +254,7 @@ router.put('/referrals/:id/confirm', async (req: AuthRequest, res: Response): Pr
 });
 
 // PUT /api/medical/referrals/:id/cancel
-router.put('/referrals/:id/cancel', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/referrals/:id/cancel', requirePermission('medical_referrals', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -286,7 +286,7 @@ router.put('/referrals/:id/cancel', async (req: AuthRequest, res: Response): Pro
 });
 
 // PUT /api/medical/referrals/:id
-router.put('/referrals/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -334,7 +334,7 @@ router.put('/referrals/:id', async (req: AuthRequest, res: Response): Promise<vo
 });
 
 // DELETE /api/medical/referrals/:id
-router.delete('/referrals/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/referrals/:id', requirePermission('medical_referrals', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -369,7 +369,7 @@ router.delete('/referrals/:id', async (req: AuthRequest, res: Response): Promise
 // ========================================================================
 
 // GET /api/medical/analysis-types
-router.get('/analysis-types', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/analysis-types', requirePermission('analysis_types', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -386,7 +386,7 @@ router.get('/analysis-types', async (req: AuthRequest, res: Response): Promise<v
 });
 
 // POST /api/medical/analysis-types
-router.post('/analysis-types', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/analysis-types', requirePermission('analysis_types', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { name } = req.body;
@@ -408,7 +408,7 @@ router.post('/analysis-types', async (req: AuthRequest, res: Response): Promise<
 });
 
 // PUT /api/medical/analysis-types/:id
-router.put('/analysis-types/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/analysis-types/:id', requirePermission('analysis_types', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -439,7 +439,7 @@ router.put('/analysis-types/:id', async (req: AuthRequest, res: Response): Promi
 });
 
 // DELETE /api/medical/analysis-types/:id
-router.delete('/analysis-types/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/analysis-types/:id', requirePermission('analysis_types', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -466,7 +466,7 @@ router.delete('/analysis-types/:id', async (req: AuthRequest, res: Response): Pr
 // ========================================================================
 
 // GET /api/medical/hospitals
-router.get('/hospitals', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/hospitals', requirePermission('hospitals', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -483,7 +483,7 @@ router.get('/hospitals', async (req: AuthRequest, res: Response): Promise<void> 
 });
 
 // POST /api/medical/hospitals
-router.post('/hospitals', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/hospitals', requirePermission('hospitals', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { name } = req.body;
@@ -505,7 +505,7 @@ router.post('/hospitals', async (req: AuthRequest, res: Response): Promise<void>
 });
 
 // PUT /api/medical/hospitals/:id
-router.put('/hospitals/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/hospitals/:id', requirePermission('hospitals', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -536,7 +536,7 @@ router.put('/hospitals/:id', async (req: AuthRequest, res: Response): Promise<vo
 });
 
 // DELETE /api/medical/hospitals/:id
-router.delete('/hospitals/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/hospitals/:id', requirePermission('hospitals', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;

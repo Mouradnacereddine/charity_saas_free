@@ -3,20 +3,22 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Badge, Input, Modal, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../lib/api';
-import { UserCog, Trash2, CheckCircle, XCircle, Shield, User as UserIcon, Mail, Copy, Check } from 'lucide-react';
+import { usePermissions } from '../hooks/usePermissions';
+import { UserCog, Trash2, CheckCircle, XCircle, Shield, User as UserIcon, Mail, Copy, Check, Package, HeartHandshake } from 'lucide-react';
 
 interface UserData {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'treasurer' | 'user';
+  role: 'super_admin' | 'admin' | 'treasurer' | 'stock_manager' | 'social_worker' | 'volunteer';
+  isFounder?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }
 
 interface InviteData {
   id: string;
-  role: 'admin' | 'treasurer' | 'user';
+  role: 'super_admin' | 'admin' | 'treasurer' | 'stock_manager' | 'social_worker' | 'volunteer';
   name: string | null;
   token: string;
   inviteLink: string | null;
@@ -33,9 +35,12 @@ const STATUS_BADGE: Record<string, 'warning' | 'success' | 'danger' | 'default' 
 };
 
 const ROLE_BADGE_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
+  super_admin: 'danger',
   admin: 'info',
   treasurer: 'warning',
-  user: 'default',
+  stock_manager: 'success',
+  social_worker: 'default',
+  volunteer: 'default',
 };
 
 const INVITE_STATUS_BADGE: Record<string, 'warning' | 'danger' | 'success'> = {
@@ -57,8 +62,10 @@ function getInviteStatus(inv: InviteData): 'pending' | 'expired' | 'used' {
 function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { role: currentRole, getAssignableRoles } = usePermissions();
+  const assignableRoles = getAssignableRoles(currentRole || '');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'user' | 'treasurer'>('user');
+  const [role, setRole] = useState<'volunteer' | 'treasurer' | 'stock_manager' | 'social_worker' | 'admin'>('volunteer');
   const [result, setResult] = useState<{ inviteLink: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
@@ -89,7 +96,7 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
   const reset = () => {
     setName('');
-    setRole('user');
+    setRole('volunteer');
     setResult(null);
     setCopied(false);
     setError('');
@@ -125,19 +132,14 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">{t('users.role')}</label>
-              <div className="flex gap-3">
-                <label className={`flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-colors ${role === 'user' ? 'border-primary bg-primary/10' : 'border-input hover:border-foreground/20'}`}>
-                  <input type="radio" name="inviteRole" value="user" checked={role === 'user'}
-                    onChange={() => setRole('user')} className="sr-only" />
-                  <UserIcon className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{t('users.volunteer')}</span>
-                </label>
-                <label className={`flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-colors ${role === 'treasurer' ? 'border-primary bg-primary/10' : 'border-input hover:border-foreground/20'}`}>
-                  <input type="radio" name="inviteRole" value="treasurer" checked={role === 'treasurer'}
-                    onChange={() => setRole('treasurer')} className="sr-only" />
-                  <Shield className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{t('users.treasurer')}</span>
-                </label>
+              <div className="flex flex-wrap gap-3">
+                {assignableRoles.map((r) => (
+                  <label key={r} className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-colors ${role === r ? 'border-primary bg-primary/10' : 'border-input hover:border-foreground/20'}`}>
+                    <input type="radio" name="inviteRole" value={r} checked={role === r}
+                      onChange={() => setRole(r)} className="sr-only" />
+                    <span className="text-sm font-medium">{t(`users.${r}`)}</span>
+                  </label>
+                ))}
               </div>
             </div>
 
@@ -189,6 +191,7 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 export default function UsersPage() {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
+  const { role: currentRole, isSuperAdmin, canManageUser } = usePermissions();
   const [actionMsg, setActionMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'users' | 'invites'>('users');
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -238,9 +241,12 @@ export default function UsersPage() {
   };
 
   const ROLE_LABELS: Record<string, string> = {
+    super_admin: t('users.superAdmin'),
     admin: t('users.admin'),
     treasurer: t('users.treasurer'),
-    user: t('users.volunteer'),
+    stock_manager: t('users.stockManager'),
+    social_worker: t('users.socialWorker'),
+    volunteer: t('users.volunteer'),
   };
 
   const INVITE_STATUS_LABELS: Record<string, string> = {
@@ -361,8 +367,15 @@ export default function UsersPage() {
                               {user.name?.charAt(0) || '?'}
                             </div>
                             <div>
-                              <p className="font-medium text-foreground">{user.name}</p>
-                              <p className="text-xs text-muted-foreground">{user.name}</p>
+                              <p className="font-medium text-foreground flex items-center gap-1.5">
+                                {user.name}
+                                {user.isFounder && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-full font-medium">
+                                    {t('users.founder')}
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{user.email}</p>
                             </div>
                           </div>
                         </td>
@@ -382,46 +395,73 @@ export default function UsersPage() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-center gap-1 flex-wrap">
-                            {user.status === 'pending' && (
+                            {canManageUser(currentRole || '', user.role) && (
                               <>
-                                <button onClick={() => handleUpdate(user.id, { status: 'approved' })}
-                                  className="p-1.5 text-success hover:bg-success/10 rounded transition-colors" title={t('users.acceptUser')}>
-                                  <CheckCircle size={16} />
-                                </button>
-                                <button onClick={() => handleUpdate(user.id, { status: 'rejected' })}
-                                  className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title={t('users.rejectUser')}>
-                                  <XCircle size={16} />
-                                </button>
+                                {user.status === 'pending' && (
+                                  <>
+                                    <button onClick={() => handleUpdate(user.id, { status: 'approved' })}
+                                      className="p-1.5 text-success hover:bg-success/10 rounded transition-colors" title={t('users.acceptUser')}>
+                                      <CheckCircle size={16} />
+                                    </button>
+                                    <button onClick={() => handleUpdate(user.id, { status: 'rejected' })}
+                                      className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title={t('users.rejectUser')}>
+                                      <XCircle size={16} />
+                                    </button>
+                                  </>
+                                )}
+                                {/* Promotions & downgrades — un admin ne peut PAS toucher un autre admin */}
+                                {user.role === 'volunteer' && user.status === 'approved' && (
+                                  <button onClick={() => handleUpdate(user.id, { role: 'treasurer' })}
+                                    className="p-1.5 text-warning hover:bg-warning/10 rounded transition-colors" title={t('users.promoteTreasurer')}>
+                                    <Shield size={16} />
+                                  </button>
+                                )}
+                                {user.role === 'volunteer' && user.status === 'approved' && (
+                                  <button onClick={() => handleUpdate(user.id, { role: 'stock_manager' })}
+                                    className="p-1.5 text-success hover:bg-success/10 rounded transition-colors" title={t('users.promoteStockManager')}>
+                                    <Package size={16} />
+                                  </button>
+                                )}
+                                {user.role === 'volunteer' && user.status === 'approved' && (
+                                  <button onClick={() => handleUpdate(user.id, { role: 'social_worker' })}
+                                    className="p-1.5 text-info hover:bg-info/10 rounded transition-colors" title={t('users.promoteSocialWorker')}>
+                                    <HeartHandshake size={16} />
+                                  </button>
+                                )}
+                                {user.role === 'treasurer' && user.status === 'approved' && (
+                                  <button onClick={() => handleUpdate(user.id, { role: 'volunteer' })}
+                                    className="p-1.5 text-muted-foreground hover:bg-muted rounded transition-colors" title={t('users.downgradeVolunteer')}>
+                                    <UserIcon size={16} />
+                                  </button>
+                                )}
+                                {user.role === 'stock_manager' && user.status === 'approved' && (
+                                  <button onClick={() => handleUpdate(user.id, { role: 'volunteer' })}
+                                    className="p-1.5 text-muted-foreground hover:bg-muted rounded transition-colors" title={t('users.downgradeVolunteer')}>
+                                    <UserIcon size={16} />
+                                  </button>
+                                )}
+                                {user.role === 'social_worker' && user.status === 'approved' && (
+                                  <button onClick={() => handleUpdate(user.id, { role: 'volunteer' })}
+                                    className="p-1.5 text-muted-foreground hover:bg-muted rounded transition-colors" title={t('users.downgradeVolunteer')}>
+                                    <UserIcon size={16} />
+                                  </button>
+                                )}
+                                {/* Promotion en admin — réservé au super_admin */}
+                                {isSuperAdmin && ['treasurer', 'stock_manager', 'social_worker', 'volunteer'].includes(user.role) && user.status === 'approved' && (
+                                  <button onClick={() => handleUpdate(user.id, { role: 'admin' })}
+                                    className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors" title={t('users.promoteAdmin')}>
+                                    <UserCog size={16} />
+                                  </button>
+                                )}
                               </>
                             )}
-                            {user.role === 'user' && user.status === 'approved' && (
-                              <button onClick={() => handleUpdate(user.id, { role: 'treasurer' })}
-                                className="p-1.5 text-warning hover:bg-warning/10 rounded transition-colors" title={t('users.promoteTreasurer')}>
-                                <Shield size={16} />
+                            {/* Suppression — jamais pour un admin (sauf super_admin), jamais pour soi-même */}
+                            {currentRole && canManageUser(currentRole, user.role) && user.role !== 'super_admin' && (
+                              <button onClick={() => handleDelete(user.id)}
+                                className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title={t('users.deleteUserConfirm')}>
+                                <Trash2 size={16} />
                               </button>
                             )}
-                            {user.role === 'treasurer' && user.status === 'approved' && (
-                              <button onClick={() => handleUpdate(user.id, { role: 'user' })}
-                                className="p-1.5 text-muted-foreground hover:bg-muted rounded transition-colors" title={t('users.downgradeVolunteer')}>
-                                <UserIcon size={16} />
-                              </button>
-                            )}
-                            {user.role === 'treasurer' && (
-                              <button onClick={() => handleUpdate(user.id, { role: 'admin' })}
-                                className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors" title={t('users.promoteAdmin')}>
-                                <UserCog size={16} />
-                              </button>
-                            )}
-                            {user.role === 'admin' && user.status === 'approved' && (
-                              <button onClick={() => handleUpdate(user.id, { role: 'treasurer' })}
-                                className="p-1.5 text-warning hover:bg-warning/10 rounded transition-colors" title={t('users.promoteTreasurer')}>
-                                <Shield size={16} />
-                              </button>
-                            )}
-                            <button onClick={() => handleDelete(user.id)}
-                              className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title={t('users.deleteUserConfirm')}>
-                              <Trash2 size={16} />
-                            </button>
                           </div>
                         </td>
                       </tr>

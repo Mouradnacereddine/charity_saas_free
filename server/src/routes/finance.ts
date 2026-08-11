@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
 
 const router = Router();
@@ -8,7 +8,7 @@ const router = Router();
 router.use(requireAuth);
 
 // GET /api/finance/transactions — list with filters
-router.get('/transactions', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/transactions', requirePermission('transactions', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
@@ -115,7 +115,7 @@ router.get('/transactions', async (req: AuthRequest, res: Response): Promise<voi
 // Accepts optional `status`: "pending" or "completed" (default)
 // CREDIT PENDING: money enters caisse immediately (donor has given), but beneficiary hasn't received yet
 // DEBIT PENDING: money does NOT leave caisse until confirmed (beneficiary hasn't received yet)
-router.post('/transactions', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/transactions', requirePermission('transactions', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
@@ -331,7 +331,7 @@ router.post('/transactions', async (req: AuthRequest, res: Response): Promise<vo
 });
 
 // GET /api/finance/transactions/:id
-router.get('/transactions/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/transactions/:id', requirePermission('transactions', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -360,7 +360,7 @@ router.get('/transactions/:id', async (req: AuthRequest, res: Response): Promise
 });
 
 // GET /api/finance/bank-accounts
-router.get('/bank-accounts', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/bank-accounts', requirePermission('bank_accounts', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -377,7 +377,7 @@ router.get('/bank-accounts', async (req: AuthRequest, res: Response): Promise<vo
 });
 
 // POST /api/finance/bank-accounts
-router.post('/bank-accounts', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/bank-accounts', requirePermission('bank_accounts', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { bankName, accountNumber, rib, iban, swift, balance } = req.body;
@@ -407,7 +407,7 @@ router.post('/bank-accounts', async (req: AuthRequest, res: Response): Promise<v
 });
 
 // PUT /api/finance/bank-accounts/:id
-router.put('/bank-accounts/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/bank-accounts/:id', requirePermission('bank_accounts', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -444,7 +444,7 @@ router.put('/bank-accounts/:id', async (req: AuthRequest, res: Response): Promis
 });
 
 // DELETE /api/finance/bank-accounts/:id
-router.delete('/bank-accounts/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/bank-accounts/:id', requirePermission('bank_accounts', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -467,7 +467,7 @@ router.delete('/bank-accounts/:id', async (req: AuthRequest, res: Response): Pro
 });
 
 // GET /api/finance/stats — total bank balance and total cash
-router.get('/stats', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/stats', requirePermission('transactions', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -495,7 +495,7 @@ router.get('/stats', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // PUT /api/finance/transactions/:id/confirm — change pending → completed
-router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/transactions/:id/confirm', requirePermission('transactions', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -680,7 +680,7 @@ router.put('/transactions/:id/confirm', async (req: AuthRequest, res: Response):
 });
 
 // PUT /api/finance/transactions/:id/cancel — change pending → cancelled
-router.put('/transactions/:id/cancel', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/transactions/:id/cancel', requirePermission('transactions', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -749,7 +749,7 @@ router.put('/transactions/:id/cancel', async (req: AuthRequest, res: Response): 
 // ========================================================================
 
 // GET /api/finance/allocations — list allocations with optional filters
-router.get('/allocations', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/allocations', requirePermission('allocations', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { donorId, beneficiaryId, status } = req.query;
@@ -777,7 +777,7 @@ router.get('/allocations', async (req: AuthRequest, res: Response): Promise<void
 });
 
 // POST /api/finance/allocations/:id/disburse — create a new debit for remaining amount
-router.post('/allocations/:id/disburse', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/allocations/:id/disburse', requirePermission('allocations', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -871,7 +871,7 @@ router.post('/allocations/:id/disburse', async (req: AuthRequest, res: Response)
 });
 
 // PUT /api/finance/allocations/:id/distribute — link a debit transaction to an allocation
-router.put('/allocations/:id/distribute', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/allocations/:id/distribute', requirePermission('allocations', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;

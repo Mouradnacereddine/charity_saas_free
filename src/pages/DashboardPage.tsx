@@ -12,7 +12,8 @@ export default function DashboardPage() {
   const { t, i18n } = useTranslation()
   const { data: stats, isLoading } = useDashboardStats()
   const { data: allLoans = [] } = useLoans()
-  const { isAdmin } = useAuth()
+  const { isAdmin, isTreasurer } = useAuth()
+  const canViewFinance = isAdmin || isTreasurer
   const [detailTx, setDetailTx] = useState<any>(null)
   const [detailLoan, setDetailLoan] = useState<Loan | null>(null)
 
@@ -45,7 +46,7 @@ export default function DashboardPage() {
 
       {/* Stat Cards — variantes alignees MediCare */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {isAdmin && (
+        {canViewFinance && (
           <>
             <StatCard
               title={t('dashboard.bankBalance')}
@@ -88,7 +89,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Caisse Balances — chaque solde affiché en StatCard pour cohérence */}
-      {isAdmin && (
+      {canViewFinance && (
         <Card titleAr={t('dashboard.fundBalances')}>
           {(!stats?.caissesBalances || stats.caissesBalances.length === 0) ? (
             <p className="text-sm text-muted-foreground text-center py-4">{t('dashboard.noFunds')}</p>
@@ -109,7 +110,7 @@ export default function DashboardPage() {
       )}
 
       {/* Recent Transactions */}
-      {isAdmin && (
+      {canViewFinance && (
         <Card titleAr={t('dashboard.recentTransactions')}>
           {(!stats?.recentTransactions || stats.recentTransactions.length === 0) ? (
             <p className="text-sm text-muted-foreground text-center py-4">{t('dashboard.noTransactions')}</p>

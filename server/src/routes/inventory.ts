@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
 
 const router = Router();
@@ -12,7 +12,7 @@ router.use(requireAuth);
 // ========================================================================
 
 // GET /api/inventory/articles — list articles
-router.get('/articles', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/articles', requirePermission('articles', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { search, categoryId, storageLocationId, status } = req.query;
@@ -44,7 +44,7 @@ router.get('/articles', async (req: AuthRequest, res: Response): Promise<void> =
 });
 
 // POST /api/inventory/articles — create
-router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/articles', requirePermission('articles', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
@@ -107,7 +107,7 @@ router.post('/articles', async (req: AuthRequest, res: Response): Promise<void> 
 });
 
 // GET /api/inventory/articles/:id
-router.get('/articles/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/articles/:id', requirePermission('articles', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -130,7 +130,7 @@ router.get('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
 });
 
 // PUT /api/inventory/articles/:id
-router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/articles/:id', requirePermission('articles', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -199,7 +199,7 @@ router.put('/articles/:id', async (req: AuthRequest, res: Response): Promise<voi
 });
 
 // DELETE /api/inventory/articles/:id
-router.delete('/articles/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/articles/:id', requirePermission('articles', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -244,7 +244,7 @@ router.delete('/articles/:id', async (req: AuthRequest, res: Response): Promise<
 // ========================================================================
 
 // GET /api/inventory/article-categories
-router.get('/article-categories', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/article-categories', requirePermission('article_categories', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -261,7 +261,7 @@ router.get('/article-categories', async (req: AuthRequest, res: Response): Promi
 });
 
 // POST /api/inventory/article-categories
-router.post('/article-categories', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/article-categories', requirePermission('article_categories', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { name } = req.body;
@@ -283,7 +283,7 @@ router.post('/article-categories', async (req: AuthRequest, res: Response): Prom
 });
 
 // PUT /api/inventory/article-categories/:id
-router.put('/article-categories/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/article-categories/:id', requirePermission('article_categories', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -314,7 +314,7 @@ router.put('/article-categories/:id', async (req: AuthRequest, res: Response): P
 });
 
 // DELETE /api/inventory/article-categories/:id
-router.delete('/article-categories/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/article-categories/:id', requirePermission('article_categories', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -346,7 +346,7 @@ router.delete('/article-categories/:id', async (req: AuthRequest, res: Response)
 // ========================================================================
 
 // GET /api/inventory/storage-locations
-router.get('/storage-locations', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/storage-locations', requirePermission('storage_locations', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -363,7 +363,7 @@ router.get('/storage-locations', async (req: AuthRequest, res: Response): Promis
 });
 
 // POST /api/inventory/storage-locations
-router.post('/storage-locations', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/storage-locations', requirePermission('storage_locations', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { name } = req.body;
@@ -385,7 +385,7 @@ router.post('/storage-locations', async (req: AuthRequest, res: Response): Promi
 });
 
 // PUT /api/inventory/storage-locations/:id
-router.put('/storage-locations/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/storage-locations/:id', requirePermission('storage_locations', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -416,7 +416,7 @@ router.put('/storage-locations/:id', async (req: AuthRequest, res: Response): Pr
 });
 
 // DELETE /api/inventory/storage-locations/:id
-router.delete('/storage-locations/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/storage-locations/:id', requirePermission('storage_locations', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -448,7 +448,7 @@ router.delete('/storage-locations/:id', async (req: AuthRequest, res: Response):
 // ========================================================================
 
 // GET /api/inventory/school-grades
-router.get('/school-grades', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/school-grades', requirePermission('school_grades', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -465,7 +465,7 @@ router.get('/school-grades', async (req: AuthRequest, res: Response): Promise<vo
 });
 
 // POST /api/inventory/school-grades
-router.post('/school-grades', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/school-grades', requirePermission('school_grades', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { name } = req.body;
@@ -491,7 +491,7 @@ router.post('/school-grades', async (req: AuthRequest, res: Response): Promise<v
 });
 
 // PUT /api/inventory/school-grades/:id
-router.put('/school-grades/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/school-grades/:id', requirePermission('school_grades', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -522,7 +522,7 @@ router.put('/school-grades/:id', async (req: AuthRequest, res: Response): Promis
 });
 
 // DELETE /api/inventory/school-grades/:id
-router.delete('/school-grades/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/school-grades/:id', requirePermission('school_grades', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -549,7 +549,7 @@ router.delete('/school-grades/:id', async (req: AuthRequest, res: Response): Pro
 // ========================================================================
 
 // GET /api/inventory/article-statuses
-router.get('/article-statuses', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/article-statuses', requirePermission('article_statuses', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -566,7 +566,7 @@ router.get('/article-statuses', async (req: AuthRequest, res: Response): Promise
 });
 
 // POST /api/inventory/article-statuses
-router.post('/article-statuses', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/article-statuses', requirePermission('article_statuses', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { name, description, isPermanent } = req.body;
@@ -588,7 +588,7 @@ router.post('/article-statuses', async (req: AuthRequest, res: Response): Promis
 });
 
 // PUT /api/inventory/article-statuses/:id
-router.put('/article-statuses/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/article-statuses/:id', requirePermission('article_statuses', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -629,7 +629,7 @@ router.put('/article-statuses/:id', async (req: AuthRequest, res: Response): Pro
 });
 
 // DELETE /api/inventory/article-statuses/:id
-router.delete('/article-statuses/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/article-statuses/:id', requirePermission('article_statuses', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -667,7 +667,7 @@ router.delete('/article-statuses/:id', async (req: AuthRequest, res: Response): 
 // jamais les prêts en cours).
 
 // POST /api/inventory/stock-takes — create session (snapshot)
-router.post('/stock-takes', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/stock-takes', requirePermission('stock_takes', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { notes } = req.body;
@@ -721,7 +721,7 @@ router.post('/stock-takes', async (req: AuthRequest, res: Response): Promise<voi
 });
 
 // GET /api/inventory/stock-takes — list sessions (summary, no items payload)
-router.get('/stock-takes', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/stock-takes', requirePermission('stock_takes', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -749,7 +749,7 @@ router.get('/stock-takes', async (req: AuthRequest, res: Response): Promise<void
 });
 
 // GET /api/inventory/stock-takes/:id — detail (theoretical frozen at snapshot)
-router.get('/stock-takes/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/stock-takes/:id', requirePermission('stock_takes', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -771,7 +771,7 @@ router.get('/stock-takes/:id', async (req: AuthRequest, res: Response): Promise<
 });
 
 // PUT /api/inventory/stock-takes/:id/items — save counted quantities (in_progress only)
-router.put('/stock-takes/:id/items', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/stock-takes/:id/items', requirePermission('stock_takes', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -819,7 +819,7 @@ router.put('/stock-takes/:id/items', async (req: AuthRequest, res: Response): Pr
 });
 
 // POST /api/inventory/stock-takes/:id/complete — validate & apply deltas
-router.post('/stock-takes/:id/complete', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/stock-takes/:id/complete', requirePermission('stock_takes', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -879,7 +879,7 @@ router.post('/stock-takes/:id/complete', async (req: AuthRequest, res: Response)
 });
 
 // DELETE /api/inventory/stock-takes/:id — cancel (in_progress only, no stock impact)
-router.delete('/stock-takes/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/stock-takes/:id', requirePermission('stock_takes', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;

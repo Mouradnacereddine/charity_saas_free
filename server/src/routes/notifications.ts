@@ -1,13 +1,13 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
 router.use(requireAuth);
 
 // GET /api/notifications — list notifications for the association
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', requirePermission('notifications', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { read, limit } = req.query;
@@ -38,7 +38,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // PUT /api/notifications/:id/read — mark as read
-router.put('/:id/read', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/:id/read', requirePermission('notifications', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -65,7 +65,7 @@ router.put('/:id/read', async (req: AuthRequest, res: Response): Promise<void> =
 });
 
 // POST /api/notifications — create notification (system use)
-router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/', requirePermission('notifications', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const { type, message, link } = req.body;

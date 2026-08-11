@@ -4,7 +4,8 @@ import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import prisma from '../lib/prisma';
 import { generateAccessToken, generateRefreshToken } from '../lib/jwt';
-import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, requireUserManagement, AuthRequest } from '../middleware/auth';
+import { getInvitableRoles, getAssignableRoles } from '../lib/permissions';
 import { config } from '../config';
 import crypto from 'crypto';
 
@@ -122,7 +123,8 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
           email,
           password: hashedPassword,
           name: adminName,
-          role: 'admin',
+          role: 'super_admin',
+          isFounder: true,
         },
       });
 
@@ -268,6 +270,7 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
         email: true,
         name: true,
         role: true,
+        isFounder: true,
         status: true,
         associationId: true,
         createdAt: true,
@@ -304,7 +307,7 @@ router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Pro
 });
 
 // PUT /api/auth/association/name — update association name (admin only)
-router.put('/association/name', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/association/name', requireAuth, requirePermission('association_settings', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { name } = req.body;
     const associationId = req.user!.associationId;
@@ -328,7 +331,7 @@ router.put('/association/name', requireAuth, requireAdmin, async (req: AuthReque
 });
 
 // PUT /api/auth/association/locale — update association locale (admin only)
-router.put('/association/locale', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/association/locale', requireAuth, requirePermission('association_settings', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { locale } = req.body;
     const associationId = req.user!.associationId;
@@ -352,7 +355,7 @@ router.put('/association/locale', requireAuth, requireAdmin, async (req: AuthReq
 });
 
 // PUT /api/auth/association/logo — update association logo URL (admin only)
-router.put('/association/logo', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/association/logo', requireAuth, requirePermission('association_settings', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { logoUrl } = req.body;
     const associationId = req.user!.associationId;
@@ -380,18 +383,15 @@ router.put('/association/logo', requireAuth, requireAdmin, async (req: AuthReque
 // ========================================================================
 
 // POST /api/auth/invite — admin generates an invite link
-router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/invite', requireAuth, requirePermission('users', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { role, name } = req.body;
     const associationId = req.user!.associationId;
 
-    const normalizedRole = role || 'user';
-    if (normalizedRole === 'admin') {
-      res.status(400).json({ error: 'لا يمكن دعوة مستخدم كمدير' });
-      return;
-    }
-    if (!['user', 'treasurer'].includes(normalizedRole)) {
-      res.status(400).json({ error: 'دور غير صالح' });
+    const normalizedRole = role || 'volunteer';
+    const allowedRoles = getInvitableRoles(req.user!.role);
+    if (!allowedRoles.includes(normalizedRole)) {
+      res.status(400).json({ error: 'دور غير صالح أو غير مسموح به' });
       return;
     }
 
@@ -426,7 +426,7 @@ router.post('/invite', requireAuth, requireAdmin, async (req: AuthRequest, res: 
 });
 
 // GET /api/auth/invites — list invites (admin only)
-router.get('/invites', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/invites', requireAuth, requirePermission('users', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -459,7 +459,7 @@ router.get('/invites', requireAuth, requireAdmin, async (req: AuthRequest, res: 
 });
 
 // DELETE /api/auth/invites/:id — cancel an invite
-router.delete('/invites/:id', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/invites/:id', requireAuth, requirePermission('users', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -523,7 +523,7 @@ router.get('/invite/:token', async (req: Request, res: Response): Promise<void> 
 // ========================================================================
 
 // POST /api/auth/users/create — admin creates a user directly
-router.post('/users/create', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/users/create', requireAuth, requirePermission('users', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { email, password, name, role } = req.body;
     const associationId = req.user!.associationId;
@@ -533,9 +533,10 @@ router.post('/users/create', requireAuth, requireAdmin, async (req: AuthRequest,
       return;
     }
 
-    const normalizedRole = role || 'user';
-    if (!['user', 'treasurer'].includes(normalizedRole)) {
-      res.status(400).json({ error: 'دور غير صالح' });
+    const normalizedRole = role || 'volunteer';
+    const allowedRoles = getAssignableRoles(req.user!.role);
+    if (!allowedRoles.includes(normalizedRole)) {
+      res.status(400).json({ error: 'دور غير صالح أو غير مسموح به' });
       return;
     }
 
@@ -574,7 +575,7 @@ router.post('/users/create', requireAuth, requireAdmin, async (req: AuthRequest,
 });
 
 // GET /api/auth/users — list all users for this association
-router.get('/users', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/users', requireAuth, requirePermission('users', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
 
@@ -585,6 +586,7 @@ router.get('/users', requireAuth, requireAdmin, async (req: AuthRequest, res: Re
         email: true,
         name: true,
         role: true,
+        isFounder: true,
         status: true,
         createdAt: true,
       },
@@ -599,7 +601,7 @@ router.get('/users', requireAuth, requireAdmin, async (req: AuthRequest, res: Re
 });
 
 // PUT /api/auth/users/:id — update user (status, role)
-router.put('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/users/:id', requireAuth, requirePermission('users', 'update'), requireUserManagement(), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -624,9 +626,14 @@ router.put('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, res
 
     if (status !== undefined) data.status = status;
     if (role !== undefined) {
-      const validRoles = ['admin', 'treasurer', 'user'];
+      const validRoles = ['admin', 'treasurer', 'stock_manager', 'social_worker', 'volunteer'];
       if (!validRoles.includes(role)) {
         res.status(400).json({ error: 'الدور غير صالح' });
+        return;
+      }
+      // Seul super_admin peut promouvoir en admin (escalade contrôlée par requireUserManagement)
+      if (role === 'admin' && req.user!.role !== 'super_admin') {
+        res.status(403).json({ error: 'المدير العام فقط يمكنه تعيين دور المسؤول' });
         return;
       }
       data.role = role;
@@ -652,7 +659,7 @@ router.put('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, res
 });
 
 // DELETE /api/auth/users/:id — remove a user
-router.delete('/users/:id', requireAuth, requireAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/users/:id', requireAuth, requirePermission('users', 'delete'), requireUserManagement(), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -794,7 +801,8 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
               email: googleEmail,
               password: '',
               name: googleName,
-              role: 'admin',
+              role: 'super_admin',
+              isFounder: true,
             },
           });
 

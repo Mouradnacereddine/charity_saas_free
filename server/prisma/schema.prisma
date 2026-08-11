@@ -15,9 +15,12 @@ datasource db {
 // ============================================
 
 enum Role {
+  super_admin
   admin
   treasurer
-  user
+  stock_manager
+  social_worker
+  volunteer
 }
 
 enum TransactionType {
@@ -110,7 +113,8 @@ model User {
   email         String     @unique
   password      String
   name          String
-  role          Role       @default(user)
+  role          Role       @default(volunteer)
+  isFounder     Boolean    @default(false)
   status        UserStatus @default(approved)
   createdAt     DateTime   @default(now())
 
@@ -124,7 +128,7 @@ model InviteToken {
   id            String    @id @default(uuid())
   associationId String
   token         String    @unique
-  role          Role      @default(user)
+  role          Role      @default(volunteer)
   name          String?
   expiresAt     DateTime
   usedAt        DateTime?

@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
 
 const router = Router();
@@ -9,7 +9,7 @@ const router = Router();
 router.use(requireAuth);
 
 // GET /api/beneficiaries — list with filters
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', requirePermission('beneficiaries', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const {
       searchTerm, attribut, caisseId, situation,
@@ -108,7 +108,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // GET /api/beneficiaries/widows/most-children — widow with most children under max age
-router.get('/widows/most-children', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/widows/most-children', requirePermission('beneficiaries', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const maxAge = req.query.maxAge ? parseInt(String(req.query.maxAge), 10) : undefined;
@@ -158,7 +158,7 @@ router.get('/widows/most-children', async (req: AuthRequest, res: Response): Pro
 });
 
 // POST /api/beneficiaries — create
-router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/', requirePermission('beneficiaries', 'create'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const associationId = req.user!.associationId;
     const {
@@ -203,7 +203,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // GET /api/beneficiaries/:id — get one
-router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/:id', requirePermission('beneficiaries', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -226,7 +226,7 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // PUT /api/beneficiaries/:id — update
-router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/:id', requirePermission('beneficiaries', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
@@ -276,7 +276,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // DELETE /api/beneficiaries/:id
-router.delete('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+router.delete('/:id', requirePermission('beneficiaries', 'delete'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const associationId = req.user!.associationId;
