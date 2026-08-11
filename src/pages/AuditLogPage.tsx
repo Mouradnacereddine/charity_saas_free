@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Badge, Input, Select, Button, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { useQuery } from '@tanstack/react-query';
 import { auditApi } from '../lib/api';
-import { ScrollText } from 'lucide-react';
+import { ScrollText, Search } from 'lucide-react';
 import type { AuditLogResponse } from '../types';
 
 const ACTION_BADGE: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -30,18 +30,18 @@ function formatDate(iso: string, locale: string) {
 
 export default function AuditLogPage() {
   const { t, i18n } = useTranslation();
+  const [queryParams, setQueryParams] = useState<Record<string, string> | undefined>(undefined);
   const [userId, setUserId] = useState('');
   const [action, setAction] = useState('');
   const [resource, setResource] = useState('');
-  const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['audit', { userId, action, resource, page }],
+    queryKey: ['audit', queryParams],
     queryFn: async () => {
-      const params: Record<string, string> = { page: String(page), limit: '50' };
-      if (userId) params.userId = userId;
-      if (action) params.action = action;
-      if (resource) params.resource = resource;
+      const params: Record<string, string> = { page: queryParams?.page || '1', limit: '50' };
+      if (queryParams?.userId) params.userId = queryParams.userId;
+      if (queryParams?.action) params.action = queryParams.action;
+      if (queryParams?.resource) params.resource = queryParams.resource;
       const res = await auditApi.list(params);
       return res.data as AuditLogResponse;
     },
@@ -49,6 +49,7 @@ export default function AuditLogPage() {
 
   const logs = data?.logs ?? [];
   const total = data?.total ?? 0;
+  const page = data?.page ?? 1;
   const totalPages = Math.max(1, Math.ceil(total / (data?.limit || 50)));
 
   const ACTION_OPTIONS = [
@@ -78,15 +79,23 @@ export default function AuditLogPage() {
     { value: 'allocation', label: t('audit.resourceAllocation') },
   ];
 
+  const buildParams = () => {
+    const params: Record<string, string> = { page: '1' };
+    if (userId) params.userId = userId;
+    if (action) params.action = action;
+    if (resource) params.resource = resource;
+    return params;
+  };
+
   const applyFilters = () => {
-    setPage(1);
+    setQueryParams(buildParams());
   };
 
   const resetFilters = () => {
     setUserId('');
     setAction('');
     setResource('');
-    setPage(1);
+    setQueryParams(undefined);
   };
 
   return (
@@ -124,7 +133,9 @@ export default function AuditLogPage() {
             options={RESOURCE_OPTIONS}
           />
           <div className="flex items-end gap-2">
-            <Button variant="primary" size="sm" onClick={applyFilters}>{t('audit.filter')}</Button>
+            <Button variant="primary" size="sm" onClick={applyFilters}>
+              <Search className="w-4 h-4" /> {t('common.search')}
+            </Button>
             <Button variant="secondary" size="sm" onClick={resetFilters}>{t('audit.reset')}</Button>
           </div>
         </div>
@@ -189,7 +200,7 @@ export default function AuditLogPage() {
                   variant="secondary"
                   size="sm"
                   disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => setQueryParams((p) => ({ ...(p || {}), page: String(Math.max(1, (p?.page ? parseInt(p.page, 10) : 1) - 1)) }))}
                 >
                   {t('audit.prev')}
                 </Button>
@@ -200,7 +211,7 @@ export default function AuditLogPage() {
                   variant="secondary"
                   size="sm"
                   disabled={page >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => setQueryParams((p) => ({ ...(p || {}), page: String(Math.min(totalPages, (p?.page ? parseInt(p.page, 10) : 1) + 1)) }))}
                 >
                   {t('audit.next')}
                 </Button>
