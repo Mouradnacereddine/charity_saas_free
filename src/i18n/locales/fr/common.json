@@ -18,6 +18,7 @@
     "doctors": "Médecins",
     "users": "Gestion des utilisateurs",
     "audit": "Journal d'activité",
+    "donation": "Faire un don",
     "toggleOpen": "Ouvrir le menu",
     "toggleCollapse": "Réduire la barre",
     "toggleExpand": "Développer la barre"
@@ -842,5 +843,18 @@
     "netFinancial": "Position financière nette",
     "expenseToIncome": "Ratio dépenses/revenus",
     "amountInWords": "Montant en lettres"
+  },
+  "donation": {
+    "title": "Soutenir le développeur",
+    "subtitle": "Ce tip jar est destiné au développeur de la plateforme, M. Baguenane. Votre soutien l'aide à maintenir et à améliorer le logiciel au service des associations.",
+    "quickAmounts": "Montants rapides",
+    "customAmount": "Montant libre",
+    "customPlaceholder": "10.00",
+    "submit": "Faire un don",
+    "loading": "Redirection vers le paiement sécurisé...",
+    "error": "Une erreur est survenue. Veuillez réessayer.",
+    "invalidAmount": "Veuillez saisir un montant valide.",
+    "disabled": "Les dons en ligne ne sont pas encore disponibles. Réessayez plus tard.",
+    "secure": "Paiement sécurisé via LemonSqueezy"
   }
 }

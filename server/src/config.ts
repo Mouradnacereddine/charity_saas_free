@@ -12,6 +12,10 @@ export const config = {
   inviteTokenExpiryDays: parseInt(process.env.INVITE_TOKEN_DAYS || '7', 10),
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+  lemonSqueezyApiKey: process.env.LEMONSQUEEZY_API_KEY || '',
+  lemonSqueezyStoreId: process.env.LEMONSQUEEZY_STORE_ID || '',
+  lemonSqueezyVariantId: process.env.LEMONSQUEEZY_VARIANT_ID || '',
+  lemonSqueezyWebhookSecret: process.env.LEMONSQUEEZY_WEBHOOK_SECRET || '',
 };
 
 // Warn if default secrets are used in production (Vercel)

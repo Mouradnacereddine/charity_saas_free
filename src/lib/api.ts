@@ -294,3 +294,9 @@ export const notificationsApi = {
 export const auditApi = {
   list: (params?: Record<string, string>) => api.get('/audit', { params }),
 };
+
+export const lemonSqueezyApi = {
+  getConfig: () => api.get<{ enabled: boolean }>('/lemon-squeezy/config'),
+  createCheckout: (payload: { amount: number; email?: string }) =>
+    api.post<{ checkoutUrl: string }>('/lemon-squeezy/checkout', payload),
+};

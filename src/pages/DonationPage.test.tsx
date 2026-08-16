@@ -1,0 +1,70 @@
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import DonationPage from './DonationPage'
+import { lemonSqueezyApi } from '../lib/api'
+
+vi.mock('../lib/api', () => ({
+  lemonSqueezyApi: {
+    getConfig: vi.fn(),
+    createCheckout: vi.fn(),
+  },
+}))
+
+const mockedGetConfig = vi.mocked(lemonSqueezyApi.getConfig)
+const mockedCreateCheckout = vi.mocked(lemonSqueezyApi.createCheckout)
+
+describe('DonationPage', () => {
+  const assignMock = vi.fn()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    Object.defineProperty(window, 'location', {
+      value: { assign: assignMock },
+      writable: true,
+    })
+    mockedGetConfig.mockResolvedValue({
+      data: { enabled: true },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    } as any)
+    mockedCreateCheckout.mockResolvedValue({
+      data: { checkoutUrl: 'https://checkout.lemonsqueezy.com/abc' },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    } as any)
+  })
+
+  it('renders the title and the quick amount buttons', async () => {
+    render(<DonationPage />)
+    expect(await screen.findByText('ادعم المطوّر')).toBeInTheDocument()
+    expect(screen.getByText('5 €')).toBeInTheDocument()
+    expect(screen.getByText('10 €')).toBeInTheDocument()
+    expect(screen.getByText('25 €')).toBeInTheDocument()
+    expect(screen.getByText('50 €')).toBeInTheDocument()
+  })
+
+  it('creates a checkout and redirects on submit', async () => {
+    render(<DonationPage />)
+    const submit = await screen.findByRole('button', { name: /تبرع/ })
+    fireEvent.click(submit)
+
+    await waitFor(() => expect(mockedCreateCheckout).toHaveBeenCalledWith({ amount: 10 }))
+    await waitFor(() =>
+      expect(assignMock).toHaveBeenCalledWith('https://checkout.lemonsqueezy.com/abc')
+    )
+  })
+
+  it('shows an inline error when the checkout fails', async () => {
+    mockedCreateCheckout.mockRejectedValue(new Error('boom'))
+    render(<DonationPage />)
+    const submit = await screen.findByRole('button', { name: /تبرع/ })
+    fireEvent.click(submit)
+
+    expect(await screen.findByText('حدث خطأ. يرجى المحاولة مرة أخرى.')).toBeInTheDocument()
+    expect(assignMock).not.toHaveBeenCalled()
+  })
+})

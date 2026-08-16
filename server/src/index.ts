@@ -29,6 +29,7 @@ import notificationsRoutes from './routes/notifications';
 import attributsRoutes from './routes/beneficiaryAttributs';
 import doctorsRoutes from './routes/doctors';
 import auditRoutes from './routes/audit';
+import lemonSqueezyRoutes from './routes/lemonSqueezy';
 
 const app = express();
 
@@ -51,6 +52,9 @@ app.use(cors({
   },
   credentials: true,
 }));
+// Raw body pour le webhook LemonSqueezy (vérification signature HMAC) —
+// doit être monté AVANT express.json() pour capturer le corps brut.
+app.use('/api/lemon-squeezy/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -78,6 +82,7 @@ app.use('/api/dashboard', autoInvalidate, dashboardRoutes);
 app.use('/api/notifications', autoInvalidate, notificationsRoutes);
 app.use('/api/beneficiary-attributs', autoInvalidate, attributsRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/lemon-squeezy', lemonSqueezyRoutes);
 
 // Socket.IO — only in non-serverless mode (require inside the block so it doesn't fail on Vercel)
 if (!process.env.VERCEL) {

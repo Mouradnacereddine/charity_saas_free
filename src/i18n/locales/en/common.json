@@ -18,6 +18,7 @@
     "doctors": "Doctors",
     "users": "User Management",
     "audit": "Activity Log",
+    "donation": "Make a Donation",
     "toggleOpen": "Open menu",
     "toggleCollapse": "Collapse sidebar",
     "toggleExpand": "Expand sidebar"
@@ -841,5 +842,18 @@
     "netFinancial": "Net Financial Position",
     "expenseToIncome": "Expense to Income Ratio",
     "amountInWords": "Amount in words"
+  },
+  "donation": {
+    "title": "Support the Developer",
+    "subtitle": "This tip jar is for the platform's developer, Mr. Baguenane. Your support helps him maintain and improve the software serving associations.",
+    "quickAmounts": "Quick amounts",
+    "customAmount": "Custom amount",
+    "customPlaceholder": "10.00",
+    "submit": "Make a Donation",
+    "loading": "Redirecting to secure payment...",
+    "error": "An error occurred. Please try again.",
+    "invalidAmount": "Please enter a valid amount.",
+    "disabled": "Online donations are not available yet. Please try again later.",
+    "secure": "Secure payment via LemonSqueezy"
   }
 }

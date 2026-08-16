@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Globe,
   ScrollText,
+  Heart,
 } from 'lucide-react';
 import { authApi } from '../../lib/api';
 import { useUIStore } from '../../stores/uiStore';
@@ -46,6 +47,7 @@ const navItems = [
   { id: 'medical', labelKey: 'nav.medical', icon: Stethoscope, resource: 'medical_referrals' },
   { id: 'doctors', labelKey: 'nav.doctors', icon: Stethoscope, resource: 'doctors' },
   { id: 'audit', labelKey: 'nav.audit', icon: ScrollText, resource: 'audit' },
+  { id: 'donation', labelKey: 'nav.donation', icon: Heart, resource: 'dashboard' },
 ];
 
 export function Layout({
