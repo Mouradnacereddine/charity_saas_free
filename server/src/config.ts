@@ -16,6 +16,9 @@ export const config = {
   lemonSqueezyStoreId: process.env.LEMONSQUEEZY_STORE_ID || '',
   lemonSqueezyVariantId: process.env.LEMONSQUEEZY_VARIANT_ID || '',
   lemonSqueezyWebhookSecret: process.env.LEMONSQUEEZY_WEBHOOK_SECRET || '',
+  // Devise du store LemonSqueezy 453836 (vérifiée via API : DZD). Les montants
+  // du tip jar (frontend + validation backend) en dépendent.
+  lemonSqueezyCurrency: process.env.LEMONSQUEEZY_CURRENCY || 'DZD',
 };
 
 // Warn if default secrets are used in production (Vercel)

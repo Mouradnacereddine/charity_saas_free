@@ -4,20 +4,44 @@ import { HeartHandshake, Lock } from 'lucide-react';
 import { Card, Button, Input } from '../components/common/UI';
 import { lemonSqueezyApi } from '../lib/api';
 
-const QUICK_AMOUNTS = [5, 10, 25, 50];
+// Devise par défaut : DZD (dinar algérien) — devise réelle du store
+// LemonSqueezy 453836 « charity-saas-free » (vérifiée via API). Surchargée
+// par GET /api/lemon-squeezy/config si l'env LEMONSQUEEZY_CURRENCY diffère.
+const DEFAULT_CURRENCY = 'DZD';
 
-/** Montants rapides en euros, ex : 5 -> "5 €" */
-function formatQuickAmount(amount: number): string {
-  return `${amount} €`;
+// Montants rapides par devise (unités de la devise, pas des centimes).
+const QUICK_AMOUNTS_BY_CURRENCY: Record<string, number[]> = {
+  DZD: [500, 1000, 2000, 5000], // ≈ 3,5 € à 35 €
+  EUR: [5, 10, 25, 50],
+};
+
+const CURRENCY_SYMBOL: Record<string, string> = {
+  DZD: 'دج',
+  EUR: '€',
+};
+
+const DEFAULT_AMOUNT_BY_CURRENCY: Record<string, number> = {
+  DZD: 1000,
+  EUR: 10,
+};
+
+function formatQuickAmount(amount: number, currency: string): string {
+  const symbol = CURRENCY_SYMBOL[currency] || currency;
+  return `${amount} ${symbol}`;
 }
 
 export default function DonationPage() {
   const { t } = useTranslation();
   const [enabled, setEnabled] = useState<boolean | null>(null);
-  const [amount, setAmount] = useState<number>(10);
+  const [currency, setCurrency] = useState<string>(DEFAULT_CURRENCY);
+  const [minAmount, setMinAmount] = useState<number>(66);
+  const [amount, setAmount] = useState<number>(DEFAULT_AMOUNT_BY_CURRENCY[DEFAULT_CURRENCY]);
   const [customAmount, setCustomAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const quickAmounts = QUICK_AMOUNTS_BY_CURRENCY[currency] || QUICK_AMOUNTS_BY_CURRENCY[DEFAULT_CURRENCY];
+  const symbol = CURRENCY_SYMBOL[currency] || currency;
 
   // Vérifie que LemonSqueezy est configuré (GET /api/lemon-squeezy/config)
   useEffect(() => {
@@ -25,7 +49,13 @@ export default function DonationPage() {
     lemonSqueezyApi
       .getConfig()
       .then((res) => {
-        if (!cancelled) setEnabled(res.data.enabled);
+        if (cancelled) return;
+        setEnabled(res.data.enabled);
+        if (res.data.currency) {
+          setCurrency(res.data.currency);
+          setAmount(DEFAULT_AMOUNT_BY_CURRENCY[res.data.currency] ?? DEFAULT_AMOUNT_BY_CURRENCY[DEFAULT_CURRENCY]);
+          if (typeof res.data.minAmount === 'number') setMinAmount(res.data.minAmount);
+        }
       })
       .catch(() => {
         if (!cancelled) setEnabled(false);
@@ -56,6 +86,10 @@ export default function DonationPage() {
     const value = customAmount ? parseFloat(customAmount.replace(',', '.')) : amount;
     if (!value || value <= 0) {
       setError(t('donation.invalidAmount'));
+      return;
+    }
+    if (value < minAmount) {
+      setError(t('donation.minAmount', { amount: minAmount, currency: symbol }));
       return;
     }
 
@@ -93,7 +127,7 @@ export default function DonationPage() {
                 {t('donation.quickAmounts')}
               </p>
               <div className="grid grid-cols-4 gap-2">
-                {QUICK_AMOUNTS.map((value) => (
+                {quickAmounts.map((value) => (
                   <button
                     key={value}
                     type="button"
@@ -104,7 +138,7 @@ export default function DonationPage() {
                         : 'bg-card text-foreground border-border hover:bg-muted'
                     }`}
                   >
-                    {formatQuickAmount(value)}
+                    {formatQuickAmount(value, currency)}
                   </button>
                 ))}
               </div>
@@ -118,10 +152,12 @@ export default function DonationPage() {
                 className="text-center text-lg"
                 value={customAmount}
                 onChange={(e) => handleCustomChange(e.target.value)}
-                placeholder={t('donation.customPlaceholder')}
+                placeholder={t('donation.customPlaceholder', { symbol })}
                 aria-label={t('donation.customAmount')}
               />
-              <p className="text-xs text-muted-foreground mt-1">{t('donation.customAmount')}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('donation.customAmount')} — {t('donation.minAmount', { amount: minAmount, currency: symbol })}
+              </p>
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}

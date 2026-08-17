@@ -16,14 +16,42 @@ const router = Router();
 
 const LEMONSQUEEZY_API_URL = 'https://api.lemonsqueezy.com/v1';
 
-// Montant en euros (ex : 10.5). Compris entre 0 (exclu) et 1000 (inclus).
-const checkoutSchema = z.object({
-  amount: z.number().positive('Le montant doit être supérieur à 0').max(1000, 'Le montant ne peut pas dépasser 1000 €'),
-  email: z.string().email('Email invalide').optional().or(z.literal('')),
-});
+// Devise du store (vérifiée via API : DZD). custom_price est en centimes :
+// 65.95 DZD = 6595 centimes → montant minimal en unités = 65.95 → arrondi à 66.
+const CURRENCY = config.lemonSqueezyCurrency.toUpperCase();
+const CURRENCY_SYMBOL = CURRENCY === 'DZD' ? 'DZD' : '€';
+const MIN_AMOUNT = CURRENCY === 'DZD' ? 66 : 1;
+const MAX_AMOUNT = CURRENCY === 'DZD' ? 100000 : 1000;
+
+// Montant dans la devise du store (ex : 10.5). Compris entre le minimum
+// (66 DZD / 1 €) et un plafond raisonnable.
+const checkoutSchema = z
+  .object({
+    amount: z.number().positive('Le montant doit être supérieur à 0'),
+    email: z.string().email('Email invalide').optional().or(z.literal('')),
+  })
+  .superRefine((data, ctx) => {
+    if (data.amount < MIN_AMOUNT) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['amount'],
+        message: `Le montant minimal est de ${MIN_AMOUNT} ${CURRENCY_SYMBOL}`,
+      });
+    } else if (data.amount > MAX_AMOUNT) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['amount'],
+        message: `Le montant ne peut pas dépasser ${MAX_AMOUNT.toLocaleString('fr-FR')} ${CURRENCY_SYMBOL}`,
+      });
+    }
+  });
 
 router.get('/config', requireAuth, (_req: AuthRequest, res: Response): void => {
-  res.json({ enabled: Boolean(config.lemonSqueezyApiKey) });
+  res.json({
+    enabled: Boolean(config.lemonSqueezyApiKey),
+    currency: CURRENCY,
+    minAmount: MIN_AMOUNT,
+  });
 });
 
 // POST /api/lemon-squeezy/checkout — crée un checkout LemonSqueezy et renvoie son URL

@@ -23,7 +23,7 @@ describe('DonationPage', () => {
       writable: true,
     })
     mockedGetConfig.mockResolvedValue({
-      data: { enabled: true },
+      data: { enabled: true, currency: 'DZD', minAmount: 66 },
       status: 200,
       statusText: 'OK',
       headers: {},
@@ -38,21 +38,21 @@ describe('DonationPage', () => {
     } as any)
   })
 
-  it('renders the title and the quick amount buttons', async () => {
+  it('renders the title and the quick amount buttons in DZD', async () => {
     render(<DonationPage />)
     expect(await screen.findByText('ادعم المطوّر')).toBeInTheDocument()
-    expect(screen.getByText('5 €')).toBeInTheDocument()
-    expect(screen.getByText('10 €')).toBeInTheDocument()
-    expect(screen.getByText('25 €')).toBeInTheDocument()
-    expect(screen.getByText('50 €')).toBeInTheDocument()
+    expect(screen.getByText('500 دج')).toBeInTheDocument()
+    expect(screen.getByText('1000 دج')).toBeInTheDocument()
+    expect(screen.getByText('2000 دج')).toBeInTheDocument()
+    expect(screen.getByText('5000 دج')).toBeInTheDocument()
   })
 
-  it('creates a checkout and redirects on submit', async () => {
+  it('creates a checkout and redirects on submit with the default DZD amount', async () => {
     render(<DonationPage />)
     const submit = await screen.findByRole('button', { name: /تبرع/ })
     fireEvent.click(submit)
 
-    await waitFor(() => expect(mockedCreateCheckout).toHaveBeenCalledWith({ amount: 10 }))
+    await waitFor(() => expect(mockedCreateCheckout).toHaveBeenCalledWith({ amount: 1000 }))
     await waitFor(() =>
       expect(assignMock).toHaveBeenCalledWith('https://checkout.lemonsqueezy.com/abc')
     )

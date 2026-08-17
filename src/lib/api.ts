@@ -296,7 +296,7 @@ export const auditApi = {
 };
 
 export const lemonSqueezyApi = {
-  getConfig: () => api.get<{ enabled: boolean }>('/lemon-squeezy/config'),
+  getConfig: () => api.get<{ enabled: boolean; currency: string; minAmount: number }>('/lemon-squeezy/config'),
   createCheckout: (payload: { amount: number; email?: string }) =>
     api.post<{ checkoutUrl: string }>('/lemon-squeezy/checkout', payload),
 };
