@@ -16,11 +16,13 @@ const router = Router();
 
 const LEMONSQUEEZY_API_URL = 'https://api.lemonsqueezy.com/v1';
 
-// Devise du store (vérifiée via API : DZD). custom_price est en centimes :
-// 65.95 DZD = 6595 centimes → montant minimal en unités = 65.95 → arrondi à 66.
+// Devise du store (vérifiée via API : DZD). custom_price est en centimes.
+// Minimum RÉEL vérifié via POST /v1/checkouts (17/08/2026) : LemonSqueezy rejette
+// tout custom_price < DZD66.09 (422 « at least DZD66.09 ») → seuil backend = 67
+// (entier suivant) pour garantir que la validation passe côté LemonSqueezy.
 const CURRENCY = config.lemonSqueezyCurrency.toUpperCase();
 const CURRENCY_SYMBOL = CURRENCY === 'DZD' ? 'DZD' : '€';
-const MIN_AMOUNT = CURRENCY === 'DZD' ? 66 : 1;
+const MIN_AMOUNT = CURRENCY === 'DZD' ? 67 : 1;
 const MAX_AMOUNT = CURRENCY === 'DZD' ? 100000 : 1000;
 
 // Montant dans la devise du store (ex : 10.5). Compris entre le minimum
@@ -116,8 +118,15 @@ router.post('/checkout', requireAuth, async (req: AuthRequest, res: Response): P
     res.json({ checkoutUrl });
   } catch (err: any) {
     const status = err?.response?.status;
-    const lsError = err?.response?.data?.errors?.[0]?.detail || err?.response?.data?.error;
-    console.error('❌ [lemon-squeezy] checkout failed:', status || err?.message, lsError || '');
+    let lsError = err?.response?.data?.errors?.[0]?.detail || err?.response?.data?.error;
+    // Carte de lecture : transformer l'erreur brute de LemonSqueezy en message
+    // français utile pour l'utilisateur final (affiché tel quel côté frontend).
+    if (lsError && /custom price field must be at least/i.test(String(lsError))) {
+      const match = String(lsError).match(/at least\s+[A-Za-z]{3}?([\d.]+)/i);
+      const min = match?.[1] || String(MIN_AMOUNT);
+      lsError = `Le montant minimal accepté par LemonSqueezy est de ${min} ${CURRENCY_SYMBOL}`;
+    }
+    console.error('❌ [lemon-squeezy] checkout failed:', status || err?.message);
     res.status(status && status >= 400 && status < 500 ? status : 502).json({
       error: lsError || 'Échec de la création du checkout LemonSqueezy',
     });

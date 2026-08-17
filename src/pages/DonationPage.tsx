@@ -102,8 +102,13 @@ export default function DonationPage() {
       } else {
         setError(t('donation.error'));
       }
-    } catch {
-      setError(t('donation.error'));
+    } catch (err: unknown) {
+      // Propager la VRAIE raison renvoyée par le backend (ex : 503 « produit de don
+      // non configuré », 400 « montant minimal », 502 « échec API LemonSqueezy »)
+      // au lieu d'afficher le message générique — l'utilisateur (et le PDG) doit
+      // comprendre pourquoi le don échoue. Fallback i18n si aucune raison précise.
+      const apiError = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setError(apiError || t('donation.error'));
     } finally {
       setLoading(false);
     }

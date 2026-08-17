@@ -23,7 +23,7 @@ describe('DonationPage', () => {
       writable: true,
     })
     mockedGetConfig.mockResolvedValue({
-      data: { enabled: true, currency: 'DZD', minAmount: 66 },
+      data: { enabled: true, currency: 'DZD', minAmount: 67 },
       status: 200,
       statusText: 'OK',
       headers: {},
@@ -65,6 +65,32 @@ describe('DonationPage', () => {
     fireEvent.click(submit)
 
     expect(await screen.findByText('حدث خطأ. يرجى المحاولة مرة أخرى.')).toBeInTheDocument()
+    expect(assignMock).not.toHaveBeenCalled()
+  })
+
+  it('affiche la VRAIE raison retournée par le backend quand le checkout échoue (503 produit non configuré)', async () => {
+    mockedCreateCheckout.mockRejectedValue({
+      response: { data: { error: 'Le produit de don (store/variant) n’est pas encore configuré' } },
+    })
+    render(<DonationPage />)
+    const submit = await screen.findByRole('button', { name: /تبرع/ })
+    fireEvent.click(submit)
+
+    expect(
+      await screen.findByText('Le produit de don (store/variant) n’est pas encore configuré')
+    ).toBeInTheDocument()
+    expect(assignMock).not.toHaveBeenCalled()
+  })
+
+  it('affiche la vraie raison backend même pour une erreur 4xx (montant invalide)', async () => {
+    mockedCreateCheckout.mockRejectedValue({
+      response: { data: { error: 'Le montant minimal est de 67 DZD' } },
+    })
+    render(<DonationPage />)
+    const submit = await screen.findByRole('button', { name: /تبرع/ })
+    fireEvent.click(submit)
+
+    expect(await screen.findByText('Le montant minimal est de 67 DZD')).toBeInTheDocument()
     expect(assignMock).not.toHaveBeenCalled()
   })
 })
