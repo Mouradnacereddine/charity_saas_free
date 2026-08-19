@@ -841,6 +841,7 @@
     "quickAmounts": "مبالغ سريعة",
     "customAmount": "مبلغ حر",
     "customPlaceholder": "مثال: 1000 {{symbol}}",
+    "currencySymbol": "دج",
     "minAmount": "الحد الأدنى: {{amount}} {{currency}}",
     "submit": "تبرع",
     "loading": "جاري التحويل إلى الدفع الآمن...",

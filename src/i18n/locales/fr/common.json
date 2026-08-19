@@ -850,6 +850,7 @@
     "quickAmounts": "Montants rapides",
     "customAmount": "Montant libre",
     "customPlaceholder": "Ex. : 1000 {{symbol}}",
+    "currencySymbol": "DA",
     "minAmount": "Montant minimal : {{amount}} {{currency}}",
     "submit": "Faire un don",
     "loading": "Redirection vers le paiement sécurisé...",

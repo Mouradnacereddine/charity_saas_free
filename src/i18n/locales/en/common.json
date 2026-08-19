@@ -849,6 +849,7 @@
     "quickAmounts": "Quick amounts",
     "customAmount": "Custom amount",
     "customPlaceholder": "e.g. 1000 {{symbol}}",
+    "currencySymbol": "DZD",
     "minAmount": "Minimum amount: {{amount}} {{currency}}",
     "submit": "Make a Donation",
     "loading": "Redirecting to secure payment...",

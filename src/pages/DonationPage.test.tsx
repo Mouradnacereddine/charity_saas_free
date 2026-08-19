@@ -1,7 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import DonationPage from './DonationPage'
 import { lemonSqueezyApi } from '../lib/api'
+import i18n from '../i18n'
+import frCommon from '../i18n/locales/fr/common.json'
+import enCommon from '../i18n/locales/en/common.json'
+import arCommon from '../i18n/locales/ar/common.json'
 
 vi.mock('../lib/api', () => ({
   lemonSqueezyApi: {
@@ -38,7 +42,40 @@ describe('DonationPage', () => {
     } as any)
   })
 
-  it('renders the title and the quick amount buttons in DZD', async () => {
+  it('renders the title and the quick amount buttons in DZD (ar → « دج »)', async () => {
+    render(<DonationPage />)
+    expect(await screen.findByText('ادعم المطوّر')).toBeInTheDocument()
+    expect(screen.getByText('500 دج')).toBeInTheDocument()
+    expect(screen.getByText('1000 دج')).toBeInTheDocument()
+    expect(screen.getByText('2000 دج')).toBeInTheDocument()
+    expect(screen.getByText('5000 دج')).toBeInTheDocument()
+  })
+
+  it('affiche le symbole « DA » en français', async () => {
+    i18n.changeLanguage('fr')
+    i18n.addResourceBundle('fr', 'common', frCommon)
+    render(<DonationPage />)
+    expect(await screen.findByText('Soutenir le développeur')).toBeInTheDocument()
+    expect(screen.getByText('500 DA')).toBeInTheDocument()
+    expect(screen.getByText('1000 DA')).toBeInTheDocument()
+    expect(screen.getByText('2000 DA')).toBeInTheDocument()
+    expect(screen.getByText('5000 DA')).toBeInTheDocument()
+  })
+
+  it('displays the "DZD" symbol in English', async () => {
+    i18n.changeLanguage('en')
+    i18n.addResourceBundle('en', 'common', enCommon)
+    render(<DonationPage />)
+    expect(await screen.findByText('Support the Developer')).toBeInTheDocument()
+    expect(screen.getByText('500 DZD')).toBeInTheDocument()
+    expect(screen.getByText('1000 DZD')).toBeInTheDocument()
+    expect(screen.getByText('2000 DZD')).toBeInTheDocument()
+    expect(screen.getByText('5000 DZD')).toBeInTheDocument()
+  })
+
+  it('displays the "دج" symbol in Arabic', async () => {
+    i18n.changeLanguage('ar')
+    i18n.addResourceBundle('ar', 'common', arCommon)
     render(<DonationPage />)
     expect(await screen.findByText('ادعم المطوّر')).toBeInTheDocument()
     expect(screen.getByText('500 دج')).toBeInTheDocument()

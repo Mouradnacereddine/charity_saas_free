@@ -15,8 +15,10 @@ const QUICK_AMOUNTS_BY_CURRENCY: Record<string, number[]> = {
   EUR: [5, 10, 25, 50],
 };
 
+// Symboles génériques pour les devises NON-DZD. Le symbole du DZD est localisé
+// selon la langue de l'interface via la clé i18n « donation.currencySymbol » :
+// fr → « DA », en → « DZD », ar → « دج » (voir src/i18n/locales/*/common.json).
 const CURRENCY_SYMBOL: Record<string, string> = {
-  DZD: 'دج',
   EUR: '€',
 };
 
@@ -25,8 +27,7 @@ const DEFAULT_AMOUNT_BY_CURRENCY: Record<string, number> = {
   EUR: 10,
 };
 
-function formatQuickAmount(amount: number, currency: string): string {
-  const symbol = CURRENCY_SYMBOL[currency] || currency;
+function formatQuickAmount(amount: number, symbol: string): string {
   return `${amount} ${symbol}`;
 }
 
@@ -41,7 +42,9 @@ export default function DonationPage() {
   const [error, setError] = useState('');
 
   const quickAmounts = QUICK_AMOUNTS_BY_CURRENCY[currency] || QUICK_AMOUNTS_BY_CURRENCY[DEFAULT_CURRENCY];
-  const symbol = CURRENCY_SYMBOL[currency] || currency;
+  // Symbole affiché : localisé selon la langue i18n pour le DZD (fr → « DA »,
+  // en → « DZD », ar → « دج »), symbole générique pour les autres devises (€).
+  const symbol = CURRENCY_SYMBOL[currency] || t('donation.currencySymbol');
 
   // Vérifie que LemonSqueezy est configuré (GET /api/lemon-squeezy/config)
   useEffect(() => {
@@ -143,7 +146,7 @@ export default function DonationPage() {
                         : 'bg-card text-foreground border-border hover:bg-muted'
                     }`}
                   >
-                    {formatQuickAmount(value, currency)}
+                    {formatQuickAmount(value, symbol)}
                   </button>
                 ))}
               </div>
