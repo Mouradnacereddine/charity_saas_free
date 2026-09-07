@@ -562,6 +562,9 @@
     "presidentSignature": "إمضاء رئيس الجمعية",
     "assocStamp": "ختم الجمعية",
     "childrenReferral": "الأطفال المستفيدون",
+    "printBeneficiaryInfo": "معلومات المستفيد",
+    "printMedicalInfo": "المعلومات الطبية",
+    "printNotesSection": "ملاحظات",
     "childrenReferralDesc": "الأطفال المستفيدون (اختياري)",
     "beneficiaryRef": "رمز المستفيد",
     "amountFrom": "المبلغ من",
@@ -586,7 +589,9 @@
     "referralChildrenLabel": "الأطفال المستفيدون",
     "tableArabic": "بالعربية",
     "tableLatin": "باللاتينية",
-    "tableActions": "الإجراءات"
+    "tableActions": "الإجراءات",
+    "name": "الاسم",
+    "sectionName": "البيان"
   },
   "doctors": {
     "title": "الأطباء",

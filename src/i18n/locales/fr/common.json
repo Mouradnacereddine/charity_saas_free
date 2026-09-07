@@ -569,6 +569,9 @@
     "presidentSignature": "Signature du Président de l'Association",
     "assocStamp": "Cachet de l'Association",
     "childrenReferral": "Enfants bénéficiaires",
+    "printBeneficiaryInfo": "Informations du bénéficiaire",
+    "printMedicalInfo": "Informations médicales",
+    "printNotesSection": "Observations",
     "childrenReferralDesc": "Enfants bénéficiaires (Optionnel)",
     "beneficiaryRef": "Référence bénéficiaire",
     "amountFrom": "Montant de",
@@ -594,7 +597,9 @@
     "referralChildrenLabel": "Enfants bénéficiaires",
     "tableArabic": "Arabe",
     "tableLatin": "Latin",
-    "tableActions": "Actions"
+    "tableActions": "Actions",
+    "name": "Nom",
+    "sectionName": "Désignation"
   },
   "doctors": {
     "title": "Médecins",

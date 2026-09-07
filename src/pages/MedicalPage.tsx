@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { formatCurrency, formatDate, numberToArabicWords, numberToWords, calculateAge, getAgeDisplay } from '../utils/helpers';
+import { formatCurrency, formatDate, numberToWords, calculateAge, getAgeDisplay } from '../utils/helpers';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import type { MedicalReferral, Beneficiary, Caisse, MedicalAnalysisType, MedicalHospital, SubCategory } from '../types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -232,12 +232,10 @@ export default function MedicalPage() {
   const handlePrint = (referral: MedicalReferral) => {
     const caisse = caisses.find((c: Caisse) => c.id === referral.caisseId)
     const subCat = caisse?.subCategories.find((s: SubCategory) => s.id === referral.subCategoryId)
-    const caisseRow = caisse ? `<span class="lbl">${t('medical.caisse')}</span><span class="val">${caisse.name}</span>` : ''
-    const subCatRow = subCat ? `<span class="lbl">${t('medical.subCategory')}</span><span class="val">${subCat.name}</span>` : ''
 
     const childrenHtml = referral.children && Array.isArray(referral.children) && referral.children.length > 0
-      ? referral.children.map((c: any) => {
-          const childName = c.name || `${c.lastName || ''} ${c.firstName || ''}`.trim() || '—'
+      ? referral.children.map((c: any, i: number) => {
+          const childName = c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim() || '—'
           let ageDisplay = ''
           try {
             if (c.dateOfBirth) {
@@ -247,7 +245,7 @@ export default function MedicalPage() {
             }
           } catch { ageDisplay = '' }
           const gender = c.gender === 'female' ? t('common.female') : c.gender === 'male' ? t('common.male') : ''
-          return `<div class="child-item"><span class="child-name">${c.name}</span>${ageDisplay ? ` — ${ageDisplay}` : ''}${gender ? ` — ${gender}` : ''}</div>`
+          return `<tr><td class="cell-num">${i + 1}</td><td class="cell-name">${childName}</td><td>${ageDisplay || '—'}</td><td>${gender || '—'}</td></tr>`
         }).join('')
       : ''
 
@@ -257,61 +255,106 @@ export default function MedicalPage() {
 
     const isLtr = i18n.language !== 'ar';
     const MEDICAL_CSS = `
-      @page { size: 148mm 210mm; margin: 15mm 12mm 10mm; }
+      @page { size: A4 portrait; margin: 12mm 14mm; }
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: ${isLtr ? 'ltr' : 'rtl'}; font-size: 10px; background: #fff; padding: 0; max-width: 124mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #2563eb; padding-bottom: 3px; margin-bottom: 6px; }
-      .header .assoc { font-size: 13px; font-weight: bold; color: #2563eb; }
-      .header .title { font-size: 11px; color: #1e40af; font-weight: 600; }
-      .info-grid { display: flex; flex-wrap: wrap; gap: 1px 4px; margin-bottom: 4px; }
-      .info-item { width: 48%; padding: 1.5px 0; }
-      .info-item .lbl { font-size: 7px; color: #999; display: block; }
-      .info-item .val { font-size: 10px; color: #222; display: block; }
-      .section-title { font-size: 9px; font-weight: 700; color: #1e40af; margin: 4px 0 2px; padding: 2px 0; border-bottom: 0.5px solid #dbeafe; }
-      .children-grid { display: flex; flex-wrap: wrap; gap: 1px 6px; margin: 2px 0; }
-      .child-item { width: 100%; font-size: 9px; padding: 1px 0; border-bottom: 0.5px dotted #e5e7eb; color: #333; }
-      .child-item .child-name { font-weight: 600; color: #111; }
-      .amt { background: #f0f4ff; border-radius: 3px; padding: 3px 0; text-align: center; margin: 5px 0; }
-      .amt .num { font-size: 18px; font-weight: bold; }
-      .amt .words { font-size: 7.5px; color: #555; margin-top: 1px; }
-      .sign-section { margin-top: 6px; }
-      .sign-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 0; }
-      .sign-box { width: 60mm; text-align: center; }
-      .sign-box .label { font-size: 7.5px; color: #888; display: block; margin-bottom: 1px; }
-      .sign-box .line { border-top: 0.8px solid #444; height: 18px; }
-      .notice { font-size: 7px; color: #666; text-align: center; margin-top: 8px; line-height: 1.6; }
+      body { font-family: 'Segoe UI', Tahoma, sans-serif; direction: ${isLtr ? 'ltr' : 'rtl'}; font-size: 11.5px; color: #1f2937; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page { display: flex; flex-direction: column; min-height: 265mm; }
+
+      /* ===== Header ===== */
+      .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 3px solid #2563eb; }
+      .header .assoc { font-size: 17px; font-weight: 700; color: #2563eb; }
+      .header .doc-type { text-align: center; }
+      .header .title { font-size: 15px; color: #1e3a8a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+      .header .ref { font-size: 11px; color: #6b7280; margin-top: 2px; }
+      .header .ref b { color: #111827; }
+      .header .meta { text-align: ${isLtr ? 'right' : 'left'}; font-size: 11px; color: #4b5563; line-height: 1.7; }
+
+      /* ===== Sections ===== */
+      .section { margin-top: 14px; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; }
+      .section-title { font-size: 12px; font-weight: 700; color: #fff; background: #2563eb; padding: 6px 12px; }
+      .grid { display: flex; flex-wrap: wrap; }
+      .item { width: 50%; padding: 8px 12px; border-bottom: 0.5px solid #f1f5f9; }
+      .item.full { width: 100%; }
+      .item .lbl { font-size: 9.5px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 2px; }
+      .item .val { font-size: 12.5px; font-weight: 600; color: #111827; }
+
+      /* ===== Children table ===== */
+      table.children { width: 100%; border-collapse: collapse; }
+      table.children th { background: #f0f4ff; color: #1e40af; font-size: 10.5px; font-weight: 700; padding: 6px 12px; text-align: ${isLtr ? 'left' : 'right'}; border-bottom: 1px solid #dbeafe; }
+      table.children td { font-size: 12px; padding: 7px 12px; border-bottom: 0.5px solid #f1f5f9; color: #1f2937; }
+      table.children .cell-num { width: 10mm; color: #6b7280; }
+      table.children .cell-name { font-weight: 600; color: #111827; }
+
+      /* ===== Amount ===== */
+      .amt { margin-top: 14px; border: 2px solid #2563eb; border-radius: 6px; padding: 12px; text-align: center; background: #f0f4ff; }
+      .amt .num { font-size: 20px; font-weight: 700; color: #1e3a8a; }
+      .amt .words { font-size: 11px; color: #4b5563; margin-top: 4px; font-style: italic; }
+      .amt.pending { border-color: #d97706; background: #fffbeb; }
+      .amt.pending .words { color: #b45309; font-style: normal; font-weight: 600; font-size: 12.5px; }
+
+      /* ===== Signatures ===== */
+      .sign-section { margin-top: auto; padding-top: 24px; }
+      .sign-row { display: flex; justify-content: space-between; }
+      .sign-box { width: 70mm; text-align: center; }
+      .sign-box .label { font-size: 10.5px; color: #4b5563; font-weight: 600; display: block; margin-bottom: 2px; }
+      .sign-box .line { border-top: 1px solid #374151; height: 26mm; }
+
+      /* ===== Legal notice ===== */
+      .notice { font-size: 9.5px; color: #6b7280; text-align: center; margin-top: 10px; line-height: 1.7; border-top: 0.5px solid #e5e7eb; padding-top: 8px; }
+
+      @media screen { body { padding: 20px; } .page { max-width: 210mm; margin: 0 auto; box-shadow: 0 0 10px rgba(0,0,0,.15); padding: 14mm; } }
+      @media print { .page { min-height: auto; height: 100%; } }
     `
 
     const w = window.open('', '_blank')
     if (!w) return
     w.document.write(`
-<!DOCTYPE html><html dir="${isLtr ? 'ltr' : 'rtl'}" lang="${i18n.language}"><head><meta charset="UTF-8"><title></title><style>${MEDICAL_CSS}</style>
+<!DOCTYPE html><html dir="${isLtr ? 'ltr' : 'rtl'}" lang="${i18n.language}"><head><meta charset="UTF-8"><title>${referral.reference || t('medical.title')}</title><style>${MEDICAL_CSS}</style>
 </head>
 <body>
+  <div class="page">
   <div class="header">
     <span class="assoc">🕌 ${association?.name || t('app.title')}</span>
-    <span class="title">${t('medical.title')}</span>
+    <div class="doc-type">
+      <span class="title">${t('medical.title')}</span>
+      <div class="ref">${t('doctors.refCode')} : <b>${referral.reference || '—'}</b></div>
+    </div>
+    <div class="meta">
+      ${t('common.date')} : <b>${formatDate(referral.date)}</b><br/>
+      ${t('common.status')} : <b>${(referral.status || 'pending') === 'pending' ? t('dashboard.pending') : (referral.status || 'pending') === 'completed' ? t('dashboard.completed') : t('dashboard.cancelled')}</b>
+    </div>
   </div>
-  <div class="info-grid">
-    <div class="info-item"><span class="lbl">${t('doctors.refCode')}</span><span class="val">${referral.reference || '—'}</span></div>
-    <div class="info-item"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(referral.date)}</span></div>
-    <div class="info-item"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${referral.beneficiaryName}</span></div>
-    <div class="info-item"><span class="lbl">${t('medical.beneficiaryRef')}</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
-    ${fullBeneficiary?.nationalCardNumber ? `<div class="info-item"><span class="lbl">${t('receipt.idNumber')}</span><span class="val">${fullBeneficiary.nationalCardNumber}</span></div>` : ''}
-    ${ageDisplay ? `<div class="info-item"><span class="lbl">${t('receipt.age')} / ${t('receipt.gender')}</span><span class="val">${ageDisplay} — ${genderDisplay}</span></div>` : ''}
-    <div class="info-item"><span class="lbl">${t('medical.doctor')}</span><span class="val">${referral.doctorName || (referral.doctor ? referral.doctor.lastName + ' ' + referral.doctor.firstName : '')}${referral.doctor?.specialty?.nameAr ? ` (${referral.doctor.specialty.nameAr})` : ''}</span></div>
-    ${referral.doctor?.address ? `<div class="info-item"><span class="lbl">${t('medical.doctorAddress')}</span><span class="val">${referral.doctor.address}</span></div>` : ''}
-    ${referral.analysisType ? `<div class="info-item"><span class="lbl">${t('medical.analysisType')}</span><span class="val">${referral.analysisType}</span></div>` : ''}
-    ${referral.hospital ? `<div class="info-item"><span class="lbl">${t('medical.hospital')}</span><span class="val">${referral.hospital}</span></div>` : ''}
-    ${caisseRow ? `<div class="info-item">${caisseRow}</div>` : ''}
-    ${subCatRow ? `<div class="info-item">${subCatRow}</div>` : ''}
+
+  <div class="section">
+    <div class="section-title">${t('medical.printBeneficiaryInfo')}</div>
+    <div class="grid">
+      <div class="item"><span class="lbl">${t('medical.beneficiary')}</span><span class="val">${referral.beneficiaryName}</span></div>
+      <div class="item"><span class="lbl">${t('medical.beneficiaryRef')}</span><span class="val">${referral.beneficiaryReference || '—'}</span></div>
+      ${fullBeneficiary?.nationalCardNumber ? `<div class="item"><span class="lbl">${t('receipt.idNumber')}</span><span class="val" dir="ltr">${fullBeneficiary.nationalCardNumber}</span></div>` : ''}
+      ${ageDisplay ? `<div class="item"><span class="lbl">${t('receipt.age')} / ${t('receipt.gender')}</span><span class="val">${ageDisplay} — ${genderDisplay}</span></div>` : ''}
+    </div>
   </div>
-  ${childrenHtml ? `<div class="section-title">${t('medical.childrenReferral')}</div><div class="children-grid">${childrenHtml}</div>` : ''}
-  ${referral.notes ? `<div class="section-title">${t('common.notes')}</div><div class="info-item" style="width:100%"><span class="val">${referral.notes}</span></div>` : ''}
+
+  <div class="section">
+    <div class="section-title">${t('medical.printMedicalInfo')}</div>
+    <div class="grid">
+      <div class="item"><span class="lbl">${t('medical.doctor')}</span><span class="val">${referral.doctorName || (referral.doctor ? referral.doctor.lastName + ' ' + referral.doctor.firstName : '—')}${referral.doctor?.specialty?.nameAr ? ` (${referral.doctor.specialty.nameAr})` : ''}</span></div>
+      ${referral.doctor?.address ? `<div class="item"><span class="lbl">${t('medical.doctorAddress')}</span><span class="val">${referral.doctor.address}</span></div>` : ''}
+      ${referral.analysisType ? `<div class="item"><span class="lbl">${t('medical.analysisType')}</span><span class="val">${referral.analysisType}</span></div>` : ''}
+      ${referral.hospital ? `<div class="item"><span class="lbl">${t('medical.hospital')}</span><span class="val">${referral.hospital}</span></div>` : ''}
+      ${caisse ? `<div class="item"><span class="lbl">${t('medical.caisse')}</span><span class="val">${caisse.name}</span></div>` : ''}
+      ${subCat ? `<div class="item"><span class="lbl">${t('medical.subCategory')}</span><span class="val">${subCat.name}</span></div>` : ''}
+    </div>
+  </div>
+
+  ${childrenHtml ? `<div class="section"><div class="section-title">${t('medical.childrenReferral')}</div><table class="children"><thead><tr><th class="cell-num">#</th><th>${t('medical.name')}</th><th>${t('receipt.age')}</th><th>${t('receipt.gender')}</th></tr></thead><tbody>${childrenHtml}</tbody></table></div>` : ''}
+  ${referral.notes ? `<div class="section"><div class="section-title">${t('medical.printNotesSection')}</div><div class="item full"><span class="val" style="font-weight:400;white-space:pre-wrap">${referral.notes}</span></div></div>` : ''}
+
   ${referral.amount > 0
-    ? `<div class="amt"><div class="num">${formatCurrency(referral.amount)}</div><div class="words">${referral.amountInWords && !referral.amountInWords.match(/^\d/) ? referral.amountInWords : numberToArabicWords(referral.amount)}</div></div>`
-    : `<div class="amt" style="background:#fef9e7"><div class="words" style="font-size:9px;color:#b8860b;font-weight:600">${t('medical.pendingAmount')}</div></div>`
+    ? `<div class="amt"><div class="num">${formatCurrency(referral.amount)}</div><div class="words">${referral.amountInWords && !referral.amountInWords.match(/^\d/) ? referral.amountInWords : numberToWords(referral.amount)}</div></div>`
+    : `<div class="amt pending"><div class="words">${t('medical.pendingAmount')}</div></div>`
   }
+
   <div class="sign-section">
     <div class="sign-row">
       <div class="sign-box"><span class="label">${t('medical.presidentSignature')}</span><div class="line"></div></div>
@@ -319,7 +362,8 @@ export default function MedicalPage() {
     </div>
   </div>
   <div class="notice">${t('medical.notice')}</div>
-  <script>window.print();window.close();</script>
+  </div>
+  <script>window.print();</script>
 </body></html>
 `)
     w.document.close()

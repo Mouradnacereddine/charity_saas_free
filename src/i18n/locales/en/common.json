@@ -569,6 +569,9 @@
     "presidentSignature": "Association President Signature",
     "assocStamp": "Association Stamp",
     "childrenReferral": "Beneficiary Children",
+    "printBeneficiaryInfo": "Beneficiary Information",
+    "printMedicalInfo": "Medical Information",
+    "printNotesSection": "Notes",
     "childrenReferralDesc": "Beneficiary Children (Optional)",
     "beneficiaryRef": "Beneficiary Reference",
     "amountFrom": "Amount From",
@@ -594,7 +597,9 @@
     "referralChildrenLabel": "Beneficiary Children",
     "tableArabic": "Arabic",
     "tableLatin": "Latin",
-    "tableActions": "Actions"
+    "tableActions": "Actions",
+    "name": "Name",
+    "sectionName": "Designation"
   },
   "doctors": {
     "title": "Doctors",
