@@ -903,19 +903,19 @@ export default function BeneficiariesPage() {
             </div>
           )}
 
-          <div className="flex gap-2 mt-4">
-            <Button size="sm" onClick={applyFilters}>
+          <div className="flex flex-wrap gap-2 mt-4">
+            <Button size="sm" className="flex-1 sm:flex-initial" onClick={applyFilters}>
               <Search className="w-4 h-4" />
               {t('common.search')}
             </Button>
-            <Button variant="secondary" size="sm" onClick={resetFilters}>
+            <Button variant="secondary" size="sm" className="flex-1 sm:flex-initial" onClick={resetFilters}>
               {t('common.clear')}
             </Button>
             <Button
               variant={widowFilterActive ? 'primary' : 'secondary'}
               size="sm"
               onClick={handleFindWidowWithMostChildren}
-              className="mr-auto"
+              className="w-full sm:w-auto sm:mr-auto"
             >
               <Users className="w-4 h-4" />
               {widowFilterActive ? t('beneficiaries.widowFilterActiveBtn') : t('beneficiaries.findMostChildrenBtn')}
@@ -926,6 +926,7 @@ export default function BeneficiariesPage() {
               onClick={handlePrintResults}
               disabled={displayBeneficiaries.length === 0}
               title={t('beneficiaries.printResultsHint')}
+              className="w-full sm:w-auto"
             >
               <Printer className="w-4 h-4" />
               {t('beneficiaries.printResultsBtn')}
