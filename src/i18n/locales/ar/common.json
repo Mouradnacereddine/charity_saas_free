@@ -290,6 +290,7 @@
     "printFile": "طباعة الملف",
     "attributes": "الصفات",
     "schoolGrade": "المستوى الدراسي",
+    "healthStatusLabel": "الحالة الصحية",
     "addAttribute": "إضافة وتعديل وحذف الصفات (الخصائص) للمستفيدين",
     "addSchoolGrade": "إضافة وتعديل وحذف المستويات الدراسية",
     "name": "الاسم",

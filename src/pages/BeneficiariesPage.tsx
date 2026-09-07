@@ -380,32 +380,43 @@ export default function BeneficiariesPage() {
     if (filterMaxChildAge2) criteria.push(chip(t('beneficiaries.childMaxAge'), `≤ ${filterMaxChildAge2}`))
     const criteriaHtml = criteria.join('')
 
-    // Table rows: one row per beneficiary + indented child rows
-    const rows = list.map((b: Beneficiary) => {
+    // One card per beneficiary: own info grid + dedicated children table
+    const genderLabel = (g?: string) => (g === 'female' ? t('common.female') : g === 'male' ? t('common.male') : '—')
+    const cardsHtml = list.map((b: Beneficiary, idx: number) => {
       const caisse = caisses.find((c: any) => c.id === b.caisseId)
-      const age = b.dateOfBirth ? getAgeDisplay(b.dateOfBirth) : '—'
-      const benefRow = `<tr>
-        <td class="cell-ref" dir="ltr">${b.reference || '—'}</td>
-        <td class="cell-name">${b.lastName} ${b.firstName}</td>
-        <td>${b.nationalCardNumber || '—'}</td>
-        <td dir="ltr">${b.phone || '—'}</td>
-        <td>${ATTRIBUT_LABELS[b.attribut] || b.attribut}</td>
-        <td>${b.gender === 'female' ? t('common.female') : t('common.male')}</td>
-        <td>${age}</td>
-        <td>${caisse?.name || '—'}</td>
-        <td>${HEALTH_STATUS_LABELS[b.situation] || b.situation || '—'}</td>
-        <td>${(b.children || []).length}</td>
-      </tr>`
-      const childRows = (b.children || []).map((ch: any) => `<tr class="child-row">
-        <td>${ch.lastName || ''} ${ch.firstName || ''}</td>
-        <td>${ch.gender === 'female' ? t('common.female') : t('common.male')}</td>
-        <td></td><td></td><td></td><td></td>
-        <td>${ch.dateOfBirth ? getAgeDisplay(ch.dateOfBirth) : '—'}</td>
-        <td></td>
-        <td>${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus || '—'}</td>
-        <td>${getGradeName(ch.schoolGradeId) || '—'}</td>
-      </tr>`).join('')
-      return benefRow + childRows
+      const children = b.children || []
+      const childrenSection = children.length > 0
+        ? `<div class="children-title">${t('beneficiaries.children')} (${children.length})</div>
+           <table class="children">
+             <thead><tr><th class="c-num">#</th><th>${t('beneficiaries.sectionName')}</th><th>${t('beneficiaries.filterGender')}</th><th>${t('receipt.age')}</th><th>${t('beneficiaries.healthStatusLabel')}</th><th>${t('beneficiaries.schoolGrade')}</th></tr></thead>
+             <tbody>${children.map((ch: any, ci: number) => `<tr>
+               <td class="c-num">${ci + 1}</td>
+               <td class="c-name">${ch.lastName || ''} ${ch.firstName || ''}</td>
+               <td>${genderLabel(ch.gender)}</td>
+               <td>${ch.dateOfBirth ? getAgeDisplay(ch.dateOfBirth) : '—'}</td>
+               <td>${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus || '—'}</td>
+               <td>${getGradeName(ch.schoolGradeId) || '—'}</td>
+             </tr>`).join('')}</tbody>
+           </table>`
+        : ''
+      return `<div class="benef-card">
+        <div class="benef-header">
+          <span class="num">${idx + 1}</span>
+          <span class="name">${b.lastName} ${b.firstName}</span>
+          <span class="ref" dir="ltr">${b.reference || ''}</span>
+          <span class="attr">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span>
+        </div>
+        <div class="benef-info">
+          <div class="cell"><span class="lbl">${t('receipt.idNumber')}</span><span class="val" dir="ltr">${b.nationalCardNumber || '—'}</span></div>
+          <div class="cell"><span class="lbl">${t('receipt.phone')}</span><span class="val" dir="ltr">${b.phone || '—'}</span></div>
+          <div class="cell"><span class="lbl">${t('beneficiaries.filterGender')}</span><span class="val">${genderLabel(b.gender)}</span></div>
+          <div class="cell"><span class="lbl">${t('receipt.age')}</span><span class="val">${b.dateOfBirth ? getAgeDisplay(b.dateOfBirth) : '—'}</span></div>
+          <div class="cell"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.name || '—'}</span></div>
+          <div class="cell"><span class="lbl">${t('common.status')}</span><span class="val">${b.situation ? (HEALTH_STATUS_LABELS[b.situation] || b.situation) : '—'}</span></div>
+          <div class="cell"><span class="lbl">${t('beneficiaries.childrenCount')}</span><span class="val">${children.length}</span></div>
+        </div>
+        ${childrenSection}
+      </div>`
     }).join('')
 
     printBeneficiariesList({
@@ -414,8 +425,7 @@ export default function BeneficiariesPage() {
       criteriaLabel: t('beneficiaries.printCriteria'),
       criteriaHtml,
       countLabel: t('beneficiaries.printCount', { count: list.length }),
-      tableHeader: `<th>${t('doctors.refCode')}</th><th>${t('beneficiaries.sectionName')}</th><th>${t('receipt.idNumber')}</th><th>${t('receipt.phone')}</th><th>${t('beneficiaries.filterAttribute')}</th><th>${t('beneficiaries.filterGender')}</th><th>${t('receipt.age')}</th><th>${t('dashboard.fund')}</th><th>${t('common.status')}</th><th>${t('beneficiaries.childrenCount')}</th>`,
-      bodyRows: rows,
+      cardsHtml,
       dir,
       lang: i18n.language,
       labels: {

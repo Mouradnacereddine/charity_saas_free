@@ -298,6 +298,7 @@
     "printFile": "Imprimer le dossier",
     "attributes": "Attributs",
     "schoolGrade": "Niveau scolaire",
+    "healthStatusLabel": "État de santé",
     "addAttribute": "Ajouter, modifier ou supprimer des attributs (caractéristiques) des bénéficiaires",
     "addSchoolGrade": "Ajouter, modifier ou supprimer des niveaux scolaires",
     "name": "Nom",

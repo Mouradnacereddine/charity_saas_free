@@ -297,6 +297,7 @@
     "printFile": "Print File",
     "attributes": "Attributes",
     "schoolGrade": "School Grade",
+    "healthStatusLabel": "Health Status",
     "addAttribute": "Add, edit or delete beneficiary attributes (characteristics)",
     "addSchoolGrade": "Add, edit or delete school grades",
     "name": "Name",
