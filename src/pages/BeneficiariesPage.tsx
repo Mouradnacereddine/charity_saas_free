@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { calculateAge, getAgeDisplay, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords, localizedDesc } from '../utils/helpers'
 import { dirForInput } from '../utils/localized'
-import { printReceipt, printBeneficiaryCard } from '../lib/receipt'
+import { printReceipt, printBeneficiaryCard, printBeneficiariesList } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Beneficiary, Child, BeneficiaryAttribut } from '../types'
 import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDeleteBeneficiary } from '../hooks/useBeneficiaries'
@@ -350,6 +350,79 @@ export default function BeneficiariesPage() {
     setFilterMaxAge('')
     setWidowFilterActive(false)
     setQueryParams(undefined)
+  }
+
+  // ---- Print filtered results (advanced search) ----
+  const handlePrintResults = () => {
+    const list = displayBeneficiaries
+    if (list.length === 0) return
+
+    const isLtr = i18n.language !== 'ar'
+    const dir = isLtr ? 'ltr' : 'rtl'
+
+    // Active criteria chips
+    const criteria: string[] = []
+    const chip = (label: string, value: string) =>
+      `<span class="chip">${label} : <b>${value}</b></span>`
+    if (filterSearchTerm) criteria.push(chip(t('beneficiaries.advancedSearch'), filterSearchTerm))
+    if (filterAttribut) criteria.push(chip(t('beneficiaries.filterAttribute'), ATTRIBUT_LABELS[filterAttribut] || filterAttribut))
+    if (filterCaisseId) criteria.push(chip(t('beneficiaries.filterFund'), getCaisseName(filterCaisseId)))
+    if (filterGender) criteria.push(chip(t('beneficiaries.filterGender'), filterGender === 'female' ? t('common.female') : t('common.male')))
+    if (filterSituation) criteria.push(chip(t('common.status'), HEALTH_STATUS_LABELS[filterSituation] || filterSituation))
+    if (filterMinChildren) criteria.push(chip(t('beneficiaries.filterMinChildren'), filterMinChildren))
+    if (filterMaxChildAge) criteria.push(chip(t('beneficiaries.filterMaxAge'), filterMaxChildAge))
+    if (filterMinAge) criteria.push(chip(t('receipt.age'), `≥ ${filterMinAge}`))
+    if (filterMaxAge) criteria.push(chip(t('receipt.age'), `≤ ${filterMaxAge}`))
+    if (filterChildGender) criteria.push(chip(t('beneficiaries.childGender'), filterChildGender === 'female' ? t('common.female') : t('common.male')))
+    if (filterChildHealthStatus) criteria.push(chip(t('beneficiaries.childHealthStatus'), HEALTH_STATUS_LABELS[filterChildHealthStatus] || filterChildHealthStatus))
+    if (filterChildSchoolGradeId) criteria.push(chip(t('beneficiaries.childSchoolLevel'), getGradeName(filterChildSchoolGradeId)))
+    if (filterMinChildAge) criteria.push(chip(t('beneficiaries.childMinAge'), `≥ ${filterMinChildAge}`))
+    if (filterMaxChildAge2) criteria.push(chip(t('beneficiaries.childMaxAge'), `≤ ${filterMaxChildAge2}`))
+    const criteriaHtml = criteria.join('')
+
+    // Table rows: one row per beneficiary + indented child rows
+    const rows = list.map((b: Beneficiary) => {
+      const caisse = caisses.find((c: any) => c.id === b.caisseId)
+      const age = b.dateOfBirth ? getAgeDisplay(b.dateOfBirth) : '—'
+      const benefRow = `<tr>
+        <td class="cell-ref" dir="ltr">${b.reference || '—'}</td>
+        <td class="cell-name">${b.lastName} ${b.firstName}</td>
+        <td>${b.nationalCardNumber || '—'}</td>
+        <td dir="ltr">${b.phone || '—'}</td>
+        <td>${ATTRIBUT_LABELS[b.attribut] || b.attribut}</td>
+        <td>${b.gender === 'female' ? t('common.female') : t('common.male')}</td>
+        <td>${age}</td>
+        <td>${caisse?.name || '—'}</td>
+        <td>${HEALTH_STATUS_LABELS[b.situation] || b.situation || '—'}</td>
+        <td>${(b.children || []).length}</td>
+      </tr>`
+      const childRows = (b.children || []).map((ch: any) => `<tr class="child-row">
+        <td>${ch.lastName || ''} ${ch.firstName || ''}</td>
+        <td>${ch.gender === 'female' ? t('common.female') : t('common.male')}</td>
+        <td></td><td></td><td></td><td></td>
+        <td>${ch.dateOfBirth ? getAgeDisplay(ch.dateOfBirth) : '—'}</td>
+        <td></td>
+        <td>${HEALTH_STATUS_LABELS[ch.healthStatus] || ch.healthStatus || '—'}</td>
+        <td>${getGradeName(ch.schoolGradeId) || '—'}</td>
+      </tr>`).join('')
+      return benefRow + childRows
+    }).join('')
+
+    printBeneficiariesList({
+      assocName: association?.name || t('app.title'),
+      title: t('beneficiaries.printResultsTitle'),
+      criteriaLabel: t('beneficiaries.printCriteria'),
+      criteriaHtml,
+      countLabel: t('beneficiaries.printCount', { count: list.length }),
+      tableHeader: `<th>${t('doctors.refCode')}</th><th>${t('beneficiaries.sectionName')}</th><th>${t('receipt.idNumber')}</th><th>${t('receipt.phone')}</th><th>${t('beneficiaries.filterAttribute')}</th><th>${t('beneficiaries.filterGender')}</th><th>${t('receipt.age')}</th><th>${t('dashboard.fund')}</th><th>${t('common.status')}</th><th>${t('beneficiaries.childrenCount')}</th>`,
+      bodyRows: rows,
+      dir,
+      lang: i18n.language,
+      labels: {
+        printReport: t('receipt.print'),
+        generatedBy: t('receipt.generatedBy'),
+      },
+    })
   }
 
   const handleFindWidowWithMostChildren = async () => {
@@ -836,6 +909,16 @@ export default function BeneficiariesPage() {
             >
               <Users className="w-4 h-4" />
               {widowFilterActive ? t('beneficiaries.widowFilterActiveBtn') : t('beneficiaries.findMostChildrenBtn')}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handlePrintResults}
+              disabled={displayBeneficiaries.length === 0}
+              title={t('beneficiaries.printResultsHint')}
+            >
+              <Printer className="w-4 h-4" />
+              {t('beneficiaries.printResultsBtn')}
             </Button>
           </div>
         </Card>

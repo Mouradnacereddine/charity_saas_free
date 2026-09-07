@@ -267,6 +267,72 @@ export function printAnalyticsReport(params: {
 }
 
 /**
+ * A4 beneficiaries list report — prints the filtered results of the
+ * advanced search, one row per beneficiary with children detail rows.
+ */
+export function printBeneficiariesList(params: {
+  assocName: string;
+  title: string;
+  criteriaLabel: string;
+  criteriaHtml: string;   // active filter chips, e.g. "Attribut : Veuve"
+  countLabel: string;     // e.g. "12 bénéficiaire(s)"
+  tableHeader: string;    // <th> cells
+  bodyRows: string;       // <tr> rows (beneficiaries + indented child rows)
+  labels?: Record<string, string>;
+  lang?: string;
+  dir?: 'ltr' | 'rtl';
+}) {
+  const l = params.labels || {
+    printReport: 'طباعة التقرير',
+    generatedBy: 'تم إنشاؤه بواسطة نظام الجمعية',
+  };
+  const d = params.dir || 'rtl';
+  const ln = params.lang || 'ar';
+
+  const REPORT_CSS = `
+    @page { size: A4 landscape; margin: 12mm 10mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: ${d}; font-size: 10.5px; color: #1a1a1a; background: #fff; line-height: 1.5; }
+    .header { text-align: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 3px double #2563eb; }
+    .header h1 { font-size: 18px; color: #1e40af; margin: 0 0 2px; }
+    .header .sub { font-size: 12px; color: #374151; font-weight: 600; }
+    .header .meta { font-size: 9.5px; color: #6b7280; margin-top: 3px; }
+    .criteria { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .criteria .chip { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-radius: 10px; padding: 1px 8px; font-size: 9px; font-weight: 600; }
+    .criteria .count { background: #2563eb; color: #fff; border-radius: 10px; padding: 1px 10px; font-size: 9px; font-weight: 700; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+    .data-table thead { display: table-header-group; }
+    .data-table thead th { background: #2563eb; color: #fff; padding: 5px 6px; text-align: ${d === 'rtl' ? 'right' : 'left'}; font-weight: 600; font-size: 9px; border: 1px solid #1d4ed8; }
+    .data-table tbody td { padding: 4px 6px; border: 1px solid #d1d5db; }
+    .data-table tbody tr:nth-child(even) { background: #f9fafb; }
+    .data-table tbody tr { page-break-inside: avoid; }
+    .data-table tr.child-row td { background: #f0f4ff; padding-inline-start: 18px; font-size: 9px; color: #374151; }
+    .data-table tr.child-row td:first-child { font-weight: 600; color: #1e40af; }
+    .footer { text-align: center; margin-top: 16px; padding-top: 6px; border-top: 1px solid #d1d5db; font-size: 9px; color: #9ca3af; }
+    .no-print { display: block; width: 220px; margin: 20px auto; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-align: center; }
+    @media print { .no-print { display: none; } }
+  `
+  const w = window.open('', '_blank')
+  if (!w) return
+  const html = `<!DOCTYPE html><html dir="${d}" lang="${ln}"><head><meta charset="UTF-8"><title>${params.title}</title><style>${REPORT_CSS}</style></head><body>
+  <div class="header">
+    <h1>🕌 ${params.assocName}</h1>
+    <div class="sub">${params.title}</div>
+    <div class="meta">${new Date().toLocaleDateString(ln === 'en' ? 'en-US' : ln === 'ar' ? 'ar' : 'fr-FR')}</div>
+  </div>
+  <div class="criteria">${params.criteriaHtml}<span class="chip count">${params.countLabel}</span></div>
+  <table class="data-table">
+    <thead><tr>${params.tableHeader}</tr></thead>
+    <tbody>${params.bodyRows}</tbody>
+  </table>
+  <div class="footer">${l.generatedBy}</div>
+  <button class="no-print" onclick="window.print()">${l.printReport}</button>
+</body></html>`
+  w.document.write(html)
+  w.document.close()
+}
+
+/**
  * Professional A4 inventory report (procès-verbal d'inventaire).
  * Pleine page, multi-pages si beaucoup d'articles, en-tête d'association,
  * tableau des articles, résumé des écarts et signatures du responsable de
