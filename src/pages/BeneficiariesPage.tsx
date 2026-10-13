@@ -1,7 +1,7 @@
 import { useState, Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { calculateAge, getAgeDisplay, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords, localizedDesc } from '../utils/helpers'
+import { calculateAge, getAgeDisplay, formatDate, formatCurrency, numberToArabicWords, numberToFrenchWords, localizedDesc, roundMoney, parseMoneyInput, numberToWords } from '../utils/helpers'
 import { dirForInput } from '../utils/localized'
 import { printReceipt, printBeneficiaryCard, printBeneficiariesList } from '../lib/receipt'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Baby, Settings, FolderTree, Printer, ChevronDown, ChevronUp } from 'lucide-react'
@@ -148,6 +148,9 @@ export default function BeneficiariesPage() {
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [showFilters, setShowFilters] = useState(false)
+  // Disbursement (receive money) for an allocation from the beneficiary file
+  const [disbursingAlloc, setDisbursingAlloc] = useState<DonationAllocation | null>(null)
+  const [disburseAmount, setDisburseAmount] = useState('')
 
   const toggleExpand = (id: string) => {
     setExpandedRows(prev => {
@@ -185,6 +188,31 @@ export default function BeneficiariesPage() {
     mutationFn: (id: string) => inventoryApi.deleteSchoolGrade(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['school-grades'] }),
   })
+
+  // Record that the beneficiary actually received (part of) an allocated amount
+  const disburseMutation = useMutation({
+    mutationFn: ({ id, amount }: { id: string; amount: number }) => financeApi.disburseAllocation(id, amount),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['beneficiary-allocations'] })
+      queryClient.invalidateQueries({ queryKey: ['beneficiary-debits'] })
+      queryClient.invalidateQueries({ queryKey: ['finance-allocations'] })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['caisses'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+
+  const handleDisburseAllocation = async () => {
+    if (!disbursingAlloc || !disburseAmount || roundMoney(parseMoneyInput(disburseAmount)) <= 0) return
+    try {
+      await disburseMutation.mutateAsync({ id: disbursingAlloc.id, amount: roundMoney(parseMoneyInput(disburseAmount)) })
+      setDisbursingAlloc(null)
+      setDisburseAmount('')
+      closeDetail()
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('finance.disburseFailed'))
+    }
+  }
 
   const handleAddAttribut = async () => {
     if (!newAttrName.trim()) return
@@ -626,7 +654,7 @@ export default function BeneficiariesPage() {
             const s = a.creditTransaction?.status
             const statusLabel = s === 'pending' ? t('beneficiaries.pendingStatus') : s === 'cancelled' ? t('dashboard.cancelled') : a.remainingAmount <= 0 ? t('dashboard.fullyDisbursed') : a.debitTransactionId ? t('dashboard.partiallyDisbursed') : t('beneficiaries.activeStatus')
           return `<tr>
-            <td>${a.donor.lastName} ${a.donor.firstName}</td>
+            <td>${a.donor ? `${a.donor.lastName} ${a.donor.firstName}` : '—'}</td>
             <td>${formatCurrency(a.amount)}</td>
             <td>${spent > 0 ? formatCurrency(spent) : '—'}</td>
             <td>${a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : '0'}</td>
@@ -1272,6 +1300,7 @@ export default function BeneficiariesPage() {
                         <th className="py-2 px-3 text-start font-medium">{t('common.status')}</th>
                         <th className="py-2 px-3 text-start font-medium">{t('common.date')}</th>
                         <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.receiptNo')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('common.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1279,7 +1308,7 @@ export default function BeneficiariesPage() {
                         const spent = a.amount - a.remainingAmount;
                         return (
                         <tr key={a.id} className="border-b border-border hover:bg-muted">
-                          <td className="py-2 px-3 font-medium text-foreground">{a.donor.lastName} {a.donor.firstName}</td>
+                          <td className="py-2 px-3 font-medium text-foreground">{a.donor ? `${a.donor.lastName} ${a.donor.firstName}` : <span className="text-muted-foreground/70">{t('finance.cashFund')}</span>}</td>
                           <td className="py-2 px-3"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
                           <td className="py-2 px-3">{spent > 0 ? formatCurrency(spent) : '—'}</td>
                           <td className="py-2 px-3">{a.remainingAmount > 0 ? formatCurrency(a.remainingAmount) : <Badge variant="success">0</Badge>}</td>
@@ -1295,6 +1324,19 @@ export default function BeneficiariesPage() {
                           </td>
                           <td className="py-2 px-3 text-foreground">{formatDate(a.createdAt)}</td>
                           <td className="py-2 px-3 text-muted-foreground/70 text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
+                          <td className="py-2 px-3">
+                            {(() => {
+                              const s = a.creditTransaction?.status;
+                              const canDisburse = s === 'completed' && a.remainingAmount > 0;
+                              return (
+                                <Button size="sm" variant="success" disabled={!canDisburse}
+                                  title={canDisburse ? t('finance.disburseRemaining') : (s === 'pending' ? t('finance.pendingTx') : '')}
+                                  onClick={() => { setDisbursingAlloc(a); setDisburseAmount(String(a.remainingAmount)); }}>
+                                  {t('finance.disburseRemaining')}
+                                </Button>
+                              );
+                            })()}
+                          </td>
                         </tr>
                       )})}
                     </tbody>
@@ -1483,6 +1525,40 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
               </Button>
             </div>
           </div>
+        </Modal>
+
+        {/* Disburse (receive money) modal for an allocation */}
+        <Modal isOpen={!!disbursingAlloc} onClose={() => { setDisbursingAlloc(null); setDisburseAmount(''); }} title={t('finance.disburseRemaining')} size="sm">
+          {disbursingAlloc && (
+            <div className="space-y-4">
+              <div className="bg-muted rounded-lg p-3 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('common.amount')}</span><span className="font-bold text-success">{formatCurrency(disbursingAlloc.amount)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('finance.remainingAmount')}</span><span className="font-bold text-warning">{formatCurrency(disbursingAlloc.remainingAmount)}</span></div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('finance.enterDisburseAmount')}</label>
+                <input
+                  type="number"
+                  value={disburseAmount}
+                  onChange={(e) => setDisburseAmount(e.target.value)}
+                  max={disbursingAlloc.remainingAmount}
+                  min={0}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  dir="ltr"
+                />
+                {Number(disburseAmount) > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">{numberToWords(Number(disburseAmount))}</p>
+                )}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button size="sm" variant="secondary" onClick={() => { setDisbursingAlloc(null); setDisburseAmount(''); }}>{t('common.cancel')}</Button>
+                <Button size="sm" variant="primary" onClick={handleDisburseAllocation}
+                  disabled={!disburseAmount || roundMoney(parseMoneyInput(disburseAmount)) <= 0 || roundMoney(parseMoneyInput(disburseAmount)) > disbursingAlloc.remainingAmount}>
+                  {t('common.confirm')}
+                </Button>
+              </div>
+            </div>
+          )}
         </Modal>
       )}
     </div>

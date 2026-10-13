@@ -311,17 +311,20 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
         }
       }
 
-      // If beneficiary is set on credit, create allocation (tracks donor→beneficiary)
+      // If beneficiary is set on credit, create allocation (tracks donor→beneficiary
+      // or caisse→beneficiary when no donor is associated)
       const allocBenefId = beneficiaryId || allocatedBeneficiaryId;
-      if (allocBenefId && donorId && type === 'credit') {
-        const donor = await tx.donor.findUnique({ where: { id: donorId } });
+      if (allocBenefId && type === 'credit') {
+        const donor = donorId ? await tx.donor.findUnique({ where: { id: donorId } }) : null;
         const beneficiary = await tx.beneficiary.findUnique({ where: { id: allocBenefId } });
-        if (donor && beneficiary) {
+        if (beneficiary) {
           allocation = await tx.donationAllocation.create({
             data: {
-              associationId, donorId, beneficiaryId: allocBenefId, creditTransactionId: transaction.id,
+              associationId, donorId: donorId || null, beneficiaryId: allocBenefId, creditTransactionId: transaction.id,
               amount: amountNum, remainingAmount: amountNum,
-              notes: `تبرع مخصص من ${donor.lastName} ${donor.firstName} إلى ${beneficiary.lastName} ${beneficiary.firstName}`,
+              notes: donor
+                ? `تبرع مخصص من ${donor.lastName} ${donor.firstName} إلى ${beneficiary.lastName} ${beneficiary.firstName}`
+                : ` Affectation depuis la caisse vers ${beneficiary.lastName} ${beneficiary.firstName}`,
             },
           });
         }
@@ -742,6 +745,18 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
           await prismaTx.donor.update({
             where: { id: tx.donorId },
             data: { totalDonated: { decrement: amountNum } },
+          });
+        }
+
+        // If this pending credit had an allocation, void it (no funds
+        // were disbursed against a pending credit, so remaining == amount).
+        const alloc = await prismaTx.donationAllocation.findFirst({
+          where: { creditTransactionId: id },
+        });
+        if (alloc) {
+          await prismaTx.donationAllocation.update({
+            where: { id: alloc.id },
+            data: { remainingAmount: 0 },
           });
         }
       }

@@ -537,12 +537,17 @@ model Notification {
   @@index([read])
 }
 
+/// Affectation de fonds à un bénéficiaire.
+/// `donorId` et `creditTransactionId` sont optionnels : une affectation peut
+/// provenir directement d'une caisse (transfert caisse -> bénéficiaire) sans
+/// donation d'un donateur. `creditTransactionId` référence alors la transaction
+/// de crédit interne qui a alimenté la caisse (source de l'affectation).
 model DonationAllocation {
   id                  String   @id @default(uuid())
   associationId       String
-  donorId             String
+  donorId             String?
   beneficiaryId       String
-  creditTransactionId String
+  creditTransactionId String?
   debitTransactionId  String?
   amount              Decimal
   remainingAmount     Decimal
@@ -551,9 +556,9 @@ model DonationAllocation {
   updatedAt           DateTime @updatedAt
 
   association       Association  @relation(fields: [associationId], references: [id], onDelete: Cascade)
-  donor             Donor        @relation(fields: [donorId], references: [id])
+  donor             Donor?       @relation(fields: [donorId], references: [id])
   beneficiary       Beneficiary  @relation(fields: [beneficiaryId], references: [id])
-  creditTransaction Transaction  @relation("CreditAllocation", fields: [creditTransactionId], references: [id])
+  creditTransaction Transaction? @relation("CreditAllocation", fields: [creditTransactionId], references: [id])
   debitTransaction  Transaction? @relation("DebitAllocation", fields: [debitTransactionId], references: [id])
 
   @@index([associationId])

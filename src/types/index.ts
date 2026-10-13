@@ -384,19 +384,19 @@ export interface DonationReceipt {
 
 export interface DonationAllocation {
   id: string;
-  donorId: string;
+  donorId?: string | null;
   beneficiaryId: string;
-  creditTransactionId: string;
-  debitTransactionId?: string;
+  creditTransactionId?: string | null;
+  debitTransactionId?: string | null;
   amount: number;
   remainingAmount: number;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
-  donor: { id: string; firstName: string; lastName: string; reference: string };
+  donor?: { id: string; firstName: string; lastName: string; reference: string } | null;
   beneficiary: { id: string; firstName: string; lastName: string; reference: string };
-  creditTransaction: { id: string; date: string; receiptNumber?: string; caisseId: string; status: TransactionStatus };
-  debitTransaction?: { id: string; date: string; receiptNumber?: string };
+  creditTransaction?: { id: string; date: string; receiptNumber?: string; caisseId: string; status: TransactionStatus } | null;
+  debitTransaction?: { id: string; date: string; receiptNumber?: string } | null;
 }
 
 // ---- Dashboard Stats ----

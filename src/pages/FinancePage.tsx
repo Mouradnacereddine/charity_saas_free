@@ -206,7 +206,7 @@ export default function FinancePage() {
 
   const filteredAllocations = allocations.filter((a: DonationAllocation) => {
     const c = committedAllocSearch
-    if (c.donor && !(a.donor.lastName.includes(c.donor) || a.donor.firstName.includes(c.donor))) return false
+    if (c.donor && !((a.donor?.lastName ?? '').includes(c.donor) || (a.donor?.firstName ?? '').includes(c.donor))) return false
     if (c.beneficiary && !(a.beneficiary.lastName.includes(c.beneficiary) || a.beneficiary.firstName.includes(c.beneficiary))) return false
     if (c.caisseId && a.creditTransaction?.caisseId !== c.caisseId) return false
     if (c.minAmount && a.amount < Number(c.minAmount)) return false
@@ -620,7 +620,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   return (
                   <tr key={a.id} className="border-b border-border hover:bg-muted transition-colors cursor-pointer" onClick={() => setSelectedAlloc(a)}>
                     <td className="py-3 px-4 text-muted-foreground font-mono text-xs" dir="ltr">{a.creditTransaction?.receiptNumber || '—'}</td>
-                    <td className="py-3 px-4 font-medium">{a.donor.lastName} {a.donor.firstName}</td>
+                    <td className="py-3 px-4 font-medium">{a.donor ? `${a.donor.lastName} ${a.donor.firstName}` : <span className="text-muted-foreground/70">{t('finance.cashFund')}</span>}</td>
                     <td className="py-3 px-4 font-medium text-foreground">{a.beneficiary.lastName} {a.beneficiary.firstName}</td>
                     <td className="py-3 px-4 hidden md:table-cell text-foreground">{allocCaisse?.name || '—'}</td>
                     <td className="py-3 px-4"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
@@ -648,7 +648,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
         {selectedAlloc && (
           <div className="space-y-4">
             <div className="bg-muted rounded-lg p-4 space-y-3">
-              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.donor')}</span><span className="font-medium text-foreground">{selectedAlloc.donor.lastName} {selectedAlloc.donor.firstName}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.donor')}</span><span className="font-medium text-foreground">{selectedAlloc.donor ? `${selectedAlloc.donor.lastName} ${selectedAlloc.donor.firstName}` : `— (${t('finance.cashFund')})`}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</span><span className="font-medium text-foreground">{selectedAlloc.beneficiary.lastName} {selectedAlloc.beneficiary.firstName}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{(() => { const ac = caisses.find((c: any) => c.id === selectedAlloc.creditTransaction?.caisseId); return ac?.name || '—'; })()}</span></div>
               <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('common.amount')}</span><span className="font-bold text-success">{formatCurrency(selectedAlloc.amount)}</span></div>
