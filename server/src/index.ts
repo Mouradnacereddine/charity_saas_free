@@ -5,16 +5,20 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { config } from './config';
 import { autoInvalidate } from './lib/autoInvalidate';
+import { roundMoney } from './lib/money';
 import { Prisma } from './generated/prisma/client';
 
 // Patch Decimal.prototype.toJSON so Decimal values serialize as numbers in JSON,
 // not as strings. Prisma Decimal uses decimal.js internally; its default toJSON
 // returns a string that loses the numeric type on the client.
+// On arrondit au centime à la sérialisation : c'est un contrat d'AFFICHAGE
+// (2 décimales pour DZD). La source de vérité reste la colonne Decimal — mais
+// comme Prisma n'arrondit jamais un nombre JS flottant à l'écriture, tous les
+// montants doivent en plus être normalisés via roundMoney AVANT persistance
+// (voir src/lib/money.ts) : c'est là que se corrige la « perte de centimes ».
 const OrigDecimal = Prisma.Decimal.prototype as any;
 OrigDecimal.toJSON = function (this: any) {
-  const n = Number(this);
-  // Avoid floating-point display artifacts: clamp to 2 decimals for display
-  return Math.round(n * 100) / 100;
+  return roundMoney(Number(this));
 };
 import authRoutes from './routes/auth';
 import beneficiariesRoutes from './routes/beneficiaries';

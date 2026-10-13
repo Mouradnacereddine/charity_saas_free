@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
+import { moneyNumber } from '../lib/money';
 
 const router = Router();
 
@@ -54,7 +55,7 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
     } = req.body;
 
     const reference = refInput || generateRef('MED');
-    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+    const numericAmount = moneyNumber(amount ?? 0);
     const words = amountInWords || `${numericAmount} DZD`;
 
     if (!beneficiaryId || !caisseId || !doctorId || !date) {
@@ -91,7 +92,7 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
         const caisse = await tx.caisse.findFirst({
           where: { id: caisseId, associationId },
         });
-        if (!caisse || caisse.balance < numericAmount) {
+        if (!caisse || Number(caisse.balance) < numericAmount) {
           throw new Error('INSUFFICIENT_BALANCE');
         }
         await tx.caisse.update({
@@ -195,7 +196,7 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
     }
 
     const { amount, amountInWords } = req.body;
-    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+    const numericAmount = moneyNumber(amount ?? 0);
     const words = amountInWords || `${numericAmount} DZD`;
 
     const referral = await prisma.$transaction(async (tx) => {
@@ -204,7 +205,7 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
         const caisse = await tx.caisse.findFirst({
           where: { id: existing.caisseId, associationId },
         });
-        if (!caisse || caisse.balance < numericAmount) {
+        if (!caisse || Number(caisse.balance) < numericAmount) {
           throw new Error('INSUFFICIENT_BALANCE');
         }
         await tx.caisse.update({
@@ -314,6 +315,20 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
     } = req.body;
 
     const data: any = {};
+    // Garde-fou : une orientation déjà `completed` a débité la caisse (débit
+    // tracé dans Transaction). Modifier son montant désynchroniserait le solde
+    // de caisse du montant enregistré → divergences de centimes comptables.
+    // Pour corriger un montant déjà décaissé : supprimer puis recréer.
+    if (
+      existing.status === 'completed' &&
+      amount !== undefined &&
+      moneyNumber(amount) !== moneyNumber(existing.amount)
+    ) {
+      res.status(400).json({
+        error: 'Le montant d’une orientation déjà confirmée ne peut pas être modifié (la caisse a été débitée). Annulez puis recréez l’orientation.',
+      });
+      return;
+    }
     if (reference !== undefined) data.reference = reference;
     if (beneficiaryId !== undefined) data.beneficiaryId = beneficiaryId;
     if (caisseId !== undefined) data.caisseId = caisseId;
@@ -321,7 +336,7 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
     if (doctorId !== undefined) data.doctorId = doctorId;
     if (analysisType !== undefined) data.analysisType = analysisType;
     if (hospital !== undefined) data.hospital = hospital;
-    if (amount !== undefined) data.amount = amount;
+    if (amount !== undefined) data.amount = moneyNumber(amount);
     if (amountInWords !== undefined) data.amountInWords = amountInWords;
     if (date !== undefined) data.date = new Date(date);
     if (notes !== undefined) data.notes = notes;
@@ -356,15 +371,28 @@ router.delete('/referrals/:id', requirePermission('medical_referrals', 'delete')
       return;
     }
 
-    // Refund the caisse if the referral was completed with amount > 0
-    if (existing.status === 'completed' && Number(existing.amount) > 0) {
-      await prisma.caisse.update({
-        where: { id: existing.caisseId },
-        data: { balance: { increment: existing.amount } },
+    // Remboursement + suppression atomiques. On ne rembourse QUE ce qui a
+    // réellement été débité : on retrouve le débit créé à la confirmation via
+    // son receiptNumber (= référence de l'orientation) et on se base sur SON
+    // montant et SA caisse. Sinon, une orientation modifiée via PUT (montant
+    // changé sans mouvement de caisse) provoquerait un remboursement fantôme.
+    await prisma.$transaction(async (tx) => {
+      const debitTx = await tx.transaction.findFirst({
+        where: { associationId, receiptNumber: existing.reference, type: 'debit' },
       });
-    }
 
-    await prisma.medicalReferral.delete({ where: { id } });
+      if (debitTx && Number(debitTx.amount) > 0) {
+        await tx.caisse.update({
+          where: { id: debitTx.caisseId },
+          data: { balance: { increment: debitTx.amount } },
+        });
+        // Le débit n'a plus lieu d'être une fois l'orientation supprimée.
+        await tx.transaction.delete({ where: { id: debitTx.id } });
+      }
+
+      await tx.medicalReferral.delete({ where: { id } });
+    });
+
     await logAudit(req, { action: 'delete', resource: 'medical_referral', resourceId: id, description: 'Orientation médicale supprimée' });
     res.json({ message: 'Medical referral deleted successfully' });
   } catch (error) {

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { HeartHandshake, Lock } from 'lucide-react';
 import { Card, Button, Input } from '../components/common/UI';
 import { lemonSqueezyApi } from '../lib/api';
+import { roundMoney, parseMoneyInput } from '../utils/helpers';
 
 // Devise par défaut : DZD (dinar algérien) — devise réelle du store
 // LemonSqueezy 453836 « charity-saas-free » (vérifiée via API). Surchargée
@@ -76,8 +77,10 @@ export default function DonationPage() {
 
   const handleCustomChange = (value: string) => {
     setCustomAmount(value);
-    // Met à jour le montant sélectionné si la saisie est un nombre valide
-    const parsed = parseFloat(value.replace(',', '.'));
+    // Met à jour le montant sélectionné si la saisie est un nombre valide.
+    // parseMoneyInput tolère « 1 500,50 » et « 1.500,50 » (et non plus
+    // seulement la première virgule), roundMoney normalise au centime.
+    const parsed = roundMoney(parseMoneyInput(value));
     if (!Number.isNaN(parsed) && parsed > 0) setAmount(parsed);
     setError('');
   };
@@ -86,8 +89,8 @@ export default function DonationPage() {
     e.preventDefault();
     if (loading) return;
 
-    const value = customAmount ? parseFloat(customAmount.replace(',', '.')) : amount;
-    if (!value || value <= 0) {
+    const value = roundMoney(customAmount ? parseMoneyInput(customAmount) : amount);
+    if (!value || value <= 0 || Number.isNaN(value)) {
       setError(t('donation.invalidAmount'));
       return;
     }

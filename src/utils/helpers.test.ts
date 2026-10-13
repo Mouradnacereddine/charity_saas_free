@@ -3,9 +3,14 @@ import {
   calculateAge,
   numberToArabicWords,
   numberToFrenchWords,
+  amountToArabicWords,
+  amountToFrenchWords,
   formatCurrency,
   generateId,
   generateReceiptNumber,
+  roundMoney,
+  sumMoney,
+  parseMoneyInput,
 } from './helpers';
 
 // ---------------------------------------------------------------------------
@@ -339,5 +344,89 @@ describe('generateReceiptNumber', () => {
     expect(parts[1]).toMatch(/^\d{8}$/);
     expect(parts[2]).toMatch(/^\d{6}$/);
     expect(parts[3]).toMatch(/^\d{3}$/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// roundMoney / sumMoney / parseMoneyInput  (précision monétaire)
+// ---------------------------------------------------------------------------
+describe('roundMoney', () => {
+  it('ramène un entier à 2 décimales', () => {
+    expect(roundMoney(1500)).toBe(1500);
+  });
+
+  it('corrige un artefact flottant de soustraction', () => {
+    // 2000 - 0.1 en flottant = 1999.8999999999999
+    expect(roundMoney(1999.8999999999999)).toBe(1999.9);
+    expect(roundMoney(1499.9999999999998)).toBe(1500);
+    expect(roundMoney(0.30000000000000004)).toBe(0.3);
+  });
+
+  it('arrondit au centime (half away from zero)', () => {
+    expect(roundMoney(1.005)).toBe(1.01);
+    expect(roundMoney(2.675)).toBe(2.68);
+    expect(roundMoney(1500.0049)).toBe(1500);
+    expect(roundMoney(1500.005)).toBe(1500.01);
+  });
+
+  it('tolère les valeurs non finies', () => {
+    expect(roundMoney(NaN)).toBe(0);
+    expect(roundMoney(Infinity)).toBe(0);
+  });
+});
+
+describe('sumMoney', () => {
+  it('évite la dérive d’addition flottante', () => {
+    const vals = Array(100).fill(0.1);
+    // Somme flottante naïve = 9.99999999999998
+    expect(sumMoney(vals)).toBe(10);
+  });
+
+  it('somme des montants à centimes sans perte', () => {
+    expect(sumMoney([1234.56, 0.01, 0.02, 7890.11])).toBe(9124.7);
+  });
+
+  it('renvoie les centimes exacts sur des tiers répétés', () => {
+    // 3 × 33.33 = 99.99 exactement
+    expect(sumMoney([33.33, 33.33, 33.33])).toBe(99.99);
+  });
+});
+
+describe('parseMoneyInput', () => {
+  it('accepte le point décimal (usuel)', () => {
+    expect(parseMoneyInput('1500.5')).toBe(1500.5);
+  });
+
+  it('accepte la virgule décimale française', () => {
+    expect(parseMoneyInput('1500,50')).toBe(1500.5);
+  });
+
+  it('tolère le séparateur de milliers français (espace)', () => {
+    expect(parseMoneyInput('1 500,50')).toBe(1500.5);
+    expect(parseMoneyInput('1 500.50')).toBe(1500.5);
+  });
+
+  it('tolère le point comme séparateur de milliers', () => {
+    expect(parseMoneyInput('1.500,50')).toBe(1500.5);
+  });
+
+  it('renvoie NaN pour une entrée vide ou non numérique', () => {
+    expect(Number.isNaN(parseMoneyInput(''))).toBe(true);
+    expect(Number.isNaN(parseMoneyInput('abc'))).toBe(true);
+  });
+});
+
+describe('amountToFrenchWords / amountToArabicWords (reçus)', () => {
+  it('inclut les centimes en français', () => {
+    expect(amountToFrenchWords(1500.5)).toContain('cinquante centimes');
+    expect(amountToFrenchWords(1500.5)).toContain('mille cinq cent dinars');
+  });
+
+  it('n’ajoute rien quand le montant est entier', () => {
+    expect(amountToFrenchWords(1500)).toBe(numberToFrenchWords(1500));
+  });
+
+  it('inclut les centimes en arabe', () => {
+    expect(amountToArabicWords(1500.5)).toContain('سنتيماً');
   });
 });

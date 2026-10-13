@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { logAudit } from '../lib/audit';
+import { moneyNumber } from '../lib/money';
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.post('/', requirePermission('caisses', 'create'), async (req: AuthRequest
         associationId,
         reference,
         name,
-        balance: balance || 0,
+        balance: moneyNumber(balance ?? 0),
         subCategories: subCategories || [],
         createdBy: req.user!.userId,
       },
@@ -102,7 +103,7 @@ router.put('/:id', requirePermission('caisses', 'update'), async (req: AuthReque
     const data: any = {};
     if (reference !== undefined) data.reference = reference;
     if (name !== undefined) data.name = name;
-    if (balance !== undefined) data.balance = balance;
+    if (balance !== undefined) data.balance = moneyNumber(balance);
     if (subCategories !== undefined) data.subCategories = subCategories;
     data.updatedBy = req.user!.userId;
 

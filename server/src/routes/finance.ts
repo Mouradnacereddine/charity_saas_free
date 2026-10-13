@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
+import { roundMoney, moneyNumber } from '../lib/money';
 
 const router = Router();
 
@@ -163,12 +164,16 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
       return;
     }
 
-    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    // Normalise le montant reçu au centime AVANT toute écriture : Prisma
+    // stocke tel quel un nombre JS flottant (ex : 1999.8999999999999) dans la
+    // colonne Decimal, d'où la « perte de quelques centimes » sur les soldes
+    // et allocations. roundMoney garantit une valeur à 2 décimales exactes.
+    const numericAmount = moneyNumber(amount);
 
     // For completed debit transactions, check balance
     if (type === 'debit' && txStatus === 'completed') {
       if (fundSource === 'caisse_physique') {
-        if (caisse.balance < numericAmount) {
+        if (Number(caisse.balance) < numericAmount) {
           res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
           return;
         }
@@ -177,7 +182,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
           const bankAccount = await prisma.bankAccount.findFirst({
             where: { id: bankAccountId, associationId },
           });
-          if (!bankAccount || bankAccount.balance < numericAmount) {
+          if (!bankAccount || Number(bankAccount.balance) < numericAmount) {
             res.status(400).json({ error: 'Insufficient bank balance' });
             return;
           }
@@ -191,7 +196,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
         data: {
           associationId,
           type,
-          amount,
+          amount: numericAmount,
           amountInWords: words,
           fundSource,
           caisseId,
@@ -297,7 +302,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
             where: { id: allocationId },
           });
           if (alloc && alloc.associationId === associationId) {
-            const newRemaining = Math.max(0, Number(alloc.remainingAmount) - Number(amountNum));
+            const newRemaining = Math.max(0, roundMoney(Number(alloc.remainingAmount) - Number(amountNum)));
             await tx.donationAllocation.update({
               where: { id: allocationId },
               data: { remainingAmount: newRemaining, debitTransactionId: transaction.id },
@@ -398,7 +403,7 @@ router.post('/bank-accounts', requirePermission('bank_accounts', 'create'), asyn
         rib: rib || '',
         iban: iban || '',
         swift: swift || '',
-        balance: balance || 0,
+        balance: moneyNumber(balance ?? 0),
         createdBy: req.user!.userId,
       },
     });
@@ -434,7 +439,7 @@ router.put('/bank-accounts/:id', requirePermission('bank_accounts', 'update'), a
     if (rib !== undefined) data.rib = rib;
     if (iban !== undefined) data.iban = iban;
     if (swift !== undefined) data.swift = swift;
-    if (balance !== undefined) data.balance = balance;
+    if (balance !== undefined) data.balance = moneyNumber(balance);
     data.updatedBy = req.user!.userId;
 
     const account = await prisma.bankAccount.update({
@@ -487,8 +492,8 @@ router.get('/stats', requirePermission('transactions', 'read'), async (req: Auth
       where: { associationId },
     });
 
-    const totalBankBalance = bankAccounts.reduce((sum, acc) => Number(sum) + Number(acc.balance), 0);
-    const totalCashBalance = caisses.reduce((sum, c) => Number(sum) + Number(c.balance), 0);
+    const totalBankBalance = roundMoney(bankAccounts.reduce((sum, acc) => Number(sum) + Number(acc.balance), 0));
+    const totalCashBalance = roundMoney(caisses.reduce((sum, c) => Number(sum) + Number(c.balance), 0));
 
     res.json({
       totalBankBalance,
@@ -526,8 +531,8 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       }
     }
 
-    const amountNum = Number(tx.amount);
-    const confirmAmount = Number(req.body.amount !== undefined ? req.body.amount : amountNum);
+    const amountNum = moneyNumber(tx.amount);
+    const confirmAmount = moneyNumber(req.body.amount !== undefined ? req.body.amount : amountNum);
 
     if (isNaN(confirmAmount) || confirmAmount <= 0 || confirmAmount > amountNum) {
       res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
@@ -581,7 +586,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
         });
 
         if (debitAlloc) {
-          const newRemaining = Math.max(0, Number(debitAlloc.remainingAmount) - Number(confirmAmount));
+          const newRemaining = Math.max(0, roundMoney(Number(debitAlloc.remainingAmount) - Number(confirmAmount)));
           await prismaTx.donationAllocation.update({
             where: { id: debitAlloc.id },
             data: { remainingAmount: newRemaining },
@@ -669,7 +674,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
         });
 
         if (alloc) {
-          const newRemaining = Math.max(0, Number(alloc.remainingAmount) - Number(confirmAmount));
+          const newRemaining = Math.max(0, roundMoney(Number(alloc.remainingAmount) - Number(confirmAmount)));
           await prismaTx.donationAllocation.update({
             where: { id: alloc.id },
             data: { remainingAmount: newRemaining, debitTransactionId: debitTx.id },
@@ -803,8 +808,8 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
       return;
     }
 
-    const disburseAmount = amount || alloc.remainingAmount;
-    if (disburseAmount <= 0 || disburseAmount > alloc.remainingAmount) {
+    const disburseAmount = roundMoney(amount || Number(alloc.remainingAmount));
+    if (disburseAmount <= 0 || disburseAmount > Number(alloc.remainingAmount)) {
       res.status(400).json({ error: 'المبلغ غير صالح' });
       return;
     }
@@ -818,13 +823,13 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
     // Check caisse balance
     if (creditTx.fundSource === 'caisse_physique') {
       const caisse = await prisma.caisse.findFirst({ where: { id: creditTx.caisseId, associationId } });
-      if (!caisse || caisse.balance < disburseAmount) {
+      if (!caisse || Number(caisse.balance) < disburseAmount) {
         res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
         return;
       }
     } else if (creditTx.bankAccountId) {
       const bankAccount = await prisma.bankAccount.findFirst({ where: { id: creditTx.bankAccountId, associationId } });
-      if (!bankAccount || bankAccount.balance < disburseAmount) {
+      if (!bankAccount || Number(bankAccount.balance) < disburseAmount) {
         res.status(400).json({ error: 'رصيد الحساب البنكي غير كافٍ' });
         return;
       }
@@ -864,7 +869,7 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
       }
 
       // Update allocation
-      const newRemaining = Math.max(0, Number(alloc.remainingAmount) - Number(disburseAmount));
+      const newRemaining = Math.max(0, roundMoney(Number(alloc.remainingAmount) - Number(disburseAmount)));
       await prismaTx.donationAllocation.update({
         where: { id },
         data: { remainingAmount: newRemaining, debitTransactionId: debitTx.id },
@@ -897,8 +902,8 @@ router.put('/allocations/:id/distribute', requirePermission('allocations', 'upda
       return;
     }
 
-    const distributeAmount = Number(amount || allocation.remainingAmount);
-    const newRemaining = Number(allocation.remainingAmount) - Number(distributeAmount);
+    const distributeAmount = moneyNumber(amount || allocation.remainingAmount);
+    const newRemaining = roundMoney(Number(allocation.remainingAmount) - Number(distributeAmount));
 
     const updated = await prisma.donationAllocation.update({
       where: { id },

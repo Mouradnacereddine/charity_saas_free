@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, StatCard, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords, numberToWords, localizedDesc } from '../utils/helpers'
+import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords, numberToWords, localizedDesc, roundMoney, sumMoney, parseMoneyInput } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake, Edit, ListOrdered } from 'lucide-react'
 import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useConfirmTransaction, useCancelTransaction } from '../hooks/useFinance'
@@ -239,14 +239,14 @@ export default function FinancePage() {
   const pageSize = 15
 
   // ---- Computed Values ----
-  const amountNum = parseFloat(txAmount) || 0
+  const amountNum = roundMoney(parseMoneyInput(txAmount))
   const amountInWords = amountNum > 0 ? numberToWords(amountNum) : ''
 
   const selectedCaisse = caisses.find((c: Caisse) => c.id === txCaisseId)
   const subCategories = selectedCaisse?.subCategories ?? []
 
-  const totalBankBalance = bankAccounts.reduce((sum: number, acc: BankAccount) => sum + acc.balance, 0)
-  const totalCash = caisses.reduce((sum: number, c: Caisse) => sum + c.balance, 0)
+  const totalBankBalance = sumMoney(bankAccounts.map((acc: BankAccount) => acc.balance))
+  const totalCash = sumMoney(caisses.map((c: Caisse) => c.balance))
 
   const totalPages = Math.max(1, Math.ceil(transactions.length / pageSize))
   const paginatedTransactions = transactions.slice(
@@ -430,7 +430,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
 
   const handleConfirmTransaction = async (id: string) => {
     try {
-      await confirmTransaction.mutateAsync({ id, amount: Number(confirmTxAmount) })
+      await confirmTransaction.mutateAsync({ id, amount: roundMoney(parseMoneyInput(confirmTxAmount)) })
       setConfirmingTxId(null)
       setConfirmTxAmount('')
       setDetailTx(null)
@@ -450,9 +450,9 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
   }
 
   const handleDisburseAllocation = async () => {
-    if (!disbursingAllocId || !disburseAmount || Number(disburseAmount) <= 0) return
+    if (!disbursingAllocId || !disburseAmount || roundMoney(parseMoneyInput(disburseAmount)) <= 0) return
     try {
-      await financeApi.disburseAllocation(disbursingAllocId, Number(disburseAmount))
+      await financeApi.disburseAllocation(disbursingAllocId, roundMoney(parseMoneyInput(disburseAmount)))
       setDisbursingAllocId(null)
       setDisburseAmount('')
       setDetailTx(null)
@@ -1220,7 +1220,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   const rem = (detailTx as any).remainingAmount;
                   // Show remaining amount only for credit with allocation (non-null)
                   if (rem !== null && rem !== undefined && typeof rem === 'number' && detailTx.type === 'credit') {
-                    const consumed = detailTx.amount - rem;
+                    const consumed = roundMoney(Number(detailTx.amount) - rem);
                     return (
                       <>
                         <div><p className="text-xs text-muted-foreground">{t('finance.disbursed', 'المبلغ المصرف')}</p><p className="font-medium text-warning">{formatCurrency(consumed)}</p></div>
@@ -1270,8 +1270,8 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   <>
                     <Button size="sm" variant="primary" onClick={() => {
                       const defaultAmt = (detailTx as any).remainingAmount !== null && (detailTx as any).remainingAmount !== undefined
-                        ? String((detailTx as any).remainingAmount)
-                        : String(detailTx.amount);
+                        ? String(roundMoney(Number((detailTx as any).remainingAmount)))
+                        : String(roundMoney(Number(detailTx.amount)));
                       setConfirmingTxId(detailTx.id);
                       setConfirmTxAmount(defaultAmt);
                     }}>
@@ -1292,7 +1292,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                       return (
                         <Button size="sm" variant="primary" onClick={() => {
                           setConfirmingTxId(detailTx.id);
-                          setConfirmTxAmount(String(rem));
+                          setConfirmTxAmount(String(roundMoney(Number(rem))));
                         }}>
                           {t('finance.disburseRemaining')} ({formatCurrency(rem)})
                         </Button>

@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
+import { roundMoney } from '../lib/money';
 
 const router = Router();
 
@@ -45,8 +46,8 @@ router.get('/', requirePermission('dashboard', 'read'), async (req: AuthRequest,
         where: { associationId },
       });
 
-      totalBankBalance = bankAccounts.reduce((sum, acc) => Number(sum) + Number(acc.balance), 0);
-      totalCashBalance = caisses.reduce((sum, c) => Number(sum) + Number(c.balance), 0);
+      totalBankBalance = roundMoney(bankAccounts.reduce((sum, acc) => Number(sum) + Number(acc.balance), 0));
+      totalCashBalance = roundMoney(caisses.reduce((sum, c) => Number(sum) + Number(c.balance), 0));
 
       caissesBalances = caisses.map((c) => ({
         id: c.id,

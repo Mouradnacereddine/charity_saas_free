@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
+import { roundMoney, moneyNumber } from '../lib/money';
 
 const router = Router();
 
@@ -84,7 +85,7 @@ router.get('/', requirePermission('donors', 'read'), async (req: AuthRequest, re
       const dist = distributionMap.get(d.id) || { caisses: [], totalAmount: 0 };
       return {
         ...d,
-        totalDonated: Number(dist.totalAmount || d.totalDonated || 0),
+        totalDonated: roundMoney(Number(dist.totalAmount || d.totalDonated || 0)),
         receiptCount: countMap.get(d.id) || 0,
         distribution: dist,
       };
@@ -178,7 +179,7 @@ router.get('/:id', requirePermission('donors', 'read'), async (req: AuthRequest,
 
     const dynamicTotal = receipts.reduce((sum: number, r: any) => Number(sum) + Number(r.amount), 0);
 
-    res.json({ ...donor, totalDonated: Number(dynamicTotal || donor.totalDonated || 0), donationReceipts: receipts });
+    res.json({ ...donor, totalDonated: roundMoney(dynamicTotal || Number(donor.totalDonated) || 0), donationReceipts: receipts });
   } catch (error) {
     console.error('Error getting donor:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -212,7 +213,7 @@ router.put('/:id', requirePermission('donors', 'update'), async (req: AuthReques
     if (phone !== undefined) data.phone = phone;
     if (email !== undefined) data.email = email;
     if (address !== undefined) data.address = address;
-    if (totalDonated !== undefined) data.totalDonated = totalDonated;
+    if (totalDonated !== undefined) data.totalDonated = moneyNumber(totalDonated);
     if (notes !== undefined) data.notes = notes;
     if (gender !== undefined) data.gender = gender;
     data.updatedBy = req.user!.userId;

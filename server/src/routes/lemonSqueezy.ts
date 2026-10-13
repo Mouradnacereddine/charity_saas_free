@@ -4,6 +4,7 @@ import axios from 'axios';
 import { z } from 'zod';
 import { config } from '../config';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { roundMoney } from '../lib/money';
 
 /**
  * Tip jar « Faire un don au développeur » — paiement via LemonSqueezy
@@ -74,8 +75,12 @@ router.post('/checkout', requireAuth, async (req: AuthRequest, res: Response): P
       return;
     }
     const { amount, email } = parsed.data;
+    // Normalise au centime avant de convertir en unités mineures entières
+    // (custom_price en centimes) : évite qu'un artefact flottant (ex : 66.67
+    // → 6667.000000000001) ne décale le montant facturé d'un centime.
+    const normalizedAmount = roundMoney(amount);
 
-    const custom: Record<string, string> = { amount: String(amount) };
+    const custom: Record<string, string> = { amount: String(normalizedAmount) };
     if (email) custom.email = email;
 
     const { data } = await axios.post(
@@ -93,7 +98,7 @@ router.post('/checkout', requireAuth, async (req: AuthRequest, res: Response): P
               embed: false,
               dark: false,
             },
-            custom_price: Math.round(amount * 100),
+            custom_price: Math.round(normalizedAmount * 100),
           },
           relationships: {
             store: { data: { type: 'stores', id: config.lemonSqueezyStoreId } },

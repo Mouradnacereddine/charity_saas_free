@@ -32,6 +32,49 @@ export function getAgeDisplay(dateOfBirth: string): string {
 }
 
 /**
+ * Normalise un montant monétaire au centime (2 décimales, arrondi
+ * « half away from zero ») avant de l'envoyer au serveur ou de l'afficher.
+ * Corrige les artefacts IEEE-754 du type 1999.8999999999999 qui, sinon,
+ * sont stockés tels quels dans les colonnes Decimal (Prisma ne ré-arrondit
+ * PAS un nombre JS flottant) et ressortent en « perte de quelques centimes ».
+ */
+export function roundMoney(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+/** Somme une liste de montants en centimes entiers, puis redivise — évite
+ *  la dérive d'addition flottante (0.1 + 0.2 ≠ 0.3). */
+export function sumMoney(values: number[]): number {
+  const cents = values.reduce((acc, v) => acc + Math.round((Number(v) + Number.EPSILON) * 100), 0);
+  return cents / 100;
+}
+
+/**
+ * Parse un montant saisi librement par l'utilisateur, en tolérant les
+ * séparateurs de milliers et la virgule décimale française.
+ *   "1 500,50"  -> 1500.5   (espace insécable / fine / normale)
+ *   "1.500,50"  -> 1500.5   (point = milliers, virgule = décimale)
+ *   "1500.5"    -> 1500.5
+ * Renvoie NaN si rien de numérique n'est trouvé.
+ */
+export function parseMoneyInput(input: string): number {
+  if (input == null) return NaN;
+  let s = String(input).trim().replace(/[\s   ]/g, '');
+  if (!s) return NaN;
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
+  if (lastComma > -1 && lastDot > -1) {
+    // Le séparateur le plus à droite est la décimale, l'autre est les milliers.
+    if (lastComma > lastDot) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '');
+  } else if (lastComma > -1) {
+    s = s.replace(/,/g, '.'); // virgule décimale
+  }
+  return parseFloat(s);
+}
+
+/**
  * Convert number to Arabic words (simplified for common amounts)
  */
 const onesAr = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
@@ -72,7 +115,7 @@ function convertHundredsAr(num: number): string {
 export function numberToArabicWords(amount: number): string {
   if (amount === 0) return 'صفر دينار';
 
-  const num = Math.floor(amount);
+  const num = Math.floor(roundMoney(amount));
   const parts: string[] = [];
 
   if (num >= 1000000) {
@@ -99,6 +142,20 @@ export function numberToArabicWords(amount: number): string {
   }
 
   return parts.join(' و ') + ' دينار';
+}
+
+/**
+ * Montant en lettres (arabe) incluant les centimes : « 1500,50 » devient
+ * « ... دينار و خمسون سنتيماً » au lieu de perdre les centimes.
+ */
+export function amountToArabicWords(amount: number): string {
+  const total = roundMoney(amount);
+  const dinars = Math.floor(total);
+  const cents = Math.round((total - dinars) * 100);
+  const base = numberToArabicWords(dinars);
+  if (cents <= 0) return base;
+  const centWords = convertHundredsAr(cents);
+  return `${base} و ${centWords} سنتيماً`;
 }
 
 /**
@@ -144,7 +201,7 @@ function convertHundredsFr(num: number): string {
 export function numberToFrenchWords(amount: number): string {
   if (amount === 0) return 'zéro dinar';
 
-  const num = Math.floor(amount);
+  const num = Math.floor(roundMoney(amount));
   const parts: string[] = [];
 
   if (num >= 1000000) {
@@ -169,6 +226,20 @@ export function numberToFrenchWords(amount: number): string {
 }
 
 /**
+ * Montant en lettres (français) incluant les centimes : « 1500,50 » devient
+ * « mille cinq cents dinars et cinquante centimes » au lieu de perdre les
+ * centimes (exigence d'exactitude des reçus de don).
+ */
+export function amountToFrenchWords(amount: number): string {
+  const total = roundMoney(amount);
+  const dinars = Math.floor(total);
+  const cents = Math.round((total - dinars) * 100);
+  const base = numberToFrenchWords(dinars);
+  if (cents <= 0) return base;
+  return `${base} et ${convertHundredsFr(cents)} centimes`;
+}
+
+/**
  * Format currency
  */
 function getLocale(): string {
@@ -182,8 +253,13 @@ export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat(getLocale(), {
     style: 'currency',
     currency: 'DZD',
+    // minimumFractionDigits = maximumFractionDigits = 2 : un entier s'affiche
+    // « 1 500,00 DZD » et un montant à centimes « 1 500,50 DZD », de façon
+    // homogène. On normalise d'abord au centime pour ne jamais laisser
+    // fuiter un artefact flottant (ex : 19.990000000000002).
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(roundMoney(amount));
 }
 
 /**
