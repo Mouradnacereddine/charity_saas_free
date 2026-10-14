@@ -232,6 +232,9 @@ export default function FinancePage() {
   const [filterMinAmount, setFilterMinAmount] = useState('')
   const [filterMaxAmount, setFilterMaxAmount] = useState('')
   const [filterTxStatus, setFilterTxStatus] = useState('')
+  // Statut derive cote client pour le filtre "partiellement deecaisse"
+  // (le serveur ne connait que pending/completed/cancelled)
+  const [derivedTxStatus, setDerivedTxStatus] = useState('')
 
   // ---- Pagination State ----
   const [currentPage, setCurrentPage] = useState(1)
@@ -247,8 +250,21 @@ export default function FinancePage() {
   const totalBankBalance = sumMoney(bankAccounts.map((acc: BankAccount) => acc.balance))
   const totalCash = sumMoney(caisses.map((c: Caisse) => c.balance))
 
-  const totalPages = Math.max(1, Math.ceil(transactions.length / pageSize))
-  const paginatedTransactions = transactions.slice(
+  // Filtre derive cote client : "partiellement deecaisse" =
+  // transaction completee avec un montant restant > 0 (non envoye
+  // au serveur car ce statut est calcule, pas stocke).
+  const filteredTransactions = derivedTxStatus === 'partially_disbursed'
+    ? transactions.filter((tx: any) => {
+        const rem = tx.remainingAmount
+        if (tx.status !== 'completed') return false
+        if (tx.type === 'credit') return typeof rem === 'number' && rem > 0 && rem < tx.amount
+        if (tx.type === 'debit') return typeof rem === 'number' && rem > 0
+        return false
+      })
+    : transactions
+
+  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize))
+  const paginatedTransactions = filteredTransactions.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   )
@@ -403,10 +419,14 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
     if (filterMinAmount) params.minAmount = filterMinAmount
     if (filterMaxAmount) params.maxAmount = filterMaxAmount
     if (filterSearchTerm) params.searchTerm = filterSearchTerm
-    if (filterTxStatus) params.status = filterTxStatus
+    // "partially_disbursed" est derive cote client (montant restant > 0),
+    // il n'est donc pas envoye au serveur — filtre local plus bas.
+    if (filterTxStatus && filterTxStatus !== 'partially_disbursed') params.status = filterTxStatus
 
     setCurrentPage(1)
     setTxFilters(Object.keys(params).length > 0 ? params : undefined)
+    // Filtre derive local : "partiellement deecaisse" = completed + reste > 0
+    setDerivedTxStatus(filterTxStatus === 'partially_disbursed' ? 'partially_disbursed' : '')
   }
 
   const handleResetFilter = () => {
@@ -419,6 +439,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
     setFilterMaxAmount('')
     setFilterSearchTerm('')
     setFilterTxStatus('')
+    setDerivedTxStatus('')
     setCurrentPage(1)
     setTxFilters(undefined)
   }
@@ -924,6 +945,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   { value: 'completed', label: t('dashboard.completed') },
                   { value: 'pending', label: t('dashboard.pending') },
                   { value: 'cancelled', label: t('dashboard.cancelled') },
+                  { value: 'partially_disbursed', label: t('dashboard.partiallyDisbursed') },
                 ]}
               />
               <Input
