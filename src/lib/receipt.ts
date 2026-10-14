@@ -101,6 +101,7 @@ export function printBeneficiaryCard(params: {
   attribut: string;
   gender: string;
   caisseName: string;
+  healthStatus?: string;
   situation?: string;
   childrenHtml: string;
   labels?: Record<string, string>;
@@ -119,6 +120,8 @@ export function printBeneficiaryCard(params: {
     age: "العمر",
     phone: "الهاتف",
     status: "الحالة",
+    healthStatus: "حالة الصحة",
+    situationDetails: "تفاصيل الحالة",
     beneficiarySignature: "توقيع المستفيد",
     stampSignature: "ختم الجمعية",
     print: "طباعة"
@@ -174,7 +177,8 @@ export function printBeneficiaryCard(params: {
         <div class="border-row"><span class="lbl">${l.gender}</span><span class="val">${params.gender}</span></div>
         <div class="border-row"><span class="lbl">${l.age}</span><span class="val">${params.ageDisplay}</span></div>
         <div class="border-row"><span class="lbl">${l.phone}</span><span class="val">${params.phone}</span></div>
-        ${params.situation ? `<div class="border-row"><span class="lbl">${l.status}</span><span class="val">${params.situation}</span></div>` : ''}
+        ${params.healthStatus ? `<div class="border-row"><span class="lbl">${l.healthStatus}</span><span class="val">${params.healthStatus}</span></div>` : ''}
+        ${params.situation ? `<div class="border-row"><span class="lbl">${l.situationDetails}</span><span class="val">${params.situation}</span></div>` : ''}
       </div>
     </div>
   </div>

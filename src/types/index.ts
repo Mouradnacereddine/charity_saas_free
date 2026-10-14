@@ -203,8 +203,7 @@ export interface Beneficiary {
   dateOfBirth: string; // ISO date string
   attribut: AttributType;
   gender?: string;
-  onBehalfOf?: string; // ID of another beneficiary (e.g., child presenting on behalf of widow)
-  onBehalfOfName?: string;
+  healthStatus?: string;
   situation?: string;
   children: Child[];
   caisseId?: string;

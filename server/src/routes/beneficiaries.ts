@@ -13,7 +13,7 @@ router.use(requireAuth);
 router.get('/', requirePermission('beneficiaries', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const {
-      searchTerm, attribut, caisseId, situation,
+      searchTerm, attribut, caisseId, situation, healthStatus,
       minChildren, maxChildAge, gender, minAge, maxAge,
       childGender, childHealthStatus, childSchoolGradeId, minChildAge, maxChildAge: maxChildAgeParam,
     } = req.query;
@@ -35,6 +35,7 @@ router.get('/', requirePermission('beneficiaries', 'read'), async (req: AuthRequ
     if (attribut) where.attribut = String(attribut);
     if (caisseId) where.caisseId = String(caisseId);
     if (gender) where.gender = String(gender);
+    if (healthStatus) where.healthStatus = String(healthStatus);
     if (situation) {
       where.OR = where.OR || [];
       where.OR.push(
@@ -165,7 +166,7 @@ router.post('/', requirePermission('beneficiaries', 'create'), async (req: AuthR
     const {
       reference: refInput, firstName, lastName,
       address, phone, nationalCardNumber, dateOfBirth,
-      attribut, gender, onBehalfOfName, situation,
+      attribut, gender, onBehalfOfName, healthStatus, situation,
       children, caisseId, subCategoryId,
     } = req.body;
 
@@ -189,6 +190,7 @@ router.post('/', requirePermission('beneficiaries', 'create'), async (req: AuthR
         attribut,
         gender: gender || 'male',
         onBehalfOfName,
+        healthStatus,
         situation,
         children: children || [],
         caisseId,
@@ -253,7 +255,7 @@ router.put('/:id', requirePermission('beneficiaries', 'update'), async (req: Aut
     const {
       reference, firstName, lastName,
       address, phone, nationalCardNumber, dateOfBirth,
-      attribut, onBehalfOfName, situation,
+      attribut, onBehalfOfName, healthStatus, situation,
       children, caisseId, subCategoryId,
     } = req.body;
 
@@ -267,6 +269,7 @@ router.put('/:id', requirePermission('beneficiaries', 'update'), async (req: Aut
     if (dateOfBirth !== undefined) data.dateOfBirth = new Date(dateOfBirth);
     if (attribut !== undefined) data.attribut = attribut;
     if (onBehalfOfName !== undefined) data.onBehalfOfName = onBehalfOfName;
+    if (healthStatus !== undefined) data.healthStatus = healthStatus;
     if (situation !== undefined) data.situation = situation;
     if (children !== undefined) data.children = children;
     if (caisseId !== undefined) data.caisseId = caisseId;

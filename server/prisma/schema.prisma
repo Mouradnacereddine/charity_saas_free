@@ -195,6 +195,7 @@ model Beneficiary {
   attribut           String
   gender             String?  @default("male")
   onBehalfOfName     String?
+  healthStatus       String?
   situation          String?
   children           Json     @default("[]")
   caisseId           String?

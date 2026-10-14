@@ -46,7 +46,7 @@ type BeneficiaryFormData = {
   dateOfBirth: string
   attribut: string
   gender: string
-  onBehalfOf: string
+  healthStatus: string
   situation: string
   caisseId: string
   subCategoryId: string
@@ -64,7 +64,7 @@ function emptyForm(): BeneficiaryFormData {
     dateOfBirth: '',
     attribut: '',
     gender: 'male',
-    onBehalfOf: '',
+    healthStatus: '',
     situation: '',
     caisseId: '',
     subCategoryId: '',
@@ -83,7 +83,7 @@ function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
     dateOfBirth: b.dateOfBirth,
     attribut: b.attribut,
     gender: b.gender ?? 'male',
-    onBehalfOf: b.onBehalfOfName ?? '',
+    healthStatus: (b as any).healthStatus ?? '',
     situation: b.situation ?? '',
     caisseId: b.caisseId ?? '',
     subCategoryId: b.subCategoryId ?? '',
@@ -265,6 +265,7 @@ export default function BeneficiariesPage() {
   const [filterMinChildren, setFilterMinChildren] = useState('')
   const [filterMaxChildAge, setFilterMaxChildAge] = useState('')
   const [filterSituation, setFilterSituation] = useState('')
+  const [filterHealthStatus, setFilterHealthStatus] = useState('')
   const [filterGender, setFilterGender] = useState('')
   const [filterChildGender, setFilterChildGender] = useState('')
   const [filterChildHealthStatus, setFilterChildHealthStatus] = useState('')
@@ -346,6 +347,7 @@ export default function BeneficiariesPage() {
     if (filterMinChildren) params.minChildren = filterMinChildren
     if (filterMaxChildAge) params.maxChildAge = filterMaxChildAge
     if (filterSituation) params.situation = filterSituation
+    if (filterHealthStatus) params.healthStatus = filterHealthStatus
     if (filterGender) params.gender = filterGender
     if (filterChildGender) params.childGender = filterChildGender
     if (filterChildHealthStatus) params.childHealthStatus = filterChildHealthStatus
@@ -368,6 +370,7 @@ export default function BeneficiariesPage() {
     setFilterMinChildren('')
     setFilterMaxChildAge('')
     setFilterSituation('')
+    setFilterHealthStatus('')
     setFilterGender('')
     setFilterChildGender('')
     setFilterChildHealthStatus('')
@@ -396,7 +399,8 @@ export default function BeneficiariesPage() {
     if (filterAttribut) criteria.push(chip(t('beneficiaries.filterAttribute'), ATTRIBUT_LABELS[filterAttribut] || filterAttribut))
     if (filterCaisseId) criteria.push(chip(t('beneficiaries.filterFund'), getCaisseName(filterCaisseId)))
     if (filterGender) criteria.push(chip(t('beneficiaries.filterGender'), filterGender === 'female' ? t('common.female') : t('common.male')))
-    if (filterSituation) criteria.push(chip(t('common.status'), HEALTH_STATUS_LABELS[filterSituation] || filterSituation))
+    if (filterHealthStatus) criteria.push(chip(t('common.status'), HEALTH_STATUS_LABELS[filterHealthStatus] || filterHealthStatus))
+    if (filterSituation) criteria.push(chip(t('beneficiaries.situationDetails'), filterSituation))
     if (filterMinChildren) criteria.push(chip(t('beneficiaries.filterMinChildren'), filterMinChildren))
     if (filterMaxChildAge) criteria.push(chip(t('beneficiaries.filterMaxAge'), filterMaxChildAge))
     if (filterMinAge) criteria.push(chip(t('receipt.age'), `≥ ${filterMinAge}`))
@@ -440,7 +444,8 @@ export default function BeneficiariesPage() {
           <div class="cell"><span class="lbl">${t('beneficiaries.filterGender')}</span><span class="val">${genderLabel(b.gender)}</span></div>
           <div class="cell"><span class="lbl">${t('receipt.age')}</span><span class="val">${b.dateOfBirth ? getAgeDisplay(b.dateOfBirth) : '—'}</span></div>
           <div class="cell"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${caisse?.name || '—'}</span></div>
-          <div class="cell"><span class="lbl">${t('common.status')}</span><span class="val">${b.situation ? (HEALTH_STATUS_LABELS[b.situation] || b.situation) : '—'}</span></div>
+          <div class="cell"><span class="lbl">${t('beneficiaries.healthStatusLabel')}</span><span class="val">${b.healthStatus ? (HEALTH_STATUS_LABELS[b.healthStatus] || b.healthStatus) : '—'}</span></div>
+          ${b.situation ? `<div class="cell" style="grid-column:span 2"><span class="lbl">${t('beneficiaries.situationDetails')}</span><span class="val">${b.situation}</span></div>` : ''}
           <div class="cell"><span class="lbl">${t('beneficiaries.childrenCount')}</span><span class="val">${children.length}</span></div>
         </div>
         ${childrenSection}
@@ -523,7 +528,7 @@ export default function BeneficiariesPage() {
       dateOfBirth: form.dateOfBirth,
       attribut: form.attribut as Beneficiary['attribut'],
       gender: form.gender || 'male',
-      onBehalfOfName: form.onBehalfOf || undefined,
+      healthStatus: form.healthStatus || undefined,
       situation: form.situation || undefined,
       caisseId: form.caisseId || undefined,
       subCategoryId: form.subCategoryId || undefined,
@@ -597,7 +602,8 @@ export default function BeneficiariesPage() {
       attribut: ATTRIBUT_LABELS[b.attribut] || b.attribut,
       gender: b.gender === 'female' ? t('common.female') : t('common.male'),
       caisseName: caisse?.name || '—',
-      situation: b.situation ? `${HEALTH_STATUS_LABELS[b.situation] || b.situation}` : undefined,
+      healthStatus: b.healthStatus ? `${HEALTH_STATUS_LABELS[b.healthStatus] || b.healthStatus}` : undefined,
+      situation: b.situation || undefined,
       childrenHtml,
       dir: isLtr ? 'ltr' : 'rtl',
       lang: cl,
@@ -613,6 +619,8 @@ export default function BeneficiariesPage() {
         age: t('receipt.age'),
         phone: t('receipt.phone'),
         status: t('common.status'),
+        healthStatus: t('beneficiaries.healthStatusLabel'),
+        situationDetails: t('beneficiaries.situationDetails'),
         beneficiarySignature: t('receipt.beneficiarySign'),
         stampSignature: t('receipt.stampSignature'),
         print: t('receipt.print')
@@ -757,7 +765,8 @@ export default function BeneficiariesPage() {
             <div class="item"><span class="lbl">${t("beneficiaries.filterGender")}</span><span class="val">${b.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
             <div class="item"><span class="lbl">${t('beneficiaries.addressTitle')}</span><span class="val">${b.address || '—'}</span></div>
             <div class="item"><span class="lbl">${t("dashboard.fund")}</span><span class="val">${caisse?.name || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
-            ${b.situation ? `<div class="item"><span class="lbl">${t("common.status")}</span><span class="val">${HEALTH_STATUS_LABELS[b.situation] || b.situation}</span></div>` : ''}
+            ${b.healthStatus ? `<div class="item"><span class="lbl">${t("beneficiaries.healthStatusLabel")}</span><span class="val">${HEALTH_STATUS_LABELS[b.healthStatus] || b.healthStatus}</span></div>` : ''}
+            ${b.situation ? `<div class="item"><span class="lbl" style="min-width:140px">${t("beneficiaries.situationDetails")}</span><span class="val">${b.situation}</span></div>` : ''}
             ${b.notes ? `<div class="item"><span class="lbl" style="min-width:140px">${t('common.notes')}</span><span class="val">${b.notes}</span></div>` : ''}
           </div>
         </div>
@@ -867,8 +876,14 @@ export default function BeneficiariesPage() {
               <SearchableSelect
                 labelAr={t('common.status')}
                 options={[{ value: '', label: t('common.all') }, ...HEALTH_STATUS_OPTIONS]}
+                value={filterHealthStatus}
+                onChange={(val) => setFilterHealthStatus(val)}
+              />
+              <Input
+                labelAr={t('beneficiaries.situationDetails')}
                 value={filterSituation}
-                onChange={(val) => setFilterSituation(val)}
+                onChange={(e) => setFilterSituation(e.target.value)}
+                placeholder={t('beneficiaries.situationDetailsPlaceholder')}
               />
               <Input
                 labelAr={t('beneficiaries.filterMinChildren')}
@@ -983,6 +998,7 @@ export default function BeneficiariesPage() {
                   <th className="py-3 px-4 text-start font-medium hidden md:table-cell">{t('receipt.idNumber')}</th>
                   <th className="py-3 px-4 text-start font-medium hidden lg:table-cell">{t('receipt.phone')}</th>
                   <th className="py-3 px-4 text-start font-medium">{t('beneficiaries.filterAttribute')}</th>
+                  <th className="py-3 px-4 text-start font-medium hidden sm:table-cell">{t('common.status')}</th>
                   <th className="py-3 px-4 text-start font-medium hidden sm:table-cell">{t('receipt.age')}</th>
                   <th className="py-3 px-4 text-start font-medium">{t('beneficiaries.childrenCount')}</th>
                   <th className="py-3 px-4 text-start font-medium hidden lg:table-cell">{t('dashboard.fund')}</th>
@@ -1024,6 +1040,13 @@ export default function BeneficiariesPage() {
                           <Badge variant={ATTRIBUT_BADGE_VARIANT[b.attribut] ?? 'default'}>
                             {ATTRIBUT_LABELS[b.attribut] ?? b.attribut}
                           </Badge>
+                        </td>
+                        <td className="py-3 px-3 hidden sm:table-cell">
+                          {b.healthStatus ? (
+                            <Badge variant={b.healthStatus === 'bonne_sante' ? 'success' : b.healthStatus === 'malade' ? 'warning' : 'info'}>
+                              {HEALTH_STATUS_LABELS[b.healthStatus] ?? b.healthStatus}
+                            </Badge>
+                          ) : '—'}
                         </td>
                         <td className="py-3 px-3 text-muted-foreground hidden sm:table-cell">
                           {age ? getAgeDisplay(b.dateOfBirth) : '—'}
@@ -1155,10 +1178,6 @@ export default function BeneficiariesPage() {
                 value={form.gender || 'male'}
                 onChange={(val) => handleFormChange('gender', val)}
               />
-              <div className="space-y-1">
-                <Input label={t('beneficiaries.onBehalfOf')} placeholder={t('beneficiaries.onBehalfOfPlaceholder')} value={form.onBehalfOf} onChange={(e) => handleFormChange('onBehalfOf', e.target.value)} />
-                <p className="text-xs text-muted-foreground/70">{t('beneficiaries.onBehalfOfHint')}</p>
-              </div>
             </div>
           </div>
 
@@ -1169,8 +1188,8 @@ export default function BeneficiariesPage() {
               <SearchableSelect
                 label={t('common.status')}
                 options={HEALTH_STATUS_OPTIONS}
-                value={form.situation}
-                onChange={(val) => handleFormChange('situation', val)}
+                value={form.healthStatus}
+                onChange={(val) => handleFormChange('healthStatus', val)}
               />
               <Input label={t('beneficiaries.situationDetails')} placeholder={t('beneficiaries.situationDetailsPlaceholder')} value={form.situation} onChange={(e) => handleFormChange('situation', e.target.value)} />
             </div>
@@ -1250,8 +1269,8 @@ export default function BeneficiariesPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterGender')}</span><span className="font-medium text-foreground">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.address')}</span><span className="font-medium text-foreground">{selectedBeneficiary.address || '—'}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-muted-foreground mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
-                {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.onBehalfOf')}</span><span className="font-medium text-foreground">{selectedBeneficiary.onBehalfOfName}</span></div>}
-                {selectedBeneficiary.situation && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('common.status')}</span><span className="font-medium text-foreground">{HEALTH_STATUS_LABELS[selectedBeneficiary.situation] || selectedBeneficiary.situation}</span></div>}
+                {selectedBeneficiary.healthStatus && <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.healthStatusLabel')}</span><span className="font-medium text-foreground">{HEALTH_STATUS_LABELS[selectedBeneficiary.healthStatus] || selectedBeneficiary.healthStatus}</span></div>}
+                {selectedBeneficiary.situation && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('beneficiaries.situationDetails')}</span><span className="font-medium text-foreground">{selectedBeneficiary.situation}</span></div>}
                 {selectedBeneficiary.notes && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('common.notes')}</span><span className="font-medium text-foreground">{selectedBeneficiary.notes}</span></div>}
               </div>
             </div>
