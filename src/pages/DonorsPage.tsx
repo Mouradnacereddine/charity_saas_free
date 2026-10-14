@@ -116,8 +116,12 @@ export default function DonorsPage() {
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.refCode')}</span><span className="font-medium" dir="ltr">{donor.reference}</span></div>
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('common.sectionName')}</span><span className="font-medium">{donor.lastName} {donor.firstName}</span></div>
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.phone')}</span><span className="font-medium" dir="ltr">{donor.phone}</span></div>
-            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.totalDonations')}</span><span className="font-medium text-success">{formatCurrency(donor._sum?.amount || 0)}</span></div>
-            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.donationCount')}</span><span className="font-medium">{donor._count?.transactions || 0}</span></div>
+            {donor.email && <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.email')}</span><span className="font-medium" dir="ltr">{donor.email}</span></div>}
+            {donor.address && <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.address')}</span><span className="font-medium">{donor.address}</span></div>}
+            {donor.gender && <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.gender')}</span><span className="font-medium">{donor.gender === 'female' ? t('common.female') : t('common.male')}</span></div>}
+            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.totalDonations')}</span><span className="font-medium text-success">{formatCurrency(donor._sum?.amount || donor.totalDonated || 0)}</span></div>
+            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.donationCount')}</span><span className="font-medium">{donor.receiptCount ?? donor._count?.transactions ?? 0}</span></div>
+            {donor.notes && <div className="flex justify-between p-2 bg-muted rounded md:col-span-2"><span className="text-muted-foreground">{t('common.notes')}</span><span className="font-medium">{donor.notes}</span></div>}
           </div>
 
           {receipts.length > 0 && (
@@ -128,7 +132,9 @@ export default function DonorsPage() {
                   <div key={r.id} className="flex items-center justify-between bg-muted rounded-lg p-3">
                     <div>
                       <p className="text-sm font-medium">{formatDate(r.date)}</p>
-                      <p className="text-xs text-muted-foreground">{r.caisse?.nameAr} - {formatCurrency(r.amount)}</p>
+                      <p className="text-xs text-muted-foreground font-mono" dir="ltr">{r.receiptNumber || '—'}</p>
+                      <p className="text-xs text-muted-foreground">{r.caisseName || r.caisse?.nameAr || r.caisse?.name || '—'} - {formatCurrency(r.amount)}</p>
+                      {r.subCategoryName && <p className="text-xs text-muted-foreground">{t('receipt.subCategory')} : {r.subCategoryName}</p>}
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => printReceipt(
                         t('donors.receiptTitle'), t('donors.receiptTitle'),
@@ -220,7 +226,7 @@ ${r.subCategoryName ? `<div class="row"><span class="lbl">${t('receipt.subCatego
                     <td className="py-3 px-4 font-medium text-foreground">{donor.lastName} {donor.firstName}</td>
                     <td className="py-3 px-4 hidden sm:table-cell text-foreground" dir="ltr">{donor.phone}</td>
                     <td className="py-3 px-4 hidden md:table-cell text-success font-semibold">{formatCurrency(donor._sum?.amount || 0)}</td>
-                    <td className="py-3 px-4 hidden md:table-cell"><Badge>{donor._count?.transactions || 0}</Badge></td>
+                    <td className="py-3 px-4 hidden md:table-cell"><Badge>{donor.receiptCount ?? donor._count?.transactions ?? 0}</Badge></td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={(e) => { e.stopPropagation(); setShowDetailModal(donor); }} className="p-1.5 text-muted-foreground hover:text-primary rounded"><Eye className="w-4 h-4" /></button>

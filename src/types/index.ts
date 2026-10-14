@@ -229,6 +229,12 @@ export interface Donor {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  // Champs calculés par le backend (GET /donors)
+  receiptCount?: number;
+  distribution?: {
+    caisses: { id: string; name: string; subCategories: { id: string; name: string; total: number }[]; total: number }[];
+    totalAmount: number;
+  };
 }
 
 // ---- Transaction ----
