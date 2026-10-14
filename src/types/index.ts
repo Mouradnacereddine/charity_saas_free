@@ -203,6 +203,7 @@ export interface Beneficiary {
   dateOfBirth: string; // ISO date string
   attribut: AttributType;
   gender?: string;
+  onBehalfOfName?: string; // Nom du défunt mari (champ optionnel)
   healthStatus?: string;
   situation?: string;
   children: Child[];

@@ -46,6 +46,7 @@ type BeneficiaryFormData = {
   dateOfBirth: string
   attribut: string
   gender: string
+  onBehalfOf: string
   healthStatus: string
   situation: string
   caisseId: string
@@ -64,6 +65,7 @@ function emptyForm(): BeneficiaryFormData {
     dateOfBirth: '',
     attribut: '',
     gender: 'male',
+    onBehalfOf: '',
     healthStatus: '',
     situation: '',
     caisseId: '',
@@ -83,6 +85,7 @@ function beneficiaryToForm(b: Beneficiary): BeneficiaryFormData {
     dateOfBirth: b.dateOfBirth,
     attribut: b.attribut,
     gender: b.gender ?? 'male',
+    onBehalfOf: b.onBehalfOfName ?? '',
     healthStatus: (b as any).healthStatus ?? '',
     situation: b.situation ?? '',
     caisseId: b.caisseId ?? '',
@@ -118,6 +121,20 @@ export default function BeneficiariesPage() {
     value,
     label,
   }))
+
+  // Réparation affichage : les bénéficiaires créés pendant la période
+  // où le champ Statut était (à tort) bindé sur `situation` ont leur
+  // statut santé (ex: "bonne_sante") stocké dans `situation`.
+  // On le ré-attribue à la volée pour l'affichage (sans écrire en base).
+  const repairHealthStatus = (b: { healthStatus?: string; situation?: string }) => {
+    if (b.healthStatus) return b.healthStatus
+    if (b.situation && b.situation in HEALTH_STATUS_LABELS) return b.situation
+    return ''
+  }
+  const repairSituation = (b: { healthStatus?: string; situation?: string }) => {
+    if (!b.healthStatus && b.situation && b.situation in HEALTH_STATUS_LABELS) return ''
+    return b.situation ?? ''
+  }
 
   const queryClient = useQueryClient()
   const { association } = useAuth()
@@ -201,6 +218,55 @@ export default function BeneficiariesPage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
+
+  // Confirmer / annuler une transaction en attente depuis la fiche bénéficiaire
+  // (mêmes actions que la fenêtre "Détails de l'opération" de la page Finance)
+  const [confirmingTx, setConfirmingTx] = useState<any>(null)
+  const [confirmTxAmount, setConfirmTxAmount] = useState('')
+  const confirmTxMutation = useMutation({
+    mutationFn: ({ id, amount }: { id: string; amount: number }) => financeApi.confirmTransaction(id, { amount }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['beneficiary-allocations'] })
+      queryClient.invalidateQueries({ queryKey: ['beneficiary-debits'] })
+      queryClient.invalidateQueries({ queryKey: ['finance-allocations'] })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['caisses'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+  const cancelTxMutation = useMutation({
+    mutationFn: (id: string) => financeApi.cancelTransaction(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['beneficiary-allocations'] })
+      queryClient.invalidateQueries({ queryKey: ['beneficiary-debits'] })
+      queryClient.invalidateQueries({ queryKey: ['finance-allocations'] })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['caisses'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+
+  const handleConfirmTx = async () => {
+    if (!confirmingTx || roundMoney(parseMoneyInput(confirmTxAmount)) <= 0) return
+    try {
+      await confirmTxMutation.mutateAsync({ id: confirmingTx.id, amount: roundMoney(parseMoneyInput(confirmTxAmount)) })
+      setConfirmingTx(null)
+      setConfirmTxAmount('')
+      closeDetail()
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('finance.confirmFailed'))
+    }
+  }
+
+  const handleCancelTx = async (id: string) => {
+    if (!window.confirm(t('finance.confirmCancelTx'))) return
+    try {
+      await cancelTxMutation.mutateAsync(id)
+      closeDetail()
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('finance.cancelFailed'))
+    }
+  }
 
   const handleDisburseAllocation = async () => {
     if (!disbursingAlloc || !disburseAmount || roundMoney(parseMoneyInput(disburseAmount)) <= 0) return
@@ -528,6 +594,7 @@ export default function BeneficiariesPage() {
       dateOfBirth: form.dateOfBirth,
       attribut: form.attribut as Beneficiary['attribut'],
       gender: form.gender || 'male',
+      onBehalfOfName: form.onBehalfOf || undefined,
       healthStatus: form.healthStatus || undefined,
       situation: form.situation || undefined,
       caisseId: form.caisseId || undefined,
@@ -1042,11 +1109,14 @@ export default function BeneficiariesPage() {
                           </Badge>
                         </td>
                         <td className="py-3 px-3 hidden sm:table-cell">
-                          {b.healthStatus ? (
-                            <Badge variant={b.healthStatus === 'bonne_sante' ? 'success' : b.healthStatus === 'malade' ? 'warning' : 'info'}>
-                              {HEALTH_STATUS_LABELS[b.healthStatus] ?? b.healthStatus}
-                            </Badge>
-                          ) : '—'}
+                          {(() => {
+                            const hs = repairHealthStatus(b)
+                            return hs ? (
+                              <Badge variant={hs === 'bonne_sante' ? 'success' : hs === 'malade' ? 'warning' : 'info'}>
+                                {HEALTH_STATUS_LABELS[hs] ?? hs}
+                              </Badge>
+                            ) : '—'
+                          })()}
                         </td>
                         <td className="py-3 px-3 text-muted-foreground hidden sm:table-cell">
                           {age ? getAgeDisplay(b.dateOfBirth) : '—'}
@@ -1172,6 +1242,7 @@ export default function BeneficiariesPage() {
                 onChange={(val) => handleFormChange('attribut', val)}
                 required
               />
+              <Input label={t('beneficiaries.onBehalfOf')} placeholder={t('beneficiaries.onBehalfOfPlaceholder')} value={form.onBehalfOf} onChange={(e) => handleFormChange('onBehalfOf', e.target.value)} dir={dirForInput(i18n.language)} />
               <SearchableSelect
                 label={t('beneficiaries.filterGender')}
                 options={[{ value: 'male', label: t('common.male') }, { value: 'female', label: t('common.female') }]}
@@ -1268,9 +1339,13 @@ export default function BeneficiariesPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterAttribute')}</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterGender')}</span><span className="font-medium text-foreground">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.address')}</span><span className="font-medium text-foreground">{selectedBeneficiary.address || '—'}</span></div>
+                {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.onBehalfOf')}</span><span className="font-medium text-foreground">{selectedBeneficiary.onBehalfOfName}</span></div>}
+              </div>
+              <h5 className="text-xs font-semibold text-muted-foreground mt-4 mb-2">{t('beneficiaries.situationTitle')}</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-muted-foreground mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
-                {selectedBeneficiary.healthStatus && <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.healthStatusLabel')}</span><span className="font-medium text-foreground">{HEALTH_STATUS_LABELS[selectedBeneficiary.healthStatus] || selectedBeneficiary.healthStatus}</span></div>}
-                {selectedBeneficiary.situation && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('beneficiaries.situationDetails')}</span><span className="font-medium text-foreground">{selectedBeneficiary.situation}</span></div>}
+                {repairHealthStatus(selectedBeneficiary) && <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.healthStatusLabel')}</span><span className="font-medium text-foreground">{HEALTH_STATUS_LABELS[repairHealthStatus(selectedBeneficiary)] || repairHealthStatus(selectedBeneficiary)}</span></div>}
+                {repairSituation(selectedBeneficiary) && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('beneficiaries.situationDetails')}</span><span className="font-medium text-foreground">{repairSituation(selectedBeneficiary)}</span></div>}
                 {selectedBeneficiary.notes && <div className="flex justify-between md:col-span-2"><span className="text-muted-foreground">{t('common.notes')}</span><span className="font-medium text-foreground">{selectedBeneficiary.notes}</span></div>}
               </div>
             </div>
@@ -1346,6 +1421,25 @@ export default function BeneficiariesPage() {
                           <td className="py-2 px-3">
                             {(() => {
                               const s = a.creditTransaction?.status;
+                              if (s === 'pending') {
+                                return (
+                                  <div className="flex gap-1">
+                                    <Button size="sm" variant="primary"
+                                      onClick={() => {
+                                        setConfirmingTx(a.creditTransaction);
+                                        // Une credit en attente n'a encore rien été déboursé :
+                                        // le montant restant est celui de l'allocation.
+                                        setConfirmTxAmount(String(roundMoney(Number(a.remainingAmount))));
+                                      }}>
+                                      {t('finance.confirmTx')}
+                                    </Button>
+                                    <Button size="sm" variant="danger"
+                                      onClick={() => handleCancelTx(a.creditTransaction!.id)}>
+                                      {t('finance.cancelTx')}
+                                    </Button>
+                                  </div>
+                                );
+                              }
                               const canDisburse = s === 'completed' && a.remainingAmount > 0;
                               return (
                                 <Button size="sm" variant="success" disabled={!canDisburse}
@@ -1573,6 +1667,41 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
                 <Button size="sm" variant="secondary" onClick={() => { setDisbursingAlloc(null); setDisburseAmount(''); }}>{t('common.cancel')}</Button>
                 <Button size="sm" variant="primary" onClick={handleDisburseAllocation}
                   disabled={!disburseAmount || roundMoney(parseMoneyInput(disburseAmount)) <= 0 || roundMoney(parseMoneyInput(disburseAmount)) > disbursingAlloc.remainingAmount}>
+                  {t('common.confirm')}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Confirmer une transaction en attente (depuis la fiche bénéficiaire) */}
+        <Modal isOpen={!!confirmingTx} onClose={() => { setConfirmingTx(null); setConfirmTxAmount(''); }} title={t('finance.confirmTx')} size="sm">
+          {confirmingTx && (
+            <div className="space-y-4">
+              <div className="bg-muted rounded-lg p-3 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('common.amount')}</span><span className="font-bold text-success">{formatCurrency(confirmingTx.amount)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('common.date')}</span><span className="font-medium">{formatDate(confirmingTx.date)}</span></div>
+                {confirmingTx.receiptNumber && <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.receiptNo')}</span><span className="font-mono text-xs" dir="ltr">{confirmingTx.receiptNumber}</span></div>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('finance.enterConfirmAmount')}</label>
+                <input
+                  type="number"
+                  value={confirmTxAmount}
+                  onChange={(e) => setConfirmTxAmount(e.target.value)}
+                  max={roundMoney(Number(confirmingTx.amount))}
+                  min={0}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  dir="ltr"
+                />
+                {Number(confirmTxAmount) > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">{numberToWords(Number(confirmTxAmount))}</p>
+                )}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button size="sm" variant="secondary" onClick={() => { setConfirmingTx(null); setConfirmTxAmount(''); }}>{t('common.cancel')}</Button>
+                <Button size="sm" variant="primary" onClick={handleConfirmTx}
+                  disabled={!confirmTxAmount || roundMoney(parseMoneyInput(confirmTxAmount)) <= 0 || roundMoney(parseMoneyInput(confirmTxAmount)) > roundMoney(Number(confirmingTx.amount))}>
                   {t('common.confirm')}
                 </Button>
               </div>
