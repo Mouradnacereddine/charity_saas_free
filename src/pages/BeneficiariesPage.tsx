@@ -1235,7 +1235,7 @@ export default function BeneficiariesPage() {
       </Modal>
 
       {/* ---- Detail View Modal ---- */}
-      {selectedBeneficiary && (
+      {selectedBeneficiary && (<>
         <Modal isOpen={showDetailModal} onClose={closeDetail} title={`${selectedBeneficiary.lastName} ${selectedBeneficiary.firstName}`} size="xl">
           <div className="space-y-6" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
             <div>
@@ -1560,7 +1560,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
             </div>
           )}
         </Modal>
-      )}
+      </>)}
     </div>
   )
 
