@@ -15,7 +15,7 @@ router.get('/', requirePermission('beneficiaries', 'read'), async (req: AuthRequ
     const {
       searchTerm, attribut, caisseId, situation, healthStatus,
       minChildren, maxChildAge, gender, minAge, maxAge,
-      childGender, childHealthStatus, childSchoolGradeId, minChildAge, maxChildAge: maxChildAgeParam,
+      childGender, childHealthStatus, childHealthDetails, childSchoolGradeId, minChildAge, maxChildAge: maxChildAgeParam,
     } = req.query;
     const associationId = req.user!.associationId;
 
@@ -70,7 +70,7 @@ router.get('/', requirePermission('beneficiaries', 'read'), async (req: AuthRequ
 
     // ---- Child-focused filters ----
     // These filter beneficiaries by requiring at least one child matching ALL criteria
-    const hasChildFilter = childGender || childHealthStatus || childSchoolGradeId || minChildAge || maxChildAgeParam;
+    const hasChildFilter = childGender || childHealthStatus || childHealthDetails || childSchoolGradeId || minChildAge || maxChildAgeParam;
 
     if (hasChildFilter) {
       const now = new Date();
@@ -84,6 +84,13 @@ router.get('/', requirePermission('beneficiaries', 'read'), async (req: AuthRequ
 
           // Child health status filter
           if (childHealthStatus && child.healthStatus !== String(childHealthStatus)) return false;
+
+          // Child health details filter (free text, case-insensitive)
+          if (childHealthDetails) {
+            const details = String(childHealthDetails).toLowerCase();
+            const childDetails = String(child.healthDetails || '').toLowerCase();
+            if (!childDetails.includes(details)) return false;
+          }
 
           // Child school grade filter
           if (childSchoolGradeId && child.schoolGradeId !== String(childSchoolGradeId)) return false;
