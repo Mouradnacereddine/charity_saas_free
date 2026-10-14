@@ -159,7 +159,6 @@ export default function FinancePage() {
   const [txAmount, setTxAmount] = useState('')
   const [txDescription, setTxDescription] = useState('')
   const [txAllocSearch, setTxAllocSearch] = useState('')
-  const [txPending, setTxPending] = useState(false)
   const [txSubmitting, setTxSubmitting] = useState(false)
   const [txError, setTxError] = useState('')
   const [confirmingTxId, setConfirmingTxId] = useState<string | null>(null)
@@ -253,14 +252,6 @@ export default function FinancePage() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   )
-
-  // ---- Pending Reset Effect ----
-  // La case "Transaction en attente" est reservee aux dons donateur -> beneficiaire
-  useEffect(() => {
-    if (!(txType === 'credit' && txDonorId && txBeneficiaryId)) {
-      setTxPending(false)
-    }
-  }, [txType, txDonorId, txBeneficiaryId])
 
   // ---- Handlers ----
   const handleOpenAddBank = () => {
@@ -379,7 +370,12 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
         description: txDescription,
         description: txDescription,
         date: new Date().toISOString().split('T')[0],
-        status: txPending ? 'pending' : 'completed',
+        // Harmonisation : tout credit destine a un beneficiaire (donateur
+        // ou caisse/banque) est cree en "pending". L'argent entre en
+        // caisse, l'allocation est creee avec le montant restant, et le
+        // versement effectif se fait via la confirmation de la transaction.
+        // Sans beneficiaire, le credit est directement "completed".
+        status: txBeneficiaryId ? 'pending' : 'completed',
       })
 
       // Reset form
@@ -390,7 +386,6 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
       setTxAllocatedBeneficiaryId('')
       setTxAllocationId('')
       setTxSubCategoryId('')
-      setTxPending(false)
     } catch (err: any) {
       setTxError(err?.response?.data?.error || err?.message || t('finance.addFailed'))
     } finally {
@@ -852,19 +847,10 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
             </div>
           )}
           <div className="flex items-center justify-between">
-            {txType === 'credit' && txDonorId && txBeneficiaryId ? (
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={txPending}
-                  onChange={(e) => setTxPending(e.target.checked)}
-                  className="w-4 h-4 text-warning-foreground focus:ring-amber-500 rounded"
-                />
-                <span className="text-sm text-muted-foreground">{t('finance.pendingTx')}</span>
-              </label>
-            ) : (
-              <div />
-            )}
+            {/* Harmonisation : plus de case "Transaction en attente".
+                Un credit avec beneficiaire est automatiquement pending
+                (a confirmer pour verser), sinon il est completed. */}
+            <div />
             <Button type="submit" disabled={txSubmitting || amountNum <= 0 || !txCaisseId}>
               {txSubmitting ? t('common.saving') : t('finance.saveTransaction')}
             </Button>
