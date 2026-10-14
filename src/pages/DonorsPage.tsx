@@ -114,7 +114,7 @@ export default function DonorsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.refCode')}</span><span className="font-medium" dir="ltr">{donor.reference}</span></div>
-            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('common.sectionName')}</span><span className="font-medium">{donor.lastName} {donor.firstName}</span></div>
+            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.fullName')}</span><span className="font-medium">{donor.lastName} {donor.firstName}</span></div>
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.phone')}</span><span className="font-medium" dir="ltr">{donor.phone}</span></div>
             {donor.email && <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.email')}</span><span className="font-medium" dir="ltr">{donor.email}</span></div>}
             {donor.address && <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.address')}</span><span className="font-medium">{donor.address}</span></div>}
@@ -135,6 +135,10 @@ export default function DonorsPage() {
                       <p className="text-xs text-muted-foreground font-mono" dir="ltr">{r.receiptNumber || '—'}</p>
                       <p className="text-xs text-muted-foreground">{r.caisseName || r.caisse?.nameAr || r.caisse?.name || '—'} - {formatCurrency(r.amount)}</p>
                       {r.subCategoryName && <p className="text-xs text-muted-foreground">{t('receipt.subCategory')} : {r.subCategoryName}</p>}
+                      {(() => {
+                        const b = (r as any).transaction?.beneficiary;
+                        return b ? <p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')} : {b.firstName} {b.lastName}</p> : null;
+                      })()}
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => printReceipt(
                         t('donors.receiptTitle'), t('donors.receiptTitle'),
@@ -142,7 +146,8 @@ export default function DonorsPage() {
 <div class="row"><span class="lbl">${t('common.date')}</span><span class="val">${formatDate(r.date)}</span></div>
 <div class="row"><span class="lbl">${t('dashboard.donor')}</span><span class="val">${r.donorName || '—'}</span></div></div>
 <div class="col"><div class="row"><span class="lbl">${t('dashboard.fund')}</span><span class="val">${r.caisseName || '—'}</span></div>
-${r.subCategoryName ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${r.subCategoryName}</span></div>` : ''}</div>`,
+${r.subCategoryName ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${r.subCategoryName}</span></div>` : ''}
+${(() => { const b = (r as any).transaction?.beneficiary; return b ? `<div class="row"><span class="lbl">${t('dashboard.beneficiary')}</span><span class="val">${b.firstName} ${b.lastName}</span></div>` : ''; })()}</div>`,
                         'color:#16a34a',
                         formatCurrency(r.amount), numberToArabicWords(r.amount), numberToFrenchWords(r.amount),
                         t('donors.donorSignature'), t('receipt.stampSignature'),
@@ -190,7 +195,7 @@ ${r.subCategoryName ? `<div class="row"><span class="lbl">${t('receipt.subCatego
         <Card titleAr={t('donors.advancedSearch')}>
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Input labelAr={t('common.sectionName')} value={filterName} onChange={(e) => setFilterName(e.target.value)} placeholder={t('common.search')} />
+              <Input labelAr={t('donors.fullName')} value={filterName} onChange={(e) => setFilterName(e.target.value)} placeholder={t('common.search')} />
               <Input labelAr={t('donors.phone')} value={filterPhone} onChange={(e) => setFilterPhone(e.target.value)} placeholder={t('common.search')} />
               <SearchableSelect labelAr={t('donors.gender')} value={filterGender} onChange={setFilterGender}
                 options={[{ value: 'male', label: t('common.male') }, { value: 'female', label: t('common.female') }]} />
@@ -212,7 +217,7 @@ ${r.subCategoryName ? `<div class="row"><span class="lbl">${t('receipt.subCatego
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-start py-3 px-4 text-muted-foreground font-medium">{t('donors.refCode')}</th>
-                  <th className="text-start py-3 px-4 text-muted-foreground font-medium">{t('common.sectionName')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium">{t('donors.fullName')}</th>
                   <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden sm:table-cell">{t('donors.phone')}</th>
                   <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">{t('donors.totalDonations')}</th>
                   <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">{t('donors.donationCount')}</th>

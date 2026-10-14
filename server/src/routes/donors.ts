@@ -285,7 +285,10 @@ router.get('/:id/receipts', requirePermission('donation_receipts', 'read'), asyn
 
     const receipts = await prisma.donationReceipt.findMany({
       where: { donorId: id, associationId },
-      include: { transaction: true, caisse: true },
+      include: {
+        transaction: { include: { beneficiary: true } },
+        caisse: true,
+      },
       orderBy: { date: 'desc' },
     });
 
