@@ -25,7 +25,7 @@
 BEGIN;
 
 -- Contrôle préalable : affiche les associations concernées
-SELECT id, name FROM "Association" ORDER BY createdAt;
+SELECT id, name FROM "Association" ORDER BY "createdAt";
 
 -- ---------------------------------------------------------------------------
 -- PARTIE A — Association conservée (39882042-…) : on vide les tables
@@ -102,7 +102,7 @@ WHERE id <> '39882042-2cb5-4795-93e8-38d7e661c513';
 -- ---------------------------------------------------------------------------
 -- Contrôles après purge
 -- ---------------------------------------------------------------------------
-SELECT id, name FROM "Association";
+SELECT id, name FROM "Association" ORDER BY "createdAt";
 SELECT 'Transaction' AS tbl, count(*) FROM "Transaction" WHERE "associationId" = '39882042-2cb5-4795-93e8-38d7e661c513'
 UNION ALL SELECT 'AuditLog', count(*) FROM "AuditLog" WHERE "associationId" = '39882042-2cb5-4795-93e8-38d7e661c513'
 UNION ALL SELECT 'MedicalReferral', count(*) FROM "MedicalReferral" WHERE "associationId" = '39882042-2cb5-4795-93e8-38d7e661c513'
