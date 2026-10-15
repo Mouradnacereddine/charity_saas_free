@@ -1099,7 +1099,7 @@ export default function BeneficiariesPage() {
                   return (
                     <Fragment key={b.id}>
                       <tr
-                        className="border-b border-border hover:bg-muted transition-colors cursor-pointer"
+                        className={`border-b border-border transition-colors cursor-pointer ${isExpanded ? 'bg-muted/30' : 'hover:bg-muted/50'}`}
                         onClick={() => openDetail(b)}
                       >
                         <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
@@ -1192,7 +1192,7 @@ export default function BeneficiariesPage() {
                                 </thead>
                                 <tbody>
                                   {b.children.map((child: any, ci: number) => (
-                                    <tr key={ci} className="border-t border-border hover:bg-card">
+                                    <tr key={ci} className="border-t border-border hover:bg-muted/40">
                                       <td className="py-2 px-3 font-medium text-foreground">{child.lastName} {child.firstName}</td>
                                       <td className="py-2 px-3 text-muted-foreground">{child.gender === 'female' ? t('common.female') : t('common.male')}</td>
                                       <td className="py-2 px-3 text-muted-foreground">{getAgeDisplay(child.dateOfBirth)}</td>
@@ -1428,7 +1428,7 @@ export default function BeneficiariesPage() {
                       {beneficiaryAllocations.map((a: DonationAllocation) => {
                         const spent = a.amount - a.remainingAmount;
                         return (
-                        <tr key={a.id} className="border-b border-border hover:bg-muted">
+                        <tr key={a.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                           <td className="py-2 px-3 font-medium text-foreground">{a.donor ? `${a.donor.lastName} ${a.donor.firstName}` : <span className="text-muted-foreground/70">{t('finance.cashFund')}</span>}</td>
                           <td className="py-2 px-3"><Badge variant="success">{formatCurrency(a.amount)}</Badge></td>
                           <td className="py-2 px-3">{spent > 0 ? formatCurrency(spent) : '—'}</td>
@@ -1512,7 +1512,7 @@ export default function BeneficiariesPage() {
                       {beneficiaryDebits.map((tx: any) => {
                         const caisse = caisses.find((c: any) => c.id === tx.caisseId);
                         return (
-                        <tr key={tx.id} className="border-b border-border hover:bg-muted">
+                        <tr key={tx.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                           <td className="py-2 px-3 text-foreground">{formatDate(tx.date)}</td>
                           <td className="py-2 px-3 font-semibold text-destructive">-{formatCurrency(tx.amount)}</td>
                           <td className="py-2 px-3 text-muted-foreground">{tx.fundSource === 'banque' ? t('beneficiaries.bankLabel') : t('beneficiaries.cashLabel')}</td>
@@ -1587,7 +1587,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('common.description')
                       {beneficiaryReferrals.map((ref: any) => {
                         const caisse = caisses.find((c: any) => c.id === ref.caisseId);
                         return (
-                        <tr key={ref.id} className="border-b border-border hover:bg-muted">
+                        <tr key={ref.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                           <td className="py-2 px-3 text-foreground">{formatDate(ref.date)}</td>
                           <td className="py-2 px-3 font-medium text-foreground">{ref.doctorName}</td>
                           <td className="py-2 px-3"><Badge variant="warning">{formatCurrency(ref.amount)}</Badge></td>
@@ -1799,7 +1799,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
                   </thead>
                   <tbody>
                     {attributs.map((a: BeneficiaryAttribut) => (
-                      <tr key={a.name} className="border-b border-border hover:bg-muted">
+                      <tr key={a.name} className="border-b border-border hover:bg-muted/50 transition-colors">
                         {editAttrId === a.name ? (
                           <>
                             <td className="py-2 px-4"><input value={editAttrName} onChange={(e) => setEditAttrName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(i18n.language)} /></td>
@@ -1847,7 +1847,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
                   </thead>
                   <tbody>
                     {schoolGrades.map((g: any) => (
-                      <tr key={g.id} className="border-b border-border hover:bg-muted">
+                      <tr key={g.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                         {editGradeId === g.id ? (
                           <>
                             <td className="py-2 px-4"><input value={editGradeName} onChange={(e) => setEditGradeName(e.target.value)} className="w-full border border-border rounded px-2 py-1 text-sm" dir={dirForInput(i18n.language)} /></td>
