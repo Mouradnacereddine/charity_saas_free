@@ -673,9 +673,9 @@ export default function BeneficiariesPage() {
       ageDisplay: b.dateOfBirth ? getAgeDisplay(b.dateOfBirth) : '—',
       attribut: ATTRIBUT_LABELS[b.attribut] || b.attribut,
       gender: b.gender === 'female' ? t('common.female') : t('common.male'),
-      caisseName: caisse?.name || '—',
-      healthStatus: b.healthStatus ? `${HEALTH_STATUS_LABELS[b.healthStatus] || b.healthStatus}` : undefined,
-      situation: b.situation || undefined,
+      caisseName: caisse?.name || '',
+      healthStatus: repairHealthStatus(b) ? `${HEALTH_STATUS_LABELS[repairHealthStatus(b)] || repairHealthStatus(b)}` : undefined,
+      situation: repairSituation(b) || undefined,
       childrenHtml,
       dir: isLtr ? 'ltr' : 'rtl',
       lang: cl,
@@ -838,12 +838,18 @@ export default function BeneficiariesPage() {
             <div class="item"><span class="lbl">${t("beneficiaries.filterAttribute")}</span><span class="val">${ATTRIBUT_LABELS[b.attribut] || b.attribut}</span></div>
             <div class="item"><span class="lbl">${t("beneficiaries.filterGender")}</span><span class="val">${b.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
             <div class="item"><span class="lbl">${t('beneficiaries.addressTitle')}</span><span class="val">${b.address || '—'}</span></div>
-            <div class="item"><span class="lbl">${t("dashboard.fund")}</span><span class="val">${caisse?.name || '—'}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>
-            ${b.healthStatus ? `<div class="item"><span class="lbl">${t("beneficiaries.healthStatusLabel")}</span><span class="val">${HEALTH_STATUS_LABELS[b.healthStatus] || b.healthStatus}</span></div>` : ''}
-            ${b.situation ? `<div class="item"><span class="lbl" style="min-width:140px">${t("beneficiaries.situationDetails")}</span><span class="val">${b.situation}</span></div>` : ''}
-            ${b.notes ? `<div class="item"><span class="lbl" style="min-width:140px">${t('common.notes')}</span><span class="val">${b.notes}</span></div>` : ''}
           </div>
         </div>
+        ${(caisse || repairHealthStatus(b) || repairSituation(b) || b.notes) ? `
+        <div class="section">
+          <div class="section-title">${t("beneficiaries.situationTitle")}</div>
+          <div class="info-grid">
+            ${caisse ? `<div class="item"><span class="lbl">${t("dashboard.fund")}</span><span class="val">${caisse.name}${b.subCategoryId ? ` (${getSubCaisseName(b.caisseId, b.subCategoryId)})` : ''}</span></div>` : ''}
+            ${repairHealthStatus(b) ? `<div class="item"><span class="lbl">${t("beneficiaries.healthStatusLabel")}</span><span class="val">${HEALTH_STATUS_LABELS[repairHealthStatus(b)] || repairHealthStatus(b)}</span></div>` : ''}
+            ${repairSituation(b) ? `<div class="item"><span class="lbl" style="min-width:140px">${t("beneficiaries.situationDetails")}</span><span class="val">${repairSituation(b)}</span></div>` : ''}
+            ${b.notes ? `<div class="item"><span class="lbl" style="min-width:140px">${t('common.notes')}</span><span class="val">${b.notes}</span></div>` : ''}
+          </div>
+        </div>` : ''}
         ${childrenHtml}
         ${allocsHtml}
         ${debitsHtml}

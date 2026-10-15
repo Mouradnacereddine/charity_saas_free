@@ -171,7 +171,7 @@ export function printBeneficiaryCard(params: {
         <div class="border-row"><span class="lbl">${l.attribut}</span><span class="val">${params.attribut}</span></div>
         <div class="border-row"><span class="lbl">${l.birthDate}</span><span class="val">${params.dateOfBirth}</span></div>
         <div class="border-row"><span class="lbl">${l.idNumber}</span><span class="val">${params.nationalCardNumber || '—'}</span></div>
-        <div class="border-row"><span class="lbl">${l.fund}</span><span class="val">${params.caisseName || '—'}</span></div>
+        ${params.caisseName ? `<div class="border-row"><span class="lbl">${l.fund}</span><span class="val">${params.caisseName}</span></div>` : ''}
       </div>
       <div class="col">
         <div class="border-row"><span class="lbl">${l.gender}</span><span class="val">${params.gender}</span></div>
