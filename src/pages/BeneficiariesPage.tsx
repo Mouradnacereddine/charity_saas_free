@@ -1177,11 +1177,11 @@ export default function BeneficiariesPage() {
                       </tr>
                       {isExpanded && b.children && b.children.length > 0 && (
                         <tr key={`${b.id}-children`}>
-                          <td colSpan={12} className="px-0 pb-4 pt-1 bg-muted">
-                            <div className="rounded-lg border border-border overflow-hidden">
+                          <td colSpan={12} className="px-0 pb-4 pt-1">
+                            <div className="rounded-lg border border-border overflow-hidden bg-muted/50">
                               <table className="w-full text-xs">
                                 <thead>
-                                  <tr className="bg-muted text-muted-foreground">
+                                  <tr className="text-muted-foreground border-b border-border">
                                     <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.sectionName')}</th>
                                     <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.filterGender')}</th>
                                     <th className="py-2 px-3 text-start font-medium">{t('receipt.age')}</th>
