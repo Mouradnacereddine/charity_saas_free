@@ -305,6 +305,7 @@
     "name": "Nom",
     "firstName": "Prénom",
     "lastName": "Nom de famille",
+    "fullName": "Nom complet",
     "address": "Adresse",
     "widow": "Veuve",
     "orphan": "Orphelin",

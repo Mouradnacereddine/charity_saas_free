@@ -297,6 +297,7 @@
     "name": "الاسم",
     "firstName": "الاسم الأول",
     "lastName": "اللقب",
+    "fullName": "الاسم الكامل",
     "address": "العنوان",
     "widow": "أرملة",
     "orphan": "يتيم",
