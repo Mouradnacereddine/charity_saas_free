@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Badge, Input, SearchableSelect, Button, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { auditApi } from '../lib/api';
-import { ScrollText, Search, Filter } from 'lucide-react';
+import { ScrollText, Search, Filter, Trash2 } from 'lucide-react';
 import type { AuditLogResponse } from '../types';
 
 const ACTION_BADGE: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -68,6 +68,49 @@ export default function AuditLogPage() {
       return res.data as AuditLogResponse;
     },
   });
+
+  const queryClient = useQueryClient();
+
+  // Mêmes filtres que la liste, sans la pagination
+  const currentFilterParams = (): Record<string, string> => {
+    const params: Record<string, string> = {};
+    if (committedSearch) params.search = committedSearch;
+    if (committedFilters.userRole) params.userRole = committedFilters.userRole;
+    if (committedFilters.action) params.action = committedFilters.action;
+    if (committedFilters.resource) params.resource = committedFilters.resource;
+    if (committedFilters.dateFrom) params.from = committedFilters.dateFrom;
+    if (committedFilters.dateTo) params.to = committedFilters.dateTo;
+    return params;
+  };
+
+  // Suppression en masse selon les filtres courants
+  const deleteFilteredMutation = useMutation({
+    mutationFn: () => {
+      const params = currentFilterParams();
+      // Sans filtre, le backend exige une confirmation explicite
+      if (Object.keys(params).length === 0) params.confirmAll = 'true';
+      return auditApi.deleteFiltered(params);
+    },
+    onSuccess: (res) => {
+      const deleted = (res.data as { deleted?: number }).deleted ?? 0;
+      window.alert(t('audit.deleteFilteredDone', { count: deleted }));
+      queryClient.invalidateQueries({ queryKey: ['audit'] });
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || t('audit.deleteError');
+      window.alert(msg);
+    },
+  });
+
+  const handleDeleteFiltered = () => {
+    const filters = currentFilterParams();
+    const hasFilters = Object.keys(filters).length > 0;
+    const scope = hasFilters
+      ? t('audit.deleteFilteredConfirmFiltered')
+      : t('audit.deleteFilteredConfirmAll');
+    if (!window.confirm(`${scope}\n${t('audit.deleteFilteredWarning')}`)) return;
+    deleteFilteredMutation.mutate();
+  };
 
   const logs = data?.logs ?? [];
   const total = data?.total ?? 0;
@@ -159,6 +202,14 @@ export default function AuditLogPage() {
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => setFilterOpen((v) => !v)}>
             <Filter className="w-4 h-4" /> {t('common.advancedSearch')}
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            disabled={deleteFilteredMutation.isPending}
+            onClick={handleDeleteFiltered}
+          >
+            <Trash2 className="w-4 h-4" /> {t('audit.deleteFiltered')}
           </Button>
         </div>
       </div>
@@ -278,34 +329,44 @@ export default function AuditLogPage() {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-              <span className="text-sm text-muted-foreground">
-                {t('audit.total')} : {total}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={currentPage <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  {t('audit.prev')}
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {currentPage} / {totalPages}
-                </span>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                >
-                  {t('audit.next')}
-                </Button>
-              </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-border">
+            <span className="text-sm text-muted-foreground">
+              {t('audit.total')} : {total}
+            </span>
+            <div className="flex items-center gap-2">
+              {totalPages > 1 && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={currentPage <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    {t('audit.prev')}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    {t('audit.next')}
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="danger"
+                size="sm"
+                disabled={deleteFilteredMutation.isPending}
+                onClick={handleDeleteFiltered}
+              >
+                <Trash2 className="w-4 h-4" /> {t('audit.deleteFiltered')}
+              </Button>
             </div>
-          )}
+          </div>
         </Card>
       )}
     </div>

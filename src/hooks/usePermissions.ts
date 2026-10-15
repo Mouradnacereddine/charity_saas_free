@@ -125,6 +125,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   ...readOnly('analytics'),
   ...crud('notifications'),
   ...readOnly('audit'),
+  'audit:delete' as Permission,
 ];
 
 const ALL_RESOURCES: Resource[] = [

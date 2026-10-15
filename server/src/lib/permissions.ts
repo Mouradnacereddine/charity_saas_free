@@ -150,8 +150,9 @@ const ADMIN_PERMISSIONS: Permission[] = [
   ...readOnly('analytics'),
   // Notifications
   ...crud('notifications'),
-  // Journal d'audit
+  // Journal d'audit : lecture + suppression (purge des entrées filtrées)
   ...readOnly('audit'),
+  'audit:delete' as Permission,
 ];
 
 // super_admin = toutes les permissions possibles

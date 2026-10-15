@@ -92,7 +92,13 @@
     "noLogs": "Aucune activité enregistrée",
     "total": "Total",
     "prev": "Précédent",
-    "next": "Suivant"
+    "next": "Suivant",
+    "deleteFiltered": "Supprimer selon les filtres",
+    "deleteFilteredConfirmFiltered": "Supprimer toutes les activités correspondant aux filtres actuellement appliqués ?",
+    "deleteFilteredConfirmAll": "Aucun filtre appliqué : supprimer TOUTES les activités du journal ?",
+    "deleteFilteredWarning": "Cette action est irréversible.",
+    "deleteFilteredDone": "{{count}} activité(s) supprimée(s).",
+    "deleteError": "Erreur lors de la suppression des activités."
   },
   "userMenu": {
     "defaultName": "Utilisateur",

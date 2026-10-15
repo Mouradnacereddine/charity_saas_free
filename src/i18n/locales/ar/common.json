@@ -92,7 +92,13 @@
     "noLogs": "لا توجد نشاطات مسجلة",
     "total": "الإجمالي",
     "prev": "السابق",
-    "next": "التالي"
+    "next": "التالي",
+    "deleteFiltered": "حذف حسب الفلاتر",
+    "deleteFilteredConfirmFiltered": "حذف جميع النشاطات المطابقة للفلاتر المطبقة حالياً؟",
+    "deleteFilteredConfirmAll": "لا يوجد فلتر مطبق: حذف جميع النشاطات في السجل؟",
+    "deleteFilteredWarning": "هذا الإجراء لا يمكن التراجع عنه.",
+    "deleteFilteredDone": "تم حذف {{count}} نشاط(ات).",
+    "deleteError": "خطأ أثناء حذف النشاطات."
   },
   "userMenu": {
     "defaultName": "مستخدم",

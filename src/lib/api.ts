@@ -293,6 +293,10 @@ export const notificationsApi = {
 
 export const auditApi = {
   list: (params?: Record<string, string>) => api.get('/audit', { params }),
+  // Supprime les entrées correspondant aux filtres passés (mêmes paramètres que list)
+  deleteFiltered: (params?: Record<string, string>) => api.delete('/audit/clear', { params }),
+  // Supprime une entrée précise
+  deleteById: (id: string) => api.delete(`/audit/${id}`),
 };
 
 export const lemonSqueezyApi = {

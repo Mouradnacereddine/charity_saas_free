@@ -92,7 +92,13 @@
     "noLogs": "No activity recorded",
     "total": "Total",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "deleteFiltered": "Delete by filters",
+    "deleteFilteredConfirmFiltered": "Delete all activities matching the currently applied filters?",
+    "deleteFilteredConfirmAll": "No filter applied: delete ALL activities in the log?",
+    "deleteFilteredWarning": "This action is irreversible.",
+    "deleteFilteredDone": "{{count}} activity(ies) deleted.",
+    "deleteError": "Error while deleting activities."
   },
   "userMenu": {
     "defaultName": "User",
