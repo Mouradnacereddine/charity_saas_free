@@ -1,0 +1,13 @@
+A free management tool for charitable associations 🙏
+
+Many charitable associations still track their beneficiaries, donations and cash in notebooks or scattered spreadsheets. Not because they choose to, but because professional software costs money that is better spent on the people they help.
+
+So I built a free SaaS for them: beneficiary management, donations with receipts, cash management with amounts written out in words, bank accounts, inventory with categories and locations, item loans to beneficiaries, medical follow-up (referrals, doctors, hospitals, analyses), roles and permissions, statistics and dashboards, plus an audit log and notifications. Each association keeps its own data space. ✅
+
+It is available in French, Arabic and English (with RTL support), secured with JWT, hashed passwords and Google Sign-In, and built with React, TypeScript, Express, Prisma and PostgreSQL — deployed on Vercel. Completely free: a small contribution to the solidarity work you do every day. 💡
+
+Try it, share your feedback, and pass it on to associations that could benefit.
+
+👉 https://charity-saas-free.vercel.app
+
+#SaaS #Charity #Associations #Free #WebDevelopment #React #TypeScript

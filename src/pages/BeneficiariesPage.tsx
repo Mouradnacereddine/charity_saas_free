@@ -831,6 +831,7 @@ export default function BeneficiariesPage() {
           <div class="section-title">${t("beneficiaries.personalInfo")}</div>
           <div class="info-grid">
             <div class="item"><span class="lbl">${t('receipt.fullName')}</span><span class="val">${b.lastName} ${b.firstName}</span></div>
+            ${b.onBehalfOfName ? `<div class="item"><span class="lbl">${t("beneficiaries.deceasedHusbandName")}</span><span class="val">${b.onBehalfOfName}</span></div>` : ''}
             <div class="item"><span class="lbl">${t("receipt.idNumber")}</span><span class="val">${b.nationalCardNumber || '—'}</span></div>
             <div class="item"><span class="lbl">${t("receipt.phone")}</span><span class="val">${b.phone}</span></div>
             <div class="item"><span class="lbl">${t("receipt.birthDate")}</span><span class="val">${b.dateOfBirth ? `${formatDate(b.dateOfBirth)} (${getAgeDisplay(b.dateOfBirth)})` : '—'}</span></div>
@@ -1170,7 +1171,7 @@ export default function BeneficiariesPage() {
                       </tr>
                       {isExpanded && b.children && b.children.length > 0 && (
                         <tr key={`${b.id}-children`}>
-                          <td colSpan={11} className="px-4 pb-4 pt-1 bg-muted">
+                          <td colSpan={12} className="px-0 pb-4 pt-1 bg-muted">
                             <div className="rounded-lg border border-border overflow-hidden">
                               <table className="w-full text-xs">
                                 <thead>
@@ -1357,14 +1358,14 @@ export default function BeneficiariesPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterAttribute')}</span><Badge variant={ATTRIBUT_BADGE_VARIANT[selectedBeneficiary.attribut] ?? 'default'}>{ATTRIBUT_LABELS[selectedBeneficiary.attribut] ?? selectedBeneficiary.attribut}</Badge></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.filterGender')}</span><span className="font-medium text-foreground">{selectedBeneficiary.gender === 'female' ? t('common.female') : t('common.male')}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.address')}</span><span className="font-medium text-foreground">{selectedBeneficiary.address || '—'}</span></div>
-                {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between gap-3 md:col-span-2"><span className="text-muted-foreground shrink-0">{t('beneficiaries.deceasedHusbandName')}</span><span className="font-medium text-foreground text-end min-w-0 break-words">{selectedBeneficiary.onBehalfOfName}</span></div>}
+                {selectedBeneficiary.onBehalfOfName && <div className="flex justify-between gap-3"><span className="text-muted-foreground shrink-0">{t('beneficiaries.deceasedHusbandName')}</span><span className="font-medium text-foreground text-end min-w-0 break-words">{selectedBeneficiary.onBehalfOfName}</span></div>}
               </div>
               <h5 className="text-xs font-semibold text-muted-foreground mt-4 mb-2">{t('beneficiaries.situationTitle')}</h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-muted-foreground mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>
+                {getCaisseName(selectedBeneficiary.caisseId) !== '—' && <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.fund')}</span><span className="font-medium text-foreground">{getCaisseName(selectedBeneficiary.caisseId)}{selectedBeneficiary.subCategoryId ? <span className="text-muted-foreground mr-2">({getSubCaisseName(selectedBeneficiary.caisseId, selectedBeneficiary.subCategoryId)})</span> : ''}</span></div>}
                 {repairHealthStatus(selectedBeneficiary) && <div className="flex justify-between"><span className="text-muted-foreground">{t('beneficiaries.healthStatusLabel')}</span><span className="font-medium text-foreground">{HEALTH_STATUS_LABELS[repairHealthStatus(selectedBeneficiary)] || repairHealthStatus(selectedBeneficiary)}</span></div>}
-                {repairSituation(selectedBeneficiary) && <div className="flex justify-between gap-3 md:col-span-2"><span className="text-muted-foreground shrink-0">{t('beneficiaries.situationDetails')}</span><span className="font-medium text-foreground text-end min-w-0 break-words">{repairSituation(selectedBeneficiary)}</span></div>}
-                {selectedBeneficiary.notes && <div className="flex justify-between gap-3 md:col-span-2"><span className="text-muted-foreground shrink-0">{t('common.notes')}</span><span className="font-medium text-foreground text-end min-w-0 break-words">{selectedBeneficiary.notes}</span></div>}
+                {repairSituation(selectedBeneficiary) && <div className="flex justify-between gap-3"><span className="text-muted-foreground shrink-0">{t('beneficiaries.situationDetails')}</span><span className="font-medium text-foreground text-end min-w-0 break-words">{repairSituation(selectedBeneficiary)}</span></div>}
+                {selectedBeneficiary.notes && <div className="flex justify-between gap-3"><span className="text-muted-foreground shrink-0">{t('common.notes')}</span><span className="font-medium text-foreground text-end min-w-0 break-words">{selectedBeneficiary.notes}</span></div>}
               </div>
             </div>
 
@@ -1379,6 +1380,7 @@ export default function BeneficiariesPage() {
                         <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.filterGender')}</th>
                         <th className="py-2 px-3 text-start font-medium">{t('receipt.age')}</th>
                         <th className="py-2 px-3 text-start font-medium">{t('common.status')}</th>
+                        <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.childHealthDetails')}</th>
                         <th className="py-2 px-3 text-start font-medium">{t('beneficiaries.schoolGrade')}</th>
                       </tr>
                     </thead>
@@ -1389,6 +1391,7 @@ export default function BeneficiariesPage() {
                           <td className="py-2 px-3">{child.gender === 'female' ? t('common.female') : t('common.male')}</td>
                           <td className="py-2 px-3">{getAgeDisplay(child.dateOfBirth)}</td>
                           <td className="py-2 px-3"><Badge variant={child.healthStatus === 'bonne_sante' ? 'success' : child.healthStatus === 'malade' ? 'warning' : 'info'}>{HEALTH_STATUS_LABELS[child.healthStatus] || child.healthStatus}</Badge></td>
+                          <td className="py-2 px-3 text-muted-foreground">{child.healthDetails || '—'}</td>
                           <td className="py-2 px-3">{getGradeName(child.schoolGradeId)}</td>
                         </tr>
                       ))}

@@ -1,0 +1,13 @@
+Un outil de gestion gratuit pour les associations caritatives 🙏
+
+Beaucoup d'associations caritatives gèrent encore leurs bénéficiaires, leurs dons et leur trésorerie dans des cahiers ou des tableurs éparpillés. Pas par choix : les logiciels professionnels coûtent cher, et cet argent est mieux employé pour celles et ceux qu'on aide.
+
+J'ai donc développé un SaaS gratuit pour les accompagner : gestion des bénéficiaires, dons et reçus, trésorerie (caisses) avec montants en lettres, comptes bancaires, inventaire (catégories, emplacements, statuts), prêts d'articles aux bénéficiaires, suivi médical (orientations, médecins, hôpitaux, analyses), rôles et permissions, statistiques et tableaux de bord, journal d'audit et notifications. Chaque association dispose de son propre espace de données. ✅
+
+Disponible en français, arabe et anglais (avec support RTL), sécurisé (JWT, mots de passe hachés, connexion Google) et construit avec React, TypeScript, Express, Prisma et PostgreSQL — déployé sur Vercel. Entièrement gratuit : une modeste contribution à votre travail de solidarité. 💡
+
+Essayez, donnez votre avis et partagez avec les associations qui pourraient en profiter.
+
+👉 https://charity-saas-free.vercel.app
+
+#SaaS #Charité #Associations #Gratuit #DéveloppementWeb #React #TypeScript
