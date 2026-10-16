@@ -231,6 +231,7 @@ export interface Donor {
   updatedAt: Date;
   // Champs calculés par le backend (GET /donors)
   receiptCount?: number;
+  sponsoredBeneficiaryIds?: string[];
   distribution?: {
     caisses: { id: string; name: string; subCategories: { id: string; name: string; total: number }[]; total: number }[];
     totalAmount: number;
@@ -386,6 +387,24 @@ export interface DonationReceipt {
   subCategoryName?: string;
   date: string;
   createdAt: Date;
+}
+
+// ---- DonorBeneficiary (prise en charge déclarée) ----
+
+export interface DonorBeneficiary {
+  id: string;
+  associationId: string;
+  donorId: string;
+  beneficiaryId: string;
+  createdAt: Date;
+  donor?: { id: string; firstName: string; lastName: string; reference: string };
+  beneficiary: {
+    id: string;
+    reference: string;
+    firstName: string;
+    lastName: string;
+    attribut?: string;
+  };
 }
 
 export interface DonationAllocation {

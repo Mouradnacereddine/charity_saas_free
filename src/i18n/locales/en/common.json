@@ -321,7 +321,6 @@
     "goodHealth": "Good Health",
     "sick": "Sick",
     "sectionName": "Name",
-    "address": "Address",
     "children": "Children",
     "filterAttribute": "Attribute",
     "filterFund": "Fund",
@@ -449,7 +448,15 @@
     "stampSignature": "Association Stamp and Official's Signature",
     "lastNameArPlaceholder": "Ex: Ben Issa",
     "firstNameArPlaceholder": "Ex: Mohamed",
-    "addressPlaceholder": "Ex: Algiers"
+    "addressPlaceholder": "Ex: Algiers",
+    "sponsoredBeneficiaries": "Sponsored beneficiaries",
+    "beneficiaryTakenCare": "sponsored by this donor",
+    "beneficiaryNotTakenCare": "not sponsored by this donor",
+    "filterSponsored": "Sponsored families",
+    "noneSponsored": "No sponsored beneficiaries",
+    "removeBeneficiary": "Remove",
+    "removeBeneficiaryConfirm": "Remove this beneficiary from the donor's sponsorship?",
+    "addBeneficiaryPlaceholder": "Add a sponsored beneficiary…"
   },
   "inventory": {
     "title": "Inventory & Loans Management",
@@ -703,7 +710,6 @@
     "expired": "Expired",
     "user": "User",
     "inviteUser": "Invite New User",
-    "name": "Name",
     "namePlaceholder": "Ex: Mohammed",
     "createInviteLink": "Create Invitation Link",
     "inviteLinkCreated": "Invitation link created",

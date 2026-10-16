@@ -314,7 +314,6 @@
     "goodHealth": "بصحة جيدة",
     "sick": "مريض",
     "sectionName": "الاسم",
-    "address": "العنوان",
     "children": "الأطفال",
     "filterAttribute": "الصفة",
     "filterFund": "الصندوق",
@@ -442,7 +441,15 @@
     "stampSignature": "ختم الجمعية وتوقيع المسؤول",
     "lastNameArPlaceholder": "مثال: بن عيسى",
     "firstNameArPlaceholder": "مثال: محمد",
-    "addressPlaceholder": "مثال: الجزائر"
+    "addressPlaceholder": "مثال: الجزائر",
+    "sponsoredBeneficiaries": "المستفيدون الذين يتكفل بهم",
+    "beneficiaryTakenCare": "يتكفل به هذا المتبرع",
+    "beneficiaryNotTakenCare": "لا يتكفل به هذا المتبرع",
+    "filterSponsored": "العائلات التي يتكفل بها",
+    "noneSponsored": "لا يوجد مستفيدون يتكفل بهم",
+    "removeBeneficiary": "إزالة",
+    "removeBeneficiaryConfirm": "إزالة تكفّل هذا المتبرع بالمستفيد؟",
+    "addBeneficiaryPlaceholder": "أضف مستفيدًا يتكفل به…"
   },
   "inventory": {
     "title": "إدارة المخزون والإعارات",
@@ -696,7 +703,6 @@
     "expired": "منتهي الصلاحية",
     "user": "مستخدم",
     "inviteUser": "دعوة مستخدم جديد",
-    "name": "الاسم",
     "namePlaceholder": "مثال: محمد",
     "createInviteLink": "إنشاء رابط الدعوة",
     "inviteLinkCreated": "تم إنشاء رابط الدعوة",

@@ -46,3 +46,38 @@ export function useDonorReceipts(id: string) {
     enabled: !!id,
   });
 }
+
+export function useDonorSponsoredBeneficiaries(id: string) {
+  return useQuery({
+    queryKey: ['donor-sponsored-beneficiaries', id],
+    queryFn: async () => {
+      const res = await donorsApi.sponsoredBeneficiaries(id);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useSponsorBeneficiary() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, beneficiaryId }: { id: string; beneficiaryId: string }) =>
+      donorsApi.addSponsoredBeneficiary(id, beneficiaryId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['donors'] });
+      qc.invalidateQueries({ queryKey: ['donor-sponsored-beneficiaries'] });
+    },
+  });
+}
+
+export function useUnsponsorBeneficiary() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, beneficiaryId }: { id: string; beneficiaryId: string }) =>
+      donorsApi.removeSponsoredBeneficiary(id, beneficiaryId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['donors'] });
+      qc.invalidateQueries({ queryKey: ['donor-sponsored-beneficiaries'] });
+    },
+  });
+}

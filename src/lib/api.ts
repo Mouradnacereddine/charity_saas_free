@@ -182,6 +182,11 @@ export const donorsApi = {
   update: (id: string, data: any) => api.put(`/donors/${id}`, data),
   delete: (id: string) => api.delete(`/donors/${id}`),
   receipts: (id: string) => api.get(`/donors/${id}/receipts`),
+  sponsoredBeneficiaries: (id: string) => api.get(`/donors/${id}/beneficiaries`),
+  addSponsoredBeneficiary: (id: string, beneficiaryId: string) =>
+    api.post(`/donors/${id}/beneficiaries`, { beneficiaryId }),
+  removeSponsoredBeneficiary: (id: string, beneficiaryId: string) =>
+    api.delete(`/donors/${id}/beneficiaries/${beneficiaryId}`),
 };
 
 export const caissesApi = {

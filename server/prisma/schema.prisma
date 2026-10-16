@@ -80,6 +80,7 @@ model Association {
   bankAccounts         BankAccount[]
   beneficiaries        Beneficiary[]
   donors               Donor[]
+  donorBeneficiaries   DonorBeneficiary[]
   transactions         Transaction[]
   articleCategories    ArticleCategory[]
   storageLocations     StorageLocation[]
@@ -211,6 +212,7 @@ model Beneficiary {
   loans            Loan[]
   medicalReferrals MedicalReferral[]
   debitAllocations DonationAllocation[]
+  donorSponsorships DonorBeneficiary[]
 
   @@index([associationId])
   @@index([caisseId])
@@ -239,6 +241,7 @@ model Donor {
   donationReceipts DonationReceipt[]
 
   creditAllocations DonationAllocation[]
+  sponsoredBeneficiaries DonorBeneficiary[]
 
   @@index([associationId])
 }
@@ -562,6 +565,27 @@ model DonationAllocation {
   creditTransaction Transaction? @relation("CreditAllocation", fields: [creditTransactionId], references: [id])
   debitTransaction  Transaction? @relation("DebitAllocation", fields: [debitTransactionId], references: [id])
 
+  @@index([associationId])
+  @@index([donorId])
+  @@index([beneficiaryId])
+}
+
+/// Prise en charge déclarée : un donateur s'engage à prendre en charge
+/// financièrement un bénéficiaire (et sa famille). Lien déclaratif,
+/// indépendant des donations (l'historique des dons reste dans
+/// DonationAllocation). Déclaré manuellement dans la fiche du donateur.
+model DonorBeneficiary {
+  id            String   @id @default(uuid())
+  associationId String
+  donorId       String
+  beneficiaryId String
+  createdAt     DateTime @default(now())
+
+  association Association  @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  donor       Donor        @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  beneficiary Beneficiary  @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+
+  @@unique([donorId, beneficiaryId])
   @@index([associationId])
   @@index([donorId])
   @@index([beneficiaryId])

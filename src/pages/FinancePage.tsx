@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, StatCard, EmptyState, LoadingSpinner } from '../components/common/UI'
 import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords, numberToWords, localizedDesc, roundMoney, sumMoney, parseMoneyInput } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
-import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake, Edit, ListOrdered } from 'lucide-react'
+import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake, Edit, ListOrdered, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useConfirmTransaction, useCancelTransaction } from '../hooks/useFinance'
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
 import { useDonors } from '../hooks/useDonors'
@@ -166,6 +166,12 @@ export default function FinancePage() {
   const [disbursingAllocId, setDisbursingAllocId] = useState<string | null>(null)
   const [disburseAmount, setDisburseAmount] = useState('')
   const [cancellingTxId, setCancellingTxId] = useState<string | null>(null)
+
+  // Bénéficiaires pris en charge par le donateur sélectionné (indicateur de cohérence)
+  const sponsoredIds = useMemo(
+    () => new Set(donors.find((d: Donor) => d.id === txDonorId)?.sponsoredBeneficiaryIds ?? []),
+    [donors, txDonorId]
+  )
 
   // ---- Allocations Data ----
   const { data: allocations = [] } = useQuery({
@@ -808,7 +814,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   onChange={setTxBeneficiaryId}
                   options={beneficiaries.map((b: Beneficiary) => ({
                     value: b.id,
-                    label: `${b.lastName} ${b.firstName} (${b.reference || ''})`,
+                    label: `${b.lastName} ${b.firstName} (${b.reference || ''})${sponsoredIds.has(b.id) ? ' ✓' : ''}`,
                   }))}
                 />
               </>
@@ -820,11 +826,29 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 onChange={setTxBeneficiaryId}
                 options={beneficiaries.map((b: Beneficiary) => ({
                   value: b.id,
-                  label: `${b.lastName} ${b.firstName} (${b.reference || ''})`,
+                  label: `${b.lastName} ${b.firstName} (${b.reference || ''})${sponsoredIds.has(b.id) ? ' ✓' : ''}`,
                 }))}
               />
             )}
           </div>
+
+          {/* Indicateur de prise en charge : le bénéficiaire sélectionné est-il
+              pris en charge par le donateur sélectionné ? */}
+          {txDonorId && txBeneficiaryId && (
+            <div className="flex items-center gap-2">
+              {sponsoredIds.has(txBeneficiaryId) ? (
+                <Badge variant="success" className="gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {t('dashboard.beneficiary')} {t('donors.beneficiaryTakenCare')}
+                </Badge>
+              ) : (
+                <Badge variant="warning" className="gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {t('dashboard.beneficiary')} {t('donors.beneficiaryNotTakenCare')}
+                </Badge>
+              )}
+            </div>
+          )}
 
           {/* Row 4: Amount & Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

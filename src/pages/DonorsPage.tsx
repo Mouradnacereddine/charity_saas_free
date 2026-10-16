@@ -4,9 +4,10 @@ import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptySta
 import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { dirForInput } from '../utils/localized'
 import { printReceipt } from '../lib/receipt'
-import { Plus, Search, Filter, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt } from 'lucide-react'
-import type { Donor, DonationReceipt } from '../types'
-import { useDonors, useCreateDonor, useUpdateDonor, useDeleteDonor, useDonorReceipts } from '../hooks/useDonors'
+import { Plus, Search, Filter, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt, X } from 'lucide-react'
+import type { Donor, DonationReceipt, Beneficiary } from '../types'
+import { useDonors, useCreateDonor, useUpdateDonor, useDeleteDonor, useDonorReceipts, useUnsponsorBeneficiary } from '../hooks/useDonors'
+import { useBeneficiaries } from '../hooks/useBeneficiaries'
 import { useQuery } from '@tanstack/react-query'
 import { caissesApi, financeApi } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
@@ -18,6 +19,7 @@ const emptyDonorForm = {
   email: '',
   address: '',
   notes: '',
+  sponsoredBeneficiaryIds: [] as string[],
 }
 
 type DonorFormData = typeof emptyDonorForm
@@ -31,10 +33,12 @@ export default function DonorsPage() {
     queryKey: ['caisses'],
     queryFn: () => caissesApi.list().then(r => r.data),
   })
+  const { data: beneficiaries = [] } = useBeneficiaries()
 
   const createDonor = useCreateDonor()
   const updateDonor = useUpdateDonor()
   const deleteDonor = useDeleteDonor()
+  const unsponsorBeneficiary = useUnsponsorBeneficiary()
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState<Donor | null>(null)
@@ -43,9 +47,11 @@ export default function DonorsPage() {
   const [filterName, setFilterName] = useState('')
   const [filterPhone, setFilterPhone] = useState('')
   const [filterGender, setFilterGender] = useState('')
+  const [filterSponsored, setFilterSponsored] = useState('')
   const [committedName, setCommittedName] = useState('')
   const [committedPhone, setCommittedPhone] = useState('')
   const [committedGender, setCommittedGender] = useState('')
+  const [committedSponsored, setCommittedSponsored] = useState('')
 
   const [form, setForm] = useState<DonorFormData>(emptyDonorForm)
 
@@ -60,6 +66,7 @@ export default function DonorsPage() {
       email: donor.email || '',
       address: donor.address || '',
       notes: donor.notes || '',
+      sponsoredBeneficiaryIds: [...(donor.sponsoredBeneficiaryIds || [])],
     })
     setShowAddModal(true)
   }
@@ -90,10 +97,11 @@ export default function DonorsPage() {
     setCommittedName(filterName)
     setCommittedPhone(filterPhone)
     setCommittedGender(filterGender)
+    setCommittedSponsored(filterSponsored)
   }
   const resetFilters = () => {
-    setFilterName(''); setFilterPhone(''); setFilterGender('')
-    setCommittedName(''); setCommittedPhone(''); setCommittedGender('')
+    setFilterName(''); setFilterPhone(''); setFilterGender(''); setFilterSponsored('')
+    setCommittedName(''); setCommittedPhone(''); setCommittedGender(''); setCommittedSponsored('')
   }
 
   const filteredDonors = donors.filter((d: Donor) => {
@@ -101,13 +109,53 @@ export default function DonorsPage() {
     if (committedName && !name.includes(committedName.toLowerCase())) return false
     if (committedPhone && !(d.phone || '').includes(committedPhone)) return false
     if (committedGender && d.gender !== committedGender) return false
+    if (committedSponsored && !(d.sponsoredBeneficiaryIds || []).includes(committedSponsored)) return false
     return true
   })
 
-  // ---- Receipt Modal ----
+  // ---- Bénéficiaires pris en charge (panneau commun à la fiche détail) ----
+  function SponsoredBeneficiariesPanel({ donor, onRemove }: { donor: Donor; onRemove?: (beneficiaryId: string) => void }) {
+    const sponsoredIds = donor.sponsoredBeneficiaryIds || []
+    if (sponsoredIds.length === 0) {
+      return <p className="text-xs text-muted-foreground">{t('donors.noneSponsored')}</p>
+    }
+    const sponsored = beneficiaries.filter((b: Beneficiary) => sponsoredIds.includes(b.id))
+    return (
+      <div className="space-y-2">
+        {sponsored.map((b: Beneficiary) => (
+          <div key={b.id} className="flex items-center justify-between bg-muted rounded-lg p-3">
+            <div>
+              <p className="text-sm font-medium">{b.lastName} {b.firstName}</p>
+              <p className="text-xs text-muted-foreground font-mono" dir="ltr">{b.reference || '—'}</p>
+              {b.attribut && <p className="text-xs text-muted-foreground">{b.attribut}</p>}
+            </div>
+            {onRemove && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onRemove(b.id) }}
+                className="p-1.5 text-muted-foreground hover:text-destructive rounded"
+                title={t('donors.removeBeneficiary')}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // ---- Receipt Modal (détail du donateur) ----
   function ReceiptModal({ donor, onClose }: { donor: Donor; onClose: () => void }) {
     const [showReceipt, setShowReceipt] = useState(false)
     const { data: receipts = [] } = useDonorReceipts(donor.id)
+
+    const handleRemoveSponsored = async (beneficiaryId: string) => {
+      if (!window.confirm(t('donors.removeBeneficiaryConfirm'))) return
+      await unsponsorBeneficiary.mutateAsync({ id: donor.id, beneficiaryId })
+    }
+
+    // Le donateur affiché suit la liste (données fraîches après mutation)
+    const freshDonor = donors.find((d: Donor) => d.id === donor.id) || donor
 
     return (
       <Modal isOpen={true} onClose={onClose} title={t('donors.details')} size="lg">
@@ -122,6 +170,11 @@ export default function DonorsPage() {
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.totalDonations')}</span><span className="font-medium text-success">{formatCurrency(donor._sum?.amount || donor.totalDonated || 0)}</span></div>
             <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.donationCount')}</span><span className="font-medium">{donor.receiptCount ?? donor._count?.transactions ?? 0}</span></div>
             {donor.notes && <div className="flex justify-between p-2 bg-muted rounded md:col-span-2"><span className="text-muted-foreground">{t('common.notes')}</span><span className="font-medium">{donor.notes}</span></div>}
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-2">{t('donors.sponsoredBeneficiaries')}</h4>
+            <SponsoredBeneficiariesPanel donor={freshDonor} onRemove={handleRemoveSponsored} />
           </div>
 
           {receipts.length > 0 && (
@@ -194,11 +247,17 @@ ${(() => { const b = (r as any).transaction?.beneficiary; return b ? `<div class
       {filterOpen && (
         <Card titleAr={t('donors.advancedSearch')}>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Input labelAr={t('donors.fullName')} value={filterName} onChange={(e) => setFilterName(e.target.value)} placeholder={t('common.search')} />
               <Input labelAr={t('donors.phone')} value={filterPhone} onChange={(e) => setFilterPhone(e.target.value)} placeholder={t('common.search')} />
               <SearchableSelect labelAr={t('donors.gender')} value={filterGender} onChange={setFilterGender}
                 options={[{ value: 'male', label: t('common.male') }, { value: 'female', label: t('common.female') }]} />
+              <SearchableSelect labelAr={t('donors.filterSponsored')} value={filterSponsored} onChange={setFilterSponsored}
+                options={beneficiaries.map((b: Beneficiary) => ({
+                  value: b.id,
+                  label: `${b.lastName} ${b.firstName} (${b.reference || ''})`,
+                }))}
+                placeholder={t('common.all')} />
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={applyFilters}><Search className="w-4 h-4" /> {t('common.search')}</Button>
@@ -221,6 +280,7 @@ ${(() => { const b = (r as any).transaction?.beneficiary; return b ? `<div class
                   <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden sm:table-cell">{t('donors.phone')}</th>
                   <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">{t('donors.totalDonations')}</th>
                   <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">{t('donors.donationCount')}</th>
+                  <th className="text-start py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">{t('donors.sponsoredBeneficiaries')}</th>
                   <th className="text-center py-3 px-4 text-muted-foreground font-medium">{t('common.actions')}</th>
                 </tr>
               </thead>
@@ -232,6 +292,7 @@ ${(() => { const b = (r as any).transaction?.beneficiary; return b ? `<div class
                     <td className="py-3 px-4 hidden sm:table-cell text-foreground" dir="ltr">{donor.phone}</td>
                     <td className="py-3 px-4 hidden md:table-cell text-success font-semibold">{formatCurrency(donor._sum?.amount || 0)}</td>
                     <td className="py-3 px-4 hidden md:table-cell"><Badge>{donor.receiptCount ?? donor._count?.transactions ?? 0}</Badge></td>
+                    <td className="py-3 px-4 hidden md:table-cell"><Badge variant="info">{(donor.sponsoredBeneficiaryIds || []).length}</Badge></td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={(e) => { e.stopPropagation(); setShowDetailModal(donor); }} className="p-1.5 text-muted-foreground hover:text-primary rounded"><Eye className="w-4 h-4" /></button>
@@ -261,6 +322,42 @@ ${(() => { const b = (r as any).transaction?.beneficiary; return b ? `<div class
           </div>
           <Input label={t('donors.address')} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('donors.addressPlaceholder')} />
           <TextArea label={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+
+          {/* Bénéficiaires pris en charge */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-foreground">{t('donors.sponsoredBeneficiaries')}</label>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <SponsoredPicker
+                  beneficiaries={beneficiaries}
+                  selectedIds={form.sponsoredBeneficiaryIds}
+                  onAdd={(id) => setForm({ ...form, sponsoredBeneficiaryIds: [...form.sponsoredBeneficiaryIds, id] })}
+                />
+              </div>
+            </div>
+            {form.sponsoredBeneficiaryIds.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {form.sponsoredBeneficiaryIds.map((id) => {
+                  const b = beneficiaries.find((x: Beneficiary) => x.id === id)
+                  if (!b) return null
+                  return (
+                    <Badge key={id} variant="info" className="pl-2.5 pr-1 py-1 gap-1">
+                      <span>{b.lastName} {b.firstName}</span>
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, sponsoredBeneficiaryIds: form.sponsoredBeneficiaryIds.filter(x => x !== id) })}
+                        className="p-0.5 rounded hover:bg-primary/20"
+                        title={t('donors.removeBeneficiary')}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </Badge>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-3 justify-end border-t border-border pt-4">
             <Button variant="secondary" onClick={() => { setShowAddModal(false); resetForm(); }}>{t('common.cancel')}</Button>
             <Button onClick={handleSave} disabled={!form.lastName.trim() || !form.phone.trim() || createDonor.isPending || updateDonor.isPending}>
@@ -272,6 +369,66 @@ ${(() => { const b = (r as any).transaction?.beneficiary; return b ? `<div class
 
       {/* Detail Modal */}
       {showDetailModal && <ReceiptModal donor={showDetailModal} onClose={() => setShowDetailModal(null)} />}
+    </div>
+  )
+}
+
+// ---- Sélecteur d'ajout de bénéficiaire pris en charge ----
+function SponsoredPicker({ beneficiaries, selectedIds, onAdd }: {
+  beneficiaries: Beneficiary[]
+  selectedIds: string[]
+  onAdd: (id: string) => void
+}) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const remaining = beneficiaries.filter((b) =>
+    !selectedIds.includes(b.id) &&
+    `${b.lastName} ${b.firstName} ${b.reference}`.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full px-3 py-2 border rounded-lg text-sm min-h-[44px] bg-background flex items-center justify-between text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring border-input"
+      >
+        <span>{t('donors.addBeneficiaryPlaceholder')}</span>
+        <span className="text-muted-foreground text-xs">▼</span>
+      </button>
+      {open && (
+        <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg max-h-60 flex flex-col overflow-hidden">
+          <div className="p-2 border-b border-border bg-muted flex items-center gap-2">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('common.search')}
+              className="w-full px-2.5 py-1.5 text-xs border border-input bg-background text-foreground rounded focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring"
+              autoFocus
+            />
+          </div>
+          <div className="overflow-y-auto flex-1">
+            {remaining.length === 0 ? (
+              <p className="p-3 text-xs text-muted-foreground text-center">{t('common.noResults')}</p>
+            ) : (
+              remaining.slice(0, 50).map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => { onAdd(b.id); setOpen(false); setSearch('') }}
+                  className="w-full text-right px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors border-b border-border last:border-0 text-foreground"
+                >
+                  {b.lastName} {b.firstName}
+                  <span className="text-xs text-muted-foreground font-mono ms-2" dir="ltr">{b.reference || ''}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

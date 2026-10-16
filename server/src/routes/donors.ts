@@ -49,6 +49,19 @@ router.get('/', requirePermission('donors', 'read'), async (req: AuthRequest, re
     const receipts = await prisma.donationReceipt.findMany({
       where: { donorId: { in: donorIds } },
     });
+    // Bénéficiaires pris en charge (liens déclaratifs DonorBeneficiary)
+    const sponsorshipRows = donorIds.length
+      ? await prisma.donorBeneficiary.findMany({
+          where: { donorId: { in: donorIds } },
+          select: { donorId: true, beneficiaryId: true },
+        })
+      : [];
+    const sponsoredMap = new Map<string, string[]>();
+    for (const row of sponsorshipRows) {
+      const arr = sponsoredMap.get(row.donorId) || [];
+      arr.push(row.beneficiaryId);
+      sponsoredMap.set(row.donorId, arr);
+    }
     const countMap = new Map<string, number>();
     const distributionMap = new Map<string, { caisses: { id: string; name: string; subCategories: { id: string; name: string; total: number }[]; total: number }[]; totalAmount: number }>();
 
@@ -87,6 +100,7 @@ router.get('/', requirePermission('donors', 'read'), async (req: AuthRequest, re
         ...d,
         totalDonated: roundMoney(Number(dist.totalAmount || d.totalDonated || 0)),
         receiptCount: countMap.get(d.id) || 0,
+        sponsoredBeneficiaryIds: sponsoredMap.get(d.id) || [],
         distribution: dist,
       };
     });
@@ -177,9 +191,25 @@ router.get('/:id', requirePermission('donors', 'read'), async (req: AuthRequest,
       orderBy: { date: 'desc' },
     });
 
+    // Bénéficiaires pris en charge (liens déclaratifs)
+    const sponsored = await prisma.donorBeneficiary.findMany({
+      where: { donorId: id, associationId },
+      include: {
+        beneficiary: {
+          where: { phone: { not: '__ATTRIBUT_DUMMY__' } },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
     const dynamicTotal = receipts.reduce((sum: number, r: any) => Number(sum) + Number(r.amount), 0);
 
-    res.json({ ...donor, totalDonated: roundMoney(dynamicTotal || Number(donor.totalDonated) || 0), donationReceipts: receipts });
+    res.json({
+      ...donor,
+      totalDonated: roundMoney(dynamicTotal || Number(donor.totalDonated) || 0),
+      donationReceipts: receipts,
+      sponsoredBeneficiaries: sponsored.map((s: any) => s.beneficiary).filter(Boolean),
+    });
   } catch (error) {
     console.error('Error getting donor:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -204,6 +234,7 @@ router.put('/:id', requirePermission('donors', 'update'), async (req: AuthReques
     const {
       reference, firstName, lastName,
       phone, email, address, totalDonated, notes, gender,
+      sponsoredBeneficiaryIds,
     } = req.body;
 
     const data: any = {};
@@ -222,6 +253,31 @@ router.put('/:id', requirePermission('donors', 'update'), async (req: AuthReques
       where: { id },
       data,
     });
+
+    // Mise à jour globale des bénéficiaires pris en charge (diff vs liens existants)
+    if (Array.isArray(sponsoredBeneficiaryIds)) {
+      const target = sponsoredBeneficiaryIds.map(String).filter(Boolean);
+      const current = await prisma.donorBeneficiary.findMany({
+        where: { donorId: id, associationId },
+        select: { beneficiaryId: true },
+      });
+      const currentIds = new Set(current.map((c: any) => c.beneficiaryId));
+      const targetSet = new Set(target);
+
+      const toAdd = target.filter(b => !currentIds.has(b));
+      const toRemove = [...currentIds].filter(b => !targetSet.has(b));
+
+      if (toRemove.length) {
+        await prisma.donorBeneficiary.deleteMany({
+          where: { donorId: id, beneficiaryId: { in: toRemove }, associationId },
+        });
+      }
+      for (const b of toAdd) {
+        await prisma.donorBeneficiary.create({
+          data: { associationId, donorId: id, beneficiaryId: b },
+        });
+      }
+    }
 
     await logAudit(req, {
       action: 'update',
@@ -264,6 +320,133 @@ router.delete('/:id', requirePermission('donors', 'delete'), async (req: AuthReq
     res.json({ message: 'Donor deleted successfully' });
   } catch (error) {
     console.error('Error deleting donor:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/donors/:id/beneficiaries — list of beneficiaries sponsored by this donor
+router.get('/:id/beneficiaries', requirePermission('donors', 'read'), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+
+    const donor = await prisma.donor.findFirst({ where: { id, associationId } });
+    if (!donor) {
+      res.status(404).json({ error: 'Donor not found' });
+      return;
+    }
+
+    const links = await prisma.donorBeneficiary.findMany({
+      where: { donorId: id, associationId },
+      include: {
+        beneficiary: {
+          where: { phone: { not: '__ATTRIBUT_DUMMY__' } },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(links.map((l: any) => l.beneficiary).filter(Boolean));
+  } catch (error) {
+    console.error('Error listing donor beneficiaries:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/donors/:id/beneficiaries — declare a beneficiary as sponsored by this donor
+router.post('/:id/beneficiaries', requirePermission('donors', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const associationId = req.user!.associationId;
+    const { beneficiaryId } = req.body;
+
+    if (!beneficiaryId) {
+      res.status(400).json({ error: 'Missing beneficiaryId' });
+      return;
+    }
+
+    const donor = await prisma.donor.findFirst({ where: { id, associationId } });
+    if (!donor) {
+      res.status(404).json({ error: 'Donor not found' });
+      return;
+    }
+
+    const beneficiary = await prisma.beneficiary.findFirst({
+      where: { id: String(beneficiaryId), associationId, phone: { not: '__ATTRIBUT_DUMMY__' } },
+    });
+    if (!beneficiary) {
+      res.status(404).json({ error: 'Beneficiary not found' });
+      return;
+    }
+
+    // Idempotent : un lien existant est renvoyé tel quel (200)
+    const existing = await prisma.donorBeneficiary.findFirst({
+      where: { donorId: id, beneficiaryId: String(beneficiaryId) },
+    });
+    if (existing) {
+      res.json(existing);
+      return;
+    }
+
+    const link = await prisma.donorBeneficiary.create({
+      data: {
+        associationId,
+        donorId: id,
+        beneficiaryId: String(beneficiaryId),
+      },
+    });
+
+    await logAudit(req, {
+      action: 'create',
+      resource: 'donor',
+      resourceId: id,
+      description: `Prise en charge déclarée : ${donor.firstName} ${donor.lastName} → ${beneficiary.firstName} ${beneficiary.lastName}`,
+    });
+
+    res.status(201).json(link);
+  } catch (error) {
+    console.error('Error adding donor beneficiary:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/donors/:id/beneficiaries/:beneficiaryId — remove a sponsorship link
+router.delete('/:id/beneficiaries/:beneficiaryId', requirePermission('donors', 'update'), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id, beneficiaryId } = req.params;
+    const associationId = req.user!.associationId;
+
+    const donor = await prisma.donor.findFirst({ where: { id, associationId } });
+    if (!donor) {
+      res.status(404).json({ error: 'Donor not found' });
+      return;
+    }
+
+    const link = await prisma.donorBeneficiary.findFirst({
+      where: { donorId: id, beneficiaryId: String(beneficiaryId), associationId },
+    });
+    if (!link) {
+      res.status(404).json({ error: 'Sponsorship link not found' });
+      return;
+    }
+
+    await prisma.donorBeneficiary.delete({ where: { id: link.id } });
+
+    const beneficiary = await prisma.beneficiary.findFirst({
+      where: { id: String(beneficiaryId), associationId },
+      select: { firstName: true, lastName: true },
+    });
+
+    await logAudit(req, {
+      action: 'delete',
+      resource: 'donor',
+      resourceId: id,
+      description: `Prise en charge retirée : ${donor.firstName} ${donor.lastName} → ${beneficiary?.firstName || ''} ${beneficiary?.lastName || ''}`,
+    });
+
+    res.json({ message: 'Sponsorship removed' });
+  } catch (error) {
+    console.error('Error removing donor beneficiary:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
