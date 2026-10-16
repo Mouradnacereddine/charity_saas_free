@@ -194,11 +194,7 @@ router.get('/:id', requirePermission('donors', 'read'), async (req: AuthRequest,
     // Bénéficiaires pris en charge (liens déclaratifs)
     const sponsored = await prisma.donorBeneficiary.findMany({
       where: { donorId: id, associationId },
-      include: {
-        beneficiary: {
-          where: { phone: { not: '__ATTRIBUT_DUMMY__' } },
-        },
-      },
+      include: { beneficiary: true },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -208,7 +204,9 @@ router.get('/:id', requirePermission('donors', 'read'), async (req: AuthRequest,
       ...donor,
       totalDonated: roundMoney(dynamicTotal || Number(donor.totalDonated) || 0),
       donationReceipts: receipts,
-      sponsoredBeneficiaries: sponsored.map((s: any) => s.beneficiary).filter(Boolean),
+      sponsoredBeneficiaries: sponsored
+        .map((s: any) => s.beneficiary)
+        .filter((b: any) => b && b.phone !== '__ATTRIBUT_DUMMY__'),
     });
   } catch (error) {
     console.error('Error getting donor:', error);
@@ -338,15 +336,15 @@ router.get('/:id/beneficiaries', requirePermission('donors', 'read'), async (req
 
     const links = await prisma.donorBeneficiary.findMany({
       where: { donorId: id, associationId },
-      include: {
-        beneficiary: {
-          where: { phone: { not: '__ATTRIBUT_DUMMY__' } },
-        },
-      },
+      include: { beneficiary: true },
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(links.map((l: any) => l.beneficiary).filter(Boolean));
+    res.json(
+      links
+        .map((l: any) => l.beneficiary)
+        .filter((b: any) => b && b.phone !== '__ATTRIBUT_DUMMY__')
+    );
   } catch (error) {
     console.error('Error listing donor beneficiaries:', error);
     res.status(500).json({ error: 'Internal server error' });
