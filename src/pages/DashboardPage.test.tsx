@@ -1,49 +1,9 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 
-// Mock all stores before importing the component
-vi.mock('../stores/financeStore', () => ({
-  useFinanceStore: () => ({
-    transactions: [],
-    totalCash: 0,
-    loadTransactions: vi.fn().mockResolvedValue(undefined),
-    loadBankAccounts: vi.fn().mockResolvedValue(undefined),
-    calculateTotalCash: vi.fn().mockResolvedValue(undefined),
-    getTotalBankBalance: () => 0,
-  }),
-}))
-
-vi.mock('../stores/caisseStore', () => ({
-  useCaisseStore: () => ({
-    caisses: [],
-    loadCaisses: vi.fn().mockResolvedValue(undefined),
-  }),
-}))
-
-vi.mock('../stores/beneficiaryStore', () => ({
-  useBeneficiaryStore: () => ({
-    beneficiaries: [],
-    loadBeneficiaries: vi.fn().mockResolvedValue(undefined),
-  }),
-}))
-
-vi.mock('../stores/donorStore', () => ({
-  useDonorStore: () => ({
-    donors: [],
-    loadDonors: vi.fn().mockResolvedValue(undefined),
-  }),
-}))
-
-vi.mock('../stores/inventoryStore', () => ({
-  useInventoryStore: () => ({
-    articles: [],
-    loans: [],
-    loadArticles: vi.fn().mockResolvedValue(undefined),
-    loadLoans: vi.fn().mockResolvedValue(undefined),
-  }),
-}))
-
-// Mock dashboard hooks
+// The dashboard is fed by TanStack Query hooks; mock them (no network in tests).
+// NOTE: the zustand store mocks this file used to carry are obsolete — the app
+// migrated to TanStack Query, so those stores are no longer read by the page.
 vi.mock('../hooks/useDashboard', () => ({
   useDashboardStats: () => ({
     data: {
@@ -60,10 +20,15 @@ vi.mock('../hooks/useDashboard', () => ({
   }),
 }))
 
+vi.mock('../hooks/useInventory', () => ({
+  useLoans: () => ({ data: [], isLoading: false }),
+}))
+
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({
     user: { id: 'admin-id', role: 'admin' },
     isAdmin: true,
+    isTreasurer: false,
     isLoading: false,
   }),
 }))
@@ -72,6 +37,7 @@ vi.mock('../hooks/useAuth', () => ({
 vi.mock('../utils/helpers', () => ({
   formatCurrency: (v: number) => `${v} DA`,
   formatDate: (d: string) => d,
+  localizedDesc: (d: unknown) => String(d ?? ''),
   generateId: () => 'mock-id',
   numberToArabicWords: () => '',
   numberToFrenchWords: () => '',
@@ -80,20 +46,28 @@ vi.mock('../utils/helpers', () => ({
 }))
 
 import DashboardPage from './DashboardPage'
+import { renderWithProviders } from '../test/utils'
 
 describe('DashboardPage', () => {
   it('renders without crashing', async () => {
-    render(<DashboardPage />)
-    // After loading resolves, the page should render the title
+    renderWithProviders(<DashboardPage />)
+    // The page title should render once loading resolves
     expect(await screen.findByText('لوحة التحكم')).toBeInTheDocument()
   })
 
   it('displays stat card titles in Arabic', async () => {
-    render(<DashboardPage />)
+    renderWithProviders(<DashboardPage />)
 
     // Wait for loading to finish then check stat card titles
     expect(await screen.findByText('رصيد البنك الإجمالي')).toBeInTheDocument()
     expect(screen.getByText('إجمالي المستفيدين')).toBeInTheDocument()
     expect(screen.getByText('إجمالي المتبرعين')).toBeInTheDocument()
+  })
+
+  it('shows the finance cards for an admin', async () => {
+    renderWithProviders(<DashboardPage />)
+    // isAdmin → canViewFinance → bank + cash balances are rendered
+    expect(await screen.findByText('رصيد البنك الإجمالي')).toBeInTheDocument()
+    expect(screen.getByText('رصيد الصندوق النقدي')).toBeInTheDocument()
   })
 })

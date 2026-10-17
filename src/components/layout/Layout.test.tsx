@@ -1,6 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { Layout } from './Layout'
+import { renderWithProviders } from '../../test/utils'
 
 describe('Layout', () => {
   const defaultProps = {
@@ -9,7 +10,7 @@ describe('Layout', () => {
   }
 
   it('renders all navigation items in Arabic', () => {
-    render(<Layout {...defaultProps}>Content</Layout>)
+    renderWithProviders(<Layout {...defaultProps}>Content</Layout>)
 
     // "لوحة التحكم" appears in both the sidebar nav and the top header h2
     const dashboardElements = screen.getAllByText('لوحة التحكم')
@@ -24,22 +25,32 @@ describe('Layout', () => {
   })
 
   it('renders children in main content area', () => {
-    render(<Layout {...defaultProps}><p>Page Content</p></Layout>)
+    renderWithProviders(<Layout {...defaultProps}><p>Page Content</p></Layout>)
     expect(screen.getByText('Page Content')).toBeInTheDocument()
   })
 
   it('highlights the active page', () => {
-    render(<Layout {...defaultProps} activePage="finance">Content</Layout>)
+    renderWithProviders(<Layout {...defaultProps} activePage="finance">Content</Layout>)
     const financeElements = screen.getAllByText('المالية')
+    // The active nav item carries the sidebar-primary background class
     const activeNavButton = financeElements.find(el =>
-      el.closest('button')?.className.includes('bg-sidebar-accent')
+      el.closest('button')?.className.includes('bg-sidebar-primary')
     )
     expect(activeNavButton).toBeDefined()
   })
 
+  it('does not highlight an inactive page', () => {
+    renderWithProviders(<Layout {...defaultProps} activePage="dashboard">Content</Layout>)
+    const financeElements = screen.getAllByText('المالية')
+    const activeNavButton = financeElements.find(el =>
+      el.closest('button')?.className.includes('bg-sidebar-primary')
+    )
+    expect(activeNavButton).toBeUndefined()
+  })
+
   it('calls onNavigate when a nav item is clicked', () => {
     const onNavigate = vi.fn()
-    render(<Layout {...defaultProps} onNavigate={onNavigate}>Content</Layout>)
+    renderWithProviders(<Layout {...defaultProps} onNavigate={onNavigate}>Content</Layout>)
 
     // Click on the sidebar nav button for "المالية"
     const navButtons = screen.getAllByRole('button')
@@ -50,7 +61,7 @@ describe('Layout', () => {
   })
 
   it('has a mobile menu button', () => {
-    render(<Layout {...defaultProps}>Content</Layout>)
+    renderWithProviders(<Layout {...defaultProps}>Content</Layout>)
     // The mobile menu button is in the header, it is an lg:hidden button
     const allButtons = screen.getAllByRole('button')
     const mobileMenuButton = allButtons.find(btn =>
@@ -59,17 +70,25 @@ describe('Layout', () => {
     expect(mobileMenuButton).toBeDefined()
   })
 
-  it('shows current date in Arabic format', () => {
-    render(<Layout {...defaultProps}>Content</Layout>)
-    // The layout renders the date using ar-DZ locale with weekday, year, month, day
-    // We verify the date container exists with Arabic text (day names / month names)
+  it('shows the current date in the header', () => {
+    renderWithProviders(<Layout {...defaultProps}>Content</Layout>)
+    // The header renders the date with fr-FR (Arabic UI falls back to fr-FR formatting)
     const today = new Date()
     const expectedDate = today.toLocaleDateString('fr-FR', {
-      weekday: 'long',
+      weekday: 'short',
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
     })
     expect(screen.getByText(expectedDate)).toBeInTheDocument()
+  })
+
+  it('hides navigation items the user cannot access', () => {
+    // canAny=false for every resource → no nav buttons rendered
+    renderWithProviders(
+      <Layout {...defaultProps} canAny={() => false}>Content</Layout>,
+    )
+    expect(screen.queryByText('المالية')).not.toBeInTheDocument()
+    expect(screen.queryByText('المستفيدون')).not.toBeInTheDocument()
   })
 })
