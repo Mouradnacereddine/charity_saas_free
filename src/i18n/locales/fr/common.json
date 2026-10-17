@@ -21,7 +21,9 @@
     "donation": "Faire un don",
     "toggleOpen": "Ouvrir le menu",
     "toggleCollapse": "Réduire la barre",
-    "toggleExpand": "Développer la barre"
+    "toggleExpand": "Développer la barre",
+    "collapseSidebar": "Réduire la barre",
+    "expandSidebar": "Développer la barre"
   },
   "audit": {
     "title": "Journal d'activité",
@@ -147,7 +149,10 @@
     "done": "Terminé",
     "error": "Erreur",
     "article": "Article",
-    "days": "jour(s)"
+    "days": "jour(s)",
+    "general": "Général",
+    "noOperations": "Aucune opération",
+    "details": "Détails"
   },
   "settings": {
     "title": "Paramètres de l'association",
@@ -286,7 +291,9 @@
     "remainingDisbursement": "Montant restant à débourser",
     "rib": "RIB",
     "iban": "IBAN",
-    "swift": "SWIFT"
+    "swift": "SWIFT",
+    "originalAmount": "Montant d'origine",
+    "amountExceedsLimit": "Le montant dépasse la limite autorisée"
   },
   "beneficiaries": {
     "title": "Bénéficiaires",
@@ -457,7 +464,9 @@
     "noneSponsored": "Aucun bénéficiaire pris en charge",
     "removeBeneficiary": "Retirer",
     "removeBeneficiaryConfirm": "Retirer la prise en charge de ce bénéficiaire ?",
-    "addBeneficiaryPlaceholder": "Ajouter un bénéficiaire pris en charge…"
+    "addBeneficiaryPlaceholder": "Ajouter un bénéficiaire pris en charge…",
+    "lastNamePlaceholder": "Ex: Ben Issa",
+    "firstNamePlaceholder": "Ex: Mohamed"
   },
   "inventory": {
     "title": "Gestion du stock et des prêts",
@@ -560,7 +569,9 @@
     "inventoryCancelled": "Annulé",
     "inventoryHint": "La quantité de référence est la quantité disponible au début du comptage. Les prêts en cours sont exclus.",
     "stockTakeBy": "Responsable de l'inventaire",
-    "associationResponsible": "Responsable de l'association"
+    "associationResponsible": "Responsable de l'association",
+    "namePlaceholder": "Ex: Médical",
+    "description": "Description"
   },
   "medical": {
     "title": "Orientation médicale",
@@ -684,7 +695,9 @@
     "nameArPlaceholder": "Ex: Généraliste",
     "searchAddressPlaceholder": "Rechercher par adresse...",
     "specialtyPlaceholder": "Choisir une spécialité...",
-    "addressPlaceholder": "Ex: 15 Rue des Frères, Alger"
+    "addressPlaceholder": "Ex: 15 Rue des Frères, Alger",
+    "lastNamePlaceholder": "Ex: Belkacem",
+    "firstNamePlaceholder": "Ex: Amina"
   },
   "users": {
     "title": "Gestion des utilisateurs",
@@ -745,7 +758,9 @@
     "deleteUserHint": "Supprimer l'utilisateur",
     "deleteInviteHint": "Supprimer l'invitation",
     "createdDate": "Date de création",
-    "nameArPlaceholder": "Ex: Ahmed"
+    "nameArPlaceholder": "Ex: Ahmed",
+    "stockManager": "Magasinier",
+    "socialWorker": "Assistant social"
   },
   "analytics": {
     "title": "Analyses financières et rapports",

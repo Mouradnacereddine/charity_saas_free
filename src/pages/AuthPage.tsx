@@ -196,7 +196,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
                   type="text"
                   value={assocName}
                   onChange={(e) => setAssocName(e.target.value)}
-                  placeholder={t('auth.namePlaceholder')}
+                  placeholder={t('auth.assocNamePlaceholder')}
                   className="w-full px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                   dir={assocLocale === 'ar' ? 'rtl' : 'ltr'}
                 />

@@ -21,7 +21,9 @@
     "donation": "Make a Donation",
     "toggleOpen": "Open menu",
     "toggleCollapse": "Collapse sidebar",
-    "toggleExpand": "Expand sidebar"
+    "toggleExpand": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
   },
   "audit": {
     "title": "Activity Log",
@@ -147,7 +149,10 @@
     "done": "Done",
     "error": "Error",
     "article": "Article",
-    "days": "day(s)"
+    "days": "day(s)",
+    "general": "General",
+    "noOperations": "No operations",
+    "details": "Details"
   },
   "settings": {
     "title": "Association Settings",
@@ -285,7 +290,9 @@
     "remainingDisbursement": "Remaining amount to disburse",
     "rib": "RIB",
     "iban": "IBAN",
-    "swift": "SWIFT"
+    "swift": "SWIFT",
+    "originalAmount": "Original amount",
+    "amountExceedsLimit": "Amount exceeds the allowed limit"
   },
   "beneficiaries": {
     "title": "Beneficiaries",
@@ -456,7 +463,9 @@
     "noneSponsored": "No sponsored beneficiaries",
     "removeBeneficiary": "Remove",
     "removeBeneficiaryConfirm": "Remove this beneficiary from the donor's sponsorship?",
-    "addBeneficiaryPlaceholder": "Add a sponsored beneficiary…"
+    "addBeneficiaryPlaceholder": "Add a sponsored beneficiary…",
+    "lastNamePlaceholder": "Ex: Ben Issa",
+    "firstNamePlaceholder": "Ex: Mohamed"
   },
   "inventory": {
     "title": "Inventory & Loans Management",
@@ -559,7 +568,9 @@
     "inventoryCancelled": "Cancelled",
     "inventoryHint": "The reference quantity is the available quantity at count start. Active loans are excluded.",
     "stockTakeBy": "Inventory officer",
-    "associationResponsible": "Association responsible"
+    "associationResponsible": "Association responsible",
+    "namePlaceholder": "Ex: Medical",
+    "description": "Description"
   },
   "medical": {
     "title": "Medical Referral",
@@ -683,7 +694,9 @@
     "nameArPlaceholder": "Ex: General Practitioner",
     "searchAddressPlaceholder": "Search by address...",
     "specialtyPlaceholder": "Choose a specialty...",
-    "addressPlaceholder": "Ex: 15 Freres Street, Algiers"
+    "addressPlaceholder": "Ex: 15 Freres Street, Algiers",
+    "lastNamePlaceholder": "Ex: Belkacem",
+    "firstNamePlaceholder": "Ex: Amina"
   },
   "users": {
     "title": "User Management",
@@ -744,7 +757,9 @@
     "deleteUserHint": "Delete user",
     "deleteInviteHint": "Delete invitation",
     "createdDate": "Created Date",
-    "nameArPlaceholder": "Ex: Ahmed"
+    "nameArPlaceholder": "Ex: Ahmed",
+    "stockManager": "Stock Manager",
+    "socialWorker": "Social Worker"
   },
   "analytics": {
     "title": "Financial Analytics & Reports",

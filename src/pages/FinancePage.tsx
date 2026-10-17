@@ -1349,7 +1349,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
             <div className="bg-muted rounded-lg p-3 space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.receiptNo')}</span><span className="font-mono" dir="ltr">{detailTx.receiptNumber || '—'}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">{t('dashboard.type')}</span><span>{detailTx.type === 'credit' ? t('dashboard.deposit') : t('dashboard.withdrawal')}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">{t('finance.originalAmount', 'المبلغ الأصلي')}</span><span className="font-bold">{formatCurrency(detailTx.amount)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{t('finance.originalAmount')}</span><span className="font-bold">{formatCurrency(detailTx.amount)}</span></div>
               {(() => {
                 const rem = (detailTx as any).remainingAmount;
                 if (rem !== null && typeof rem === 'number' && rem > 0 && detailTx.type === 'credit') {
@@ -1385,7 +1385,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   return detailTx.amount;
                 })();
                 if (Number(confirmTxAmount) > maxVal) {
-                  return <p className="text-xs text-destructive mt-1">{t('finance.amountExceedsLimit', 'المبلغ يتجاوز الحد المسموح به')} ({formatCurrency(maxVal)})</p>;
+                  return <p className="text-xs text-destructive mt-1">{t('finance.amountExceedsLimit')} ({formatCurrency(maxVal)})</p>;
                 }
                 return null;
               })()}

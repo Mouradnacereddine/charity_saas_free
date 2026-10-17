@@ -21,7 +21,9 @@
     "donation": "تبرع",
     "toggleOpen": "فتح القائمة",
     "toggleCollapse": "طي القائمة",
-    "toggleExpand": "توسيع القائمة"
+    "toggleExpand": "توسيع القائمة",
+    "collapseSidebar": "طي القائمة",
+    "expandSidebar": "توسيع القائمة"
   },
   "audit": {
     "title": "سجل النشاطات",
@@ -147,7 +149,10 @@
     "done": "تم",
     "error": "خطأ",
     "article": "المقال",
-    "days": "يوم"
+    "days": "يوم",
+    "general": "عام",
+    "noOperations": "لا توجد عمليات",
+    "details": "التفاصيل"
   },
   "settings": {
     "title": "إعدادات الجمعية",
@@ -231,7 +236,12 @@
     "name": "اسم الصندوق",
     "namePlaceholder": "مثال: صندوق الزكاة",
     "categoryName": "اسم الفئة",
-    "categoryNamePlaceholder": "مثال: تحاليل طبية"
+    "categoryNamePlaceholder": "مثال: تحاليل طبية",
+    "addCategoryTitle": "إضافة فئة فرعية",
+    "editCategoryTitle": "تعديل الفئة الفرعية",
+    "deleteFundConfirm": "هل أنت متأكد من حذف هذا الصندوق؟",
+    "deleteCategoryConfirm": "هل أنت متأكد من حذف هذه الفئة الفرعية؟",
+    "saveChanges": "حفظ التعديلات"
   },
   "finance": {
     "title": "الإدارة المالية",
@@ -278,7 +288,9 @@
     "remainingDisbursement": "المبلغ المتبقي لاستكمال الصرف",
     "rib": "RIB",
     "iban": "IBAN",
-    "swift": "SWIFT"
+    "swift": "SWIFT",
+    "originalAmount": "المبلغ الأصلي",
+    "amountExceedsLimit": "المبلغ يتجاوز الحد المسموح به"
   },
   "beneficiaries": {
     "title": "المستفيدون",
@@ -449,7 +461,9 @@
     "noneSponsored": "لا يوجد مستفيدون يتكفل بهم",
     "removeBeneficiary": "إزالة",
     "removeBeneficiaryConfirm": "إزالة تكفّل هذا المتبرع بالمستفيد؟",
-    "addBeneficiaryPlaceholder": "أضف مستفيدًا يتكفل به…"
+    "addBeneficiaryPlaceholder": "أضف مستفيدًا يتكفل به…",
+    "lastNamePlaceholder": "مثال: بن عيسى",
+    "firstNamePlaceholder": "مثال: محمد"
   },
   "inventory": {
     "title": "إدارة المخزون والإعارات",
@@ -552,7 +566,9 @@
     "inventoryCancelled": "ملغي",
     "inventoryHint": "الكمية المرجعية هي الكمية المتاحة عند بداية الجرد. الإعارات الجارية غير مشمولة.",
     "stockTakeBy": "المسؤول عن الجرد",
-    "associationResponsible": "مسؤول الجمعية"
+    "associationResponsible": "مسؤول الجمعية",
+    "namePlaceholder": "مثال: الاسم",
+    "description": "الوصف"
   },
   "medical": {
     "title": "التوجيه الطبي",
@@ -676,7 +692,9 @@
     "nameArPlaceholder": "مثال: طب عام",
     "searchAddressPlaceholder": "بحث بالعنوان...",
     "specialtyPlaceholder": "اختر تخصص...",
-    "addressPlaceholder": "مثال: 15 شارع الإخوة، الجزائر"
+    "addressPlaceholder": "مثال: 15 شارع الإخوة، الجزائر",
+    "lastNamePlaceholder": "مثال: بلقاسم",
+    "firstNamePlaceholder": "مثال: أمينة"
   },
   "users": {
     "title": "إدارة المستخدمين",
@@ -737,7 +755,9 @@
     "deleteUserHint": "حذف المستخدم",
     "deleteInviteHint": "حذف الدعوة",
     "createdDate": "تاريخ الإنشاء",
-    "nameArPlaceholder": "مثال: أحمد"
+    "nameArPlaceholder": "مثال: أحمد",
+    "stockManager": "مسؤول المخزن",
+    "socialWorker": "أخصائي اجتماعي"
   },
   "analytics": {
     "title": "التحليلات والتقارير المالية",
