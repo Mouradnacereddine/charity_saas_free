@@ -130,6 +130,7 @@ router.post('/', requirePermission('donors', 'create'), async (req: AuthRequest,
     const {
       reference: refInput, firstName, lastName,
       phone, email, address, gender, totalDonated, notes,
+      sponsoredBeneficiaryIds,
     } = req.body;
 
     const reference = refInput || generateRef('DON');
@@ -154,6 +155,27 @@ router.post('/', requirePermission('donors', 'create'), async (req: AuthRequest,
         createdBy: req.user!.userId,
       },
     });
+
+    // Bénéficiaires pris en charge déclarés à la création (mêmes règles que le PUT :
+    // seuls les bénéficiaires réels de CETTE association sont retenus).
+    if (Array.isArray(sponsoredBeneficiaryIds)) {
+      const requested = sponsoredBeneficiaryIds.map(String).filter(Boolean);
+      if (requested.length) {
+        const valid = await prisma.beneficiary.findMany({
+          where: {
+            id: { in: requested },
+            associationId,
+            phone: { not: '__ATTRIBUT_DUMMY__' },
+          },
+          select: { id: true },
+        });
+        for (const b of valid) {
+          await prisma.donorBeneficiary.create({
+            data: { associationId, donorId: donor.id, beneficiaryId: b.id },
+          });
+        }
+      }
+    }
 
     await logAudit(req, {
       action: 'create',
@@ -254,7 +276,20 @@ router.put('/:id', requirePermission('donors', 'update'), async (req: AuthReques
 
     // Mise à jour globale des bénéficiaires pris en charge (diff vs liens existants)
     if (Array.isArray(sponsoredBeneficiaryIds)) {
-      const target = sponsoredBeneficiaryIds.map(String).filter(Boolean);
+      const requested = sponsoredBeneficiaryIds.map(String).filter(Boolean);
+      // Seuls les bénéficiaires réels de CETTE association sont acceptés :
+      // un identifiant étranger ou un dummy est ignoré silencieusement.
+      const valid = requested.length
+        ? await prisma.beneficiary.findMany({
+            where: {
+              id: { in: requested },
+              associationId,
+              phone: { not: '__ATTRIBUT_DUMMY__' },
+            },
+            select: { id: true },
+          })
+        : [];
+      const target = valid.map((b: any) => b.id);
       const current = await prisma.donorBeneficiary.findMany({
         where: { donorId: id, associationId },
         select: { beneficiaryId: true },

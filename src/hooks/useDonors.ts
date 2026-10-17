@@ -16,7 +16,10 @@ export function useCreateDonor() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: donorsApi.create,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['donors'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['donors'] });
+      qc.invalidateQueries({ queryKey: ['donor-sponsored-beneficiaries'] });
+    },
   });
 }
 
@@ -24,7 +27,10 @@ export function useUpdateDonor() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => donorsApi.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['donors'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['donors'] });
+      qc.invalidateQueries({ queryKey: ['donor-sponsored-beneficiaries'] });
+    },
   });
 }
 
