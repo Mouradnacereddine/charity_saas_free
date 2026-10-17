@@ -19,6 +19,7 @@ const emptyDonorForm = {
   email: '',
   address: '',
   notes: '',
+  gender: 'male',
   sponsoredBeneficiaryIds: [] as string[],
 }
 
@@ -66,6 +67,7 @@ export default function DonorsPage() {
       email: donor.email || '',
       address: donor.address || '',
       notes: donor.notes || '',
+      gender: donor.gender || 'male',
       sponsoredBeneficiaryIds: [...(donor.sponsoredBeneficiaryIds || [])],
     })
     setShowAddModal(true)
@@ -321,6 +323,12 @@ ${(() => { const b = (r as any).transaction?.beneficiary; return b ? `<div class
             <Input label={t('donors.email')} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@example.com" dir="ltr" />
           </div>
           <Input label={t('donors.address')} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('donors.addressPlaceholder')} />
+          <SearchableSelect
+            label={t('donors.gender')}
+            options={[{ value: 'male', label: t('common.male') }, { value: 'female', label: t('common.female') }]}
+            value={form.gender || 'male'}
+            onChange={(val) => setForm({ ...form, gender: val })}
+          />
           <TextArea label={t('common.notes')} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
 
           {/* Bénéficiaires pris en charge */}
