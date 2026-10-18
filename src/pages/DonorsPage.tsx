@@ -4,12 +4,10 @@ import { Card, Button, Input, SearchableSelect, Modal, Badge, TextArea, EmptySta
 import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords } from '../utils/helpers'
 import { dirForInput } from '../utils/localized'
 import { printReceipt } from '../lib/receipt'
-import { Plus, Search, Filter, Eye, Edit, Trash2, Printer, HeartHandshake, Receipt, X } from 'lucide-react'
+import { Plus, Search, Filter, Eye, Edit, Trash2, Printer, HeartHandshake, X } from 'lucide-react'
 import type { Donor, DonationReceipt, Beneficiary } from '../types'
 import { useDonors, useCreateDonor, useUpdateDonor, useDeleteDonor, useDonorReceipts, useUnsponsorBeneficiary } from '../hooks/useDonors'
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
-import { useQuery } from '@tanstack/react-query'
-import { caissesApi, financeApi } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
 
 const emptyDonorForm = {
@@ -28,12 +26,8 @@ type DonorFormData = typeof emptyDonorForm
 export default function DonorsPage() {
   const { t, i18n } = useTranslation()
   const { association } = useAuth()
-  const [queryParams, setQueryParams] = useState<Record<string, string> | undefined>(undefined)
+  const [queryParams] = useState<Record<string, string> | undefined>(undefined)
   const { data: donors = [], isLoading } = useDonors(queryParams)
-  const { data: caisses = [] } = useQuery({
-    queryKey: ['caisses'],
-    queryFn: () => caissesApi.list().then(r => r.data),
-  })
   const { data: beneficiaries = [] } = useBeneficiaries()
 
   const createDonor = useCreateDonor()
@@ -148,7 +142,6 @@ export default function DonorsPage() {
 
   // ---- Receipt Modal (détail du donateur) ----
   function ReceiptModal({ donor, onClose }: { donor: Donor; onClose: () => void }) {
-    const [showReceipt, setShowReceipt] = useState(false)
     const { data: receipts = [] } = useDonorReceipts(donor.id)
 
     const handleRemoveSponsored = async (beneficiaryId: string) => {
@@ -169,8 +162,8 @@ export default function DonorsPage() {
             {donor.email && <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.email')}</span><span className="font-medium" dir="ltr">{donor.email}</span></div>}
             {donor.address && <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.address')}</span><span className="font-medium">{donor.address}</span></div>}
             {donor.gender && <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.gender')}</span><span className="font-medium">{donor.gender === 'female' ? t('common.female') : t('common.male')}</span></div>}
-            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.totalDonations')}</span><span className="font-medium text-success">{formatCurrency(donor._sum?.amount || donor.totalDonated || 0)}</span></div>
-            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.donationCount')}</span><span className="font-medium">{donor.receiptCount ?? donor._count?.transactions ?? 0}</span></div>
+            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.totalDonations')}</span><span className="font-medium text-success">{formatCurrency(freshDonor.totalDonated || 0)}</span></div>
+            <div className="flex justify-between p-2 bg-muted rounded"><span className="text-muted-foreground">{t('donors.donationCount')}</span><span className="font-medium">{freshDonor.receiptCount ?? 0}</span></div>
             {donor.notes && <div className="flex justify-between p-2 bg-muted rounded md:col-span-2"><span className="text-muted-foreground">{t('common.notes')}</span><span className="font-medium">{donor.notes}</span></div>}
           </div>
 
@@ -188,7 +181,7 @@ export default function DonorsPage() {
                     <div>
                       <p className="text-sm font-medium">{formatDate(r.date)}</p>
                       <p className="text-xs text-muted-foreground font-mono" dir="ltr">{r.receiptNumber || '—'}</p>
-                      <p className="text-xs text-muted-foreground">{r.caisseName || r.caisse?.nameAr || r.caisse?.name || '—'} - {formatCurrency(r.amount)}</p>
+                      <p className="text-xs text-muted-foreground">{r.caisseName || '—'} - {formatCurrency(r.amount)}</p>
                       {r.subCategoryName && <p className="text-xs text-muted-foreground">{t('receipt.subCategory')} : {r.subCategoryName}</p>}
                       {(() => {
                         const b = (r as any).transaction?.beneficiary;
@@ -292,8 +285,8 @@ ${(() => { const b = (r as any).transaction?.beneficiary; return b ? `<div class
                     <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{donor.reference}</td>
                     <td className="py-3 px-4 font-medium text-foreground">{donor.lastName} {donor.firstName}</td>
                     <td className="py-3 px-4 hidden sm:table-cell text-foreground" dir="ltr">{donor.phone}</td>
-                    <td className="py-3 px-4 hidden md:table-cell text-success font-semibold">{formatCurrency(donor._sum?.amount || 0)}</td>
-                    <td className="py-3 px-4 hidden md:table-cell"><Badge>{donor.receiptCount ?? donor._count?.transactions ?? 0}</Badge></td>
+                    <td className="py-3 px-4 hidden md:table-cell text-success font-semibold">{formatCurrency(donor.totalDonated || 0)}</td>
+                    <td className="py-3 px-4 hidden md:table-cell"><Badge>{donor.receiptCount ?? 0}</Badge></td>
                     <td className="py-3 px-4 hidden md:table-cell"><Badge variant="info">{(donor.sponsoredBeneficiaryIds || []).length}</Badge></td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-1">

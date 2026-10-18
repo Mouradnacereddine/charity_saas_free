@@ -243,7 +243,16 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
           });
         }
 
-        // Auto-create donation receipt if donorId is present
+        // Auto-create donation receipt if donorId is present.
+        // Le reçu est émis dès la création, y compris pour un crédit
+        // « pending » : ici « pending » qualifie la REMISE au bénéficiaire,
+        // pas la réception du don. Le POST crédite déjà la caisse et
+        // incrémente donor.totalDonated (juste au-dessus) — l'argent est reçu —
+        // et l'annulation défait symétriquement ces trois écritures, reçu
+        // compris (PUT /transactions/:id/cancel). Retenir le reçu ici ferait
+        // diverger receiptCount de totalDonated pour le flux principal (crédit
+        // avec bénéficiaire = pending), soit exactement l'anomalie « Total des
+        // dons à 0 » signalée.
         if (donorId && ref) {
           const donor = await tx.donor.findUnique({
             where: { id: donorId },
@@ -267,7 +276,11 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
                 donorName: `${donor.firstName} ${donor.lastName}`,
                 transactionId: transaction.id,
                 amount: amountNum,
-                amountInWords,
+                // `words` (calculé plus haut) retombe sur « <montant> DZD »
+                // quand le client omet amountInWords. Utiliser ici la variable
+                // brute du body faisait échouer la création du reçu (champ
+                // requis null) dès qu'un appelant ne l'envoyait pas.
+                amountInWords: words,
                 caisseId,
                 caisseName: caisse.name,
                 subCategoryId: subCat?.id,
@@ -759,6 +772,16 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
             data: { remainingAmount: 0 },
           });
         }
+
+        // Supprimer le reçu du crédit annulé. L'annulation défait la
+        // réception du don : l'argent ressort de la caisse et
+        // donor.totalDonated est décrémenté juste au-dessus. Le don n'a donc
+        // pas eu lieu, et GET /donors dérive totalDonated et receiptCount des
+        // reçus : le laisser en place laisserait apparaître un don annulé dans
+        // le total affiché. deleteMany est sans effet sur zéro ligne.
+        await prismaTx.donationReceipt.deleteMany({
+          where: { transactionId: id, associationId },
+        });
       }
 
       // Note: For pending DEBIT cancel, nothing was subtracted yet, so no balance change needed.

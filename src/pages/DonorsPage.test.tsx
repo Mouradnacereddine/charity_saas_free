@@ -39,6 +39,21 @@ const BENEFICIARY = {
   associationId: 'assoc-1',
 }
 
+// Charge utile de GET /api/donors : la route ne renvoie jamais d'agrégat
+// Prisma (_sum/_count), elle dérive totalDonated/receiptCount côté serveur.
+const DONOR = {
+  id: 'd1',
+  reference: 'DON-20260101-000000-001',
+  firstName: 'سليم',
+  lastName: 'بوزيد',
+  phone: '0555555555',
+  gender: 'male',
+  associationId: 'assoc-1',
+  totalDonated: 18000,
+  receiptCount: 2,
+  sponsoredBeneficiaryIds: [],
+}
+
 /** Opens the "add donor" modal from the donors list page. */
 async function openAddDonorModal() {
   renderWithProviders(<DonorsPage />)
@@ -126,5 +141,36 @@ describe('DonorsPage — formulaire donateur', () => {
     await waitFor(() => expect(donorsApi.create).toHaveBeenCalledTimes(1))
     const payload = vi.mocked(donorsApi.create).mock.calls[0][0] as any
     expect(payload.sponsoredBeneficiaryIds).toEqual(['b1'])
+  })
+})
+
+describe('DonorsPage — montants affichés', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(donorsApi.list).mockResolvedValue({ data: [DONOR] } as any)
+    vi.mocked(beneficiariesApi.list).mockResolvedValue({ data: [] } as any)
+  })
+
+  it('affiche le total des dons réel et non 0,00 DZD dans le tableau', async () => {
+    renderWithProviders(<DonorsPage />)
+
+    // La ligne du donateur doit montrer le montant servi par l'API.
+    const cell = await screen.findByText(/18\s?000,00/)
+    expect(cell).toBeInTheDocument()
+    expect(screen.queryByText(/^0,00\s*DZD$/)).not.toBeInTheDocument()
+  })
+
+  it('affiche le montant réel dans la fiche détail du donateur', async () => {
+    renderWithProviders(<DonorsPage />)
+
+    // Le nom est rendu par un unique nœud texte « بوزيد سليم ».
+    fireEvent.click(await screen.findByText('بوزيد سليم'))
+
+    // « إجمالي التبرعات » est aussi un en-tête de colonne : on ne retient que
+    // les occurrences suivies d'une valeur (celles de la fiche détail).
+    const labels = await screen.findAllByText('إجمالي التبرعات')
+    const values = labels.map((l) => l.nextElementSibling?.textContent ?? '')
+    expect(values.some((v) => /18\s?000,00/.test(v))).toBe(true)
+    expect(values.some((v) => /^0,00\s*DZD$/.test(v.trim()))).toBe(false)
   })
 })

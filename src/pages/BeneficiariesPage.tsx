@@ -1470,7 +1470,7 @@ export default function BeneficiariesPage() {
                               const canDisburse = s === 'completed' && a.remainingAmount > 0;
                               return (
                                 <Button size="sm" variant="success" disabled={!canDisburse}
-                                  title={canDisburse ? t('finance.disburseRemaining') : (s === 'pending' ? t('finance.pendingTx') : '')}
+                                  title={canDisburse ? t('finance.disburseRemaining') : (s !== 'completed' ? t('finance.pendingTx') : '')}
                                   onClick={() => { setDisbursingAlloc(a); setDisburseAmount(String(a.remainingAmount)); }}>
                                   {t('finance.disburseRemaining')}
                                 </Button>
@@ -1528,9 +1528,13 @@ export default function BeneficiariesPage() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const caisse = caisses.find((c: any) => c.id === tx.caisseId)
+                                // Le reçu porte les mots arabes ET latins : dérivés tous deux du
+                                // montant (source de vérité). Les deux emplacements
+                                // recevaient la même chaîne stockée, d'où le montant
+                                // arabe répété en latin.
                                 const amount = typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)
-                                const wordsAr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToArabicWords(amount)
-                                const wordsFr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToFrenchWords(amount)
+                                const wordsAr = numberToArabicWords(amount)
+                                const wordsFr = numberToFrenchWords(amount)
                                 printReceipt(
                                   t('receipt.expenseTitle'), t('beneficiaries.expenseReceipt'),
                                   `<div class="col"><div class="row"><span class="lbl">${t('beneficiaries.receiptNo')}</span><span class="val">${tx.id.slice(0, 8) || '—'}</span></div>

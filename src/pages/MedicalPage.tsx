@@ -191,7 +191,11 @@ export default function MedicalPage() {
       const child = (beneficiary.children || []).find((c: any) => c.id === childId || `${c.firstName} ${c.lastName}` === childId);
       return child ? {
         id: child.id || childId,
-        name: `${child.lastName || ''} ${child.firstName || ''}`.trim(),
+        // Une seule clé `name` : les deux lignes ci-avant portaient le même
+        // nom et la seconde écrasait la première en silence (TS1117 jamais
+        // joué, `npm run build` n'exécute pas tsc). Les deux ordres étaient
+        // en plus inversés ; on retient « prénom nom », convention dominante
+        // de l'application et cohérente avec le `find` ci-dessus.
         name: `${child.firstName || ''} ${child.lastName || ''}`.trim(),
         age: calculateAge(child.dateOfBirth).display,
         gender: child.gender || 'male',

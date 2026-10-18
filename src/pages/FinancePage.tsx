@@ -302,7 +302,6 @@ export default function FinancePage() {
         id: editingBankId,
         data: {
           bankName: data.bankName,
-          bankName: data.bankName,
           accountNumber: data.accountNumber,
           rib: data.rib,
           iban: data.iban,
@@ -311,7 +310,6 @@ export default function FinancePage() {
       })
     } else {
       await createBankAccount.mutateAsync({
-        bankName: data.bankName,
         bankName: data.bankName,
         accountNumber: data.accountNumber,
         rib: data.rib,
@@ -325,13 +323,16 @@ export default function FinancePage() {
 
   const handlePrintReceipt = (tx: any) => {
     const caisse = caisses.find((c: Caisse) => c.id === tx.caisseId)
-    const subCat = caisse?.subCategories.find((s: { id: string; name: string; name: string }) => s.id === tx.subCategoryId)
+    const subCat = caisse?.subCategories.find((s: { id: string; name: string }) => s.id === tx.subCategoryId)
     const subCatRow = subCat ? `<div class="row"><span class="lbl">${t('receipt.subCategory')}</span><span class="val">${subCat.name}</span></div>` : ''
 
-    // Generate proper amount in words at print time (handles old data with numeric-only strings)
+    // Le reçu porte les mots arabes ET latins : on dérive les deux du montant,
+    // qui est la source de vérité. Les deux emplacements étaient alimentés par
+    // la même chaîne stockée (amountInWords) — le montant en lettres arabes
+    // s'imprimait donc aussi en latin.
     const amount = typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)
-    const wordsAr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToArabicWords(amount)
-    const wordsFr = tx.amountInWords && !tx.amountInWords.match(/^\d/) ? tx.amountInWords : numberToFrenchWords(amount)
+    const wordsAr = numberToArabicWords(amount)
+    const wordsFr = numberToFrenchWords(amount)
 
     const isLtr = i18n.language !== 'ar';
 
@@ -380,7 +381,13 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
       await createTransaction.mutateAsync({
         type: txType,
         amount: amountNum,
-        amountInWords: numberToFrenchWords(amountNum),
+        // Une seule colonne amountInWords côté serveur (Transaction). Le reçu
+        // affiche les mots arabes ET latins côte à côte (printReceipt wordsAr /
+        // wordsFr) : on stocke donc les mots ARABES et on dérive le latin à
+        // l'impression. Les deux clés ci-dessous étaient dupliquées — la
+        // seconde écrasait la première en silence (TS1117 jamais joué, le
+        // build n'exécute pas tsc) et les deux emplacements finissaient par
+        // afficher le même texte.
         amountInWords: numberToArabicWords(amountNum),
         fundSource: txFundSource,
         caisseId: txCaisseId,
@@ -389,7 +396,6 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
         donorId: txDonorId || undefined,
         beneficiaryId: txBeneficiaryId || undefined,
         allocationId: txType === 'debit' ? txAllocationId || undefined : undefined,
-        description: txDescription,
         description: txDescription,
         date: new Date().toISOString().split('T')[0],
         // Harmonisation : tout credit destine a un beneficiaire (donateur
@@ -787,7 +793,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 label={t('medical.subCategory')}
                 value={txSubCategoryId}
                 onChange={setTxSubCategoryId}
-                options={subCategories.map((sc: { id: string; name: string; name: string }) => ({
+                options={subCategories.map((sc: { id: string; name: string }) => ({
                   value: sc.id,
                   label: sc.name,
                 }))}

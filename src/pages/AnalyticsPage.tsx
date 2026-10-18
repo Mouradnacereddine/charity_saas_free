@@ -803,8 +803,8 @@ export default function AnalyticsPage() {
               <div key={idx} className="border border-border rounded-lg overflow-hidden bg-card">
                 <div className="bg-muted px-4 py-3 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <span className="text-foreground font-bold text-sm">{t('analytics.logSubcategory')}: {group.subName}</span>
-                    <span className="text-xs text-muted-foreground/70 mr-2">({group.caisseName})</span>
+                    <span className="text-foreground font-bold text-sm">{t('analytics.logSubcategory')}: {group.subNameAr}</span>
+                    <span className="text-xs text-muted-foreground/70 mr-2">({group.caisseNameAr})</span>
                   </div>
                   <div className="flex gap-4 text-xs font-semibold">
                     <span className="text-success-foreground">{t('analytics.totalIncome')}: +{formatCurrency(group.credits)}</span>
