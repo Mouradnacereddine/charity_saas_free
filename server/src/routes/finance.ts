@@ -816,7 +816,11 @@ router.get('/allocations', requirePermission('allocations', 'read'), async (req:
       include: {
         donor: { select: { id: true, firstName: true, lastName: true, reference: true } },
         beneficiary: { select: { id: true, firstName: true, lastName: true, reference: true } },
-        creditTransaction: { select: { id: true, date: true, receiptNumber: true, caisseId: true, status: true } },
+        // `amount` est indispensable : la fiche bénéficiaire s'en sert pour
+        // borner le montant à confirmer et pour activer le bouton
+        // (BeneficiariesPage, modal « Confirmer la transaction »). Sans lui,
+        // Number(undefined) → NaN → borne 0 → bouton désactivé à jamais.
+        creditTransaction: { select: { id: true, date: true, receiptNumber: true, caisseId: true, status: true, amount: true } },
         debitTransaction: { select: { id: true, date: true, receiptNumber: true } },
       },
       orderBy: { createdAt: 'desc' },

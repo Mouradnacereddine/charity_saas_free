@@ -420,7 +420,9 @@ export interface DonationAllocation {
   updatedAt: Date;
   donor?: { id: string; firstName: string; lastName: string; reference: string } | null;
   beneficiary: { id: string; firstName: string; lastName: string; reference: string };
-  creditTransaction?: { id: string; date: string; receiptNumber?: string; caisseId: string; status: TransactionStatus } | null;
+  // `amount` est bien servi par GET /finance/allocations (BeneficiariesPage
+  // s'en sert pour borner et activer le bouton « Confirmer la transaction »).
+  creditTransaction?: { id: string; date: string; receiptNumber?: string; caisseId: string; status: TransactionStatus; amount: number } | null;
   debitTransaction?: { id: string; date: string; receiptNumber?: string } | null;
 }
 

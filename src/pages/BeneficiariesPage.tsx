@@ -223,6 +223,11 @@ export default function BeneficiariesPage() {
   // (mêmes actions que la fenêtre "Détails de l'opération" de la page Finance)
   const [confirmingTx, setConfirmingTx] = useState<any>(null)
   const [confirmTxAmount, setConfirmTxAmount] = useState('')
+  // Plafond du montant à confirmer, figé à l'ouverture du modal. Sans repli
+  // explicite, un creditTransaction.amount absent produisait NaN → roundMoney
+  // renvoie 0 → bouton « Confirmer » désactivé pour toujours (bug constaté :
+  // la route /finance/allocations ne sélectionnait pas `amount`).
+  const [confirmTxMax, setConfirmTxMax] = useState(0)
   const confirmTxMutation = useMutation({
     mutationFn: ({ id, amount }: { id: string; amount: number }) => financeApi.confirmTransaction(id, { amount }),
     onSuccess: () => {
@@ -1456,7 +1461,11 @@ export default function BeneficiariesPage() {
                                         setConfirmingTx(a.creditTransaction);
                                         // Une credit en attente n'a encore rien été déboursé :
                                         // le montant restant est celui de l'allocation.
-                                        setConfirmTxAmount(String(roundMoney(Number(a.remainingAmount))));
+                                        // Repli explicite : si l'un ou l'autre montant est
+                                        // indisponible, on retombe sur l'allocation, jamais sur NaN.
+                                        const max = roundMoney(Number(a.creditTransaction?.amount) || Number(a.amount));
+                                        setConfirmTxMax(max);
+                                        setConfirmTxAmount(String(roundMoney(Number(a.remainingAmount)) || max));
                                       }}>
                                       {t('finance.confirmTx')}
                                     </Button>
@@ -1706,7 +1715,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
         </Modal>
 
         {/* Confirmer une transaction en attente (depuis la fiche bénéficiaire) */}
-        <Modal isOpen={!!confirmingTx} onClose={() => { setConfirmingTx(null); setConfirmTxAmount(''); }} title={t('finance.confirmTx')} size="sm">
+        <Modal isOpen={!!confirmingTx} onClose={() => { setConfirmingTx(null); setConfirmTxAmount(''); setConfirmTxMax(0); }} title={t('finance.confirmTx')} size="sm">
           {confirmingTx && (
             <div className="space-y-4">
               <div className="bg-muted rounded-lg p-3 space-y-2 text-sm">
@@ -1720,7 +1729,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
                   type="number"
                   value={confirmTxAmount}
                   onChange={(e) => setConfirmTxAmount(e.target.value)}
-                  max={roundMoney(Number(confirmingTx.amount))}
+                  max={confirmTxMax > 0 ? confirmTxMax : undefined}
                   min={0}
                   className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   dir="ltr"
@@ -1730,9 +1739,9 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
                 )}
               </div>
               <div className="flex gap-2 justify-end">
-                <Button size="sm" variant="secondary" onClick={() => { setConfirmingTx(null); setConfirmTxAmount(''); }}>{t('common.cancel')}</Button>
+                <Button size="sm" variant="secondary" onClick={() => { setConfirmingTx(null); setConfirmTxAmount(''); setConfirmTxMax(0); }}>{t('common.cancel')}</Button>
                 <Button size="sm" variant="primary" onClick={handleConfirmTx}
-                  disabled={!confirmTxAmount || roundMoney(parseMoneyInput(confirmTxAmount)) <= 0 || roundMoney(parseMoneyInput(confirmTxAmount)) > roundMoney(Number(confirmingTx.amount))}>
+                  disabled={!confirmTxAmount || roundMoney(parseMoneyInput(confirmTxAmount)) <= 0 || (confirmTxMax > 0 && roundMoney(parseMoneyInput(confirmTxAmount)) > confirmTxMax)}>
                   {t('common.confirm')}
                 </Button>
               </div>
