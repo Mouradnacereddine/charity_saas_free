@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { caissesApi } from '../lib/api';
 import { useMedicalReferrals, useCreateMedicalReferral, useDeleteMedicalReferral, useAnalysisTypes, useCreateAnalysisType, useUpdateAnalysisType, useDeleteAnalysisType, useHospitals, useCreateHospital, useUpdateHospital, useDeleteHospital } from '../hooks/useMedical';
 import { useBeneficiaries } from '../hooks/useBeneficiaries';
-import { api, doctorsApi, financeApi } from '../lib/api';
+import { api, doctorsApi } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { dirForInput } from '../utils/localized';
 
@@ -121,7 +121,6 @@ export default function MedicalPage() {
     queryFn: () => doctorsApi.specialties().then(r => r.data),
   });
 
-  const selectedDoctor = allDoctors.find((d: any) => d.id === doctorId);
   const [analysisType, setAnalysisType] = useState('');
   const [hospital, setHospital] = useState('');
   const [amount, setAmount] = useState(0);
@@ -342,7 +341,7 @@ export default function MedicalPage() {
   <div class="section">
     <div class="section-title">${t('medical.printMedicalInfo')}</div>
     <div class="grid">
-      <div class="item"><span class="lbl">${t('medical.doctor')}</span><span class="val">${referral.doctorName || (referral.doctor ? referral.doctor.lastName + ' ' + referral.doctor.firstName : '—')}${referral.doctor?.specialty?.nameAr ? ` (${referral.doctor.specialty.nameAr})` : ''}</span></div>
+      <div class="item"><span class="lbl">${t('medical.doctor')}</span><span class="val">${referral.doctorName || (referral.doctor ? referral.doctor.lastName + ' ' + referral.doctor.firstName : '—')}${referral.doctor?.specialty?.name ? ` (${referral.doctor.specialty.name})` : ''}</span></div>
       ${referral.doctor?.address ? `<div class="item"><span class="lbl">${t('medical.doctorAddress')}</span><span class="val">${referral.doctor.address}</span></div>` : ''}
       ${referral.analysisType ? `<div class="item"><span class="lbl">${t('medical.analysisType')}</span><span class="val">${referral.analysisType}</span></div>` : ''}
       ${referral.hospital ? `<div class="item"><span class="lbl">${t('medical.hospital')}</span><span class="val">${referral.hospital}</span></div>` : ''}
@@ -664,7 +663,7 @@ export default function MedicalPage() {
                 const b = beneficiaries.find((b: Beneficiary) => b.id === showDetailModal.beneficiaryId);
                 return b?.nationalCardNumber ? <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.nationalCardLabel')}</span><span className="font-medium text-foreground" dir="ltr">{b.nationalCardNumber}</span></div> : null;
               })()}
-              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.doctor')}</span><span className="font-medium text-foreground">{showDetailModal.doctorName || (showDetailModal.doctor ? `${showDetailModal.doctor.lastName} ${showDetailModal.doctor.firstName}` : '')}{showDetailModal.doctor?.specialty?.nameAr ? <span className="text-xs text-muted-foreground/70 mr-2">({showDetailModal.doctor.specialty.nameAr || showDetailModal.doctor.specialty.name})</span> : ''}</span></div>
+              <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.doctor')}</span><span className="font-medium text-foreground">{showDetailModal.doctorName || (showDetailModal.doctor ? `${showDetailModal.doctor.lastName} ${showDetailModal.doctor.firstName}` : '')}{showDetailModal.doctor?.specialty?.name ? <span className="text-xs text-muted-foreground/70 mr-2">({showDetailModal.doctor.specialty.name})</span> : ''}</span></div>
               {showDetailModal.analysisType && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.analysisType')}</span><span className="font-medium text-foreground">{showDetailModal.analysisType}</span></div>}
               {showDetailModal.hospital && <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('medical.hospital')}</span><span className="font-medium text-foreground">{showDetailModal.hospital}</span></div>}
               <div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">{t('common.date')}</span><span className="font-medium text-foreground">{formatDate(showDetailModal.date)}</span></div>

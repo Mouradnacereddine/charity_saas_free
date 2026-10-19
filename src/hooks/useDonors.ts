@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { donorsApi } from '../lib/api';
+import type { Donor } from '../types';
 
 export function useDonors(params?: Record<string, string>) {
   return useQuery({
     queryKey: ['donors', params],
     queryFn: async () => {
       const res = await donorsApi.list(params);
-      return res.data;
+      return res.data as Donor[];
     },
     staleTime: 0,
   });

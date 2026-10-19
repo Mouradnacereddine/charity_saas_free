@@ -81,6 +81,9 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   labelAr?: string;
   options: { value: string; label: string }[];
   error?: string;
+  // Le corps du composant l'utilise (option vide « sélectionner ») : le type
+  // doit le déclarer, sinon TS voit un prop inexistant.
+  placeholder?: string;
 }
 
 export function Select({ label, labelAr, options, error, className = '', placeholder: placeholderProp, ...props }: SelectProps) {

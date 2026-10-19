@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../lib/api';
 import { usePermissions } from '../hooks/usePermissions';
 import { UserCog, Trash2, CheckCircle, XCircle, Shield, User as UserIcon, Mail, Copy, Check, Package, HeartHandshake } from 'lucide-react';
+import type { Role } from '../types';
 
 interface UserData {
   id: string;
@@ -65,7 +66,9 @@ function InviteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
   const { role: currentRole, getAssignableRoles } = usePermissions();
   const assignableRoles = getAssignableRoles(currentRole || '');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'volunteer' | 'treasurer' | 'stock_manager' | 'social_worker' | 'admin'>('volunteer');
+  // `getAssignableRoles` renvoie `RoleType[]` : le state doit accepter le
+  // même type, pas un sous-ensemble figé de 5 rôles.
+  const [role, setRole] = useState<Role>('volunteer');
   const [result, setResult] = useState<{ inviteLink: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');

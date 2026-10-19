@@ -154,18 +154,15 @@ export default function FinancePage() {
   const [txSubCategoryId, setTxSubCategoryId] = useState('')
   const [txDonorId, setTxDonorId] = useState('')
   const [txBeneficiaryId, setTxBeneficiaryId] = useState('')
-  const [txAllocatedBeneficiaryId, setTxAllocatedBeneficiaryId] = useState('')
   const [txAllocationId, setTxAllocationId] = useState('')
   const [txAmount, setTxAmount] = useState('')
   const [txDescription, setTxDescription] = useState('')
-  const [txAllocSearch, setTxAllocSearch] = useState('')
   const [txSubmitting, setTxSubmitting] = useState(false)
   const [txError, setTxError] = useState('')
   const [confirmingTxId, setConfirmingTxId] = useState<string | null>(null)
   const [confirmTxAmount, setConfirmTxAmount] = useState('')
   const [disbursingAllocId, setDisbursingAllocId] = useState<string | null>(null)
   const [disburseAmount, setDisburseAmount] = useState('')
-  const [cancellingTxId, setCancellingTxId] = useState<string | null>(null)
 
   // Bénéficiaires pris en charge par le donateur sélectionné (indicateur de cohérence)
   const sponsoredIds = useMemo(
@@ -411,7 +408,6 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
       setTxDescription('')
       setTxDonorId('')
       setTxBeneficiaryId('')
-      setTxAllocatedBeneficiaryId('')
       setTxAllocationId('')
       setTxSubCategoryId('')
     } catch (err: any) {
@@ -470,7 +466,6 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
   const handleCancelTransaction = async (id: string) => {
     try {
       await cancelTransaction.mutateAsync(id)
-      setCancellingTxId(null)
       setDetailTx(null)
     } catch (err: any) {
       alert(err?.response?.data?.error || err?.message || t('finance.cancelFailed'))
@@ -1294,7 +1289,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 {detailTx.fundSource === 'banque' && bankAcc && <div><p className="text-xs text-muted-foreground">{t('finance.bankAccounts')}</p><p className="font-medium">{bankAcc.bankName}</p></div>}
                 {donor && <div><p className="text-xs text-muted-foreground">{t('dashboard.donor')}</p><p className="font-medium">{donor.lastName} {donor.firstName}</p></div>}
                 {benef && <div><p className="text-xs text-muted-foreground">{t('dashboard.beneficiary')}</p><p className="font-medium">{benef.lastName} {benef.firstName}</p></div>}
-                {(detailTx.description || detailTx.description) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{localizedDesc(detailTx.description, detailTx.description)}</p></div>}
+                {detailTx.description && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">{t('common.description')}</p><p className="font-medium text-foreground">{localizedDesc(detailTx.description, detailTx.description)}</p></div>}
                 <div><p className="text-xs text-muted-foreground">{t('dashboard.receiptNo')}</p><p className="font-mono text-foreground" dir="ltr">{detailTx.receiptNumber || '—'}</p></div>
                 <div><p className="text-xs text-muted-foreground">{t('common.date')}</p><p className="font-medium text-foreground">{formatDate(detailTx.date)}</p></div>
               </div>

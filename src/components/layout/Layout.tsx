@@ -124,7 +124,6 @@ export function Layout({
     : userRole === 'social_worker' ? t('userMenu.socialWorker')
     : t('userMenu.volunteer');
   const isRtl = i18n.language === 'ar';
-  const sidebarDir = isRtl ? 'right' : 'left';
   const headerDir = isRtl ? 'rtl' : 'ltr';
 
   return (

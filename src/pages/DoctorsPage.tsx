@@ -3,19 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
 import { formatDate } from '../utils/helpers';
 import { dirForInput } from '../utils/localized';
-import { useAuth } from '../hooks/useAuth';
 import { Plus, Search, Filter, Eye, Edit, Trash2, Stethoscope, Settings, Phone, Mail, MapPin, Activity, Calendar } from 'lucide-react';
-import type { Doctor, DoctorSpecialty, DoctorStats } from '../types';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { doctorsApi } from '../lib/api';
+import type { Doctor, DoctorSpecialty } from '../types';
 import { useDoctors, useCreateDoctor, useUpdateDoctor, useDeleteDoctor, useDoctorStats, useDoctorSpecialties, useCreateDoctorSpecialty, useUpdateDoctorSpecialty, useDeleteDoctorSpecialty } from '../hooks/useDoctors';
 
 const MONTH_KEYS = ['analytics.january','analytics.february','analytics.march','analytics.april','analytics.may','analytics.june','analytics.july','analytics.august','analytics.september','analytics.october','analytics.november','analytics.december'];
 
 export default function DoctorsPage() {
   const { t, i18n } = useTranslation();
-  const { association } = useAuth();
-  const queryClient = useQueryClient();
   const { data: doctors = [], isLoading } = useDoctors();
   const { data: specialties = [] } = useDoctorSpecialties();
   const createDoctor = useCreateDoctor();
@@ -133,7 +128,7 @@ export default function DoctorsPage() {
     const term = committedSearchTerm.toLowerCase();
     if (term && !`${d.firstName} ${d.lastName} ${d.phone} ${d.email || ''} ${d.address || ''}`.includes(term)) return false;
     if (committedSpecialtyId && d.specialtyId !== committedSpecialtyId) return false;
-    if (committedAddress && !(d.address || d.address || '').includes(committedAddress)) return false;
+    if (committedAddress && !(d.address || '').includes(committedAddress)) return false;
     return true;
   });
 

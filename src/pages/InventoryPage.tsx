@@ -91,21 +91,6 @@ function getStorageName(storageLocation: any, locations: StorageLocation[]): str
   return found ? found.name : storageLocation
 }
 
-/** Guess French status name from Arabic input (simple transliteration helper). */
-function getDefaultFrenchName(arName: string): string {
-  const map: Record<string, string> = {
-    'متاح': 'Disponible',
-    'معار': 'Prêté',
-    'تالف': 'Endommagé',
-    'مفقود': 'Perdu',
-    'مستهلك': 'Consommé',
-    'قيد الإصلاح': 'En réparation',
-    'جديد': 'Neuf',
-    'مستعمل': 'Usage',
-  }
-  return map[arName] || arName
-}
-
 export interface StockTakeFilter {
   search: string;
   category: string;
@@ -136,7 +121,7 @@ export function filterStockTakeItems(items: StockTakeItem[], filters: StockTakeF
 // ---- Component ----
 
 export default function InventoryPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const STATUS_LABELS: Record<string, string> = {
     disponible: t('inventory.available_status'),
     prete: t('inventory.onLoan'),
@@ -150,7 +135,6 @@ export default function InventoryPage() {
     retourne: t('inventory.final'),
     definitif: t('inventory.final'),
   }
-  const { association } = useAuth()
   const [activeTab, setActiveTab] = useState<'stock' | 'loans' | 'settings' | 'inventory'>('stock')
   const stockActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
   const loansActions = useRef<{ toggleFilter: () => void; addItem: () => void }>({ toggleFilter: () => {}, addItem: () => {} })
@@ -253,7 +237,7 @@ export default function InventoryPage() {
       {activeTab === 'stock' ? (
         <StockTab actionsRef={stockActions} statusLabels={STATUS_LABELS} />
       ) : activeTab === 'loans' ? (
-        <LoansTab actionsRef={loansActions} statusLabels={STATUS_LABELS} loanStatusLabels={loanStatusLabels} />
+        <LoansTab actionsRef={loansActions} loanStatusLabels={loanStatusLabels} />
       ) : activeTab === 'inventory' ? (
         <InventoryTab actionsRef={inventoryActions} />
       ) : (
@@ -269,7 +253,6 @@ export default function InventoryPage() {
 
 function SettingsTab() {
   const { t, i18n } = useTranslation();
-  const { association } = useAuth();
 
   const { data: categories = [], isLoading: catsLoading } = useArticleCategories()
   const { data: locations = [], isLoading: locsLoading } = useStorageLocations()
@@ -299,8 +282,6 @@ function SettingsTab() {
   const [editStsId, setEditStsId] = useState<string | null>(null)
   const [editStsName, setEditStsName] = useState('')
   const [editStsDesc, setEditStsDesc] = useState('')
-  const [newStsIsPermanent, setNewStsIsPermanent] = useState(false)
-  const [editStsIsPermanent, setEditStsIsPermanent] = useState(false)
 
   // School grade form state
 
@@ -680,7 +661,6 @@ function SettingsTab() {
 // ============================================================
 
 function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; statusLabels: Record<string, string> }) { const { t, i18n } = useTranslation();
-  const { association } = useAuth();
   const { data: articles = [], isLoading: loading } = useArticles()
   const { data: categories = [] } = useArticleCategories()
   const { data: locations = [] } = useStorageLocations()
@@ -700,7 +680,6 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
   }>({ searchTerm: '', category: '', status: '', storage: '', type: '' })
   const [filterCategory, setFilterCategory] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
-  const [filterArticleStatus, setFilterArticleStatus] = useState('')
   const [filterStorage, setFilterStorage] = useState('')
   const [filterType, setFilterType] = useState('')
   const [showModal, setShowModal] = useState(false)
@@ -715,7 +694,6 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
     setFilterSearchTerm('')
     setFilterCategory('')
     setFilterStatus('')
-    setFilterArticleStatus('')
     setFilterStorage('')
     setFilterType('')
     setCommittedFilters({ searchTerm: '', category: '', status: '', storage: '', type: '' })
@@ -932,7 +910,7 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
                     <td className="py-3 px-4 text-muted-foreground">{article.quantity}</td>
                     <td className="py-3 px-4 text-muted-foreground">{article.availableQuantity}</td>
                     <td className="py-3 px-4">
-                      <Badge variant="default">
+                      <Badge variant={STATUS_VARIANTS[article.status] || 'default'}>
                         {(article as any).statusModel?.name || statusLabels[article.status] || article.status}
                       </Badge>
                     </td>
@@ -946,6 +924,13 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
                         title={t('common.edit')}
                       >
                         <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(article.id); }}
+                        className="p-1.5 text-muted-foreground/70 hover:text-danger-600 transition-colors"
+                        title={t('common.delete')}
+                      >
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>
@@ -1008,7 +993,7 @@ function StockTab({ actionsRef, statusLabels }: { actionsRef: React.MutableRefOb
 // LOANS TAB
 // ============================================================
 
-function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; statusLabels: Record<string, string>; loanStatusLabels: Record<string, string> }) { const { t, i18n } = useTranslation();
+function LoansTab({ actionsRef, loanStatusLabels }: { actionsRef: React.MutableRefObject<{ toggleFilter: () => void; addItem: () => void }>; loanStatusLabels: Record<string, string> }) { const { t, i18n } = useTranslation();
   const queryClient = useQueryClient()
   const { association } = useAuth()
   const { data: loans = [], isLoading: loading } = useLoans()
@@ -1217,7 +1202,7 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
       await returnItems.mutateAsync({ id: selectedLoan.id, items: validReturns })
       await queryClient.invalidateQueries({ queryKey: ['loans'] })
       setShowReturnForm(false)
-      setShowDetailModal(null)
+      setShowDetailModal(false)
       setSelectedLoan(null)
     } catch (err) {
       console.error('Return failed:', err)
@@ -1286,15 +1271,13 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
 
     await markLoanDefinitive.mutateAsync(selectedLoan.id)
     await queryClient.invalidateQueries({ queryKey: ['loans'] })
-    setShowDetailModal(null)
+    setShowDetailModal(false)
     setSelectedLoan(null)
   }
 
   // ---- Print Loan ----
 
   const handlePrintLoan = (loan: Loan) => {
-    const statusLabel = loanStatusLabels[loan.status] || loan.status
-
     // Impression A4 professionnelle (même format que l'inventaire)
     const tableHeader = [
       t('inventory.refCode'),
@@ -1576,7 +1559,6 @@ function LoansTab({ actionsRef, statusLabels, loanStatusLabels }: { actionsRef: 
             value={selectedBeneficiaryId}
             onChange={(val) => {
               setSelectedBeneficiaryId(val)
-              const b = beneficiaries.find((ben: Beneficiary) => ben.id === val)
             }}
             options={beneficiaryOptions}
             required

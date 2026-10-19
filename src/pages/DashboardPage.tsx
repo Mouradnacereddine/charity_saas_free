@@ -5,11 +5,11 @@ import { useDashboardStats } from '../hooks/useDashboard'
 import { useLoans } from '../hooks/useInventory'
 import { useAuth } from '../hooks/useAuth'
 import { formatCurrency, formatDate, localizedDesc } from '../utils/helpers'
-import { Wallet, Banknote, Users, HeartHandshake, Package, Handshake, AlertTriangle, Eye, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
+import { Wallet, Banknote, Users, HeartHandshake, Package, Handshake, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
 import type { Loan } from '../types'
 
 export default function DashboardPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { data: stats, isLoading } = useDashboardStats()
   const { data: allLoans = [] } = useLoans()
   const { isAdmin, isTreasurer } = useAuth()

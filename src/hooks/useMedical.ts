@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { medicalApi } from '../lib/api';
 import { asArray } from './useApiSafety';
+import type { MedicalReferral } from '../types';
 
 export function useMedicalReferrals(params?: Record<string, string>) {
   return useQuery({
     queryKey: ['medical-referrals', params],
     queryFn: async () => {
       const res = await medicalApi.referrals(params);
-      return asArray(res.data);
+      return asArray<MedicalReferral>(res.data);
     },
   });
 }

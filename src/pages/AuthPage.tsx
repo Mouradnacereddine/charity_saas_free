@@ -22,9 +22,7 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
     associationName: string;
     associationLocale?: 'ar' | 'fr' | 'en';
   } | null>(null);
-  const [inviteToken, setInviteToken] = useState('');
   const [checkingInvite, setCheckingInvite] = useState(false);
-  const [checkingAccount, setCheckingAccount] = useState(true);
   const [assocName, setAssocName] = useState('');
   const [assocLocale, setAssocLocale] = useState<'ar' | 'fr' | 'en'>('ar');
   const [showAssocForm, setShowAssocForm] = useState(false);
@@ -39,7 +37,6 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
     const token = match ? decodeURIComponent(match[1]) : null;
 
     if (token) {
-      setInviteToken(token);
       setInviteInfo({ email: '', role: '', associationName: '...' });
       setCheckingInvite(true);
       authApi.inviteDetails(token)
@@ -51,7 +48,6 @@ export default function AuthPage({ onSuccess }: { onSuccess: () => void }) {
         .catch(err => setError(err.response?.data?.error || t('auth.inviteCodeInvalid')))
         .finally(() => setCheckingInvite(false));
     }
-    setCheckingAccount(false);
   }, []);
 
   // Load Google Sign-In

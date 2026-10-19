@@ -6,8 +6,16 @@ import { localizedDesc } from '../utils/helpers';
 
 // Use i18nInstance.t directly instead of the hook-based t to avoid
 // "t is not a function" errors during React Query re-renders (react-i18next#1950)
+// Les surcharges de `i18nInstance.t` ne s'unifient pas sur notre signature
+// (options `string | Record`) : on fixe le contrat via un cast, sans changer
+// l'appel runtime.
+const translate = i18nInstance.t.bind(i18nInstance) as (
+  key: string,
+  options?: Record<string, any> | string
+) => string;
+
 const t = (key: string, options?: Record<string, any> | string) => {
-  try { return i18nInstance.t(key, options); }
+  try { return translate(key, options); }
   catch {
     if (typeof options === 'string') return options;
     return key;
@@ -320,7 +328,6 @@ export default function AnalyticsPage() {
               onClick={() => {
                 const totalCredits = filteredTx.filter((t: any) => t.status !== 'cancelled' && t.type === 'credit').reduce((s: number, t: any) => s + t.amount, 0);
                 const totalDebits = filteredTx.filter((t: any) => t.status !== 'cancelled' && t.type === 'debit').reduce((s: number, t: any) => s + t.amount, 0);
-                const MONTHS = ['analytics.january','analytics.february','analytics.march','analytics.april','analytics.may','analytics.june','analytics.july','analytics.august','analytics.september','analytics.october','analytics.november','analytics.december'];
                 let bodyRows = `<div class="section-title">${t('analytics.byFund')}</div>`;
                 caisseBreakdown.forEach((c: any) => {
                   const sum = c.periodCredits + c.periodDebits;

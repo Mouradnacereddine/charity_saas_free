@@ -1,6 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryApi, loansApi } from '../lib/api';
 import { asArray } from './useApiSafety';
+import type {
+  Article,
+  ArticleCategory,
+  ArticleStatus,
+  StorageLocation,
+  Loan,
+  SchoolGrade,
+  StockTake,
+} from '../types';
 
 // ---- Articles ----
 export function useArticles(params?: Record<string, string>) {
@@ -8,7 +17,7 @@ export function useArticles(params?: Record<string, string>) {
     queryKey: ['articles', params],
     queryFn: async () => {
       const res = await inventoryApi.articles(params);
-      return asArray(res.data);
+      return asArray<Article>(res.data);
     },
   });
 }
@@ -43,7 +52,7 @@ export function useArticleCategories() {
     queryKey: ['article-categories'],
     queryFn: async () => {
       const res = await inventoryApi.categories();
-      return asArray(res.data);
+      return asArray<ArticleCategory>(res.data);
     },
   });
 }
@@ -78,7 +87,7 @@ export function useArticleStatuses() {
     queryKey: ['article-statuses'],
     queryFn: async () => {
       const res = await inventoryApi.statuses();
-      return asArray(res.data);
+      return asArray<ArticleStatus>(res.data);
     },
   });
 }
@@ -113,7 +122,7 @@ export function useStorageLocations() {
     queryKey: ['storage-locations'],
     queryFn: async () => {
       const res = await inventoryApi.locations();
-      return asArray(res.data);
+      return asArray<StorageLocation>(res.data);
     },
   });
 }
@@ -148,7 +157,7 @@ export function useLoans(params?: Record<string, string>) {
     queryKey: ['loans', params],
     queryFn: async () => {
       const res = await loansApi.list(params);
-      return asArray(res.data);
+      return asArray<Loan>(res.data);
     },
   });
 }
@@ -211,7 +220,7 @@ export function useSchoolGrades() {
     queryKey: ['school-grades'],
     queryFn: async () => {
       const res = await inventoryApi.schoolGrades();
-      return asArray(res.data);
+      return asArray<SchoolGrade>(res.data);
     },
   });
 }
@@ -246,7 +255,7 @@ export function useStockTakes(params?: Record<string, string>) {
     queryKey: ['stock-takes', params],
     queryFn: async () => {
       const res = await inventoryApi.stockTakes(params);
-      return asArray(res.data);
+      return asArray<StockTake>(res.data);
     },
   });
 }

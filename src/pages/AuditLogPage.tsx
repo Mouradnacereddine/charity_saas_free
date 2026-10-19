@@ -159,11 +159,6 @@ export default function AuditLogPage() {
     setCommittedSearch(searchTerm);
     setPage(1);
   };
-  const resetSearch = () => {
-    setSearchTerm('');
-    setCommittedSearch('');
-    setPage(1);
-  };
 
   // Filtres avancés
   const applyFilters = () => {

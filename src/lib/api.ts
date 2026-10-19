@@ -120,7 +120,10 @@ api.interceptors.response.use(
       originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
       return api(originalRequest);
     } catch (refreshErr) {
-      console.warn('🔐 Auth: refresh failed —', refreshErr?.response?.data?.error || refreshErr.message);
+      // `refreshErr` est `unknown` (useUnknownInCatchVariables) : on le
+      // narrow avant de lire le message d'erreur Axios.
+      const err = refreshErr as { response?: { data?: { error?: string } }; message?: string };
+      console.warn('🔐 Auth: refresh failed —', err?.response?.data?.error || err?.message);
       // Clear tokens on failure
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
@@ -136,8 +139,14 @@ api.interceptors.response.use(
 export const authApi = {
   register: (data: { associationName?: string; associationNameAr?: string; email: string; password: string; adminName?: string; adminNameAr?: string; inviteToken?: string; logoUrl?: string }) =>
     api.post('/auth/register', data),
-  googleLogin: (data: { credential: string; inviteToken?: string; mode?: string }) =>
-    api.post('/auth/google', data),
+  googleLogin: (data: {
+    credential: string;
+    inviteToken?: string;
+    mode?: string;
+    // Envoyés par AuthPage : le serveur les lit (server/src/routes/auth.ts:725)
+    associationName?: string;
+    locale?: string;
+  }) => api.post('/auth/google', data),
   updateLogo: (logoUrl: string) =>
     api.put('/auth/association/logo', { logoUrl }),
   updateName: (name: string) =>

@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financeApi } from '../lib/api';
+import type { Transaction, BankAccount } from '../types';
 
 export function useTransactions(params?: Record<string, string>) {
   return useQuery({
     queryKey: ['transactions', params],
     queryFn: async () => {
       const res = await financeApi.transactions(params);
-      return res.data;
+      return res.data as Transaction[];
     },
   });
 }
@@ -29,7 +30,7 @@ export function useBankAccounts() {
     queryKey: ['bank-accounts'],
     queryFn: async () => {
       const res = await financeApi.bankAccounts();
-      return res.data;
+      return res.data as BankAccount[];
     },
   });
 }

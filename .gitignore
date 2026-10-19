@@ -24,6 +24,14 @@ server/.env.local
 # Vercel
 .vercel
 
+# Outillage local (skills, config Claude Code)
+.claude/
+skills-lock.json
+
+# Outillage local (skills, config Claude Code)
+.claude/
+skills-lock.json
+
 # Documents locaux (Word/PDF) — ne pas pousser sur GitHub
 docs/
 
