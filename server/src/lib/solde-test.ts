@@ -18,7 +18,7 @@ interface Etat {
   caisse: { balance: number };
   banque: { balance: number };
   allocations: { id: string; remainingAmount: number; caisseId: string; bankAccountId?: string }[];
-  debits: { id: string; amount: number; status: 'pending' | 'completed'; caisseId: string; bankAccountId?: string }[];
+  debits: { id: string; amount: number; status: 'pending' | 'completed'; fundSource: 'caisse_physique' | 'banque'; caisseId: string; bankAccountId?: string }[];
 }
 
 function fauxClient(etat: Etat): TxClient {
@@ -33,6 +33,21 @@ function fauxClient(etat: Etat): TxClient {
       (c: any) =>
         (c.caisseId !== undefined && o.caisseId === c.caisseId) ||
         (c.bankAccountId !== undefined && o.bankAccountId === c.bankAccountId),
+    );
+  };
+
+  // Un debit porte TOUJOURS un caisseId (colonne obligatoire), meme quand
+  // fundSource vaut 'banque'. Pour un debit bancaire, l'argent sort du compte
+  // bancaire et la caisse n'est jamais touchee : un filtre sur le seul caisseId
+  // ferait fuiter la reservation vers la caisse. On reproduit donc fundSource.
+  const rattacheDebit = (d: Etat['debits'][number], w: any) => {
+    if (!rattache(d, w)) return false;
+    const ou: any[] = w?.OR ?? [];
+    if (ou.length === 0) return true;
+    return ou.some((c: any) =>
+      c.fundSource !== undefined
+        ? d.fundSource === c.fundSource
+        : true,
     );
   };
 
@@ -58,7 +73,7 @@ function fauxClient(etat: Etat): TxClient {
         const somme = etat.debits
           .filter((d) => d.status === (where?.status ?? d.status))
           .filter((d) => d.amount > 0)
-          .filter((d) => rattache(d, where))
+          .filter((d) => rattacheDebit(d, where))
           // Exclusion de la réservation que la sortie éteint (débit confirmé).
           .filter((d) => !where?.id?.not || d.id !== where.id.not)
           .reduce((s, d) => s + d.amount, 0);
@@ -83,6 +98,7 @@ function attendu(intitule: string, reel: unknown, voulu: unknown) {
 
 const AID = 'asso-1';
 const CAISSE = { caisseId: 'c1' };
+const BANQUE = { bankAccountId: 'b1' };
 
 // Le corps est enveloppé dans `main` : le projet compile en `commonjs`, qui
 // n'accepte pas d'`await` au niveau racine.
@@ -166,7 +182,7 @@ console.log('\nCas limites');
   const tx = fauxClient({
     caisse: { balance: 10 }, banque: { balance: 0 },
     allocations: [],
-    debits: [{ id: 'd1', amount: 10, status: 'pending', caisseId: 'c1' }],
+    debits: [{ id: 'd1', amount: 10, status: 'pending', fundSource: 'caisse_physique', caisseId: 'c1' }],
   });
   attendu('débit en attente réserve 10', await montantReserve(tx, AID, CAISSE), 10);
   attendu('confirmation du débit autorisée', (await verifierSortie(tx, AID, CAISSE, 10, { transactionId: 'd1' })).autorise, true);
@@ -175,7 +191,7 @@ console.log('\nCas limites');
   const vide = fauxClient({
     caisse: { balance: 0 }, banque: { balance: 0 },
     allocations: [],
-    debits: [{ id: 'd1', amount: 10, status: 'pending', caisseId: 'c1' }],
+    debits: [{ id: 'd1', amount: 10, status: 'pending', fundSource: 'caisse_physique', caisseId: 'c1' }],
   });
   attendu('débit en attente sans fonds REFUSÉ', (await verifierSortie(vide, AID, CAISSE, 10, { transactionId: 'd1' })).autorise, false);
 }
@@ -213,6 +229,21 @@ console.log('\nCas limites');
     debits: [],
   });
   attendu("réservation d'une autre caisse ignorée", await montantReserve(tx, AID, CAISSE), 0);
+}
+
+// Un débit BANCAIRE porte malgré tout un caisseId (colonne obligatoire de
+// Transaction). Il ne doit réserver QUE sur le compte bancaire : sans le filtre
+// sur fundSource, la caisse apparaîtrait réservée par un engagement qui ne la
+// concerne pas, et une dépense légitime y serait refusée.
+{
+  const tx = fauxClient({
+    caisse: { balance: 10 }, banque: { balance: 10 },
+    allocations: [],
+    debits: [{ id: 'd1', amount: 10, status: 'pending', fundSource: 'banque', caisseId: 'c1', bankAccountId: 'b1' }],
+  });
+  attendu('débit bancaire ne réserve rien sur la caisse', await montantReserve(tx, AID, CAISSE), 0);
+  attendu('débit bancaire réserve sur le compte bancaire', await montantReserve(tx, AID, BANQUE), 10);
+  attendu('dépense libre de 10 sur la caisse autorisée', (await verifierSortie(tx, AID, CAISSE, 10)).autorise, true);
 }
 
 console.log(echecs === 0 ? '\nTous les cas passent.\n' : `\n${echecs} cas en échec.\n`);
