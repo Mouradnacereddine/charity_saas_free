@@ -771,7 +771,12 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 onChange={setTxBankAccountId}
                 options={bankAccounts.map((a: BankAccount) => ({
                   value: a.id,
-                  label: `${a.bankName} - ${a.accountNumber}`,
+                  // Même règle que pour les caisses : n'afficher le disponible
+                  // que lorsqu'il diffère du détenu.
+                  label:
+                    a.availableBalance !== undefined && a.availableBalance !== a.balance
+                      ? `${a.bankName} - ${a.accountNumber} — ${t('caisses.available')} : ${formatCurrency(a.availableBalance)}`
+                      : `${a.bankName} - ${a.accountNumber}`,
                 }))}
                 required
               />

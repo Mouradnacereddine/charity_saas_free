@@ -5,7 +5,7 @@ import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
 import { roundMoney, moneyNumber } from '../lib/money';
 import { resolveTransactionDate, localDay } from '../lib/datePolicy';
-import { verifierSortie, type CompteCible, type ReservationEteinte } from '../lib/solde';
+import { verifierSortie, soldeDisponible, type CompteCible, type ReservationEteinte } from '../lib/solde';
 
 const router = Router();
 
@@ -455,7 +455,17 @@ router.get('/bank-accounts', requirePermission('bank_accounts', 'read'), async (
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(accounts);
+    // Même logique que GET /api/caisses : `balance` est le solde détenu, on y
+    // joint le disponible pour que l'interface ne montre pas un montant plus
+    // élevé que ce que le contrôle des sorties autorisera.
+    const avecDisponible = await Promise.all(
+      accounts.map(async (a) => ({
+        ...a,
+        availableBalance: await soldeDisponible(prisma, associationId, { bankAccountId: a.id }),
+      })),
+    );
+
+    res.json(avecDisponible);
   } catch (error) {
     console.error('Error listing bank accounts:', error);
     res.status(500).json({ error: 'Internal server error' });
