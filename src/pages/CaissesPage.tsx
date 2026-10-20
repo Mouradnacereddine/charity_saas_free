@@ -178,6 +178,11 @@ export default function CaissesPage() {
                 <p className={`text-lg font-bold ${caisse.balance >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {formatCurrency(caisse.balance)}
                 </p>
+                {caisse.availableBalance !== undefined && caisse.availableBalance !== caisse.balance && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('caisses.available')} : <span className="font-medium text-foreground">{formatCurrency(caisse.availableBalance)}</span>
+                  </p>
+                )}
               </div>
 
               {/* Sub-categories */}

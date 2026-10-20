@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { logAudit } from '../lib/audit';
 import { moneyNumber } from '../lib/money';
+import { soldeDisponible } from '../lib/solde';
 
 const router = Router();
 
@@ -18,7 +19,18 @@ router.get('/', requirePermission('caisses', 'read'), async (req: AuthRequest, r
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(caisses);
+    // `balance` est le solde DÉTENU ; on y joint le disponible (détenu moins
+    // les montants déjà promis : dons affectés non versés, débits en attente).
+    // L'interface les affiche côte à côte — sans quoi une dépense serait
+    // refusée par le serveur sans que l'utilisateur ait pu voir pourquoi.
+    const avecDisponible = await Promise.all(
+      caisses.map(async (c) => ({
+        ...c,
+        availableBalance: await soldeDisponible(prisma, associationId, { caisseId: c.id }),
+      })),
+    );
+
+    res.json(avecDisponible);
   } catch (error) {
     console.error('Error listing caisses:', error);
     res.status(500).json({ error: 'Internal server error' });

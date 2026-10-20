@@ -785,7 +785,12 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
               }}
               options={caisses.map((c: Caisse) => ({
                 value: c.id,
-                label: c.name,
+                // Le disponible n'apparaît que s'il diffère du détenu : une
+                // partie du solde est déjà promise à des bénéficiaires.
+                label:
+                  c.availableBalance !== undefined && c.availableBalance !== c.balance
+                    ? `${c.name} — ${t('caisses.available')} : ${formatCurrency(c.availableBalance)}`
+                    : c.name,
               }))}
               required
             />

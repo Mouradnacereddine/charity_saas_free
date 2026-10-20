@@ -159,6 +159,8 @@ export interface Caisse {
   name: string;
   subCategories: SubCategory[];
   balance: number;
+  /** Solde détenu moins les montants déjà promis. Calculé par le serveur. */
+  availableBalance?: number;
   createdAt: Date;
   updatedAt: Date;
 }
