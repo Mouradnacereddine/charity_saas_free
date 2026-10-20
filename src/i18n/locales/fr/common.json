@@ -254,6 +254,7 @@
     "bankAccounts": "Comptes bancaires",
     "donationDistribution": "Répartition des dons",
     "newTransaction": "Ajouter une opération",
+    "dateHint": "Date de l'opération (passée ou aujourd'hui)",
     "transactionLog": "Journal des opérations",
     "bankName": "Nom de la banque",
     "accountNumber": "Numéro de compte",
@@ -575,6 +576,7 @@
   },
   "medical": {
     "title": "Orientation médicale",
+    "dateHint": "Date de l'orientation (passée ou aujourd'hui)",
     "subtitle": "Gérer les orientations médicales des bénéficiaires",
     "tabReferrals": "Orientations médicales",
     "tabSettings": "Gestion des catégories",

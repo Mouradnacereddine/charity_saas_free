@@ -263,6 +263,19 @@ export function formatCurrency(amount: number): string {
 }
 
 /**
+ * Jour courant au format `YYYY-MM-DD`, dans le fuseau LOCAL du navigateur.
+ *
+ * Ne pas utiliser `new Date().toISOString().split('T')[0]` : `toISOString`
+ * est en UTC, donc pour un utilisateur en Algérie (UTC+1) une saisie faite
+ * entre 23 h et minuit renverrait la veille — le champ date se refuserait
+ * alors lui-même.
+ */
+export function todayISO(date: Date = new Date()): string {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().split('T')[0];
+}
+
+/**
  * Format date for display
  */
 export function formatDate(date: string | Date): string {

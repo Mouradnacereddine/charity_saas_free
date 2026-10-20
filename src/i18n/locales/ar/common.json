@@ -251,6 +251,7 @@
     "bankAccounts": "الحسابات البنكية",
     "donationDistribution": "توزيع التبرعات",
     "newTransaction": "إضافة معاملة جديدة",
+    "dateHint": "تاريخ العملية (في الماضي أو اليوم)",
     "transactionLog": "سجل المعاملات",
     "bankName": "اسم البنك",
     "accountNumber": "رقم الحساب",
@@ -572,6 +573,7 @@
   },
   "medical": {
     "title": "التوجيه الطبي",
+    "dateHint": "تاريخ التوجيه (في الماضي أو اليوم)",
     "subtitle": "إدارة التوجيهات الطبية للمستفيدين",
     "tabReferrals": "التوجيه الطبي",
     "tabSettings": "إدارة التصنيفات",

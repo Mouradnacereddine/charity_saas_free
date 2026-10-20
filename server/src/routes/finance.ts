@@ -4,6 +4,7 @@ import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth'
 import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
 import { roundMoney, moneyNumber } from '../lib/money';
+import { resolveTransactionDate, localDay } from '../lib/datePolicy';
 
 const router = Router();
 
@@ -32,7 +33,15 @@ router.get('/transactions', requirePermission('transactions', 'read'), async (re
     if (dateFrom || dateTo) {
       where.date = {};
       if (dateFrom) where.date.gte = new Date(String(dateFrom));
-      if (dateTo) where.date.lte = new Date(String(dateTo));
+      // `dateTo` est un jour entier, pas un instant : une borne `lte` à minuit
+      // exclurait toutes les opérations du jour même. On borne donc au début du
+      // jour suivant, en exclu — nécessaire depuis que les opérations portent
+      // l'instant réel de création et non plus minuit.
+      if (dateTo) {
+        const end = new Date(String(dateTo));
+        end.setUTCDate(end.getUTCDate() + 1);
+        where.date.lt = end;
+      }
     }
 
     if (minAmount || maxAmount) {
@@ -148,6 +157,17 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
       return;
     }
 
+    // Seul le super-admin peut fixer la date, et seulement dans le passé ou le
+    // jour même : la valeur d'un autre rôle est ignorée (jour courant). Le
+    // contrôle est ici, pas dans le formulaire — une requête directe
+    // contournerait un champ simplement masqué.
+    const dateResolution = resolveTransactionDate(req.user!.role, date);
+    if ('error' in dateResolution) {
+      res.status(400).json({ error: dateResolution.error });
+      return;
+    }
+    const txDate = dateResolution.date;
+
     // Auto-generate amountInWords if not provided
     const words = amountInWords || `${amount} DZD`;
 
@@ -207,7 +227,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
           description,
           receiptNumber: ref,
           status: txStatus as any,
-          date: date ? new Date(date) : new Date(),
+          date: txDate,
           createdBy: req.user!.userId,
         },
       });
@@ -285,7 +305,9 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
                 caisseName: caisse.name,
                 subCategoryId: subCat?.id,
                 subCategoryName: subCat?.name,
-                date: date ? new Date(date) : new Date(),
+                // Même valeur que la Transaction : le reçu ne doit pas pouvoir
+                // diverger de la date de l'opération qu'il atteste.
+                date: txDate,
               },
             });
           }
@@ -346,7 +368,20 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
       return { transaction, receipt, allocation };
     });
 
-    await logAudit(req, { action: 'create', resource: 'transaction', resourceId: result.transaction.id, description: 'Transaction créée' });
+    // Trace : une date choisie manuellement (et non le jour courant) est
+    // inhabituelle — on l'enregistre pour qu'elle reste imputable.
+    const manualDate =
+      dateResolution.honored && localDay(txDate) !== localDay(new Date());
+
+    await logAudit(req, {
+      action: 'create',
+      resource: 'transaction',
+      resourceId: result.transaction.id,
+      description: 'Transaction créée',
+      ...(manualDate
+        ? { metadata: { manualDate: txDate.toISOString(), chosenBy: req.user!.userId } }
+        : {}),
+    });
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating transaction:', error);

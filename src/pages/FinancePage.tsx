@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, Select, SearchableSelect, Modal, Badge, TextArea, StatCard, EmptyState, LoadingSpinner } from '../components/common/UI'
-import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords, numberToWords, localizedDesc, roundMoney, sumMoney, parseMoneyInput } from '../utils/helpers'
+import { formatCurrency, formatDate, numberToArabicWords, numberToFrenchWords, numberToWords, localizedDesc, roundMoney, sumMoney, parseMoneyInput, todayISO } from '../utils/helpers'
 import { printReceipt } from '../lib/receipt'
 import { Plus, Banknote, Building2, ArrowUpCircle, ArrowDownCircle, Search, Filter, Printer, HeartHandshake, Edit, ListOrdered, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useTransactions, useCreateTransaction, useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useConfirmTransaction, useCancelTransaction } from '../hooks/useFinance'
@@ -127,7 +127,7 @@ export default function FinancePage() {
     queryKey: ['caisses'],
     queryFn: () => caissesApi.list().then(r => r.data),
   })
-  const { association } = useAuth()
+  const { association, isSuperAdmin } = useAuth()
   const queryClient = useQueryClient()
   const { data: beneficiaries = [] } = useBeneficiaries()
   const { data: donors = [] } = useDonors()
@@ -157,6 +157,9 @@ export default function FinancePage() {
   const [txAllocationId, setTxAllocationId] = useState('')
   const [txAmount, setTxAmount] = useState('')
   const [txDescription, setTxDescription] = useState('')
+  // Date choisissable par le super-admin uniquement (voir le rendu conditionnel
+  // du champ plus bas et la politique serveur dans lib/datePolicy.ts).
+  const [txDate, setTxDate] = useState(todayISO())
   const [txSubmitting, setTxSubmitting] = useState(false)
   const [txError, setTxError] = useState('')
   const [confirmingTxId, setConfirmingTxId] = useState<string | null>(null)
@@ -394,7 +397,9 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
         beneficiaryId: txBeneficiaryId || undefined,
         allocationId: txType === 'debit' ? txAllocationId || undefined : undefined,
         description: txDescription,
-        date: new Date().toISOString().split('T')[0],
+        // Hors super-admin le champ est masqué : on renvoie le jour courant,
+        // comme avant. Le serveur reste seul juge (lib/datePolicy.ts).
+        date: isSuperAdmin ? txDate : todayISO(),
         // Harmonisation : tout credit destine a un beneficiaire (donateur
         // ou caisse/banque) est cree en "pending". L'argent entre en
         // caisse, l'allocation est creee avec le montant restant, et le
@@ -406,6 +411,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
       // Reset form
       setTxAmount('')
       setTxDescription('')
+      setTxDate(todayISO())
       setTxDonorId('')
       setTxBeneficiaryId('')
       setTxAllocationId('')
@@ -874,6 +880,25 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 </div>
               )}
             </div>
+            {/* Date — réservée au super-administrateur, dans le passé ou le
+                jour même. Le calendrier est borné à aujourd'hui (`max`) pour
+                que le futur ne soit pas seulement refusé mais impossible à
+                choisir. */}
+            {isSuperAdmin && (
+              <div className="space-y-1">
+                <Input
+                  label={t('common.date')}
+                  type="date"
+                  value={txDate}
+                  onChange={(e) => setTxDate(e.target.value)}
+                  max={todayISO()}
+                  required
+                  dir="ltr"
+                  className="text-left"
+                />
+                <p className="text-xs text-muted-foreground">{t('finance.dateHint')}</p>
+              </div>
+            )}
           </div>
 
           {/* Description */}

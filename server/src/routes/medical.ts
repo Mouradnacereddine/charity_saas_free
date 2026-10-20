@@ -4,6 +4,7 @@ import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth'
 import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
 import { moneyNumber } from '../lib/money';
+import { resolveTransactionDate } from '../lib/datePolicy';
 
 const router = Router();
 
@@ -63,6 +64,17 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
       return;
     }
 
+    // Politique de date : seul un super-admin peut fixer la date (passé ou
+    // aujourd'hui) ; pour les autres rôles la valeur envoyée est ignorée et le
+    // jour courant retenu. Cette date unique porte à la fois l'orientation et
+    // l'opération de débit liée plus bas — elles ne doivent pas diverger.
+    const dateResolution = resolveTransactionDate(req.user!.role, date);
+    if ('error' in dateResolution) {
+      res.status(400).json({ error: dateResolution.error });
+      return;
+    }
+    const referralDate = dateResolution.date;
+
     // Verify beneficiary and caisse belong to association
     const beneficiary = await prisma.beneficiary.findFirst({
       where: { id: beneficiaryId, associationId },
@@ -114,7 +126,7 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
             description: `Medical referral - ${analysisType || ''}`,
             receiptNumber: reference,
             status: 'completed',
-            date: new Date(date),
+            date: referralDate,
           },
         });
       }
@@ -133,7 +145,7 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
           amount: numericAmount,
           amountInWords: words,
           status: txStatus,
-          date: new Date(date),
+          date: referralDate,
           notes,
           children: children || [],
         },
@@ -338,7 +350,16 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
     if (hospital !== undefined) data.hospital = hospital;
     if (amount !== undefined) data.amount = moneyNumber(amount);
     if (amountInWords !== undefined) data.amountInWords = amountInWords;
-    if (date !== undefined) data.date = new Date(date);
+    // Même politique qu'à la création : hors super-admin la date envoyée est
+    // ignorée (la date existante est conservée), et le futur est refusé.
+    if (date !== undefined) {
+      const dateResolution = resolveTransactionDate(req.user!.role, date);
+      if ('error' in dateResolution) {
+        res.status(400).json({ error: dateResolution.error });
+        return;
+      }
+      if (dateResolution.honored) data.date = dateResolution.date;
+    }
     if (notes !== undefined) data.notes = notes;
     if (req.body.status !== undefined) data.status = req.body.status;
     data.updatedBy = req.user!.userId;

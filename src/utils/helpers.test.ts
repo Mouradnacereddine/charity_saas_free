@@ -11,6 +11,7 @@ import {
   roundMoney,
   sumMoney,
   parseMoneyInput,
+  todayISO,
 } from './helpers';
 
 // ---------------------------------------------------------------------------
@@ -428,5 +429,33 @@ describe('amountToFrenchWords / amountToArabicWords (reçus)', () => {
 
   it('inclut les centimes en arabe', () => {
     expect(amountToArabicWords(1500.5)).toContain('سنتيماً');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// todayISO
+// ---------------------------------------------------------------------------
+describe('todayISO', () => {
+  it('rend le jour LOCAL du fuseau, pas le jour UTC', () => {
+    // Cas réel : en Algérie (UTC+1), à 00 h 30 le 21, l'instant est encore
+    // le 20 en UTC. `toISOString()` seul rendrait "2026-10-20" et le champ
+    // date se refuserait lui-même (valeur > max).
+    const tz = new Date().getTimezoneOffset();
+    const local = new Date(2026, 9, 21, 0, 30); // 21 oct. 2026, 00 h 30 local
+    expect(todayISO(local)).toBe('2026-10-21');
+    // Le fuseau du processus de test ne doit pas changer le résultat.
+    expect(todayISO(local)).toBe(
+      new Date(local.getTime() - tz * 60_000).toISOString().split('T')[0],
+    );
+  });
+
+  it('rend le jour local en fin de journée', () => {
+    const local = new Date(2026, 9, 20, 23, 30); // 20 oct. 2026, 23 h 30 local
+    expect(todayISO(local)).toBe('2026-10-20');
+  });
+
+  it('respecte le format YYYY-MM-DD attendu par <input type="date">', () => {
+    expect(todayISO(new Date(2026, 0, 5))).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(todayISO(new Date(2026, 0, 5))).toBe('2026-01-05');
   });
 });
