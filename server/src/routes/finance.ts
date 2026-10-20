@@ -5,6 +5,7 @@ import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
 import { roundMoney, moneyNumber } from '../lib/money';
 import { resolveTransactionDate, localDay } from '../lib/datePolicy';
+import { verifierSortie, type CompteCible, type ReservationEteinte } from '../lib/solde';
 
 const router = Router();
 
@@ -198,6 +199,25 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
       // passaient tous deux et le second creusait la caisse, qui pouvait
       // devenir négative.
       if (type === 'debit' && txStatus === 'completed') {
+        // Le solde brut ne suffit pas : une partie est déjà promise (dons
+        // affectés non versés, débits en attente). Un débit rattaché à une
+        // allocation paie cette promesse et l'éteint ; une dépense libre doit
+        // se contenter des fonds non réservés.
+        const compte = fundSource === 'banque' && bankAccountId
+          ? { bankAccountId }
+          : { caisseId };
+
+        const sortie = await verifierSortie(
+          tx,
+          associationId,
+          compte,
+          numericAmount,
+          allocationId ? { allocationId } : {},
+        );
+        if (!sortie.autorise) {
+          throw new Error('INSUFFICIENT_DISPONIBLE');
+        }
+
         if (fundSource === 'caisse_physique') {
           const decCaisse = await tx.caisse.updateMany({
             where: { id: caisseId, associationId, balance: { gte: numericAmount } },
@@ -383,6 +403,12 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
     }
     if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
       res.status(400).json({ error: 'Insufficient bank balance' });
+      return;
+    }
+    if (error?.message === 'INSUFFICIENT_DISPONIBLE') {
+      res.status(400).json({
+        error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق',
+      });
       return;
     }
     console.error('Error creating transaction:', error);
@@ -612,6 +638,42 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       // Le premier décrément qui échoue interrompt la transaction : la
       // caisse/bank partiellement débitée est restaurée par le rollback.
       if (isOutflow) {
+        // Réservation que cette sortie éteint, donc à ne pas compter dans le
+        // réservé (sinon elle serait comptée deux fois et l'opération la plus
+        // normale — payer la promesse — serait refusée) :
+        //   - confirmer un débit en attente libère sa propre réservation ;
+        //   - un débit rattaché à une allocation paie cette promesse ;
+        //   - confirmer un crédit affecté paie la promesse du don.
+        const eteint: ReservationEteinte = {};
+        if (tx.type === 'debit') {
+          // Confirmer un débit en attente libère sa propre réservation.
+          if (tx.status === 'pending') eteint.transactionId = tx.id;
+          // Un débit rattaché à une promesse la paie. Le lien vit sur
+          // `DonationAllocation.debitTransactionId` — `Transaction` n'a pas de
+          // champ `allocationId`.
+          const promesse = await prismaTx.donationAllocation.findFirst({
+            where: { debitTransactionId: tx.id, associationId },
+            select: { id: true },
+          });
+          if (promesse) eteint.allocationId = promesse.id;
+        } else if (tx.beneficiaryId) {
+          const promesse = await prismaTx.donationAllocation.findFirst({
+            where: { creditTransactionId: tx.id, associationId },
+            select: { id: true },
+          });
+          if (promesse) eteint.allocationId = promesse.id;
+        }
+
+        // Les deux comptes réellement débités par le compare-and-swap ci-dessous.
+        const comptes: CompteCible[] = [{ caisseId: tx.caisseId }];
+        if (tx.bankAccountId) comptes.push({ bankAccountId: tx.bankAccountId });
+        for (const compte of comptes) {
+          const sortie = await verifierSortie(prismaTx, associationId, compte, confirmAmount, eteint);
+          if (!sortie.autorise) {
+            throw new Error('INSUFFICIENT_DISPONIBLE');
+          }
+        }
+
         const decCaisse = await prismaTx.caisse.updateMany({
           where: { id: tx.caisseId, associationId, balance: { gte: confirmAmount } },
           data: { balance: { decrement: confirmAmount } },
@@ -744,6 +806,12 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
     }
     if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
       res.status(400).json({ error: 'Insufficient bank balance to confirm' });
+      return;
+    }
+    if (error?.message === 'INSUFFICIENT_DISPONIBLE') {
+      res.status(400).json({
+        error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق',
+      });
       return;
     }
     console.error('Error confirming transaction:', error);
@@ -905,6 +973,21 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
     }
 
     const result = await prisma.$transaction(async (prismaTx) => {
+      // Débourser une allocation, c'est payer la promesse qu'elle porte : on
+      // l'éteint donc du réservé, sinon le montant serait compté deux fois
+      // (une fois comme réservé, une fois comme sortie) et tout déboursement
+      // légitime serait refusé dès que la caisse ne contient que ces fonds.
+      const eteint: ReservationEteinte = { allocationId: id };
+      const comptes: CompteCible[] = [];
+      if (creditTx.fundSource === 'caisse_physique') comptes.push({ caisseId: creditTx.caisseId });
+      if (creditTx.bankAccountId) comptes.push({ bankAccountId: creditTx.bankAccountId });
+      for (const compte of comptes) {
+        const sortie = await verifierSortie(prismaTx, associationId, compte, disburseAmount, eteint);
+        if (!sortie.autorise) {
+          throw new Error('INSUFFICIENT_DISPONIBLE');
+        }
+      }
+
       // Contrôle du solde À L'INTÉRIEUR de la transaction : fait avant, la
       // valeur lue pouvait être périmée et deux déboursements concurrents
       // passaient tous deux le contrôle, produisant un solde négatif.
@@ -967,6 +1050,12 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
     }
     if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
       res.status(400).json({ error: 'رصيد الحساب البنكي غير كافٍ' });
+      return;
+    }
+    if (error?.message === 'INSUFFICIENT_DISPONIBLE') {
+      res.status(400).json({
+        error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق',
+      });
       return;
     }
     console.error('Error disbursing allocation:', error);

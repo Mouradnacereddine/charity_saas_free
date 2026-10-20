@@ -5,6 +5,7 @@ import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
 import { moneyNumber } from '../lib/money';
 import { resolveTransactionDate } from '../lib/datePolicy';
+import { verifierSortie } from '../lib/solde';
 
 const router = Router();
 
@@ -101,6 +102,14 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
     const referral = await prisma.$transaction(async (tx) => {
       // Only deduct balance when status is 'completed' and amount > 0
       if (numericAmount > 0 && txStatus === 'completed') {
+        // Une orientation est une dépense LIBRE : elle ne paie aucune promesse.
+        // Elle doit donc être couverte par des fonds non réservés — sinon un
+        // don déjà affecté à un bénéficiaire serait dépensé une seconde fois.
+        const sortie = await verifierSortie(tx, associationId, { caisseId }, numericAmount);
+        if (!sortie.autorise) {
+          throw new Error('INSUFFICIENT_DISPONIBLE');
+        }
+
         // Débit conditionnel ATOMIQUE : vérifier puis décrémenter en une seule
         // instruction ferme la course entre deux opérations concurrentes.
         const decCaisse = await tx.caisse.updateMany({
@@ -158,6 +167,10 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
       res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
       return;
     }
+    if (error.message === 'INSUFFICIENT_DISPONIBLE') {
+      res.status(400).json({ error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق' });
+      return;
+    }
     console.error('Error creating medical referral:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -212,6 +225,12 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
 
     const referral = await prisma.$transaction(async (tx) => {
       if (numericAmount > 0) {
+        // Dépense libre : seuls les fonds non réservés sont disponibles.
+        const sortie = await verifierSortie(tx, associationId, { caisseId: existing.caisseId }, numericAmount);
+        if (!sortie.autorise) {
+          throw new Error('INSUFFICIENT_DISPONIBLE');
+        }
+
         // Débit conditionnel ATOMIQUE : vérifier puis décrémenter en une seule
         // instruction ferme la course entre deux confirmations concurrentes.
         const decCaisse = await tx.caisse.updateMany({
@@ -261,6 +280,10 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
   } catch (error: any) {
     if (error.message === 'INSUFFICIENT_BALANCE') {
       res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+      return;
+    }
+    if (error.message === 'INSUFFICIENT_DISPONIBLE') {
+      res.status(400).json({ error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق' });
       return;
     }
     console.error('Error confirming medical referral:', error);
