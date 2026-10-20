@@ -101,16 +101,15 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
     const referral = await prisma.$transaction(async (tx) => {
       // Only deduct balance when status is 'completed' and amount > 0
       if (numericAmount > 0 && txStatus === 'completed') {
-        const caisse = await tx.caisse.findFirst({
-          where: { id: caisseId, associationId },
-        });
-        if (!caisse || Number(caisse.balance) < numericAmount) {
-          throw new Error('INSUFFICIENT_BALANCE');
-        }
-        await tx.caisse.update({
-          where: { id: caisseId },
+        // Débit conditionnel ATOMIQUE : vérifier puis décrémenter en une seule
+        // instruction ferme la course entre deux opérations concurrentes.
+        const decCaisse = await tx.caisse.updateMany({
+          where: { id: caisseId, associationId, balance: { gte: numericAmount } },
           data: { balance: { decrement: numericAmount } },
         });
+        if (decCaisse.count === 0) {
+          throw new Error('INSUFFICIENT_BALANCE');
+        }
 
         // Create a transaction record for traceability
         await tx.transaction.create({
@@ -213,17 +212,15 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
 
     const referral = await prisma.$transaction(async (tx) => {
       if (numericAmount > 0) {
-        // Deduct from caisse (atomic: locked within transaction)
-        const caisse = await tx.caisse.findFirst({
-          where: { id: existing.caisseId, associationId },
-        });
-        if (!caisse || Number(caisse.balance) < numericAmount) {
-          throw new Error('INSUFFICIENT_BALANCE');
-        }
-        await tx.caisse.update({
-          where: { id: existing.caisseId },
+        // Débit conditionnel ATOMIQUE : vérifier puis décrémenter en une seule
+        // instruction ferme la course entre deux confirmations concurrentes.
+        const decCaisse = await tx.caisse.updateMany({
+          where: { id: existing.caisseId, associationId, balance: { gte: numericAmount } },
           data: { balance: { decrement: numericAmount } },
         });
+        if (decCaisse.count === 0) {
+          throw new Error('INSUFFICIENT_BALANCE');
+        }
 
         // Create a transaction record for traceability
         const beneficiary = await tx.beneficiary.findFirst({

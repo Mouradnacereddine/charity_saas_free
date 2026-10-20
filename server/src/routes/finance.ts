@@ -190,28 +190,32 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
     // et allocations. roundMoney garantit une valeur à 2 décimales exactes.
     const numericAmount = moneyNumber(amount);
 
-    // For completed debit transactions, check balance
-    if (type === 'debit' && txStatus === 'completed') {
-      if (fundSource === 'caisse_physique') {
-        if (Number(caisse.balance) < numericAmount) {
-          res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
-          return;
-        }
-      } else if (fundSource === 'banque') {
-        if (bankAccountId) {
-          const bankAccount = await prisma.bankAccount.findFirst({
-            where: { id: bankAccountId, associationId },
+    // Use a transaction to create the transaction and update balances
+    const result = await prisma.$transaction(async (tx) => {
+      // Un débit « completed » fait sortir l'argent immédiatement : le solde
+      // est contrôlé ICI, dans la transaction, et non avant. Un contrôle
+      // préalable lisait une valeur périmée — deux débits concurrents le
+      // passaient tous deux et le second creusait la caisse, qui pouvait
+      // devenir négative.
+      if (type === 'debit' && txStatus === 'completed') {
+        if (fundSource === 'caisse_physique') {
+          const decCaisse = await tx.caisse.updateMany({
+            where: { id: caisseId, associationId, balance: { gte: numericAmount } },
+            data: { balance: { decrement: numericAmount } },
           });
-          if (!bankAccount || Number(bankAccount.balance) < numericAmount) {
-            res.status(400).json({ error: 'Insufficient bank balance' });
-            return;
+          if (decCaisse.count === 0) {
+            throw new Error('INSUFFICIENT_CAISSE_BALANCE');
+          }
+        } else if (fundSource === 'banque' && bankAccountId) {
+          const decBank = await tx.bankAccount.updateMany({
+            where: { id: bankAccountId, associationId, balance: { gte: numericAmount } },
+            data: { balance: { decrement: numericAmount } },
+          });
+          if (decBank.count === 0) {
+            throw new Error('INSUFFICIENT_BANK_BALANCE');
           }
         }
       }
-    }
-
-    // Use a transaction to create the transaction and update balances
-    const result = await prisma.$transaction(async (tx) => {
       const transaction = await tx.transaction.create({
         data: {
           associationId,
@@ -319,18 +323,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
       // (pending = beneficiary hasn't received yet)
       // =====================================================
       if (type === 'debit' && txStatus === 'completed') {
-        await tx.caisse.update({
-          where: { id: caisseId },
-          data: { balance: { decrement: amountNum } },
-        });
-
-        if (bankAccountId) {
-          await tx.bankAccount.update({
-            where: { id: bankAccountId },
-            data: { balance: { decrement: amountNum } },
-          });
-        }
-
+        // Le solde a déjà été débité par le compare-and-swap ci-dessus.
         // If linked to an allocation, update remaining amount
         if (allocationId) {
           const alloc = await tx.donationAllocation.findUnique({
@@ -383,7 +376,15 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
         : {}),
     });
     res.status(201).json(result);
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'INSUFFICIENT_CAISSE_BALANCE') {
+      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+      return;
+    }
+    if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
+      res.status(400).json({ error: 'Insufficient bank balance' });
+      return;
+    }
     console.error('Error creating transaction:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -590,25 +591,45 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       return;
     }
 
-    // Check balance for debits
-    if (tx.type === 'debit') {
-      if (tx.fundSource === 'caisse_physique') {
-        if (Number(tx.caisse.balance) < confirmAmount) {
-          res.status(400).json({ error: 'رصيد الصندوق غير كافٍ لإكمال هذه المعاملة' });
-          return;
-        }
-      } else if (tx.fundSource === 'banque' && tx.bankAccountId) {
-        const bankAccount = await prisma.bankAccount.findFirst({
-          where: { id: tx.bankAccountId, associationId },
-        });
-        if (!bankAccount || Number(bankAccount.balance) < confirmAmount) {
-          res.status(400).json({ error: 'Insufficient bank balance to confirm' });
-          return;
-        }
-      }
-    }
+    // Une confirmation fait SORTIR de l'argent de la caisse/banque dans deux
+    // cas, et le solde doit être contrôlé pour les DEUX :
+    //   - un débit confirmé : l'argent part au bénéficiaire ;
+    //   - un crédit AVEC bénéficiaire : la confirmation crée le débit de
+    //     libération plus bas, donc l'argent sort aussi.
+    // Contrôler le seul cas « debit » laissait confirmer un crédit alors que
+    // les fonds avaient été engagés ailleurs entre-temps, ce qui produisait un
+    // solde de caisse négatif.
+    const isOutflow = tx.type === 'debit' || (tx.type === 'credit' && !!tx.beneficiaryId);
 
     const result = await prisma.$transaction(async (prismaTx) => {
+      // Débit conditionnel ATOMIQUE du solde : le `WHERE balance >= montant`
+      // fait vérifier et décrémenter par la base en une seule instruction, donc
+      // la course est fermée quelle que soit l'isolation. Un simple contrôle
+      // préalable (lire puis décrémenter) laissait deux opérations
+      // concurrentes lire le même solde, passer toutes deux, et produire un
+      // découvert. 0 ligne touchée = solde insuffisant, on annule tout.
+      //
+      // Le premier décrément qui échoue interrompt la transaction : la
+      // caisse/bank partiellement débitée est restaurée par le rollback.
+      if (isOutflow) {
+        const decCaisse = await prismaTx.caisse.updateMany({
+          where: { id: tx.caisseId, associationId, balance: { gte: confirmAmount } },
+          data: { balance: { decrement: confirmAmount } },
+        });
+        if (decCaisse.count === 0) {
+          throw new Error('INSUFFICIENT_CAISSE_BALANCE');
+        }
+        if (tx.bankAccountId) {
+          const decBank = await prismaTx.bankAccount.updateMany({
+            where: { id: tx.bankAccountId, associationId, balance: { gte: confirmAmount } },
+            data: { balance: { decrement: confirmAmount } },
+          });
+          if (decBank.count === 0) {
+            throw new Error('INSUFFICIENT_BANK_BALANCE');
+          }
+        }
+      }
+
       // Update status
       const updated = await prismaTx.transaction.update({
         where: { id },
@@ -620,18 +641,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       // the caisse/bank
       // =====================================================
       if (tx.type === 'debit') {
-        await prismaTx.caisse.update({
-          where: { id: tx.caisseId },
-          data: { balance: { decrement: confirmAmount } },
-        });
-
-        if (tx.bankAccountId) {
-          await prismaTx.bankAccount.update({
-            where: { id: tx.bankAccountId },
-            data: { balance: { decrement: confirmAmount } },
-          });
-        }
-
+        // Le solde a déjà été débité par le compare-and-swap ci-dessus.
         const debitAlloc = await prismaTx.donationAllocation.findFirst({
           where: { debitTransactionId: tx.id },
         });
@@ -708,18 +718,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
           },
         });
 
-        await prismaTx.caisse.update({
-          where: { id: tx.caisseId },
-          data: { balance: { decrement: confirmAmount } },
-        });
-
-        if (tx.bankAccountId) {
-          await prismaTx.bankAccount.update({
-            where: { id: tx.bankAccountId },
-            data: { balance: { decrement: confirmAmount } },
-          });
-        }
-
+        // Le solde a déjà été débité par le compare-and-swap ci-dessus.
         const alloc = await prismaTx.donationAllocation.findFirst({
           where: { creditTransactionId: tx.id },
         });
@@ -738,7 +737,15 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
 
     await logAudit(req, { action: 'confirm', resource: 'transaction', resourceId: result.id, description: 'Transaction confirmée' });
     res.json(result);
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'INSUFFICIENT_CAISSE_BALANCE') {
+      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ لإكمال هذه المعاملة' });
+      return;
+    }
+    if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
+      res.status(400).json({ error: 'Insufficient bank balance to confirm' });
+      return;
+    }
     console.error('Error confirming transaction:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -897,22 +904,29 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
       return;
     }
 
-    // Check caisse balance
-    if (creditTx.fundSource === 'caisse_physique') {
-      const caisse = await prisma.caisse.findFirst({ where: { id: creditTx.caisseId, associationId } });
-      if (!caisse || Number(caisse.balance) < disburseAmount) {
-        res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
-        return;
-      }
-    } else if (creditTx.bankAccountId) {
-      const bankAccount = await prisma.bankAccount.findFirst({ where: { id: creditTx.bankAccountId, associationId } });
-      if (!bankAccount || Number(bankAccount.balance) < disburseAmount) {
-        res.status(400).json({ error: 'رصيد الحساب البنكي غير كافٍ' });
-        return;
-      }
-    }
-
     const result = await prisma.$transaction(async (prismaTx) => {
+      // Contrôle du solde À L'INTÉRIEUR de la transaction : fait avant, la
+      // valeur lue pouvait être périmée et deux déboursements concurrents
+      // passaient tous deux le contrôle, produisant un solde négatif.
+      if (creditTx.fundSource === 'caisse_physique') {
+        const decCaisse = await prismaTx.caisse.updateMany({
+          where: { id: creditTx.caisseId, associationId, balance: { gte: disburseAmount } },
+          data: { balance: { decrement: disburseAmount } },
+        });
+        if (decCaisse.count === 0) {
+          throw new Error('INSUFFICIENT_CAISSE_BALANCE');
+        }
+      }
+      if (creditTx.bankAccountId) {
+        const decBank = await prismaTx.bankAccount.updateMany({
+          where: { id: creditTx.bankAccountId, associationId, balance: { gte: disburseAmount } },
+          data: { balance: { decrement: disburseAmount } },
+        });
+        if (decBank.count === 0) {
+          throw new Error('INSUFFICIENT_BANK_BALANCE');
+        }
+      }
+
       const ref = generateRef('BON');
       const debitTx = await prismaTx.transaction.create({
         data: {
@@ -932,18 +946,7 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
         },
       });
 
-      // Debit caisse
-      await prismaTx.caisse.update({
-        where: { id: creditTx.caisseId },
-        data: { balance: { decrement: disburseAmount } },
-      });
-
-      if (creditTx.bankAccountId) {
-        await prismaTx.bankAccount.update({
-          where: { id: creditTx.bankAccountId },
-          data: { balance: { decrement: disburseAmount } },
-        });
-      }
+      // Debit caisse — déjà fait par le compare-and-swap ci-dessus.
 
       // Update allocation
       const newRemaining = Math.max(0, roundMoney(Number(alloc.remainingAmount) - Number(disburseAmount)));
@@ -957,7 +960,15 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
 
     await logAudit(req, { action: 'create', resource: 'allocation', resourceId: result.debitTx?.id, description: 'Déboursement d’allocation' });
     res.status(201).json(result);
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'INSUFFICIENT_CAISSE_BALANCE') {
+      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+      return;
+    }
+    if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
+      res.status(400).json({ error: 'رصيد الحساب البنكي غير كافٍ' });
+      return;
+    }
     console.error('Error disbursing allocation:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
