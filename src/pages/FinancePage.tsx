@@ -775,7 +775,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                   // que lorsqu'il diffère du détenu.
                   label:
                     a.availableBalance !== undefined && a.availableBalance !== a.balance
-                      ? `${a.bankName} - ${a.accountNumber} — ${t('caisses.available')} : ${formatCurrency(a.availableBalance)}`
+                      ? `${a.bankName} - ${a.accountNumber} — ${t('caisses.available')} : ${formatCurrency(a.availableBalance)} · ${t('caisses.reserved')} : ${formatCurrency(roundMoney(a.balance - a.availableBalance))}`
                       : `${a.bankName} - ${a.accountNumber}`,
                 }))}
                 required
@@ -794,7 +794,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 // partie du solde est déjà promise à des bénéficiaires.
                 label:
                   c.availableBalance !== undefined && c.availableBalance !== c.balance
-                    ? `${c.name} — ${t('caisses.available')} : ${formatCurrency(c.availableBalance)}`
+                    ? `${c.name} — ${t('caisses.available')} : ${formatCurrency(c.availableBalance)} · ${t('caisses.reserved')} : ${formatCurrency(roundMoney(c.balance - c.availableBalance))}`
                     : c.name,
               }))}
               required

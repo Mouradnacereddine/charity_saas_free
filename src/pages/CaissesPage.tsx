@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, Modal, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { formatCurrency, generateId, generateReceiptNumber } from '../utils/helpers';
+import { formatCurrency, generateId, generateReceiptNumber, roundMoney } from '../utils/helpers';
 import { Plus, Edit, Trash2, FolderOpen, Tag } from 'lucide-react';
 import type { Caisse, SubCategory } from '../types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -181,6 +181,8 @@ export default function CaissesPage() {
                 {caisse.availableBalance !== undefined && caisse.availableBalance !== caisse.balance && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {t('caisses.available')} : <span className="font-medium text-foreground">{formatCurrency(caisse.availableBalance)}</span>
+                    <span className="mx-1.5">·</span>
+                    {t('caisses.reserved')} : <span className="font-medium text-foreground">{formatCurrency(roundMoney(caisse.balance - caisse.availableBalance))}</span>
                   </p>
                 )}
               </div>
