@@ -112,21 +112,37 @@ export async function montantReserve(
     _sum: { remainingAmount: true },
   });
 
-  // 2. Débits en attente : argent engagé, pas encore sorti.
-  const debitEnAttente = await tx.transaction.aggregate({
-    where: {
-      associationId,
-      status: 'pending',
-      type: 'debit',
-      OR: ou,
-      ...(exclure.transactionId ? { id: { not: exclure.transactionId } } : {}),
-    },
-    _sum: { amount: true },
-  });
+  // 2. Débits en attente : argent engagé, pas encore sorti. Au moment de la
+  //    confirmation, l'argent sortira du compte désigné par `fundSource` — et
+  //    de lui seul. On ne peut donc PAS s'appuyer sur `caisseId`/`bankAccountId`
+  //    seuls : `caisseId` est un champ obligatoire de `Transaction`, renseigné
+  //    même pour un débit bancaire, alors qu'un débit `banque` ne touche jamais
+  //    la caisse. Sans ce filtre, une caisse afficherait comme réservés des
+  //    engagements qui ne la concernent pas.
+  const debits: Prisma.TransactionWhereInput[] = [];
+  if (compte.caisseId) {
+    debits.push({ fundSource: 'caisse_physique', caisseId: compte.caisseId });
+  }
+  if (compte.bankAccountId) {
+    debits.push({ fundSource: 'banque', bankAccountId: compte.bankAccountId });
+  }
+
+  const debitEnAttente = debits.length
+    ? await tx.transaction.aggregate({
+        where: {
+          associationId,
+          status: 'pending',
+          type: 'debit',
+          OR: debits,
+          ...(exclure.transactionId ? { id: { not: exclure.transactionId } } : {}),
+        },
+        _sum: { amount: true },
+      })
+    : null;
 
   return roundMoney(
     Number(allocations._sum.remainingAmount ?? 0) +
-      Number(debitEnAttente._sum.amount ?? 0),
+      Number(debitEnAttente?._sum.amount ?? 0),
   );
 }
 
