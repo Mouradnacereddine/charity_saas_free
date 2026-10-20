@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, SearchableSelect, Modal, TextArea, Badge, EmptyState, LoadingSpinner } from '../components/common/UI';
-import { formatCurrency, formatDate, numberToWords, calculateAge, getAgeDisplay } from '../utils/helpers';
+import { formatCurrency, formatDate, numberToWords, calculateAge, getAgeDisplay, todayISO } from '../utils/helpers';
 import { Plus, Search, Eye, Edit, Trash2, Stethoscope, Printer, Filter, Settings } from 'lucide-react';
 import type { MedicalReferral, Beneficiary, Caisse, MedicalAnalysisType, MedicalHospital, SubCategory } from '../types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ import { dirForInput } from '../utils/localized';
 export default function MedicalPage() {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
-  const { association } = useAuth();
+  const { association, isSuperAdmin } = useAuth();
   const { data: referrals = [] } = useMedicalReferrals();
   const { data: beneficiaries = [] } = useBeneficiaries();
   const { data: caisses = [] } = useQuery({
@@ -124,7 +124,7 @@ export default function MedicalPage() {
   const [analysisType, setAnalysisType] = useState('');
   const [hospital, setHospital] = useState('');
   const [amount, setAmount] = useState(0);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayISO());
   const [notes, setNotes] = useState('');
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
   const [txStatus, setTxStatus] = useState('pending');
@@ -174,7 +174,7 @@ export default function MedicalPage() {
     setAnalysisType('');
     setHospital('');
     setAmount(0);
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(todayISO());
     setNotes('');
     setSelectedChildren([]);
     setTxStatus('pending');
@@ -212,7 +212,9 @@ export default function MedicalPage() {
         hospital: hospital || undefined,
         amount: amount || 0,
         status: txStatus,
-        date,
+        // Hors super-admin le champ est désactivé : on renvoie le jour courant.
+        // Le serveur reste seul juge (lib/datePolicy.ts).
+        date: isSuperAdmin ? date : todayISO(),
         notes: notes || undefined,
         children: childrenData.length > 0 ? childrenData : undefined,
       });
@@ -630,7 +632,16 @@ export default function MedicalPage() {
               <Input label={t('medical.amountOptional')} type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} min={0} />
               {amount > 0 && <p className="text-xs text-muted-foreground mt-1">{numberToWords(amount)}</p>}
             </div>
-            <Input label={t('common.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            {/* Date — réservée au super-administrateur, passé ou jour même.
+                Le calendrier est borné à aujourd'hui (`max`). */}
+            {isSuperAdmin ? (
+              <div className="space-y-1">
+                <Input label={t('common.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} max={todayISO()} dir="ltr" className="text-left" />
+                <p className="text-xs text-muted-foreground">{t('medical.dateHint')}</p>
+              </div>
+            ) : (
+              <Input label={t('common.date')} type="date" value={date} disabled dir="ltr" className="text-left" />
+            )}
           </div>
           <div className="flex items-center gap-3 p-3 bg-warning/10 border border-warning/30 rounded-lg">
             <input

@@ -253,6 +253,7 @@
     "bankAccounts": "Bank Accounts",
     "donationDistribution": "Donation Distribution",
     "newTransaction": "Add New Transaction",
+    "dateHint": "Operation date (past or today only)",
     "transactionLog": "Transaction Log",
     "bankName": "Bank Name",
     "accountNumber": "Account Number",
@@ -574,6 +575,7 @@
   },
   "medical": {
     "title": "Medical Referral",
+    "dateHint": "Referral date (past or today only)",
     "subtitle": "Manage medical referrals for beneficiaries",
     "tabReferrals": "Medical Referrals",
     "tabSettings": "Category Management",
