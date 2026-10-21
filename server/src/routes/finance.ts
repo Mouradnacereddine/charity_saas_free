@@ -191,6 +191,26 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
     // et allocations. roundMoney garantit une valeur à 2 décimales exactes.
     const numericAmount = moneyNumber(amount);
 
+    // Un montant négatif inverse le sens du mouvement : un débit de -50 sur
+    // une caisse à 0 passait le contrôle `balance < numericAmount` (0 < -50 est
+    // faux) et CRÉAIT 50 DZD. Un non-numérique ("abc") ressortait à 0 via
+    // roundMoney, donc un montant nul accepté. Les deux sont refusés ici.
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      res.status(400).json({ error: 'المبلغ يجب أن يكون رقماً أكبر من صفر' });
+      return;
+    }
+
+    // `description` est non-nullable en base et sans valeur par défaut : la
+    // recevoir absente ou nulle faisait échouer Prisma, donc remonter un 500
+    // opaque au lieu d'une création normale. On la ramène à une chaîne vide,
+    // comportement inchangé pour un client qui envoie déjà "" (le reçu masque
+    // les descriptions vides) — sans transformer le champ en obligatoire.
+    if (description !== undefined && description !== null && typeof description !== 'string') {
+      res.status(400).json({ error: 'Invalid description' });
+      return;
+    }
+    const descriptionText: string = description ?? '';
+
     // Use a transaction to create the transaction and update balances
     const result = await prisma.$transaction(async (tx) => {
       // Un débit « completed » fait sortir l'argent immédiatement : le solde
@@ -248,7 +268,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
           bankAccountId,
           donorId,
           beneficiaryId,
-          description,
+          description: descriptionText,
           receiptNumber: ref,
           status: txStatus as any,
           date: txDate,

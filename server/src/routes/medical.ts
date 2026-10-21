@@ -60,6 +60,14 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
     const numericAmount = moneyNumber(amount ?? 0);
     const words = amountInWords || `${numericAmount} DZD`;
 
+    // Un montant négatif ou non numérique était stocké tel quel (amount = -99,
+    // ou 0 pour "abc" via roundMoney). Ici la caisse n'est pas débitée à la
+    // création, mais la fiche afficherait un montant faux ; refus à l'entrée.
+    if (isNaN(numericAmount) || numericAmount < 0) {
+      res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
+      return;
+    }
+
     if (!beneficiaryId || !caisseId || !doctorId || !date) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
@@ -223,6 +231,14 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
     const numericAmount = moneyNumber(amount ?? 0);
     const words = amountInWords || `${numericAmount} DZD`;
 
+    // Même refus qu'à la création : sans lui, une orientation à montant négatif
+    // était marquée « completed » sans débiter la caisse, laissant la fiche
+    // afficher un montant impossible.
+    if (isNaN(numericAmount) || numericAmount < 0) {
+      res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
+      return;
+    }
+
     const referral = await prisma.$transaction(async (tx) => {
       if (numericAmount > 0) {
         // Dépense libre : seuls les fonds non réservés sont disponibles.
@@ -368,7 +384,17 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
     if (doctorId !== undefined) data.doctorId = doctorId;
     if (analysisType !== undefined) data.analysisType = analysisType;
     if (hospital !== undefined) data.hospital = hospital;
-    if (amount !== undefined) data.amount = moneyNumber(amount);
+    // Un montant négatif ou non numérique était écrit tel quel sur une
+    // orientation encore `pending` — même refus qu'à la création et à la
+    // confirmation, pour que les trois chemins s'accordent.
+    if (amount !== undefined) {
+      const montant = moneyNumber(amount);
+      if (isNaN(montant) || montant < 0) {
+        res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
+        return;
+      }
+      data.amount = montant;
+    }
     if (amountInWords !== undefined) data.amountInWords = amountInWords;
     // Même politique qu'à la création : hors super-admin la date envoyée est
     // ignorée (la date existante est conservée), et le futur est refusé.
