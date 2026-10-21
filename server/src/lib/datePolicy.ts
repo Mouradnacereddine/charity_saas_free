@@ -38,6 +38,46 @@ export function todayLocalISO(now: Date = new Date()): string {
   return localDay(now);
 }
 
+/**
+ * Instant UTC du début d'un jour local (`YYYY-MM-DD` → 00:00 en Algérie).
+ *
+ * Inverse de `localDay`, et nécessaire parce que les filtres `dateFrom`/`dateTo`
+ * raisonnent en jours calendaires alors que `Transaction.date` stocke un
+ * instant. Les borner à `new Date('2026-10-20')` — soit minuit UTC — décale la
+ * fenêtre d'une heure : une opération créée entre 23 h et minuit UTC porte le
+ * jour local *suivant* à l'affichage, mais serait exclue du filtre de ce
+ * jour-là et incluse dans celui de la veille.
+ *
+ * Le décalage est lu depuis `timeZone` plutôt que codé en dur, pour que le
+ * fuseau de référence reste défini à un seul endroit.
+ */
+export function startOfLocalDay(day: string, timeZone: string = APP_TIME_ZONE): Date {
+  const [y, m, d] = day.split('-').map(Number);
+  const utcGuess = Date.UTC(y, m - 1, d);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(new Date(utcGuess));
+  const p = Object.fromEntries(parts.map((x) => [x.type, x.value]));
+  // `% 24` : Intl peut rendre « 24 » pour minuit selon l'ICU du runtime.
+  const asIfUTC = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
+  // `utcGuess` interprété comme heure locale → décalage appliqué en sens inverse.
+  return new Date(utcGuess - (asIfUTC - utcGuess));
+}
+
+/** Jour local suivant `day`, au format `YYYY-MM-DD`. */
+export function nextLocalDay(day: string): string {
+  const [y, m, d] = day.split('-').map(Number);
+  // Date.UTC reporte les débordements : jour 32 → 1er du mois suivant.
+  return new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+}
+
 export interface ResolvedDate {
   date: Date;
   /** true si la date fournie par le client a été retenue telle quelle. */

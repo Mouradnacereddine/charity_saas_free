@@ -4,7 +4,7 @@ import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth'
 import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
 import { roundMoney, moneyNumber } from '../lib/money';
-import { resolveTransactionDate, localDay } from '../lib/datePolicy';
+import { resolveTransactionDate, localDay, startOfLocalDay, nextLocalDay } from '../lib/datePolicy';
 import { verifierSortie, soldeDisponible, type CompteCible, type ReservationEteinte } from '../lib/solde';
 
 const router = Router();
@@ -33,16 +33,18 @@ router.get('/transactions', requirePermission('transactions', 'read'), async (re
 
     if (dateFrom || dateTo) {
       where.date = {};
-      if (dateFrom) where.date.gte = new Date(String(dateFrom));
-      // `dateTo` est un jour entier, pas un instant : une borne `lte` à minuit
-      // exclurait toutes les opérations du jour même. On borne donc au début du
-      // jour suivant, en exclu — nécessaire depuis que les opérations portent
-      // l'instant réel de création et non plus minuit.
-      if (dateTo) {
-        const end = new Date(String(dateTo));
-        end.setUTCDate(end.getUTCDate() + 1);
-        where.date.lt = end;
-      }
+      // Les bornes sont des jours calendaires locaux, pas des instants UTC :
+      // `new Date('2026-10-20')` vaut minuit UTC, soit 01:00 en Algérie. Une
+      // opération créée entre 23 h et minuit UTC porte le jour local suivant à
+      // l'affichage, mais tombait alors hors du filtre de ce jour-là — absente
+      // de son propre jour, et comptée la veille. On passe donc par
+      // `startOfLocalDay`, qui est l'inverse exact de `localDay` utilisé pour
+      // l'affichage.
+      if (dateFrom) where.date.gte = startOfLocalDay(String(dateFrom));
+      // `dateTo` est un jour entier, inclusif : la borne haute est le début du
+      // jour local suivant, en exclu — une borne `lte` à minuit exclurait
+      // toutes les opérations du jour même.
+      if (dateTo) where.date.lt = startOfLocalDay(nextLocalDay(String(dateTo)));
     }
 
     if (minAmount || maxAmount) {

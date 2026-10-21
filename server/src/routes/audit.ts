@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
+import { startOfLocalDay, nextLocalDay } from '../lib/datePolicy';
 
 const router = Router();
 
@@ -60,8 +61,13 @@ function buildFilter(req: AuthRequest): any {
 
   if (from || to) {
     where.createdAt = {};
-    if (from) where.createdAt.gte = new Date(String(from));
-    if (to) where.createdAt.lte = new Date(String(to));
+    // `from`/`to` viennent d'un `<input type="date">` : des jours calendaires,
+    // pas des instants. Les borner à `new Date('2026-10-20')` (minuit UTC) est
+    // faux de deux façons — décalage d'une heure en bas, et surtout la borne
+    // haute `lte` à minuit excluait le jour de fin *entier*. On borne donc sur
+    // les jours locaux, la haute en exclu au début du jour suivant.
+    if (from) where.createdAt.gte = startOfLocalDay(String(from));
+    if (to) where.createdAt.lt = startOfLocalDay(nextLocalDay(String(to)));
   }
 
   return where;
