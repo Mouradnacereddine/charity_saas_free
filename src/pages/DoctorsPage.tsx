@@ -200,7 +200,7 @@ export default function DoctorsPage() {
                     <td className="py-3 px-4 font-semibold text-primary" dir="ltr">{doc.reference}</td>
                     <td className="py-3 px-4 font-medium">{doc.lastName} {doc.firstName}</td>
                     <td className="py-3 px-4 hidden sm:table-cell text-muted-foreground">{doc.specialty?.name || '—'}</td>
-                    <td className="py-3 px-4 hidden lg:table-cell text-muted-foreground max-w-[200px] truncate" title={doc.address || doc.address || '—'}>{doc.address || doc.address || '—'}</td>
+                    <td className="py-3 px-4 hidden lg:table-cell text-muted-foreground max-w-[200px] truncate" title={doc.address || '—'}>{doc.address || '—'}</td>
                     <td className="py-3 px-4 hidden md:table-cell text-muted-foreground" dir="ltr">{doc.phone}</td>
                     <td className="py-3 px-4 text-center hidden lg:table-cell">
                       <Badge variant="info">{doc._count?.referrals ?? 0}</Badge>
