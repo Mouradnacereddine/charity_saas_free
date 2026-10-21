@@ -9,6 +9,26 @@ import { verifierSortie } from '../lib/solde';
 
 const router = Router();
 
+/**
+ * Valide un montant reçu du client AVANT `moneyNumber`, et le normalise.
+ *
+ * Le contrôle doit porter sur l'entrée brute : `moneyNumber("abc")` vaut 0
+ * (`roundMoney` ramène toute valeur non finie à 0), or 0 est un montant
+ * légitime pour une orientation — un montant saisi en lettres passait donc
+ * pour un 0 silencieux. Un négatif, lui, était stocké tel quel et la fiche
+ * affichait un montant impossible.
+ *
+ * Vit ici plutôt que répété trois fois : création, confirmation et
+ * modification doivent s'accorder, et trois copies d'une même règle finissent
+ * par diverger.
+ */
+function montantMedical(value: unknown): { montant?: number; error?: string } {
+  if (value === undefined || value === null || value === '') return { montant: 0 };
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n) || n < 0) return { error: 'المبلغ المدخل غير صالح' };
+  return { montant: moneyNumber(n) };
+}
+
 router.use(requireAuth);
 
 // ========================================================================
@@ -57,16 +77,13 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
     } = req.body;
 
     const reference = refInput || generateRef('MED');
-    const numericAmount = moneyNumber(amount ?? 0);
-    const words = amountInWords || `${numericAmount} DZD`;
-
-    // Un montant négatif ou non numérique était stocké tel quel (amount = -99,
-    // ou 0 pour "abc" via roundMoney). Ici la caisse n'est pas débitée à la
-    // création, mais la fiche afficherait un montant faux ; refus à l'entrée.
-    if (isNaN(numericAmount) || numericAmount < 0) {
-      res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
+    const montant = montantMedical(amount);
+    if (montant.error) {
+      res.status(400).json({ error: montant.error });
       return;
     }
+    const numericAmount = montant.montant!;
+    const words = amountInWords || `${numericAmount} DZD`;
 
     if (!beneficiaryId || !caisseId || !doctorId || !date) {
       res.status(400).json({ error: 'Missing required fields' });
@@ -227,17 +244,14 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
       return;
     }
 
-    const { amount, amountInWords } = req.body;
-    const numericAmount = moneyNumber(amount ?? 0);
-    const words = amountInWords || `${numericAmount} DZD`;
-
-    // Même refus qu'à la création : sans lui, une orientation à montant négatif
-    // était marquée « completed » sans débiter la caisse, laissant la fiche
-    // afficher un montant impossible.
-    if (isNaN(numericAmount) || numericAmount < 0) {
-      res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
+    const { amountInWords } = req.body;
+    const montant = montantMedical(req.body.amount);
+    if (montant.error) {
+      res.status(400).json({ error: montant.error });
       return;
     }
+    const numericAmount = montant.montant!;
+    const words = amountInWords || `${numericAmount} DZD`;
 
     const referral = await prisma.$transaction(async (tx) => {
       if (numericAmount > 0) {
@@ -384,16 +398,13 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
     if (doctorId !== undefined) data.doctorId = doctorId;
     if (analysisType !== undefined) data.analysisType = analysisType;
     if (hospital !== undefined) data.hospital = hospital;
-    // Un montant négatif ou non numérique était écrit tel quel sur une
-    // orientation encore `pending` — même refus qu'à la création et à la
-    // confirmation, pour que les trois chemins s'accordent.
     if (amount !== undefined) {
-      const montant = moneyNumber(amount);
-      if (isNaN(montant) || montant < 0) {
-        res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
+      const montant = montantMedical(amount);
+      if (montant.error) {
+        res.status(400).json({ error: montant.error });
         return;
       }
-      data.amount = montant;
+      data.amount = montant.montant;
     }
     if (amountInWords !== undefined) data.amountInWords = amountInWords;
     // Même politique qu'à la création : hors super-admin la date envoyée est
