@@ -1109,8 +1109,20 @@ router.put('/allocations/:id/distribute', requirePermission('allocations', 'upda
       return;
     }
 
-    const distributeAmount = moneyNumber(amount || allocation.remainingAmount);
-    const newRemaining = roundMoney(Number(allocation.remainingAmount) - Number(distributeAmount));
+    // `amount` alimente `remainingAmount` par soustraction, et cette colonne
+    // est le « réservé » que `verifierSortie` retranche du solde disponible.
+    // Un montant négatif faisait donc *augmenter* la réservation (remaining
+    // − (−100) = +100), réduisant d'autant le disponible et bloquant des
+    // dépenses légitimes. Un non-numérique ressortait à 0 via roundMoney.
+    const distributeAmount = amount === undefined || amount === null
+      ? Number(allocation.remainingAmount)
+      : Number(amount);
+    if (!Number.isFinite(distributeAmount) || distributeAmount < 0
+        || distributeAmount > Number(allocation.remainingAmount)) {
+      res.status(400).json({ error: 'المبلغ غير صالح' });
+      return;
+    }
+    const newRemaining = roundMoney(Number(allocation.remainingAmount) - distributeAmount);
 
     const updated = await prisma.donationAllocation.update({
       where: { id },
