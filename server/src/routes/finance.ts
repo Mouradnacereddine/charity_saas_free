@@ -5,7 +5,7 @@ import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
 import { roundMoney, moneyNumber } from '../lib/money';
 import { resolveTransactionDate, localDay, startOfLocalDay, nextLocalDay } from '../lib/datePolicy';
-import { verifierSortie, soldeDisponible, type CompteCible, type ReservationEteinte } from '../lib/solde';
+import { verifierSortie, soldeDisponible, compteDuMouvement, type ReservationEteinte } from '../lib/solde';
 
 const router = Router();
 
@@ -213,6 +213,57 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
     }
     const descriptionText: string = description ?? '';
 
+    // Portée multi-tenant des rattachements optionnels. `caisseId` est vérifié
+    // juste au-dessus, mais les trois autres identifiants entrants ne
+    // l'étaient pas : un `donorId`/`beneficiaryId` d'une AUTRE association
+    // était accepté tel quel, et les écritures qui en découlent sortent du
+    // périmètre du tenant — `donor.totalDonated` incrémenté chez le voisin,
+    // reçu de don créé avec un donateur étranger, allocation rattachée à un
+    // bénéficiaire qui n'est pas le sien. On refuse désormais franchement
+    // plutôt que d'ignorer en silence : un identifiant fourni qui n'appartient
+    // pas à l'association est une erreur d'appel, pas un champ absent.
+    if (donorId) {
+      const donor = await prisma.donor.findFirst({ where: { id: donorId, associationId }, select: { id: true } });
+      if (!donor) {
+        res.status(400).json({ error: 'Donor not found' });
+        return;
+      }
+    }
+    const benefId = beneficiaryId || allocatedBeneficiaryId;
+    if (benefId) {
+      const benef = await prisma.beneficiary.findFirst({ where: { id: benefId, associationId }, select: { id: true } });
+      if (!benef) {
+        res.status(400).json({ error: 'Beneficiary not found' });
+        return;
+      }
+    }
+    if (bankAccountId) {
+      const banque = await prisma.bankAccount.findFirst({ where: { id: bankAccountId, associationId }, select: { id: true } });
+      if (!banque) {
+        res.status(400).json({ error: 'Bank account not found' });
+        return;
+      }
+    }
+    if (allocationId) {
+      const alloc = await prisma.donationAllocation.findFirst({ where: { id: allocationId, associationId }, select: { id: true } });
+      if (!alloc) {
+        res.status(400).json({ error: 'Allocation not found' });
+        return;
+      }
+    }
+
+    // Compte réellement mouvementé par cette opération — un seul, jamais les
+    // deux (voir `compteDuMouvement`). Pour un crédit bancaire le client envoie
+    // AUSSI un `caisseId` (champ obligatoire de `Transaction`) : s'en servir
+    // pour créditer la caisse faisait entrer le même argent deux fois, dans
+    // deux comptes, et gonflait le total affiché.
+    const compteMouvement = compteDuMouvement({ fundSource, caisseId, bankAccountId });
+    if (!compteMouvement) {
+      // `fundSource: 'banque'` sans compte bancaire : aucun solde à mouvoir.
+      res.status(400).json({ error: 'Bank account is required for banque fund source' });
+      return;
+    }
+
     // Use a transaction to create the transaction and update balances
     const result = await prisma.$transaction(async (tx) => {
       // Un débit « completed » fait sortir l'argent immédiatement : le solde
@@ -225,14 +276,10 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
         // affectés non versés, débits en attente). Un débit rattaché à une
         // allocation paie cette promesse et l'éteint ; une dépense libre doit
         // se contenter des fonds non réservés.
-        const compte = fundSource === 'banque' && bankAccountId
-          ? { bankAccountId }
-          : { caisseId };
-
         const sortie = await verifierSortie(
           tx,
           associationId,
-          compte,
+          compteMouvement,
           numericAmount,
           allocationId ? { allocationId } : {},
         );
@@ -240,22 +287,23 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
           throw new Error('INSUFFICIENT_DISPONIBLE');
         }
 
-        if (fundSource === 'caisse_physique') {
-          const decCaisse = await tx.caisse.updateMany({
-            where: { id: caisseId, associationId, balance: { gte: numericAmount } },
-            data: { balance: { decrement: numericAmount } },
-          });
-          if (decCaisse.count === 0) {
-            throw new Error('INSUFFICIENT_CAISSE_BALANCE');
-          }
-        } else if (fundSource === 'banque' && bankAccountId) {
-          const decBank = await tx.bankAccount.updateMany({
-            where: { id: bankAccountId, associationId, balance: { gte: numericAmount } },
-            data: { balance: { decrement: numericAmount } },
-          });
-          if (decBank.count === 0) {
-            throw new Error('INSUFFICIENT_BANK_BALANCE');
-          }
+        // Débit conditionnel ATOMIQUE sur le compte réellement visé : le
+        // `WHERE balance >= montant` fait vérifier et décrémenter par la base
+        // en une seule instruction. Un compte bancaire crédite la banque, une
+        // caisse physique décrémente la caisse — jamais les deux.
+        const debitOk = compteMouvement.bankAccountId
+          ? await tx.bankAccount.updateMany({
+              where: { id: compteMouvement.bankAccountId, associationId, balance: { gte: numericAmount } },
+              data: { balance: { decrement: numericAmount } },
+            })
+          : await tx.caisse.updateMany({
+              where: { id: compteMouvement.caisseId!, associationId, balance: { gte: numericAmount } },
+              data: { balance: { decrement: numericAmount } },
+            });
+        if (debitOk.count === 0) {
+          throw new Error(
+            compteMouvement.bankAccountId ? 'INSUFFICIENT_BANK_BALANCE' : 'INSUFFICIENT_CAISSE_BALANCE',
+          );
         }
       }
       const transaction = await tx.transaction.create({
@@ -283,22 +331,28 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
       let allocation = null;
 
       // =====================================================
-      // CREDIT: money enters caisse IMMEDIATELY (even pending)
+      // CREDIT: money enters IMMEDIATELY (even pending)
       // because the donor has physically given the money.
       // =====================================================
       if (type === 'credit') {
-        // Update caisse balance
-        await tx.caisse.update({
-          where: { id: caisseId },
-          data: { balance: { increment: amountNum } },
-        });
-
-        // Update bank account balance if applicable
-        if (bankAccountId) {
-          await tx.bankAccount.update({
-            where: { id: bankAccountId },
-            data: { balance: { increment: amountNum } },
-          });
+        // INC/DEC sur le compte réellement mouvementé, et sur lui seul.
+        // L'incrément conditionnel reprend le garde-fou du débit : si le compte
+        // a disparu entre-temps (supprimé concurremment), l'écriture ne touche
+        // zéro ligne et la transaction est annulée au lieu de créer un
+        // mouvement sans contrepartie.
+        const creditOk = compteMouvement.bankAccountId
+          ? await tx.bankAccount.updateMany({
+              where: { id: compteMouvement.bankAccountId, associationId },
+              data: { balance: { increment: amountNum } },
+            })
+          : await tx.caisse.updateMany({
+              where: { id: compteMouvement.caisseId!, associationId },
+              data: { balance: { increment: amountNum } },
+            });
+        if (creditOk.count === 0) {
+          throw new Error(
+            compteMouvement.bankAccountId ? 'INSUFFICIENT_BANK_BALANCE' : 'INSUFFICIENT_CAISSE_BALANCE',
+          );
         }
 
         // Update donor totalDonated
@@ -383,7 +437,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
 
       // If beneficiary is set on credit, create allocation (tracks donor→beneficiary
       // or caisse→beneficiary when no donor is associated)
-      const allocBenefId = beneficiaryId || allocatedBeneficiaryId;
+      const allocBenefId = benefId;
       if (allocBenefId && type === 'credit') {
         const donor = donorId ? await tx.donor.findUnique({ where: { id: donorId } }) : null;
         const beneficiary = await tx.beneficiary.findUnique({ where: { id: allocBenefId } });
@@ -634,11 +688,15 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
     }
 
     if (tx.status !== 'pending') {
-      // Allow completed credits with remaining amount to continue disbursing
-      if (!(tx.type === 'credit' && tx.status === 'completed')) {
-        res.status(400).json({ error: 'Seules les transactions en attente peuvent être confirmées' });
-        return;
-      }
+      // Une transaction non « pending » est déjà réglée : la rejouer n'est pas
+      // une opération idempotente ici — elle redébite le compte et recrée un
+      // débit de libération. Constaté en recette : deux appels successifs sur
+      // un crédit déjà confirmé produisaient DEUX débits sortis du compte avec
+      // le même numéro de reçu, vidant la caisse. Une confirmation est un acte
+      // unique ; pour poursuivre un déboursement partiel, la route dédiée est
+      // POST /finance/allocations/:id/disburse.
+      res.status(400).json({ error: 'Seules les transactions en attente peuvent être confirmées' });
+      return;
     }
 
     const amountNum = moneyNumber(tx.amount);
@@ -648,16 +706,39 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
       return;
     }
+    // Un crédit partiel (le bénéficiaire n'a reçu qu'une partie) doit être
+    // libéré par le solde restant de la promesse, et non par le montant
+    // d'origine lu sur la transaction — sinon on peut libérer deux fois le même
+    // argent. La promesse fait foi de ce qui reste dû.
+    let plafond = amountNum;
+    if (tx.type === 'credit' && tx.beneficiaryId) {
+      const alloc = await prisma.donationAllocation.findFirst({
+        where: { creditTransactionId: tx.id, associationId },
+        select: { remainingAmount: true },
+      });
+      if (alloc && Number(alloc.remainingAmount) > 0) {
+        plafond = moneyNumber(alloc.remainingAmount);
+        if (confirmAmount > plafond) {
+          res.status(400).json({ error: 'المبلغ يتجاوز المتبقي من التخصيص' });
+          return;
+        }
+      }
+    }
 
-    // Une confirmation fait SORTIR de l'argent de la caisse/banque dans deux
-    // cas, et le solde doit être contrôlé pour les DEUX :
+    // Une confirmation fait SORTIR de l'argent du compte mouvementé par
+    // l'opération, et de lui seul (voir `compteDuMouvement`) :
     //   - un débit confirmé : l'argent part au bénéficiaire ;
     //   - un crédit AVEC bénéficiaire : la confirmation crée le débit de
     //     libération plus bas, donc l'argent sort aussi.
-    // Contrôler le seul cas « debit » laissait confirmer un crédit alors que
-    // les fonds avaient été engagés ailleurs entre-temps, ce qui produisait un
-    // solde de caisse négatif.
+    // Le crédit bancaire débitait malgré tout la CAISSE (décrément
+    // inconditionnel) en plus du compte bancaire : la caisse se vidait d'un
+    // argent qu'elle n'avait jamais reçu, jusqu'à devenir négative.
     const isOutflow = tx.type === 'debit' || (tx.type === 'credit' && !!tx.beneficiaryId);
+    const compteMouvement = compteDuMouvement({
+      fundSource: tx.fundSource,
+      caisseId: tx.caisseId,
+      bankAccountId: tx.bankAccountId,
+    });
 
     const result = await prisma.$transaction(async (prismaTx) => {
       // Débit conditionnel ATOMIQUE du solde : le `WHERE balance >= montant`
@@ -696,31 +777,34 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
           if (promesse) eteint.allocationId = promesse.id;
         }
 
-        // Les deux comptes réellement débités par le compare-and-swap ci-dessous.
-        const comptes: CompteCible[] = [{ caisseId: tx.caisseId }];
-        if (tx.bankAccountId) comptes.push({ bankAccountId: tx.bankAccountId });
-        for (const compte of comptes) {
-          const sortie = await verifierSortie(prismaTx, associationId, compte, confirmAmount, eteint);
+        // Le compte réellement débité par le compare-and-swap ci-dessous : un
+        // seul. En lister deux (caisse + banque) refusait une sortie bancaire
+        // légitime dont la caisse, non mouvementée, était à sec — et
+        // l'inverse.
+        if (compteMouvement) {
+          const sortie = await verifierSortie(prismaTx, associationId, compteMouvement, confirmAmount, eteint);
           if (!sortie.autorise) {
             throw new Error('INSUFFICIENT_DISPONIBLE');
           }
         }
 
-        const decCaisse = await prismaTx.caisse.updateMany({
-          where: { id: tx.caisseId, associationId, balance: { gte: confirmAmount } },
-          data: { balance: { decrement: confirmAmount } },
-        });
-        if (decCaisse.count === 0) {
-          throw new Error('INSUFFICIENT_CAISSE_BALANCE');
+        if (!compteMouvement) {
+          throw new Error('INSUFFICIENT_DISPONIBLE');
         }
-        if (tx.bankAccountId) {
-          const decBank = await prismaTx.bankAccount.updateMany({
-            where: { id: tx.bankAccountId, associationId, balance: { gte: confirmAmount } },
-            data: { balance: { decrement: confirmAmount } },
-          });
-          if (decBank.count === 0) {
-            throw new Error('INSUFFICIENT_BANK_BALANCE');
-          }
+
+        const debitOk = compteMouvement.bankAccountId
+          ? await prismaTx.bankAccount.updateMany({
+              where: { id: compteMouvement.bankAccountId, associationId, balance: { gte: confirmAmount } },
+              data: { balance: { decrement: confirmAmount } },
+            })
+          : await prismaTx.caisse.updateMany({
+              where: { id: compteMouvement.caisseId!, associationId, balance: { gte: confirmAmount } },
+              data: { balance: { decrement: confirmAmount } },
+            });
+        if (debitOk.count === 0) {
+          throw new Error(
+            compteMouvement.bankAccountId ? 'INSUFFICIENT_BANK_BALANCE' : 'INSUFFICIENT_CAISSE_BALANCE',
+          );
         }
       }
 
@@ -877,22 +961,39 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
         data: { status: 'cancelled', updatedBy: req.user!.userId },
       });
 
-      const amountNum = tx.amount;
+      const amountNum = moneyNumber(tx.amount);
 
       // If a pending CREDIT is cancelled, we must subtract the money that entered
       if (tx.type === 'credit') {
-        // Decrease caisse balance
-        await prismaTx.caisse.update({
-          where: { id: tx.caisseId },
-          data: { balance: { decrement: amountNum } },
+        // Décrément sur le compte réellement crédité, et sur lui seul. Le
+        // décrément était inconditionnel sur la caisse ET sur la banque : le
+        // crédit bancaire retirait donc de la caisse un argent qu'elle n'avait
+        // jamais reçu, la faisant passer en négatif. Le garde-fou `gte` ferme
+        // en plus la course avec un retrait concurrent.
+        const compte = compteDuMouvement({
+          fundSource: tx.fundSource,
+          caisseId: tx.caisseId,
+          bankAccountId: tx.bankAccountId,
         });
-
-        // Decrease bank account balance if applicable
-        if (tx.bankAccountId) {
-          await prismaTx.bankAccount.update({
-            where: { id: tx.bankAccountId },
-            data: { balance: { decrement: amountNum } },
-          });
+        if (compte) {
+          const annule = compte.bankAccountId
+            ? await prismaTx.bankAccount.updateMany({
+                where: { id: compte.bankAccountId, associationId, balance: { gte: amountNum } },
+                data: { balance: { decrement: amountNum } },
+              })
+            : await prismaTx.caisse.updateMany({
+                where: { id: compte.caisseId!, associationId, balance: { gte: amountNum } },
+                data: { balance: { decrement: amountNum } },
+              });
+          if (annule.count === 0) {
+            // Les fonds reçus ont déjà été engagés ailleurs : annuler
+            // creuserait le compte. On refuse, la transaction reste en attente.
+            // Le code d'erreur suit le compte réellement débité, sinon le
+            // message parle de caisse pour une opération bancaire.
+            throw new Error(
+              compte.bankAccountId ? 'INSUFFICIENT_BANK_BALANCE' : 'INSUFFICIENT_CAISSE_BALANCE',
+            );
+          }
         }
 
         // Decrease donor totalDonated if applicable
@@ -933,7 +1034,17 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
 
     await logAudit(req, { action: 'cancel', resource: 'transaction', resourceId: updated.id, description: 'Transaction annulée' });
     res.json(updated);
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'INSUFFICIENT_CAISSE_BALANCE') {
+      res.status(400).json({
+        error: 'تعذر الإلغاء : المبلغ المستلم استُخدم أو التُزم به. لا يمكن إلغاء العملية.',
+      });
+      return;
+    }
+    if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
+      res.status(400).json({ error: 'Insufficient bank balance to cancel' });
+      return;
+    }
     console.error('Error cancelling transaction:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1010,36 +1121,35 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
       // (une fois comme réservé, une fois comme sortie) et tout déboursement
       // légitime serait refusé dès que la caisse ne contient que ces fonds.
       const eteint: ReservationEteinte = { allocationId: id };
-      const comptes: CompteCible[] = [];
-      if (creditTx.fundSource === 'caisse_physique') comptes.push({ caisseId: creditTx.caisseId });
-      if (creditTx.bankAccountId) comptes.push({ bankAccountId: creditTx.bankAccountId });
-      for (const compte of comptes) {
-        const sortie = await verifierSortie(prismaTx, associationId, compte, disburseAmount, eteint);
-        if (!sortie.autorise) {
-          throw new Error('INSUFFICIENT_DISPONIBLE');
-        }
+      // Un déboursement sort du compte qui a reçu le don : celui de la
+      // transaction de crédit, et lui seul.
+      const compte = compteDuMouvement({
+        fundSource: creditTx.fundSource,
+        caisseId: creditTx.caisseId,
+        bankAccountId: creditTx.bankAccountId,
+      });
+      if (!compte) {
+        throw new Error('INSUFFICIENT_DISPONIBLE');
+      }
+      const sortie = await verifierSortie(prismaTx, associationId, compte, disburseAmount, eteint);
+      if (!sortie.autorise) {
+        throw new Error('INSUFFICIENT_DISPONIBLE');
       }
 
       // Contrôle du solde À L'INTÉRIEUR de la transaction : fait avant, la
       // valeur lue pouvait être périmée et deux déboursements concurrents
       // passaient tous deux le contrôle, produisant un solde négatif.
-      if (creditTx.fundSource === 'caisse_physique') {
-        const decCaisse = await prismaTx.caisse.updateMany({
-          where: { id: creditTx.caisseId, associationId, balance: { gte: disburseAmount } },
-          data: { balance: { decrement: disburseAmount } },
-        });
-        if (decCaisse.count === 0) {
-          throw new Error('INSUFFICIENT_CAISSE_BALANCE');
-        }
-      }
-      if (creditTx.bankAccountId) {
-        const decBank = await prismaTx.bankAccount.updateMany({
-          where: { id: creditTx.bankAccountId, associationId, balance: { gte: disburseAmount } },
-          data: { balance: { decrement: disburseAmount } },
-        });
-        if (decBank.count === 0) {
-          throw new Error('INSUFFICIENT_BANK_BALANCE');
-        }
+      const decOk = compte.bankAccountId
+        ? await prismaTx.bankAccount.updateMany({
+            where: { id: compte.bankAccountId, associationId, balance: { gte: disburseAmount } },
+            data: { balance: { decrement: disburseAmount } },
+          })
+        : await prismaTx.caisse.updateMany({
+            where: { id: compte.caisseId!, associationId, balance: { gte: disburseAmount } },
+            data: { balance: { decrement: disburseAmount } },
+          });
+      if (decOk.count === 0) {
+        throw new Error(compte.bankAccountId ? 'INSUFFICIENT_BANK_BALANCE' : 'INSUFFICIENT_CAISSE_BALANCE');
       }
 
       const ref = generateRef('BON');

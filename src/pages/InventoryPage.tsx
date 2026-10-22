@@ -2272,6 +2272,11 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
           counted: counts[it.articleId] === '' ? undefined : Number(counts[it.articleId]),
         })),
       })
+    } catch (err: any) {
+      // Sans ce catch, un refus serveur laissait l'écran muet et les
+      // quantités saisies étaient perdues silencieusement. Le corps d'erreur
+      // de cette route est en arabe en dur : on préfère le message localisé.
+      alert(t('inventory.saveStockTakeFailed'))
     } finally {
       setSaving(false)
     }

@@ -15,6 +15,27 @@ function generateDocRef(): string {
   return generateRef('DOC');
 }
 
+// Un médecin ne peut être rattaché qu'à un spécialité de SA propre association.
+// Retourne undefined si aucun identifiant n'est fourni (pas de rattachement),
+// l'identifiant validé s'il existe bien dans l'association, et null après avoir
+// répondu 400 lorsque l'identifiant est étranger ou inexistant.
+async function validerSpecialite(
+  specialtyId: unknown,
+  associationId: string,
+  res: Response
+): Promise<string | undefined | null> {
+  if (specialtyId === undefined || specialtyId === null || specialtyId === '') return undefined;
+  const specialite = await prisma.doctorSpecialty.findFirst({
+    where: { id: String(specialtyId), associationId },
+    select: { id: true },
+  });
+  if (!specialite) {
+    res.status(400).json({ error: 'التخصص غير موجود' });
+    return null;
+  }
+  return specialite.id;
+}
+
 // ========================================================================
 // DOCTORS CRUD
 // ========================================================================
@@ -254,6 +275,9 @@ router.post('/', requirePermission('doctors', 'create'), async (req: AuthRequest
       return;
     }
 
+    const specialiteId = await validerSpecialite(specialtyId, associationId, res);
+    if (specialiteId === null) return;
+
     const doctor = await prisma.doctor.create({
       data: {
         associationId,
@@ -262,7 +286,7 @@ router.post('/', requirePermission('doctors', 'create'), async (req: AuthRequest
         lastName,
         phone,
         email,
-        specialtyId: specialtyId || undefined,
+        specialtyId: specialiteId || undefined,
         address,
         notes,
         createdBy: req.user!.userId,
@@ -306,7 +330,11 @@ router.put('/:id', requirePermission('doctors', 'update'), async (req: AuthReque
     if (lastName !== undefined) data.lastName = lastName;
     if (phone !== undefined) data.phone = phone;
     if (email !== undefined) data.email = email;
-    if (specialtyId !== undefined) data.specialtyId = specialtyId;
+    if (specialtyId !== undefined) {
+      const specialiteValidee = await validerSpecialite(specialtyId, associationId, res);
+      if (specialiteValidee === null) return;
+      data.specialtyId = specialiteValidee ?? null;
+    }
     if (address !== undefined) data.address = address;
     if (notes !== undefined) data.notes = notes;
     data.updatedBy = req.user!.userId;

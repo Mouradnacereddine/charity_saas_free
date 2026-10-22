@@ -153,6 +153,23 @@ router.delete('/:id', requirePermission('caisses', 'delete'), async (req: AuthRe
       return;
     }
 
+    // Un reçu de don ou une transaction référence la caisse sans onDelete :
+    // la clé étrangère bloque la suppression. On le signale explicitement
+    // (409) au lieu de laisser fuiter un 500 opaque affiché tel quel.
+    const [receiptCount, txCount] = await Promise.all([
+      prisma.donationReceipt.count({ where: { caisseId: id, associationId } }),
+      prisma.transaction.count({ where: { caisseId: id, associationId } }),
+    ]);
+    if (receiptCount > 0 || txCount > 0) {
+      res.status(409).json({
+        error: 'Caisse is in use',
+        message: 'Cette caisse a des transactions ou des reçus et ne peut pas être supprimée.',
+        transactionCount: txCount,
+        receiptCount,
+      });
+      return;
+    }
+
     await prisma.caisse.delete({ where: { id } });
 
     await logAudit(req, {

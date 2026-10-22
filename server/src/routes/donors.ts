@@ -150,7 +150,7 @@ router.post('/', requirePermission('donors', 'create'), async (req: AuthRequest,
         email,
         address,
         gender: gender || 'male',
-        totalDonated: totalDonated || 0,
+        totalDonated: moneyNumber(Math.max(0, Number(totalDonated) || 0)),
         notes,
         createdBy: req.user!.userId,
       },
@@ -338,6 +338,21 @@ router.delete('/:id', requirePermission('donors', 'delete'), async (req: AuthReq
 
     if (!existing) {
       res.status(404).json({ error: 'Donor not found' });
+      return;
+    }
+
+    // Un reçu de don référence le donateur sans onDelete : la clé étrangère
+    // bloque la suppression. On le signale explicitement (409) au lieu de
+    // laisser fuiter un 500 opaque que l'interface affiche telle quelle.
+    const receiptCount = await prisma.donationReceipt.count({
+      where: { donorId: id, associationId },
+    });
+    if (receiptCount > 0) {
+      res.status(409).json({
+        error: 'Donor has donation receipts',
+        message: 'Ce donateur a des reçus de don et ne peut pas être supprimé.',
+        receiptCount,
+      });
       return;
     }
 

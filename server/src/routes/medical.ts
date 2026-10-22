@@ -50,12 +50,28 @@ router.get('/referrals', requirePermission('medical_referrals', 'read'), async (
       orderBy: [{ createdAt: 'desc' }, { date: 'desc' }],
     });
 
+    // Une orientation peut pointer vers un médecin d'une AUTRE association
+    // (les anciennes lignes n'étaient pas scopées à l'écriture, et la liste
+    // exposait alors son nom et sa spécialité : fuite inter-tenants). On
+    // n'affiche donc un médecin que s'il appartient bien à cette association.
+    const medecinsAutorises = new Set(
+      (await prisma.doctor.findMany({ where: { associationId }, select: { id: true } })).map((d) => d.id),
+    );
+
     const result = referrals.map((r: any) => ({
       ...r,
+      // Le champ `doctor` de la relation n'est pas scopé : on le neutralise
+      // quand il appartient à une autre association, sinon le client retombe
+      // dessus (`referral.doctor ? ...`) et le masquage ci-dessous ne sert à rien.
+      doctor: r.doctor && medecinsAutorises.has(r.doctor.id) ? r.doctor : null,
       beneficiaryName: r.beneficiary ? `${r.beneficiary.firstName} ${r.beneficiary.lastName}` : '',
       beneficiaryReference: r.beneficiary?.reference || '',
-      doctorName: r.doctor ? `${r.doctor.firstName} ${r.doctor.lastName}` : '',
-      doctorSpecialty: r.doctor?.specialty?.name || '',
+      doctorName: r.doctor && medecinsAutorises.has(r.doctor.id)
+        ? `${r.doctor.firstName} ${r.doctor.lastName}`
+        : '',
+      doctorSpecialty: r.doctor && medecinsAutorises.has(r.doctor.id)
+        ? (r.doctor?.specialty?.name || '')
+        : '',
     }));
 
     res.json(result);
@@ -117,6 +133,19 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
 
     if (!caisse) {
       res.status(400).json({ error: 'Caisse not found' });
+      return;
+    }
+
+    // Le médecin entrant était écrit sans contrôle : une orientation pouvait
+    // référencer le médecin d'une AUTRE association. Le PUT et la liste sont
+    // durcis de leur côté ; on refuse également à la création.
+    const doctor = await prisma.doctor.findFirst({
+      where: { id: doctorId, associationId },
+      select: { id: true },
+    });
+
+    if (!doctor) {
+      res.status(400).json({ error: 'Doctor not found' });
       return;
     }
 
@@ -217,7 +246,18 @@ router.get('/referrals/:id', requirePermission('medical_referrals', 'read'), asy
       return;
     }
 
-    res.json(referral);
+    // Même règle que la liste : le médecin d'une autre association n'est pas
+    // renvoyé (la relation n'est pas scopée en lecture).
+    let doctor: any = null;
+    if (referral.doctor) {
+      const own = await prisma.doctor.findFirst({
+        where: { id: referral.doctor.id, associationId },
+        select: { id: true },
+      });
+      if (own) doctor = referral.doctor;
+    }
+
+    res.json({ ...referral, doctor });
   } catch (error) {
     console.error('Error getting medical referral:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -391,6 +431,54 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
       });
       return;
     }
+
+    // `status` n'est PAS accepté ici. Cette route acceptait n'importe quelle
+    // valeur et l'écrivait telle quelle : renvoyer `pending` sur une
+    // orientation déjà `completed` la rendait à nouveau « en attente » alors
+    // que le débit était toujours en base — puis `PUT /:id/confirm` créait un
+    // SECOND débit portant le MÊME `receiptNumber`, l'argent sortait deux fois
+    // et le remboursement à la suppression n'en défaisait qu'un. Les
+    // transitions d'état passent par les routes dédiées `/confirm` et
+    // `/cancel`, qui contrôlent le solde.
+    if (req.body.status !== undefined) {
+      res.status(400).json({
+        error: 'L’état d’une orientation se change via /confirm ou /cancel, pas par une modification.',
+      });
+      return;
+    }
+
+    // Scoper les rattachements entrants à l'association : sans ce contrôle, une
+    // orientation pouvait pointer vers la caisse, le bénéficiaire ou le
+    // médecin d'une AUTRE association — et le débit ultérieur écrivait sur une
+    // caisse étrangère.
+    if (beneficiaryId !== undefined) {
+      const benef = await prisma.beneficiary.findFirst({
+        where: { id: beneficiaryId, associationId }, select: { id: true },
+      });
+      if (!benef) {
+        res.status(400).json({ error: 'Beneficiary not found' });
+        return;
+      }
+    }
+    if (caisseId !== undefined) {
+      const caisse = await prisma.caisse.findFirst({
+        where: { id: caisseId, associationId }, select: { id: true },
+      });
+      if (!caisse) {
+        res.status(400).json({ error: 'Caisse not found' });
+        return;
+      }
+    }
+    if (doctorId !== undefined) {
+      const doctor = await prisma.doctor.findFirst({
+        where: { id: doctorId, associationId }, select: { id: true },
+      });
+      if (!doctor) {
+        res.status(400).json({ error: 'Doctor not found' });
+        return;
+      }
+    }
+
     if (reference !== undefined) data.reference = reference;
     if (beneficiaryId !== undefined) data.beneficiaryId = beneficiaryId;
     if (caisseId !== undefined) data.caisseId = caisseId;
@@ -418,7 +506,6 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
       if (dateResolution.honored) data.date = dateResolution.date;
     }
     if (notes !== undefined) data.notes = notes;
-    if (req.body.status !== undefined) data.status = req.body.status;
     data.updatedBy = req.user!.userId;
 
     const referral = await prisma.medicalReferral.update({

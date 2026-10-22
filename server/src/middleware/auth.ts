@@ -11,7 +11,21 @@ export interface AuthRequest extends Request {
   params: Record<string, string>;
 }
 
-export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+/**
+ * Vérifie la signature du jeton PUIS l'état du compte en base.
+ *
+ * La seule signature laissait une révocation sans effet : un compte passé à
+ * `rejected` conservait l'accès pendant les 15 minutes de vie de son jeton, et
+ * indéfiniment tant qu'il appelait `/auth/refresh`. Le rôle et l'association
+ * sont eux aussi relus, de sorte qu'un changement de rôle prenne effet sans
+ * attendre l'expiration du jeton.
+ *
+ * Le coût est une lecture par clé primaire (indexée) sur les routes
+ * authentifiées ; en échange, l'accès s'arrête à la requête suivante. Tout
+ * échec de lecture **refuse** l'accès : une panne de base ne doit pas ouvrir
+ * les routes.
+ */
+export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || Array.isArray(authHeader) || !authHeader.startsWith('Bearer ')) {
@@ -22,13 +36,44 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
 
   const token = authHeader.substring(7);
 
+  let payload: AccessTokenPayload;
   try {
-    const payload = verifyToken(token);
-    req.user = payload;
-    next();
+    payload = verifyToken(token);
   } catch (err) {
     console.warn(`🔐 401 — Invalid or expired token. URL: ${req.method} ${req.path}, IP: ${req.ip}, Token prefix: ${token.substring(0, 12)}...`);
     res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  try {
+    const compte = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { status: true, role: true, associationId: true },
+    });
+
+    if (!compte) {
+      console.warn(`🔐 401 — Jeton valide mais compte ${payload.userId} introuvable. URL: ${req.method} ${req.path}`);
+      res.status(401).json({ error: 'Invalid or expired token' });
+      return;
+    }
+
+    if (compte.status !== 'approved') {
+      console.warn(`🔐 403 — Accès refusé, compte ${payload.userId} au statut « ${compte.status} ». URL: ${req.method} ${req.path}`);
+      res.status(403).json({ error: 'Account is not approved' });
+      return;
+    }
+
+    req.user = {
+      userId: payload.userId,
+      associationId: compte.associationId,
+      role: compte.role,
+    };
+    next();
+  } catch (err) {
+    // Refus par défaut : mieux vaut une route fermée qu'une route ouverte
+    // parce que la base n'a pas répondu.
+    console.error(`🔐 500 — Échec de la vérification du compte ${payload.userId} en base. URL: ${req.method} ${req.path}`, err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
 

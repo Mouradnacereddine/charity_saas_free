@@ -561,6 +561,7 @@
     "countedItems": "Counted items",
     "totalDiff": "Total diff",
     "validateStockTake": "Validate count",
+    "saveStockTakeFailed": "Failed to save the count",
     "completeStockTake": "Complete count",
     "cancelStockTake": "Cancel count",
     "confirmCancelStockTake": "Cancel this count?",

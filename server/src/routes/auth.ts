@@ -259,6 +259,17 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Le contrôle de statut vivait uniquement dans `/login` : un compte
+    // approuvé puis SUSPENDU (`pending`/`rejected`) continuait indéfiniment à
+    // obtenir de nouveaux jetons via son refresh token (7 jours, renouvelable),
+    // donc la révocation ne prenait jamais effet. Le refresh doit valoir le
+    // login sur ce point.
+    if (user.status !== 'approved') {
+      console.warn(`🔐 Refresh refusé — compte ${user.id} au statut « ${user.status} »`);
+      res.status(403).json({ error: 'Account is not approved' });
+      return;
+    }
+
     const newAccessToken = generateAccessToken({
       userId: user.id,
       associationId: user.associationId,

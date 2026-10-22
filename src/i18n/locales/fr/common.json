@@ -562,6 +562,7 @@
     "countedItems": "Articles comptés",
     "totalDiff": "Écart total",
     "validateStockTake": "Valider le comptage",
+    "saveStockTakeFailed": "Échec de l'enregistrement du comptage",
     "completeStockTake": "Terminer l'inventaire",
     "cancelStockTake": "Annuler l'inventaire",
     "confirmCancelStockTake": "Annuler cet inventaire ?",

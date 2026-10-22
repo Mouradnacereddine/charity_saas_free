@@ -199,9 +199,27 @@ router.put('/:id', requirePermission('loans', 'update'), async (req: AuthRequest
       loanDate, expectedReturnDate, actualReturnDate, notes,
     } = req.body;
 
+    // Scoper le bénéficiaire entrant : sans ce contrôle, un prêt pouvait être
+    // rattaché au bénéficiaire d'une AUTRE association (l'identifiant était
+    // écrit tel quel), et la fiche du voisin affichait un prêt qui ne le
+    // concerne pas.
+    if (beneficiaryId !== undefined) {
+      const benef = await prisma.beneficiary.findFirst({
+        where: { id: beneficiaryId, associationId },
+        select: { id: true },
+      });
+      if (!benef) {
+        res.status(400).json({ error: 'Beneficiary not found' });
+        return;
+      }
+    }
+
     const data: any = {};
     if (reference !== undefined) data.reference = reference;
     if (beneficiaryId !== undefined) data.beneficiaryId = beneficiaryId;
+    // Les identifiants de ligne entrants (`itemKey`) sont préservés : c'est eux
+    // qui rattachent un retour à la bonne occurrence. Les articles visés sont
+    // scopés à l'association ci-dessous.
     if (items !== undefined) {
       // Garantir un itemKey sur chaque ligne reçue (protection contre la perte des clés)
       data.items = (items as any[]).map((i: any) => ({
@@ -222,14 +240,97 @@ router.put('/:id', requirePermission('loans', 'update'), async (req: AuthRequest
     if (actualReturnDate !== undefined) data.actualReturnDate = actualReturnDate ? new Date(actualReturnDate) : null;
     if (notes !== undefined) data.notes = notes;
 
-    const loan = await prisma.loan.update({
-      where: { id },
-      data: { ...data, updatedBy: req.user!.userId },
+    // Le stock est la conséquence des lignes : une réécriture d'`items` qui
+    // change les quantités SANS toucher `availableQuantity` désynchronisait
+    // le stock du prêt — la boucle des retours créditait des articles qui
+    // n'étaient plus prêtés, et le stock pouvait être gonflé au-delà du réel.
+    // On consomme donc le delta ligne à ligne, exactement comme le fait
+    // `remove-item` pour une ligne supprimée.
+    const newItems: any[] = data.items;
+    if (newItems) {
+      for (const item of newItems) {
+        if (!item || !item.articleId) {
+          res.status(400).json({ error: 'Chaque ligne doit porter un articleId' });
+          return;
+        }
+        const qty = Number(item.quantity);
+        if (!Number.isFinite(qty) || !Number.isInteger(qty) || qty < 0) {
+          res.status(400).json({ error: 'الكمية غير صالحة' });
+          return;
+        }
+        const article = await prisma.article.findFirst({
+          where: { id: item.articleId, associationId },
+          select: { id: true },
+        });
+        if (!article) {
+          res.status(400).json({ error: `Article ${item.articleId} not found` });
+          return;
+        }
+        const already = Number(item.returnedQuantity || 0);
+        if (!Number.isFinite(already) || already < 0 || already > qty) {
+          res.status(400).json({ error: 'الكمية المُرجعة غير صالحة' });
+          return;
+        }
+      }
+    }
+
+    const loan = await prisma.$transaction(async (tx) => {
+      if (newItems) {
+        // Quantités prêtées avant / après, par occurrence (itemKey), pour
+        // n'ajuster le stock que du delta réel.
+        const anciens: any[] = (existing.items as any[]) || [];
+        const avantParCle = new Map<string, number>();
+        for (const i of anciens) {
+          if (!i?.itemKey) continue;
+          avantParCle.set(i.itemKey, (avantParCle.get(i.itemKey) || 0) + Number(i.quantity || 0));
+        }
+        const apresParCle = new Map<string, number>();
+        for (const i of newItems) {
+          apresParCle.set(i.itemKey, (apresParCle.get(i.itemKey) || 0) + Number(i.quantity || 0));
+        }
+
+        const cles = new Set([...avantParCle.keys(), ...apresParCle.keys()]);
+        for (const cle of cles) {
+          const avant = avantParCle.get(cle) || 0;
+          const apres = apresParCle.get(cle) || 0;
+          const delta = apres - avant;
+          if (delta === 0) continue;
+          const articleId = newItems.find((i: any) => i.itemKey === cle)?.articleId
+            || anciens.find((i: any) => i.itemKey === cle)?.articleId;
+          if (!articleId) continue;
+          if (delta > 0) {
+            // Prêter davantage sort du stock disponible, conditionnellement :
+            // 0 ligne touchée = stock insuffisant, on annule tout.
+            const dec = await tx.article.updateMany({
+              where: { id: articleId, associationId, availableQuantity: { gte: delta } },
+              data: { availableQuantity: { decrement: delta } },
+            });
+            if (dec.count === 0) {
+              throw new Error('INSUFFICIENT_ARTICLE_STOCK');
+            }
+          } else {
+            // Prêter moins rend la différence au stock.
+            await tx.article.updateMany({
+              where: { id: articleId, associationId },
+              data: { availableQuantity: { increment: -delta } },
+            });
+          }
+        }
+      }
+
+      return tx.loan.update({
+        where: { id },
+        data: { ...data, updatedBy: req.user!.userId },
+      });
     });
 
     await logAudit(req, { action: 'update', resource: 'loan', resourceId: loan.id, description: 'Prêt modifié' });
     res.json(loan);
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'INSUFFICIENT_ARTICLE_STOCK') {
+      res.status(400).json({ error: 'الكمية المتاحة غير كافية في المخزون' });
+      return;
+    }
     console.error('Error updating loan:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -250,16 +351,27 @@ router.delete('/:id', requirePermission('loans', 'delete'), async (req: AuthRequ
       return;
     }
 
-    // Restore available quantities before deleting
-    const items = existing.items as any[];
-    for (const item of items) {
-      await prisma.article.update({
-        where: { id: item.articleId },
-        data: { availableQuantity: { increment: item.quantity } },
-      });
-    }
+    // Restore available quantities before deleting — mais seulement ce qui est
+    // encore SORTI du stock. Les unités déjà retournées ont été recréditées au
+    // moment de leur retour ; les rendre une seconde fois à la suppression du
+    // prêt gonflait le stock au-delà du réel (prêt de 5, 5 retournés, puis
+    // suppression → +5 fantômes).
+    await prisma.$transaction(async (tx) => {
+      const items: any[] = (existing.items as any[]) || [];
+      for (const item of items) {
+        if (!item?.articleId) continue;
+        const aRendre = Number(item.quantity || 0) - Number(item.returnedQuantity || 0);
+        if (aRendre > 0) {
+          await tx.article.updateMany({
+            where: { id: item.articleId, associationId },
+            data: { availableQuantity: { increment: aRendre } },
+          });
+        }
+      }
 
-    await prisma.loan.delete({ where: { id } });
+      await tx.loan.delete({ where: { id } });
+    });
+
     await logAudit(req, { action: 'delete', resource: 'loan', resourceId: id, description: 'Prêt supprimé' });
     res.json({ message: 'Loan deleted successfully' });
   } catch (error) {
@@ -313,8 +425,24 @@ router.post('/:id/return', requirePermission('loans', 'update'), async (req: Aut
         }
 
         // Update returned quantity
-        const returnedQty = quantity || loanItem.quantity;
-        loanItem.returnedQuantity = (loanItem.returnedQuantity || 0) + returnedQty;
+        //
+        // Borné des deux côtés. Sans borne haute, un retour de 3 sur un prêt de
+        // 5 appelé trois fois créditait 6 unités sur un article qui n'en avait
+        // prêté que 5 : le stock gonflait à chaque appel. Sans borne basse, un
+        // `quantity: 0` explicite (ou négatif) passait et la ligne se croyait
+        // retournée sans rien rendre. Un retour ne peut pas dépasser le reste
+        // dû, et une unité de plus que ce qui reste est refusée.
+        const dejaRendu = Number(loanItem.returnedQuantity || 0);
+        const reste = Number(loanItem.quantity || 0) - dejaRendu;
+        const returnedQty = quantity === undefined || quantity === null
+          ? reste
+          : Number(quantity);
+        if (!Number.isFinite(returnedQty) || !Number.isInteger(returnedQty)
+            || returnedQty <= 0 || returnedQty > reste) {
+          throw new Error(`Quantité de retour invalide pour l'article ${loanItem.articleId} : ${returnedQty} (reste dû : ${reste})`);
+        }
+
+        loanItem.returnedQuantity = dejaRendu + returnedQty;
         if (condition) loanItem.conditionOnReturn = condition;
 
         // Restore available quantity (utilise l'article de la ligne ciblée)
@@ -355,7 +483,7 @@ router.post('/:id/return', requirePermission('loans', 'update'), async (req: Aut
     res.json(result);
   } catch (error: any) {
     console.error('Error processing loan return:', error);
-    if (error.message?.startsWith('Article')) {
+    if (error.message?.startsWith('Article') || error.message?.startsWith('Quantité')) {
       res.status(400).json({ error: error.message });
     } else {
       res.status(500).json({ error: 'Internal server error' });
@@ -375,6 +503,17 @@ router.post('/:id/add-item', requirePermission('loans', 'update'), async (req: A
 
     if (!articleId || !quantity) {
       res.status(400).json({ error: 'articleId and quantity are required' });
+      return;
+    }
+
+    // `parseInt` d'une entrée non numérique donne NaN : la comparaison
+    // `availableQuantity < NaN` est fausse, donc le contrôle de stock laissait
+    // passer, et le `decrement: NaN` faisait échouer Prisma en 500. Un
+    // `quantity` négatif était pire encore : il INCRÉMENTAIT le stock
+    // (`decrement` d'un négatif = `increment`). On exige un entier positif.
+    const qty = Number(quantity);
+    if (!Number.isFinite(qty) || !Number.isInteger(qty) || qty <= 0) {
+      res.status(400).json({ error: 'الكمية غير صالحة' });
       return;
     }
 
@@ -402,14 +541,14 @@ router.post('/:id/add-item', requirePermission('loans', 'update'), async (req: A
       return;
     }
 
-    if (article.availableQuantity < quantity) {
+    if (article.availableQuantity < qty) {
       res.status(400).json({ error: `Insufficient quantity for article ${article.name}` });
       return;
     }
 
     const result = await prisma.$transaction(async (tx) => {
       const currentItems: any[] = loan.items as any[];
-      const newQty = parseInt(quantity, 10);
+      const newQty = qty;
       const newDate = expectedReturnDate ? String(expectedReturnDate) : undefined;
 
       // Philosophie: chaque occurrence d'un article est une ligne distincte.
@@ -448,7 +587,7 @@ router.post('/:id/add-item', requirePermission('loans', 'update'), async (req: A
 
       await tx.article.update({
         where: { id: articleId },
-        data: { availableQuantity: { decrement: parseInt(quantity, 10) } },
+        data: { availableQuantity: { decrement: newQty } },
       });
 
       const updatedLoan = await tx.loan.update({
@@ -547,12 +686,32 @@ router.put('/:id/mark-definitive', requirePermission('loans', 'update'), async (
       return;
     }
 
-    const updatedLoan = await prisma.loan.update({
-      where: { id },
-      data: {
-        status: 'definitif',
-        actualReturnDate: new Date(),
-      },
+    // Marquer « définitif » ferme le prêt sans passage par la case « retour » :
+    // sans cette restitution, les unités encore sorties du stock étaient
+    // perdues pour toujours — invisibles dans le prêt (fermé) comme dans le
+    // stock (jamais recréditées). On rend donc au stock tout ce qui reste dû.
+    const items: any[] = (loan.items as any[]) || [];
+    const updatedLoan = await prisma.$transaction(async (tx) => {
+      for (const item of items) {
+        if (!item?.articleId) continue;
+        const aRendre = Number(item.quantity || 0) - Number(item.returnedQuantity || 0);
+        if (aRendre > 0) {
+          await tx.article.updateMany({
+            where: { id: item.articleId, associationId },
+            data: { availableQuantity: { increment: aRendre } },
+          });
+          item.returnedQuantity = Number(item.quantity || 0);
+        }
+      }
+
+      return tx.loan.update({
+        where: { id },
+        data: {
+          items,
+          status: 'definitif',
+          actualReturnDate: new Date(),
+        },
+      });
     });
 
     await logAudit(req, { action: 'update', resource: 'loan', resourceId: updatedLoan.id, description: 'Prêt marqué définitif' });

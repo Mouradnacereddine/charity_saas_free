@@ -146,6 +146,38 @@ export async function montantReserve(
   );
 }
 
+/**
+ * Compte effectivement mouvementé par une opération, déduit de `fundSource`.
+ *
+ * C'est ICI, et nulle part ailleurs, qu'est définie la règle « d'où sort (ou
+ * où entre) l'argent ». Elle est volontairement EXCLUSIVE : un crédit ou un
+ * débit bancaire ne touche jamais la caisse, et réciproquement.
+ *
+ * Les quatre sites qui déplacent réellement un solde — création d'un débit,
+ * création d'un crédit, confirmation d'une transaction, déboursement d'une
+ * allocation — doivent tous passer par ce helper. Ils avaient fini par
+ * diverger : le chemin crédit incrémentait la caisse ET la banque (le même
+ * argent compté deux fois, donc des soldes totaux gonflés et des retraits
+ * possibles sur des fonds jamais entrés), tandis que le débit n'en débitait
+ * qu'un. Un seul point de vérité empêche la divergence de revenir.
+ */
+export function compteDuMouvement(op: {
+  fundSource?: string | null;
+  caisseId?: string | null;
+  bankAccountId?: string | null;
+}): CompteCible | null {
+  if (op.fundSource === 'banque') {
+    return op.bankAccountId ? { bankAccountId: op.bankAccountId } : null;
+  }
+  if (op.fundSource === 'caisse_physique') {
+    return op.caisseId ? { caisseId: op.caisseId } : null;
+  }
+  // `fundSource` absent sur des lignes anciennes : on retombe sur le compte
+  // réellement désigné.
+  if (op.bankAccountId) return { bankAccountId: op.bankAccountId };
+  return op.caisseId ? { caisseId: op.caisseId } : null;
+}
+
 /** Solde détenu moins les montants déjà promis. */
 export async function soldeDisponible(
   tx: TxClient,

@@ -39,6 +39,11 @@ docs/
 coverage
 .nyc_output
 
+# Artefacts d'audit / scripts de diagnostic jetables
+audit-*.html
+server/_probe_*.ts
+server/.tmpq/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

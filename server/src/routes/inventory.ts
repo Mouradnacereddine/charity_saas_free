@@ -69,6 +69,17 @@ router.post('/articles', requirePermission('articles', 'create'), async (req: Au
       return;
     }
 
+    // `parseInt(quantity, 10)` acceptait tout : une entrée non numérique
+    // donnait NaN (stock NaN, donc toute comparaison fausse et tout contrôle
+    // contourné), un négatif créait un stock négatif, et un texte comme
+    // « 5abc » passait pour 5 sans le dire. On exige un entier positif, et on
+    // l'exige AVANT l'écriture.
+    const qty = Number(quantity);
+    if (!Number.isFinite(qty) || !Number.isInteger(qty) || qty <= 0) {
+      res.status(400).json({ error: 'الكمية يجب أن تكون عدداً صحيحاً أكبر من صفر' });
+      return;
+    }
+
     // Auto-generate reference if not provided
     const ref = reference || generateRef('ART');
 
@@ -90,8 +101,8 @@ router.post('/articles', requirePermission('articles', 'create'), async (req: Au
         name,
         description,
         categoryId: resolvedCategoryId,
-        quantity: parseInt(quantity, 10),
-        availableQuantity: parseInt(quantity, 10),
+        quantity: qty,
+        availableQuantity: qty,
         storageLocationId: resolvedStorageLocationId,
         isPermanent: isPermanentValue,
         notes,
@@ -159,16 +170,53 @@ router.put('/articles/:id', requirePermission('articles', 'update'), async (req:
     if (description !== undefined) data.description = description;
     if (categoryId !== undefined) data.categoryId = categoryId;
     if (category !== undefined) data.categoryId = category;
+
+    // Quantité totale : entier positif. `parseInt` laissait passer NaN (stock
+    // NaN, contrôles contournés) et les négatifs.
+    let nouvelleQuantite: number | undefined;
     if (quantity !== undefined) {
-      const newQty = parseInt(quantity, 10);
-      const oldQty = existing.quantity;
-      data.quantity = newQty;
-      // If availableQuantity is not explicitly provided, adjust it by the same delta as quantity
-      if (availableQuantity === undefined) {
-        data.availableQuantity = Math.max(0, existing.availableQuantity + (newQty - oldQty));
+      const newQty = Number(quantity);
+      if (!Number.isFinite(newQty) || !Number.isInteger(newQty) || newQty <= 0) {
+        res.status(400).json({ error: 'الكمية يجب أن تكون عدداً صحيحاً أكبر من صفر' });
+        return;
       }
+      // Le stock total ne peut pas descendre sous les unités actuellement
+      // prêtées (quantity - availableQuantity). Sinon le prêt en cours
+      // pointerait sur des articles qui n'existent plus au total : au retour,
+      // availableQuantity remonterait au-dessus de quantity et le stock
+      // afficherait plus d'unités que la réalité. Pour réduire le total,
+      // enregistrer d'abord le retour des articles concernés.
+      const pretees = existing.quantity - existing.availableQuantity;
+      if (newQty < pretees) {
+        res.status(400).json({
+          error: `الكمية الإجمالية لا يمكن أن تقل عن الكمية المعارة حالياً (${pretees})`,
+        });
+        return;
+      }
+      nouvelleQuantite = newQty;
+      data.quantity = newQty;
     }
-    if (availableQuantity !== undefined) data.availableQuantity = parseInt(availableQuantity, 10);
+
+    // Quantité disponible : idem, et elle ne peut pas dépasser la quantité
+    // totale — un disponible supérieur au stock réel laissait prêter des
+    // articles inexistants. Le plafond se lit sur la quantité finale, celle
+    // qu'on vient de recevoir si elle est fournie, sinon celle en base.
+    if (availableQuantity !== undefined) {
+      const newAvail = Number(availableQuantity);
+      const plafond = nouvelleQuantite ?? existing.quantity;
+      if (!Number.isFinite(newAvail) || !Number.isInteger(newAvail) || newAvail < 0 || newAvail > plafond) {
+        res.status(400).json({ error: 'الكمية المتاحة غير صالحة' });
+        return;
+      }
+      data.availableQuantity = newAvail;
+    } else if (nouvelleQuantite !== undefined) {
+      // La quantité totale a bougé sans disponible explicite : on ajuste le
+      // disponible du même delta, en le ramenant dans [0, quantité totale].
+      data.availableQuantity = Math.min(
+        nouvelleQuantite,
+        Math.max(0, existing.availableQuantity + (nouvelleQuantite - existing.quantity)),
+      );
+    }
     if (status !== undefined) data.status = status;
     if (statusId !== undefined) {
       data.statusId = statusId;
@@ -802,10 +850,30 @@ router.put('/stock-takes/:id/items', requirePermission('stock_takes', 'update'),
     }
 
     const currentItems: any[] = (stockTake.items as any[]) || [];
+    // `counted` absent = ligne non comptée : c'est un état normal (saisie
+    // partielle). Seules les valeurs réellement fournies et invalides sont
+    // refusées.
+    const ignored = items.filter((x: any) => {
+      const c = x?.counted;
+      if (c === undefined || c === null || c === '') return false;
+      return !(typeof c === 'number' && Number.isFinite(c) && c >= 0);
+    });
+    // Une ligne invalide était silencieusement écartée et la route renvoyait
+    // quand même 200 : la saisie de l'utilisateur disparaissait sans un mot, et
+    // le décompte restait marqué « à faire » ou figé sur une valeur périmée.
+    // On refuse désormais franchement, en nommant ce qui a été rejeté.
+    if (ignored.length > 0) {
+      res.status(400).json({
+        error: 'كميات الجرد غير صالحة: يجب أن تكون أعداداً صحيحة موجبة',
+        articleIds: ignored.map((x: any) => x?.articleId).filter(Boolean),
+      });
+      return;
+    }
+
     const updated = currentItems.map((it: any) => {
       const incoming = items.find((x: any) => x.articleId === it.articleId);
-      if (incoming && typeof incoming.counted === 'number' && incoming.counted >= 0) {
-        const counted = Math.trunc(incoming.counted);
+      if (incoming && incoming.counted !== undefined && incoming.counted !== null && incoming.counted !== '') {
+        const counted = Math.trunc(Number(incoming.counted));
         it.counted = counted;
         it.diff = counted - (it.theoretical ?? 0);
       }

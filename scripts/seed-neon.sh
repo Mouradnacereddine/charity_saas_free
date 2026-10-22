@@ -1,14 +1,19 @@
 #!/bin/bash
 # Seed the Neon remote database
-# Usage: ./scripts/seed-neon.sh
+# Usage: DATABASE_URL="postgresql://..." ./scripts/seed-neon.sh
+set -euo pipefail
+
+cd "$(dirname "$0")/../server"
+
+# La chaîne de connexion n'est JAMAIS écrite ici : elle vient de l'environnement.
+# Le dépôt est public — un identifiant commité est un identifiant compromis.
+if [ -z "${DATABASE_URL:-}" ]; then
+  echo "DATABASE_URL manquant." >&2
+  echo "Exportez-la d'abord, p. ex. : DATABASE_URL=\"postgresql://...\" $0" >&2
+  exit 1
+fi
 
 echo "Pushing schema to Neon..."
-cd /home/mourad/Documents/SaaS_Association_Charitable/server
-
-# The DATABASE_URL is set inline for Neon
-export DATABASE_URL="postgresql://neondb_owner:npg_Ebn0AYy2DaNl@ep-fragrant-cloud-ah45kgbj-pooler.c-3.us-east-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require"
-
-echo "Running Prisma db push..."
 npx prisma db push --accept-data-loss
 
 echo "Running seed..."
