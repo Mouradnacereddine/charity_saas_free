@@ -902,5 +902,13 @@
     "invalidAmount": "Veuillez saisir un montant valide.",
     "disabled": "Les dons en ligne ne sont pas encore disponibles. Réessayez plus tard.",
     "secure": "Paiement sécurisé via LemonSqueezy"
+  },
+  "errors": {
+    "INSUFFICIENT_DISPONIBLE": "Solde insuffisant : le montant restant est réservé à un versement en attente",
+    "INSUFFICIENT_CAISSE_BALANCE": "Solde de caisse insuffisant",
+    "INSUFFICIENT_BANK_BALANCE": "Solde du compte bancaire insuffisant",
+    "AMOUNT_INVALID": "Le montant saisi est invalide",
+    "AMOUNT_EXCEEDS_ALLOCATION": "Le montant dépasse le reste de la répartition",
+    "CANCEL_AMOUNT_ALREADY_USED": "Annulation impossible : le montant reçu a été utilisé ou engagé"
   }
 }

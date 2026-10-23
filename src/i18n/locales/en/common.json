@@ -901,5 +901,13 @@
     "invalidAmount": "Please enter a valid amount.",
     "disabled": "Online donations are not available yet. Please try again later.",
     "secure": "Secure payment via LemonSqueezy"
+  },
+  "errors": {
+    "INSUFFICIENT_DISPONIBLE": "Insufficient balance: the remaining amount is reserved for a pending disbursement",
+    "INSUFFICIENT_CAISSE_BALANCE": "Insufficient cash balance",
+    "INSUFFICIENT_BANK_BALANCE": "Insufficient bank account balance",
+    "AMOUNT_INVALID": "The amount entered is invalid",
+    "AMOUNT_EXCEEDS_ALLOCATION": "Amount exceeds the remaining allocation",
+    "CANCEL_AMOUNT_ALREADY_USED": "Cannot cancel: the received amount has been used or committed"
   }
 }

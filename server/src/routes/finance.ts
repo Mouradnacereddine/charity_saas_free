@@ -198,7 +198,7 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
     // faux) et CRÉAIT 50 DZD. Un non-numérique ("abc") ressortait à 0 via
     // roundMoney, donc un montant nul accepté. Les deux sont refusés ici.
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      res.status(400).json({ error: 'المبلغ يجب أن يكون رقماً أكبر من صفر' });
+      res.status(400).json({ code: 'AMOUNT_INVALID', error: 'Amount must be a number greater than zero' });
       return;
     }
 
@@ -474,16 +474,17 @@ router.post('/transactions', requirePermission('transactions', 'create'), async 
     res.status(201).json(result);
   } catch (error: any) {
     if (error?.message === 'INSUFFICIENT_CAISSE_BALANCE') {
-      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+      res.status(400).json({ code: 'INSUFFICIENT_CAISSE_BALANCE', error: 'Insufficient cash balance' });
       return;
     }
     if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
-      res.status(400).json({ error: 'Insufficient bank balance' });
+      res.status(400).json({ code: 'INSUFFICIENT_BANK_BALANCE', error: 'Insufficient bank balance' });
       return;
     }
     if (error?.message === 'INSUFFICIENT_DISPONIBLE') {
       res.status(400).json({
-        error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق',
+        code: 'INSUFFICIENT_DISPONIBLE',
+        error: 'Insufficient available balance: the remaining amount is reserved for a pending disbursement',
       });
       return;
     }
@@ -703,7 +704,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
     const confirmAmount = moneyNumber(req.body.amount !== undefined ? req.body.amount : amountNum);
 
     if (isNaN(confirmAmount) || confirmAmount <= 0 || confirmAmount > amountNum) {
-      res.status(400).json({ error: 'المبلغ المدخل غير صالح' });
+      res.status(400).json({ code: 'AMOUNT_INVALID', error: 'Invalid amount' });
       return;
     }
     // Un crédit partiel (le bénéficiaire n'a reçu qu'une partie) doit être
@@ -719,7 +720,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       if (alloc && Number(alloc.remainingAmount) > 0) {
         plafond = moneyNumber(alloc.remainingAmount);
         if (confirmAmount > plafond) {
-          res.status(400).json({ error: 'المبلغ يتجاوز المتبقي من التخصيص' });
+          res.status(400).json({ code: 'AMOUNT_EXCEEDS_ALLOCATION', error: 'Amount exceeds the remaining allocation' });
           return;
         }
       }
@@ -917,16 +918,17 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
     res.json(result);
   } catch (error: any) {
     if (error?.message === 'INSUFFICIENT_CAISSE_BALANCE') {
-      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ لإكمال هذه المعاملة' });
+      res.status(400).json({ code: 'INSUFFICIENT_CAISSE_BALANCE', error: 'Insufficient cash balance to complete this transaction' });
       return;
     }
     if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
-      res.status(400).json({ error: 'Insufficient bank balance to confirm' });
+      res.status(400).json({ code: 'INSUFFICIENT_BANK_BALANCE', error: 'Insufficient bank balance to confirm' });
       return;
     }
     if (error?.message === 'INSUFFICIENT_DISPONIBLE') {
       res.status(400).json({
-        error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق',
+        code: 'INSUFFICIENT_DISPONIBLE',
+        error: 'Insufficient available balance: the remaining amount is reserved for a pending disbursement',
       });
       return;
     }
@@ -1037,12 +1039,13 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
   } catch (error: any) {
     if (error?.message === 'INSUFFICIENT_CAISSE_BALANCE') {
       res.status(400).json({
-        error: 'تعذر الإلغاء : المبلغ المستلم استُخدم أو التُزم به. لا يمكن إلغاء العملية.',
+        code: 'CANCEL_AMOUNT_ALREADY_USED',
+        error: 'Cannot cancel: the received amount has been used or committed',
       });
       return;
     }
     if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
-      res.status(400).json({ error: 'Insufficient bank balance to cancel' });
+      res.status(400).json({ code: 'INSUFFICIENT_BANK_BALANCE', error: 'Insufficient bank balance to cancel' });
       return;
     }
     console.error('Error cancelling transaction:', error);
@@ -1105,7 +1108,7 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
 
     const disburseAmount = roundMoney(amount || Number(alloc.remainingAmount));
     if (disburseAmount <= 0 || disburseAmount > Number(alloc.remainingAmount)) {
-      res.status(400).json({ error: 'المبلغ غير صالح' });
+      res.status(400).json({ code: 'AMOUNT_INVALID', error: 'Invalid amount' });
       return;
     }
 
@@ -1187,16 +1190,17 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
     res.status(201).json(result);
   } catch (error: any) {
     if (error?.message === 'INSUFFICIENT_CAISSE_BALANCE') {
-      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+      res.status(400).json({ code: 'INSUFFICIENT_CAISSE_BALANCE', error: 'Insufficient cash balance' });
       return;
     }
     if (error?.message === 'INSUFFICIENT_BANK_BALANCE') {
-      res.status(400).json({ error: 'رصيد الحساب البنكي غير كافٍ' });
+      res.status(400).json({ code: 'INSUFFICIENT_BANK_BALANCE', error: 'Insufficient bank account balance' });
       return;
     }
     if (error?.message === 'INSUFFICIENT_DISPONIBLE') {
       res.status(400).json({
-        error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق',
+        code: 'INSUFFICIENT_DISPONIBLE',
+        error: 'Insufficient available balance: the remaining amount is reserved for a pending disbursement',
       });
       return;
     }
@@ -1231,7 +1235,7 @@ router.put('/allocations/:id/distribute', requirePermission('allocations', 'upda
       : Number(amount);
     if (!Number.isFinite(distributeAmount) || distributeAmount < 0
         || distributeAmount > Number(allocation.remainingAmount)) {
-      res.status(400).json({ error: 'المبلغ غير صالح' });
+      res.status(400).json({ code: 'AMOUNT_INVALID', error: 'Invalid amount' });
       return;
     }
     const newRemaining = roundMoney(Number(allocation.remainingAmount) - distributeAmount);

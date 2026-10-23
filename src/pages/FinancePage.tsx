@@ -11,6 +11,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { caissesApi, financeApi } from '../lib/api'
 import { noWheelChange } from '../lib/noWheelChange'
+import { apiErrorMessage } from '../lib/apiError'
 import type { Transaction, BankAccount, Caisse, Beneficiary, Donor, DonationAllocation } from '../types'
 
 // ---- Bank Account Modal ----
@@ -418,7 +419,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
       setTxAllocationId('')
       setTxSubCategoryId('')
     } catch (err: any) {
-      setTxError(err?.response?.data?.error || err?.message || t('finance.addFailed'))
+      setTxError(apiErrorMessage(err, t, 'finance.addFailed'))
     } finally {
       setTxSubmitting(false)
     }
@@ -466,7 +467,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
       setConfirmTxAmount('')
       setDetailTx(null)
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('finance.confirmFailed'))
+      alert(apiErrorMessage(err, t, 'finance.confirmFailed'))
     }
   }
 
@@ -475,7 +476,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
       await cancelTransaction.mutateAsync(id)
       setDetailTx(null)
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('finance.cancelFailed'))
+      alert(apiErrorMessage(err, t, 'finance.cancelFailed'))
     }
   }
 
@@ -492,7 +493,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
       queryClient.invalidateQueries({ queryKey: ['caisses'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('finance.disburseFailed'))
+      alert(apiErrorMessage(err, t, 'finance.disburseFailed'))
     }
   }
 

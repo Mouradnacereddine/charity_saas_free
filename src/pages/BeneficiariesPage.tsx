@@ -10,6 +10,7 @@ import { useBeneficiaries, useCreateBeneficiary, useUpdateBeneficiary, useDelete
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { caissesApi, attributsApi, inventoryApi, api, financeApi, medicalApi } from '../lib/api'
 import { noWheelChange } from '../lib/noWheelChange'
+import { apiErrorMessage } from '../lib/apiError'
 import type { DonationAllocation } from '../types'
 import { useAuth } from '../hooks/useAuth'
 
@@ -260,7 +261,7 @@ export default function BeneficiariesPage() {
       setConfirmTxAmount('')
       closeDetail()
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('finance.confirmFailed'))
+      alert(apiErrorMessage(err, t, 'finance.confirmFailed'))
     }
   }
 
@@ -270,7 +271,7 @@ export default function BeneficiariesPage() {
       await cancelTxMutation.mutateAsync(id)
       closeDetail()
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('finance.cancelFailed'))
+      alert(apiErrorMessage(err, t, 'finance.cancelFailed'))
     }
   }
 
@@ -339,7 +340,7 @@ export default function BeneficiariesPage() {
       setDisburseAmount('')
       closeDetail()
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || t('finance.disburseFailed'))
+      alert(apiErrorMessage(err, t, 'finance.disburseFailed'))
     }
   }
 

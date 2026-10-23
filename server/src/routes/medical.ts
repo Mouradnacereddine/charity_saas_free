@@ -22,10 +22,10 @@ const router = Router();
  * modification doivent s'accorder, et trois copies d'une même règle finissent
  * par diverger.
  */
-function montantMedical(value: unknown): { montant?: number; error?: string } {
+function montantMedical(value: unknown): { montant?: number; error?: string; code?: string } {
   if (value === undefined || value === null || value === '') return { montant: 0 };
   const n = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(n) || n < 0) return { error: 'المبلغ المدخل غير صالح' };
+  if (!Number.isFinite(n) || n < 0) return { code: 'AMOUNT_INVALID', error: 'Invalid amount' };
   return { montant: moneyNumber(n) };
 }
 
@@ -95,7 +95,7 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
     const reference = refInput || generateRef('MED');
     const montant = montantMedical(amount);
     if (montant.error) {
-      res.status(400).json({ error: montant.error });
+      res.status(400).json({ code: montant.code, error: montant.error });
       return;
     }
     const numericAmount = montant.montant!;
@@ -218,11 +218,11 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
     res.status(201).json(referral);
   } catch (error: any) {
     if (error.message === 'INSUFFICIENT_BALANCE') {
-      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+      res.status(400).json({ code: 'INSUFFICIENT_CAISSE_BALANCE', error: 'Insufficient cash balance' });
       return;
     }
     if (error.message === 'INSUFFICIENT_DISPONIBLE') {
-      res.status(400).json({ error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق' });
+      res.status(400).json({ code: 'INSUFFICIENT_DISPONIBLE', error: 'Insufficient available balance: the remaining amount is reserved for a pending disbursement' });
       return;
     }
     console.error('Error creating medical referral:', error);
@@ -287,7 +287,7 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
     const { amountInWords } = req.body;
     const montant = montantMedical(req.body.amount);
     if (montant.error) {
-      res.status(400).json({ error: montant.error });
+      res.status(400).json({ code: montant.code, error: montant.error });
       return;
     }
     const numericAmount = montant.montant!;
@@ -349,11 +349,11 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
     res.json(referral);
   } catch (error: any) {
     if (error.message === 'INSUFFICIENT_BALANCE') {
-      res.status(400).json({ error: 'رصيد الصندوق غير كافٍ' });
+      res.status(400).json({ code: 'INSUFFICIENT_CAISSE_BALANCE', error: 'Insufficient cash balance' });
       return;
     }
     if (error.message === 'INSUFFICIENT_DISPONIBLE') {
-      res.status(400).json({ error: 'رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق' });
+      res.status(400).json({ code: 'INSUFFICIENT_DISPONIBLE', error: 'Insufficient available balance: the remaining amount is reserved for a pending disbursement' });
       return;
     }
     console.error('Error confirming medical referral:', error);
@@ -489,7 +489,7 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
     if (amount !== undefined) {
       const montant = montantMedical(amount);
       if (montant.error) {
-        res.status(400).json({ error: montant.error });
+        res.status(400).json({ code: montant.code, error: montant.error });
         return;
       }
       data.amount = montant.montant;

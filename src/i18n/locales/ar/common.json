@@ -899,5 +899,13 @@
     "invalidAmount": "يرجى إدخال مبلغ صحيح.",
     "disabled": "التبرعات عبر الإنترنت غير متاحة حالياً. يرجى المحاولة لاحقاً.",
     "secure": "دفع آمن عبر LemonSqueezy"
+  },
+  "errors": {
+    "INSUFFICIENT_DISPONIBLE": "رصيد غير كافٍ : المبلغ المتبقي مخصص لدعم معلّق",
+    "INSUFFICIENT_CAISSE_BALANCE": "رصيد الصندوق غير كافٍ",
+    "INSUFFICIENT_BANK_BALANCE": "رصيد الحساب البنكي غير كافٍ",
+    "AMOUNT_INVALID": "المبلغ المدخل غير صالح",
+    "AMOUNT_EXCEEDS_ALLOCATION": "المبلغ يتجاوز المتبقي من التخصيص",
+    "CANCEL_AMOUNT_ALREADY_USED": "تعذر الإلغاء : المبلغ المستلم استُخدم أو التُزم به."
   }
 }

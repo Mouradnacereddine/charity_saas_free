@@ -12,6 +12,7 @@ import { api, doctorsApi } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { dirForInput } from '../utils/localized';
 import { noWheelChange } from '../lib/noWheelChange';
+import { apiErrorMessage } from '../lib/apiError';
 
 export default function MedicalPage() {
   const { t, i18n } = useTranslation();
@@ -220,7 +221,7 @@ export default function MedicalPage() {
         children: childrenData.length > 0 ? childrenData : undefined,
       });
     } catch (err: any) {
-      const msg = err.response?.data?.error || err.message || 'Erreur lors de la création';
+      const msg = apiErrorMessage(err, t, 'common.error');
       alert(msg);
       return;
     }
@@ -734,7 +735,7 @@ export default function MedicalPage() {
                         queryClient.invalidateQueries({ queryKey: ['dashboard'] });
                         setShowDetailModal(null);
                       } catch (err: any) {
-                        alert(err?.response?.data?.error || t('common.error'));
+                        alert(apiErrorMessage(err, t, 'common.error'));
                       }
                     }
                   }}>
@@ -761,7 +762,7 @@ export default function MedicalPage() {
                       setConfirmingId(null);
                       setShowDetailModal(null);
                     } catch (err: any) {
-                      alert(err?.response?.data?.error || t('common.error'));
+                      alert(apiErrorMessage(err, t, 'common.error'));
                     }
                   }}>{t('common.confirm')}</Button>
                 </div>
