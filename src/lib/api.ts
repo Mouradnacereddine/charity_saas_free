@@ -267,6 +267,9 @@ export const medicalApi = {
   referrals: (params?: Record<string, string>) => api.get('/medical/referrals', { params }),
   createReferral: (data: any) => api.post('/medical/referrals', data),
   deleteReferral: (id: string) => api.delete(`/medical/referrals/${id}`),
+  // Confirmer (le médecin a fixé le montant) / annuler une orientation en attente.
+  confirmReferral: (id: string, data: { amount: number }) => api.put(`/medical/referrals/${id}/confirm`, data),
+  cancelReferral: (id: string) => api.put(`/medical/referrals/${id}/cancel`),
   analysisTypes: () => api.get('/medical/analysis-types'),
   createAnalysisType: (data: any) => api.post('/medical/analysis-types', data),
   updateAnalysisType: (id: string, data: any) => api.put(`/medical/analysis-types/${id}`, data),

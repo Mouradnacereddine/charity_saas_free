@@ -273,6 +273,63 @@ export default function BeneficiariesPage() {
     }
   }
 
+  // Confirmer / annuler une orientation médicale en attente depuis la fiche
+  // bénéficiaire (mêmes actions que la fenêtre de détail de la page Médical).
+  const [confirmingReferral, setConfirmingReferral] = useState<any>(null)
+  const [confirmReferralAmount, setConfirmReferralAmount] = useState('')
+  /**
+   * Montant de l'orientation confirmée, ou `null` si la saisie est inexploitable.
+   *
+   * `parseMoneyInput('abc')` vaut NaN et `roundMoney` ramène NaN à 0 : sans ce
+   * contrôle explicite, une saisie en lettres serait confirmée à 0 DZD en
+   * silence (même piège que `montantMedical` côté serveur).
+   * Un champ vide reste légitime : 0 est le montant d'une orientation gratuite.
+   */
+  const parseReferralAmount = (raw: string): number | null => {
+    if (raw.trim() === '') return 0
+    const parsed = roundMoney(parseMoneyInput(raw))
+    if (!Number.isFinite(parsed) || parsed < 0) return null
+    return parsed
+  }
+  const referralAmountValue = parseReferralAmount(confirmReferralAmount)
+  const referralInvalidation = () => {
+    // La fiche lit sa propre requête « beneficiary-referrals » ; la page
+    // Médical lit « medical-referrals ». Invalider les deux évite qu'un onglet
+    // déjà ouvert affiche encore l'ancien statut.
+    queryClient.invalidateQueries({ queryKey: ['beneficiary-referrals'] })
+    queryClient.invalidateQueries({ queryKey: ['medical-referrals'] })
+    queryClient.invalidateQueries({ queryKey: ['caisses'] })
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+  }
+  const confirmReferralMutation = useMutation({
+    mutationFn: ({ id, amount }: { id: string; amount: number }) => medicalApi.confirmReferral(id, { amount }),
+    onSuccess: referralInvalidation,
+  })
+  const cancelReferralMutation = useMutation({
+    mutationFn: (id: string) => medicalApi.cancelReferral(id),
+    onSuccess: referralInvalidation,
+  })
+
+  const handleConfirmReferral = async () => {
+    if (!confirmingReferral || referralAmountValue === null) return
+    try {
+      await confirmReferralMutation.mutateAsync({ id: confirmingReferral.id, amount: referralAmountValue })
+      setConfirmingReferral(null)
+      setConfirmReferralAmount('')
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('common.error'))
+    }
+  }
+
+  const handleCancelReferral = async (id: string) => {
+    if (!window.confirm(t('medical.confirmCancelReferral'))) return
+    try {
+      await cancelReferralMutation.mutateAsync(id)
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('common.error'))
+    }
+  }
+
   const handleDisburseAllocation = async () => {
     if (!disbursingAlloc || !disburseAmount || roundMoney(parseMoneyInput(disburseAmount)) <= 0) return
     try {
@@ -1613,6 +1670,25 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('common.description')
                           <td className="py-2 px-3 text-muted-foreground">{ref.analysisType || '—'}</td>
                           <td className="py-2 px-3 text-muted-foreground">{ref.hospital || '—'}</td>
                           <td className="py-2 px-3">
+                            <div className="flex items-center gap-1">
+                              {(ref.status || 'pending') === 'pending' && (
+                                <>
+                                  <Button size="sm" variant="primary"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setConfirmingReferral(ref)
+                                      // Le médecin a pu indiquer un montant à la création :
+                                      // on le propose, sinon le champ reste vide (0 = gratuit).
+                                      setConfirmReferralAmount(ref.amount > 0 ? String(ref.amount) : '')
+                                    }}>
+                                    {t('medical.confirmReferral')}
+                                  </Button>
+                                  <Button size="sm" variant="danger"
+                                    onClick={(e) => { e.stopPropagation(); handleCancelReferral(ref.id) }}>
+                                    {t('medical.cancelReferral')}
+                                  </Button>
+                                </>
+                              )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1645,6 +1721,7 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
                             >
                               <Printer size={14} />
                             </button>
+                            </div>
                           </td>
                         </tr>
                       )})}
@@ -1742,6 +1819,47 @@ ${ref.notes ? `<div class="row"><span class="lbl">${t('common.notes')}</span><sp
                 <Button size="sm" variant="secondary" onClick={() => { setConfirmingTx(null); setConfirmTxAmount(''); setConfirmTxMax(0); }}>{t('common.cancel')}</Button>
                 <Button size="sm" variant="primary" onClick={handleConfirmTx}
                   disabled={!confirmTxAmount || roundMoney(parseMoneyInput(confirmTxAmount)) <= 0 || (confirmTxMax > 0 && roundMoney(parseMoneyInput(confirmTxAmount)) > confirmTxMax)}>
+                  {t('common.confirm')}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Confirmer une orientation médicale en attente (depuis la fiche bénéficiaire) */}
+        <Modal isOpen={!!confirmingReferral} onClose={() => { setConfirmingReferral(null); setConfirmReferralAmount(''); }} title={t('medical.confirmReferral')} size="sm">
+          {confirmingReferral && (
+            <div className="space-y-4">
+              <div className="bg-muted rounded-lg p-3 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('medical.doctor')}</span><span className="font-medium">{confirmingReferral.doctorName || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t('common.date')}</span><span className="font-medium">{formatDate(confirmingReferral.date)}</span></div>
+                {confirmingReferral.reference && <div className="flex justify-between"><span className="text-muted-foreground">{t('doctors.refCode')}</span><span className="font-mono text-xs" dir="ltr">{confirmingReferral.reference}</span></div>}
+                {confirmingReferral.analysisType && <div className="flex justify-between"><span className="text-muted-foreground">{t('medical.analysisType')}</span><span className="font-medium">{confirmingReferral.analysisType}</span></div>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('medical.confirmAmount')}</label>
+                <input
+                  type="number"
+                  value={confirmReferralAmount}
+                  onChange={(e) => setConfirmReferralAmount(e.target.value)}
+                  min={0}
+                  placeholder="0"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  dir="ltr"
+                />
+                {referralAmountValue !== null && referralAmountValue > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">{numberToWords(referralAmountValue)}</p>
+                )}
+                {/* Rappel de la valeur par défaut — seulement tant que le champ
+                    est vide, sinon il contredirait le montant saisi. */}
+                {confirmReferralAmount.trim() === '' && (
+                  <p className="text-xs text-muted-foreground mt-1">{t('medical.pendingAmountLabel')} → 0</p>
+                )}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button size="sm" variant="secondary" onClick={() => { setConfirmingReferral(null); setConfirmReferralAmount(''); }}>{t('common.cancel')}</Button>
+                <Button size="sm" variant="primary" onClick={handleConfirmReferral}
+                  disabled={confirmReferralMutation.isPending || referralAmountValue === null}>
                   {t('common.confirm')}
                 </Button>
               </div>
