@@ -11,6 +11,7 @@ import { useBeneficiaries } from '../hooks/useBeneficiaries';
 import { api, doctorsApi } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { dirForInput } from '../utils/localized';
+import { noWheelChange } from '../lib/noWheelChange';
 
 export default function MedicalPage() {
   const { t, i18n } = useTranslation();
@@ -439,6 +440,7 @@ export default function MedicalPage() {
                   type="number" min="0" placeholder="0"
                   className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={filterMinAmount} onChange={(e) => setFilterMinAmount(e.target.value)}
+                  {...noWheelChange({ type: 'number' })}
                 />
               </div>
               <div>
@@ -447,6 +449,7 @@ export default function MedicalPage() {
                   type="number" min="0" placeholder="0"
                   className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={filterMaxAmount} onChange={(e) => setFilterMaxAmount(e.target.value)}
+                  {...noWheelChange({ type: 'number' })}
                 />
               </div>
               <div>

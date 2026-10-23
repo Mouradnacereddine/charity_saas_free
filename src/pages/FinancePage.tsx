@@ -10,6 +10,7 @@ import { useDonors } from '../hooks/useDonors'
 import { useAuth } from '../hooks/useAuth'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { caissesApi, financeApi } from '../lib/api'
+import { noWheelChange } from '../lib/noWheelChange'
 import type { Transaction, BankAccount, Caisse, Beneficiary, Donor, DonationAllocation } from '../types'
 
 // ---- Bank Account Modal ----
@@ -1410,6 +1411,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 min={0}
                 className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 dir="ltr"
+                {...noWheelChange({ type: 'number' })}
               />
               {Number(confirmTxAmount) > 0 && (
                 <p className="text-xs text-muted-foreground mt-1">{numberToWords(Number(confirmTxAmount))}</p>
@@ -1458,6 +1460,7 @@ ${tx.description ? `<div class="row"><span class="lbl">${t('receipt.description'
                 min={0}
                 className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 dir="ltr"
+                {...noWheelChange({ type: 'number' })}
               />
               {Number(disburseAmount) > 0 && (
                 <p className="text-xs text-muted-foreground mt-1">{numberToWords(Number(disburseAmount))}</p>

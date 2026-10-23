@@ -39,6 +39,7 @@ import {
   useCancelStockTake,
 } from '../hooks/useInventory'
 import { useBeneficiaries } from '../hooks/useBeneficiaries'
+import { noWheelChange } from '../lib/noWheelChange'
 
 // ---- Constants ----
 
@@ -2522,6 +2523,7 @@ function StockTakeCounter({ id, onClose }: { id: string | null; onClose: () => v
                           }}
                           className="w-24 px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                           dir="ltr"
+                          {...noWheelChange({ type: 'number' })}
                         />
                       </td>
                       <td className="py-2 px-3">

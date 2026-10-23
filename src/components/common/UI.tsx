@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode, type ButtonHTMLAttributes } from 'react';
 import { useTranslation } from 'react-i18next';
+import { noWheelChange } from '../../lib/noWheelChange';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'ghost';
@@ -70,6 +71,7 @@ export function Input({ label, labelAr, error, className = '', ...props }: Input
           error ? 'border-destructive' : 'border-input'
         } ${className}`}
         {...props}
+        {...noWheelChange(props)}
       />
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
