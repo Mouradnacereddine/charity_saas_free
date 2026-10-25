@@ -15,7 +15,10 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
+    // `baseUrl` est déprécié (erreur dure à partir de TypeScript 7). Depuis
+    // TS 4.1 `paths` se résout tout seul, relativement à ce fichier : on le
+    // retire plutôt que de masquer l'avertissement avec `ignoreDeprecations`,
+    // qui ne ferait que repousser la rupture.
     "paths": { "@/*": ["./src/*"] },
 
     /* Linting */

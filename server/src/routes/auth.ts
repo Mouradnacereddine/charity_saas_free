@@ -14,6 +14,20 @@ const googleAuthClient = new OAuth2Client();
 const router = Router();
 
 /**
+ * Leurre de coût constant pour les emails inconnus.
+ *
+ * Le littéral `$2b$10$…` utilisé auparavant était figé sur 10 tours : le jour où
+ * `config.bcryptRounds` passerait à 12, un compte existant coûterait ~4 fois
+ * plus cher qu'un compte absent, et l'écart de temps réouvrirait l'énumération
+ * des emails inscrits que ce leurre est censé fermer. On dérive donc le leurre
+ * de la configuration pour que les deux chemins restent indissociables.
+ */
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(
+  crypto.randomBytes(32).toString('hex'),
+  config.bcryptRounds,
+);
+
+/**
  * Politique de mot de passe minimale. Avant, seule la présence était vérifiée :
  * `"a"` était accepté sur une route d'inscription publique, ce qui combiné à
  * l'absence de throttling rendait le brute force trivial.
@@ -76,7 +90,21 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       const hashedPassword = await bcrypt.hash(password, config.bcryptRounds);
 
       const result = await prisma.$transaction(async (tx) => {
-        const user = await tx.user.create({
+        // Consommation ATOMIQUE du jeton, avant toute création de compte.
+        // Le contrôle `usedAt` ci-dessus lit hors transaction : deux inscriptions
+        // simultanées avec le même lien (deux emails différents) le passaient
+        // toutes deux et créaient deux comptes dans l'association. Ici, seule la
+        // transaction qui réussit à passer `usedAt: null` → date obtient la
+        // ligne ; la seconde ne met à jour aucune ligne et échoue.
+        const consomme = await tx.inviteToken.updateMany({
+          where: { id: token.id, usedAt: null },
+          data: { usedAt: new Date() },
+        });
+        if (consomme.count === 0) {
+          throw new Error('INVITE_DEJA_UTILISE');
+        }
+
+        return tx.user.create({
           data: {
             associationId: token.associationId,
             email,
@@ -86,13 +114,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             status: 'approved',
           },
         });
-
-        await tx.inviteToken.update({
-          where: { id: token.id },
-          data: { usedAt: new Date() },
-        });
-
-        return user;
       });
 
       const accessToken = generateAccessToken({
@@ -186,6 +207,12 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
+    // Le jeton a été consommé par une inscription concurrente entre notre
+    // lecture et la transaction : c'est un conflit client, pas une panne.
+    if (error instanceof Error && error.message === 'INVITE_DEJA_UTILISE') {
+      res.status(409).json({ error: 'رمز الدعوة مستخدم بالفعل' });
+      return;
+    }
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -207,7 +234,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       // qu'un mot de passe erroné (bcrypt.compare non exécuté), et l'écart de
       // temps suffisait à énumérer les emails inscrits. Hash réel à coût 10
       // pour que les deux chemins brûlent le même CPU.
-      await bcrypt.compare(password, '$2b$10$DGDemOGXTmoxpqOojadteemJXvpNU3Xx23m75Wp/Acdwk17CyiyKK');
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }

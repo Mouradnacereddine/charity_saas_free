@@ -161,7 +161,9 @@ export const authApi = {
   // `token` explicite : au logout, `localStorage` est vidé juste après l'appel,
   // donc l'intercepteur (qui le relit au moment de la requête) pouvait partir
   // sans en-tête Authorization et la révocation serveur n'avait jamais lieu.
-  logout: (token?: string) =>
+  // `null` est accepté nommément : `getItem` renvoie `null` quand il n'y a pas
+  // de jeton, et c'est le cas « aucun en-tête » — pas une valeur à convertir.
+  logout: (token?: string | null) =>
     api.post(
       '/auth/logout',
       undefined,
