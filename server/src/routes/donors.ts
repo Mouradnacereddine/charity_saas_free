@@ -4,6 +4,7 @@ import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth'
 import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
 import { roundMoney, moneyNumber } from '../lib/money';
+import { relationAutorisee, masquerRelationsListe } from '../lib/tenant';
 
 const router = Router();
 
@@ -213,6 +214,11 @@ router.get('/:id', requirePermission('donors', 'read'), async (req: AuthRequest,
       orderBy: { date: 'desc' },
     });
 
+    // `transaction` et `caisse` sont des relations to-one : l'`include` ne peut
+    // pas les filtrer, et un reçu hérité (caisseId écrit avant f2d90e4) peut
+    // pointer une caisse d'une autre association.
+    const receiptsScoped = masquerRelationsListe(receipts as any[], associationId, ['transaction', 'caisse']);
+
     // Bénéficiaires pris en charge (liens déclaratifs)
     const sponsored = await prisma.donorBeneficiary.findMany({
       where: { donorId: id, associationId },
@@ -220,15 +226,15 @@ router.get('/:id', requirePermission('donors', 'read'), async (req: AuthRequest,
       orderBy: { createdAt: 'desc' },
     });
 
-    const dynamicTotal = receipts.reduce((sum: number, r: any) => Number(sum) + Number(r.amount), 0);
+    const dynamicTotal = receiptsScoped.reduce((sum: number, r: any) => Number(sum) + Number(r.amount), 0);
 
     res.json({
       ...donor,
       totalDonated: roundMoney(dynamicTotal || Number(donor.totalDonated) || 0),
-      donationReceipts: receipts,
+      donationReceipts: receiptsScoped,
       sponsoredBeneficiaries: sponsored
         .map((s: any) => s.beneficiary)
-        .filter((b: any) => b && b.phone !== '__ATTRIBUT_DUMMY__'),
+        .filter((b: any) => b && b.associationId === associationId && b.phone !== '__ATTRIBUT_DUMMY__'),
     });
   } catch (error) {
     console.error('Error getting donor:', error);
@@ -393,7 +399,9 @@ router.get('/:id/beneficiaries', requirePermission('donors', 'read'), async (req
     res.json(
       links
         .map((l: any) => l.beneficiary)
-        .filter((b: any) => b && b.phone !== '__ATTRIBUT_DUMMY__')
+        // `beneficiary` est une relation to-one non contrainte par l'include :
+        // un lien hérité peut désigner une fiche d'une autre association.
+        .filter((b: any) => b && b.associationId === associationId && b.phone !== '__ATTRIBUT_DUMMY__')
     );
   } catch (error) {
     console.error('Error listing donor beneficiaries:', error);
@@ -523,7 +531,21 @@ router.get('/:id/receipts', requirePermission('donation_receipts', 'read'), asyn
       orderBy: { date: 'desc' },
     });
 
-    res.json(receipts);
+    // Trois niveaux de relations to-one non contraintes : le reçu → sa caisse,
+    // le reçu → sa transaction, la transaction → son bénéficiaire. Chacune peut
+    // désigner une ligne d'une autre association héritée d'avant f2d90e4.
+    const scoped = (receipts as any[]).map((r) => {
+      const transaction = relationAutorisee(r.transaction, associationId);
+      return {
+        ...r,
+        caisse: relationAutorisee(r.caisse, associationId),
+        transaction: transaction
+          ? { ...transaction, beneficiary: relationAutorisee((transaction as any).beneficiary, associationId) }
+          : null,
+      };
+    });
+
+    res.json(scoped);
   } catch (error) {
     console.error('Error getting donor receipts:', error);
     res.status(500).json({ error: 'Internal server error' });

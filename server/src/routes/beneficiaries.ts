@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
+import { masquerRelationsListe, masquerRelationsHorsTenant } from '../lib/tenant';
 
 const router = Router();
 
@@ -109,7 +110,7 @@ router.get('/', requirePermission('beneficiaries', 'read'), async (req: AuthRequ
       });
     }
 
-    res.json(beneficiaries);
+    res.json(masquerRelationsListe(beneficiaries as any[], associationId, ['caisse']));
   } catch (error) {
     console.error('Error listing beneficiaries:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -241,7 +242,14 @@ router.get('/:id', requirePermission('beneficiaries', 'read'), async (req: AuthR
 
     const beneficiary = await prisma.beneficiary.findFirst({
       where: { id, associationId },
-      include: { caisse: true, loans: true, medicalReferrals: true },
+      include: {
+        caisse: true,
+        // Les deux collections sont contraintes à la source : un prêt ou une
+        // orientation créé avant f2d90e4 peut référencer cette fiche depuis une
+        // AUTRE association, et l'include nu les renvoyait intégralement.
+        loans: { where: { associationId }, orderBy: { createdAt: 'desc' } },
+        medicalReferrals: { where: { associationId }, orderBy: { date: 'desc' } },
+      },
     });
 
     if (!beneficiary) {
@@ -249,7 +257,9 @@ router.get('/:id', requirePermission('beneficiaries', 'read'), async (req: AuthR
       return;
     }
 
-    res.json(beneficiary);
+    // `caisse` est une relation to-one : Prisma n'y accepte pas de `where`, donc
+    // on masque après lecture (cf. `masquerRelationsHorsTenant`).
+    res.json(masquerRelationsHorsTenant(beneficiary as any, associationId, ['caisse']));
   } catch (error) {
     console.error('Error getting beneficiary:', error);
     res.status(500).json({ error: 'Internal server error' });

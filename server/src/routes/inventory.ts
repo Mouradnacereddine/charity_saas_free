@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { generateRef } from '../lib/ref';
 import { logAudit } from '../lib/audit';
+import { masquerRelationsListe, masquerRelationsHorsTenant } from '../lib/tenant';
 
 const router = Router();
 
@@ -37,7 +38,10 @@ router.get('/articles', requirePermission('articles', 'read'), async (req: AuthR
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(articles);
+    // Relations to-one non contraintes : les écritures sont désormais validées,
+    // mais un article hérité peut pointer une catégorie, un emplacement ou un
+    // statut d'une autre association (le libellé fuiterait tel quel).
+    res.json(masquerRelationsListe(articles as any[], associationId, ['category', 'storageLocation', 'statusModel']));
   } catch (error) {
     console.error('Error listing articles:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -158,7 +162,7 @@ router.get('/articles/:id', requirePermission('articles', 'read'), async (req: A
       return;
     }
 
-    res.json(article);
+    res.json(masquerRelationsHorsTenant(article as any, associationId, ['category', 'storageLocation', 'statusModel']));
   } catch (error) {
     console.error('Error getting article:', error);
     res.status(500).json({ error: 'Internal server error' });

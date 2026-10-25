@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requirePermission, AuthRequest } from '../middleware/auth';
 import { roundMoney } from '../lib/money';
+import { masquerRelationsListe } from '../lib/tenant';
 
 const router = Router();
 
@@ -61,6 +62,20 @@ router.get('/', requirePermission('dashboard', 'read'), async (req: AuthRequest,
         orderBy: { date: 'desc' },
         take: 10,
       });
+
+      // Les trois relations ci-dessus ne portent aucune contrainte : la
+      // transaction racine est bien filtrée, mais `caisseId`/`donorId`/
+      // `beneficiaryId` pouvaient être écrits sans contrôle d'appartenance avant
+      // f2d90e4. Sur un tableau de bord la fuite serait directe — un donateur
+      // d'une autre association apparaîtrait dans « dernières transactions ».
+      recentTransactions = masquerRelationsListe(
+        recentTransactions as any[],
+        associationId,
+        ['caisse', 'donor', 'beneficiary'],
+      );
+
+
+
     }
 
     res.json({

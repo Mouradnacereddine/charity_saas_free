@@ -6,6 +6,7 @@ import { logAudit } from '../lib/audit';
 import { roundMoney, moneyNumber } from '../lib/money';
 import { resolveTransactionDate, localDay, startOfLocalDay, nextLocalDay } from '../lib/datePolicy';
 import { verifierSortie, soldeDisponible, compteDuMouvement, type ReservationEteinte } from '../lib/solde';
+import { masquerRelationsHorsTenant, masquerRelationsListe, RELATIONS_TRANSACTION } from '../lib/tenant';
 
 const router = Router();
 
@@ -102,7 +103,12 @@ router.get('/transactions', requirePermission('transactions', 'read'), async (re
       }
     }
 
-    const enriched = transactions.map(tx => {
+    // Les relations `caisse`/`bankAccount`/`donor`/`beneficiary` ne sont pas
+    // contraintes par l'include (to-one sans `where` possible) : une transaction
+    // héritée peut pointer une ligne d'une autre association.
+    const scoped = masquerRelationsListe(transactions as any[], associationId, RELATIONS_TRANSACTION);
+
+    const enriched = scoped.map(tx => {
       const alloc = (tx as any).creditAllocations?.[0];
       const debitAlloc = debitAllocMap.get(tx.id);
       let rem: number | null = null;
@@ -518,7 +524,14 @@ router.get('/transactions/:id', requirePermission('transactions', 'read'), async
       return;
     }
 
-    res.json(transaction);
+    // Mêmes relations non contraintes que dans la liste (cf. lib/tenant).
+    res.json({
+      ...masquerRelationsHorsTenant(transaction as any, associationId, RELATIONS_TRANSACTION),
+      // Les reçus sont filtrés à la source : ils portent leur propre
+      // `associationId`, contrairement aux relations to-one ci-dessus.
+      donationReceipts: ((transaction as any).donationReceipts || [])
+        .filter((r: any) => r.associationId === associationId),
+    });
   } catch (error) {
     console.error('Error getting transaction:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -1119,7 +1132,12 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
     }
 
     const creditTx = alloc.creditTransaction;
-    if (!creditTx) {
+    // L'allocation est bien la nôtre, mais la transaction de crédit qu'elle
+    // désigne ne l'est pas forcément : `creditTransactionId` pouvait être écrit
+    // sans contrôle avant f2d90e4. Or c'est cette ligne qui décide du compte
+    // débité (`compteDuMouvement`) : sans ce garde, le déboursement sortait
+    // l'argent de la caisse ou du compte bancaire d'une autre association.
+    if (!creditTx || creditTx.associationId !== associationId) {
       res.status(400).json({ error: 'Crédit associé introuvable' });
       return;
     }
