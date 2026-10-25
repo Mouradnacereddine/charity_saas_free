@@ -91,7 +91,10 @@ router.get('/transactions', requirePermission('transactions', 'read'), async (re
     const allocIds = transactions.filter(t => t.type === 'debit').map(t => t.id).filter(Boolean);
     if (allocIds.length > 0) {
       const debitAllocs = await prisma.donationAllocation.findMany({
-        where: { debitTransactionId: { in: allocIds } },
+        // `associationId` est indispensable : sans lui, une allocation d'une
+        // autre association pointant vers l'une de ces transactions serait
+        // fusionnée dans la réponse (cf. /allocations/:id/distribute).
+        where: { debitTransactionId: { in: allocIds }, associationId },
         select: { id: true, amount: true, remainingAmount: true, debitTransactionId: true },
       });
       for (const da of debitAllocs) {
@@ -608,7 +611,7 @@ router.put('/bank-accounts/:id', requirePermission('bank_accounts', 'update'), a
     data.updatedBy = req.user!.userId;
 
     const account = await prisma.bankAccount.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -635,7 +638,7 @@ router.delete('/bank-accounts/:id', requirePermission('bank_accounts', 'delete')
       return;
     }
 
-    await prisma.bankAccount.delete({ where: { id } });
+    await prisma.bankAccount.delete({ where: { id, associationId } });
     await logAudit(req, { action: 'delete', resource: 'bank_account', resourceId: id, description: 'Compte bancaire supprimé' });
     res.json({ message: 'Bank account deleted successfully' });
   } catch (error) {
@@ -811,7 +814,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
 
       // Update status
       const updated = await prismaTx.transaction.update({
-        where: { id },
+        where: { id, associationId },
         data: { status: 'completed', updatedBy: req.user!.userId },
       });
 
@@ -822,7 +825,10 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       if (tx.type === 'debit') {
         // Le solde a déjà été débité par le compare-and-swap ci-dessus.
         const debitAlloc = await prismaTx.donationAllocation.findFirst({
-          where: { debitTransactionId: tx.id },
+          // `tx.id` est déjà vérifié comme nôtre (681), mais l'allocation qui
+          // pointe vers lui ne l'était pas : une FK héritée d'une autre
+          // association faisait modifier *son* remainingAmount (cf. /distribute).
+          where: { debitTransactionId: tx.id, associationId },
         });
 
         if (debitAlloc) {
@@ -841,7 +847,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
       // =====================================================
       if (tx.type === 'credit' && tx.donorId) {
         const existingReceipt = await prismaTx.donationReceipt.findFirst({
-          where: { transactionId: tx.id },
+          where: { transactionId: tx.id, associationId },
         });
 
         if (!existingReceipt) {
@@ -899,7 +905,7 @@ router.put('/transactions/:id/confirm', requirePermission('transactions', 'updat
 
         // Le solde a déjà été débité par le compare-and-swap ci-dessus.
         const alloc = await prismaTx.donationAllocation.findFirst({
-          where: { creditTransactionId: tx.id },
+          where: { creditTransactionId: tx.id, associationId },
         });
 
         if (alloc) {
@@ -959,7 +965,7 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
 
     const updated = await prisma.$transaction(async (prismaTx) => {
       const txUpdate = await prismaTx.transaction.update({
-        where: { id },
+        where: { id, associationId },
         data: { status: 'cancelled', updatedBy: req.user!.userId },
       });
 
@@ -1009,7 +1015,7 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
         // If this pending credit had an allocation, void it (no funds
         // were disbursed against a pending credit, so remaining == amount).
         const alloc = await prismaTx.donationAllocation.findFirst({
-          where: { creditTransactionId: id },
+          where: { creditTransactionId: id, associationId },
         });
         if (alloc) {
           await prismaTx.donationAllocation.update({
@@ -1179,7 +1185,7 @@ router.post('/allocations/:id/disburse', requirePermission('allocations', 'creat
       // Update allocation
       const newRemaining = Math.max(0, roundMoney(Number(alloc.remainingAmount) - Number(disburseAmount)));
       await prismaTx.donationAllocation.update({
-        where: { id },
+        where: { id, associationId },
         data: { remainingAmount: newRemaining, debitTransactionId: debitTx.id },
       });
 
@@ -1240,16 +1246,39 @@ router.put('/allocations/:id/distribute', requirePermission('allocations', 'upda
     }
     const newRemaining = roundMoney(Number(allocation.remainingAmount) - distributeAmount);
 
-    const updated = await prisma.donationAllocation.update({
-      where: { id },
+    // `debitTransactionId` est écrit tel quel dans une clé étrangère : sans ce
+    // contrôle, on pouvait le pointer vers une transaction d'une autre
+    // association. `GET /allocations` renvoie ensuite `debitTransaction`
+    // (receiptNumber, date) — soit une lecture inter-tenant — et
+    // `GET /transactions` du voisin se retrouvait contaminé en retour.
+    if (debitTransactionId) {
+      const debitTx = await prisma.transaction.findFirst({
+        where: { id: debitTransactionId, associationId, type: 'debit' },
+        select: { id: true },
+      });
+      if (!debitTx) {
+        res.status(400).json({ error: 'Debit transaction not found' });
+        return;
+      }
+    }
+
+    const updated = await prisma.donationAllocation.updateMany({
+      where: { id, associationId },
       data: {
         debitTransactionId: debitTransactionId || undefined,
         remainingAmount: Math.max(0, newRemaining),
       },
     });
 
-    await logAudit(req, { action: 'update', resource: 'allocation', resourceId: updated.id, description: 'Allocation distribuée' });
-    res.json(updated);
+    if (updated.count !== 1) {
+      res.status(404).json({ error: 'Allocation not found' });
+      return;
+    }
+
+    await logAudit(req, { action: 'update', resource: 'allocation', resourceId: id, description: 'Allocation distribuée' });
+    // `updateMany` ne renvoie pas la ligne : on relit l'allocation scopée.
+    const refreshed = await prisma.donationAllocation.findFirst({ where: { id, associationId } });
+    res.json(refreshed);
   } catch (error) {
     console.error('Error distributing allocation:', error);
     res.status(500).json({ error: 'Internal server error' });

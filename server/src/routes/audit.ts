@@ -82,7 +82,13 @@ router.delete('/clear', requirePermission('audit', 'delete'), async (req: AuthRe
 
     // Sécurité : sans aucun filtre (hors associationId), exiger une confirmation
     // explicite pour éviter une suppression accidentelle de tout le journal.
-    const hasFilter = Object.keys(req.query).length > 0;
+    //
+    // `hasFilter` doit porter sur les paramètres que `buildFilter` consomme
+    // réellement. Compter `Object.keys(req.query)` rendait le garde-fou
+    // inopérant : `?confirmAll=false`, ou n'importe quel paramètre inconnu
+    // (`?page=1`), suffisait à vider tout le journal sans confirmation.
+    const FILTRES_CONNUS = ['userId', 'userRole', 'search', 'action', 'resource', 'from', 'to'];
+    const hasFilter = FILTRES_CONNUS.some((cle) => req.query[cle] !== undefined && req.query[cle] !== '');
     if (!hasFilter && String(req.query.confirmAll) !== 'true') {
       res.status(400).json({
         error: 'missing_filters',

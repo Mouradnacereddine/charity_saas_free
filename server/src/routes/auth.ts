@@ -13,6 +13,22 @@ import crypto from 'crypto';
 const googleAuthClient = new OAuth2Client();
 const router = Router();
 
+/**
+ * Politique de mot de passe minimale. Avant, seule la présence était vérifiée :
+ * `"a"` était accepté sur une route d'inscription publique, ce qui combiné à
+ * l'absence de throttling rendait le brute force trivial.
+ * Retourne un message d'erreur, ou null si le mot de passe est acceptable.
+ */
+function validatePassword(password: unknown): string | null {
+  if (typeof password !== 'string' || password.length < 8) {
+    return 'كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل';
+  }
+  if (password.length > 200) {
+    return 'كلمة المرور طويلة جداً';
+  }
+  return null;
+}
+
 // ========================================================================
 // PUBLIC AUTH
 // ========================================================================
@@ -25,6 +41,12 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 
     if (!email || !password) {
       res.status(400).json({ error: 'Email and password are required' });
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      res.status(400).json({ error: passwordError });
       return;
     }
 
@@ -78,7 +100,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         associationId: token.associationId,
         role: result.role,
       });
-      const refreshToken = generateRefreshToken({ userId: result.id });
+      const refreshToken = generateRefreshToken({ userId: result.id, tokenVersion: result.tokenVersion ?? 0 });
 
       await logAudit(
         req,
@@ -144,7 +166,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       role: result.user.role,
     });
 
-    const refreshToken = generateRefreshToken({ userId: result.user.id });
+    const refreshToken = generateRefreshToken({ userId: result.user.id, tokenVersion: result.user.tokenVersion ?? 0 });
 
     await logAudit(
       req,
@@ -181,6 +203,11 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
+      // Comparaison factice : sans elle, l'absence de compte répondait plus vite
+      // qu'un mot de passe erroné (bcrypt.compare non exécuté), et l'écart de
+      // temps suffisait à énumérer les emails inscrits. Hash réel à coût 10
+      // pour que les deux chemins brûlent le même CPU.
+      await bcrypt.compare(password, '$2b$10$DGDemOGXTmoxpqOojadteemJXvpNU3Xx23m75Wp/Acdwk17CyiyKK');
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
@@ -208,7 +235,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       role: user.role,
     });
 
-    const refreshToken = generateRefreshToken({ userId: user.id });
+    const refreshToken = generateRefreshToken({ userId: user.id, tokenVersion: user.tokenVersion ?? 0 });
 
     await logAudit(
       req,
@@ -243,9 +270,11 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    let payload: { userId: string };
+    let payload: { userId: string; tokenVersion?: number };
     try {
-      payload = jwt.verify(refreshToken, config.jwtRefreshSecret) as { userId: string };
+      payload = jwt.verify(refreshToken, config.jwtRefreshSecret, {
+        algorithms: ['HS256'],
+      }) as { userId: string; tokenVersion?: number };
     } catch (err) {
       console.warn(`🔐 Refresh failed — Invalid/expired refresh token. Token prefix: ${refreshToken.substring(0, 12)}...`);
       res.status(401).json({ error: 'Invalid or expired refresh token' });
@@ -270,13 +299,24 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Révocation : la version portée par le jeton doit correspondre à celle du
+    // compte. `/logout` et le changement de mot de passe l'incrémentent, ce qui
+    // invalide immédiatement tous les refresh tokens déjà émis. Les jetons
+    // antérieurs à l'ajout du champ n'ont pas de `tokenVersion` : on les accepte
+    // tant que le compte est encore à la version 0 (aucune révocation survenue).
+    if ((payload.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+      console.warn(`🔐 Refresh refusé — refresh token obsolète pour le compte ${user.id}`);
+      res.status(401).json({ error: 'Refresh token has been revoked' });
+      return;
+    }
+
     const newAccessToken = generateAccessToken({
       userId: user.id,
       associationId: user.associationId,
       role: user.role,
     });
 
-    const newRefreshToken = generateRefreshToken({ userId: user.id });
+    const newRefreshToken = generateRefreshToken({ userId: user.id, tokenVersion: user.tokenVersion ?? 0 });
 
     res.json({
       accessToken: newAccessToken,
@@ -333,6 +373,19 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
 
 // POST /api/auth/logout
 router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  // Le logout était purement cosmétique : les jetons restaient valables côté
+  // serveur. Incrémenter `tokenVersion` révoque tous les refresh tokens émis
+  // pour ce compte (l'access token, 15 min, expire de lui-même).
+  try {
+    await prisma.user.update({
+      where: { id: req.user!.userId },
+      data: { tokenVersion: { increment: 1 } },
+    });
+  } catch (err) {
+    // Ne pas bloquer la déconnexion si la révocation échoue : le client efface
+    // ses jetons de toute façon. On journalise pour ne pas échouer en silence.
+    console.error('Logout — échec de la révocation des refresh tokens:', err);
+  }
   await logAudit(req, { action: 'logout', resource: 'user', resourceId: req.user!.userId, description: 'Déconnexion' });
   res.json({ message: 'Logged out successfully' });
 });
@@ -506,7 +559,7 @@ router.delete('/invites/:id', requireAuth, requirePermission('users', 'delete'),
       return;
     }
 
-    await prisma.inviteToken.delete({ where: { id } });
+    await prisma.inviteToken.delete({ where: { id, associationId } });
     await logAudit(req, { action: 'delete', resource: 'user', resourceId: id, description: 'Invitation supprimée' });
     res.json({ message: 'تم إلغاء الدعوة' });
   } catch (error) {
@@ -564,6 +617,12 @@ router.post('/users/create', requireAuth, requirePermission('users', 'create'), 
 
     if (!email || !password || !name) {
       res.status(400).json({ error: 'البريد الإلكتروني، كلمة المرور، والاسم مطلوبون' });
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      res.status(400).json({ error: passwordError });
       return;
     }
 
@@ -660,7 +719,17 @@ router.put('/users/:id', requireAuth, requirePermission('users', 'update'), requ
       return;
     }
 
-    if (status !== undefined) data.status = status;
+    // `status` part directement dans une colonne enum Prisma : sans liste
+    // blanche, une valeur arbitraire ne produit qu'un 500 opaque. On valide
+    // explicitement, comme pour `role` juste en dessous.
+    if (status !== undefined) {
+      const validStatuses = ['approved', 'pending', 'rejected'];
+      if (!validStatuses.includes(status)) {
+        res.status(400).json({ error: 'الحالة غير صالحة' });
+        return;
+      }
+      data.status = status;
+    }
     if (role !== undefined) {
       const validRoles = ['admin', 'treasurer', 'stock_manager', 'social_worker', 'volunteer'];
       if (!validRoles.includes(role)) {
@@ -675,8 +744,10 @@ router.put('/users/:id', requireAuth, requirePermission('users', 'update'), requ
       data.role = role;
     }
 
+    // `associationId` dans le WHERE : l'écriture reste bornée au tenant même si
+    // le pré-contrôle de la ligne 704 est un jour déplacé ou contourné.
     const updated = await prisma.user.update({
-      where: { id },
+      where: { id, associationId },
       data,
       select: {
         id: true,
@@ -716,7 +787,7 @@ router.delete('/users/:id', requireAuth, requirePermission('users', 'delete'), r
       return;
     }
 
-    await prisma.user.delete({ where: { id } });
+    await prisma.user.delete({ where: { id, associationId } });
     await logAudit(req, { action: 'delete', resource: 'user', resourceId: id, description: 'Utilisateur supprimé' });
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
@@ -756,6 +827,14 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
 
     if (!payload || !payload.email) {
       res.status(400).json({ error: 'Invalid Google token payload' });
+      return;
+    }
+
+    // Sans ce contrôle, un émetteur Google délivrant un email non vérifié
+    // permettrait de s'approprier un compte existant par simple correspondance
+    // d'adresse (prise de contrôle de compte).
+    if (payload.email_verified !== true) {
+      res.status(400).json({ error: 'البريد الإلكتروني من Google غير مُتحقَّق منه' });
       return;
     }
 
@@ -852,6 +931,19 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       }
     }
 
+    // Même contrôle de statut que `/login` (l.188) et `/refresh` (l.267) : ce
+    // chemin Google n'en avait aucun, et délivrait des jetons à un compte
+    // suspendu ou rejeté (inutilisables ensuite via requireAuth, mais
+    // incohérence de défense en profondeur).
+    if (user.status !== 'approved') {
+      res.status(403).json({
+        error: user.status === 'pending'
+          ? 'حسابك قيد المراجعة. يرجى الانتظار حتى يتم الموافقة عليه.'
+          : 'تم رفض حسابك. يرجى التواصل مع المسؤول.',
+      });
+      return;
+    }
+
     // Generate JWT tokens
     const accessToken = generateAccessToken({
       userId: user.id,
@@ -859,7 +951,7 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       role: user.role,
     });
 
-    const refreshTokenVal = generateRefreshToken({ userId: user.id });
+    const refreshTokenVal = generateRefreshToken({ userId: user.id, tokenVersion: user.tokenVersion ?? 0 });
 
     await logAudit(
       req,

@@ -39,14 +39,20 @@ const PATH_TO_RESOURCE: Record<string, string[]> = {
 export function autoInvalidate(req: AuthRequest, res: Response, next: NextFunction) {
   // Store original json to intercept the response
   const originalJson = res.json.bind(res);
-  const { method, path } = req;
+  // `req.path` est déjà amputé du préfixe de montage par le router d'Express
+  // (`app.use('/api/donors', autoInvalidate, ...)` → `req.path` vaut `/` ou
+  // `/123`). Aucune clé de PATH_TO_RESOURCE (qui sont des chemins *complets*)
+  // ne pouvait donc matcher : aucune invalidation n'était jamais émise.
+  // `originalUrl` conserve le chemin complet ; on retire le query string.
+  const { method } = req;
+  const pathApresApi = (req.originalUrl || req.url || '').split('?')[0].replace(/^\/api/, '');
 
   res.json = function (body: any) {
     // Only emit for mutation methods that succeeded
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && res.statusCode < 400) {
       // Find matching resource keys
       const matched = Object.entries(PATH_TO_RESOURCE).find(([prefix]) =>
-        path.startsWith(prefix)
+        pathApresApi.startsWith(prefix)
       );
       if (matched && req.user?.associationId) {
         for (const resource of matched[1]) {

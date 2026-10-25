@@ -270,7 +270,7 @@ router.put('/:id', requirePermission('donors', 'update'), async (req: AuthReques
     data.updatedBy = req.user!.userId;
 
     const donor = await prisma.donor.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -356,7 +356,7 @@ router.delete('/:id', requirePermission('donors', 'delete'), async (req: AuthReq
       return;
     }
 
-    await prisma.donor.delete({ where: { id } });
+    await prisma.donor.delete({ where: { id, associationId } });
 
     await logAudit(req, {
       action: 'delete',

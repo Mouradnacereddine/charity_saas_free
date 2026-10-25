@@ -54,9 +54,20 @@ router.get('/referrals', requirePermission('medical_referrals', 'read'), async (
     // (les anciennes lignes n'étaient pas scopées à l'écriture, et la liste
     // exposait alors son nom et sa spécialité : fuite inter-tenants). On
     // n'affiche donc un médecin que s'il appartient bien à cette association.
-    const medecinsAutorises = new Set(
-      (await prisma.doctor.findMany({ where: { associationId }, select: { id: true } })).map((d) => d.id),
-    );
+    // Même cause pour `beneficiary` et `caisse` : `beneficiaryId`/`caisseId`
+    // étaient écrits sans contrôle avant f2d90e4, et le `...r` ci-dessous
+    // renvoyait l'état civil complet (adresse, téléphone, CIN, santé) et le
+    // solde de la caisse d'un autre tenant.
+    const [medecins, beneficiaires, caisses] = await Promise.all([
+      prisma.doctor.findMany({ where: { associationId }, select: { id: true } }),
+      prisma.beneficiary.findMany({ where: { associationId }, select: { id: true } }),
+      prisma.caisse.findMany({ where: { associationId }, select: { id: true } }),
+    ]);
+    const medecinsAutorises = new Set(medecins.map((d) => d.id));
+    const beneficiairesAutorises = new Set(beneficiaires.map((b) => b.id));
+    const caissesAutorisees = new Set(caisses.map((c) => c.id));
+    const beneValide = (b: any) => (b && beneficiairesAutorises.has(b.id) ? b : null);
+    const caisseValide = (c: any) => (c && caissesAutorisees.has(c.id) ? c : null);
 
     const result = referrals.map((r: any) => ({
       ...r,
@@ -64,8 +75,11 @@ router.get('/referrals', requirePermission('medical_referrals', 'read'), async (
       // quand il appartient à une autre association, sinon le client retombe
       // dessus (`referral.doctor ? ...`) et le masquage ci-dessous ne sert à rien.
       doctor: r.doctor && medecinsAutorises.has(r.doctor.id) ? r.doctor : null,
-      beneficiaryName: r.beneficiary ? `${r.beneficiary.firstName} ${r.beneficiary.lastName}` : '',
-      beneficiaryReference: r.beneficiary?.reference || '',
+      beneficiary: beneValide(r.beneficiary),
+      caisse: caisseValide(r.caisse),
+      beneficiaryName: beneValide(r.beneficiary)
+        ? `${r.beneficiary.firstName} ${r.beneficiary.lastName}` : '',
+      beneficiaryReference: beneValide(r.beneficiary)?.reference || '',
       doctorName: r.doctor && medecinsAutorises.has(r.doctor.id)
         ? `${r.doctor.firstName} ${r.doctor.lastName}`
         : '',
@@ -150,7 +164,16 @@ router.post('/referrals', requirePermission('medical_referrals', 'create'), asyn
     }
 
     // Status: pending = amount TBD by doctor later (no deduction until confirmed)
-    const txStatus = status || 'pending';
+    //
+    // Aucune liste blanche auparavant : un client pouvait créer une orientation
+    // déjà `completed` (statut arbitraire, hors machine d'état /confirm//cancel)
+    // et fausser les statistiques. Seuls ces deux états sont admis à la création ;
+    // `completed` exige le chemin de débit ci-dessous pour être cohérent.
+    if (status !== undefined && status !== null && status !== 'pending' && status !== 'completed') {
+      res.status(400).json({ error: 'Invalid status: use pending or completed' });
+      return;
+    }
+    const txStatus = status === 'completed' ? 'completed' : 'pending';
 
     // Create referral and optionally deduct caisse balance + create transaction atomically
     const referral = await prisma.$transaction(async (tx) => {
@@ -246,8 +269,9 @@ router.get('/referrals/:id', requirePermission('medical_referrals', 'read'), asy
       return;
     }
 
-    // Même règle que la liste : le médecin d'une autre association n'est pas
-    // renvoyé (la relation n'est pas scopée en lecture).
+    // Même règle que la liste : le médecin, le bénéficiaire et la caisse d'une
+    // autre association ne sont pas renvoyés (relations non scopées en lecture,
+    // et le `...referral` du res.json les exposait entièrement).
     let doctor: any = null;
     if (referral.doctor) {
       const own = await prisma.doctor.findFirst({
@@ -257,7 +281,25 @@ router.get('/referrals/:id', requirePermission('medical_referrals', 'read'), asy
       if (own) doctor = referral.doctor;
     }
 
-    res.json({ ...referral, doctor });
+    let beneficiary: any = null;
+    if (referral.beneficiary) {
+      const own = await prisma.beneficiary.findFirst({
+        where: { id: referral.beneficiary.id, associationId },
+        select: { id: true },
+      });
+      if (own) beneficiary = referral.beneficiary;
+    }
+
+    let caisse: any = null;
+    if (referral.caisse) {
+      const own = await prisma.caisse.findFirst({
+        where: { id: referral.caisse.id, associationId },
+        select: { id: true },
+      });
+      if (own) caisse = referral.caisse;
+    }
+
+    res.json({ ...referral, doctor, beneficiary, caisse });
   } catch (error) {
     console.error('Error getting medical referral:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -335,7 +377,7 @@ router.put('/referrals/:id/confirm', requirePermission('medical_referrals', 'upd
       }
 
       return tx.medicalReferral.update({
-        where: { id },
+        where: { id, associationId },
         data: {
           amount: numericAmount,
           amountInWords: words,
@@ -382,7 +424,7 @@ router.put('/referrals/:id/cancel', requirePermission('medical_referrals', 'upda
     }
 
     const referral = await prisma.medicalReferral.update({
-      where: { id },
+      where: { id, associationId },
       data: { status: 'cancelled', updatedBy: req.user!.userId },
     });
 
@@ -509,7 +551,7 @@ router.put('/referrals/:id', requirePermission('medical_referrals', 'update'), a
     data.updatedBy = req.user!.userId;
 
     const referral = await prisma.medicalReferral.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -547,15 +589,21 @@ router.delete('/referrals/:id', requirePermission('medical_referrals', 'delete')
       });
 
       if (debitTx && Number(debitTx.amount) > 0) {
-        await tx.caisse.update({
-          where: { id: debitTx.caisseId },
+        // `debitTx` est scopé, donc sa caisse l'est normalement aussi — mais une
+        // transaction héritée pointant une caisse étrangère ferait créditer un
+        // autre tenant. `updateMany` + count ferme le chemin.
+        const credit = await tx.caisse.updateMany({
+          where: { id: debitTx.caisseId, associationId },
           data: { balance: { increment: debitTx.amount } },
         });
+        if (credit.count !== 1) {
+          throw new Error('REFUND_CAISSE_NOT_IN_ASSOCIATION');
+        }
         // Le débit n'a plus lieu d'être une fois l'orientation supprimée.
         await tx.transaction.delete({ where: { id: debitTx.id } });
       }
 
-      await tx.medicalReferral.delete({ where: { id } });
+      await tx.medicalReferral.delete({ where: { id, associationId } });
     });
 
     await logAudit(req, { action: 'delete', resource: 'medical_referral', resourceId: id, description: 'Orientation médicale supprimée' });
@@ -629,7 +677,7 @@ router.put('/analysis-types/:id', requirePermission('analysis_types', 'update'),
     if (name !== undefined) data.name = name;
 
     const type = await prisma.medicalAnalysisType.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -655,7 +703,7 @@ router.delete('/analysis-types/:id', requirePermission('analysis_types', 'delete
       return;
     }
 
-    await prisma.medicalAnalysisType.delete({ where: { id } });
+    await prisma.medicalAnalysisType.delete({ where: { id, associationId } });
     res.json({ message: 'Analysis type deleted successfully' });
   } catch (error) {
     console.error('Error deleting analysis type:', error);
@@ -726,7 +774,7 @@ router.put('/hospitals/:id', requirePermission('hospitals', 'update'), async (re
     if (name !== undefined) data.name = name;
 
     const hospital = await prisma.medicalHospital.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -752,7 +800,7 @@ router.delete('/hospitals/:id', requirePermission('hospitals', 'delete'), async 
       return;
     }
 
-    await prisma.medicalHospital.delete({ where: { id } });
+    await prisma.medicalHospital.delete({ where: { id, associationId } });
     res.json({ message: 'Hospital deleted successfully' });
   } catch (error) {
     console.error('Error deleting hospital:', error);

@@ -61,7 +61,10 @@ router.get('/', requirePermission('doctors', 'read'), async (req: AuthRequest, r
       where,
       include: {
         specialty: { select: { id: true, name: true } },
-        _count: { select: { referrals: true } },
+        // `_count` sans filtre ramassait les orientations d'autres associations
+        // pointant vers ce médecin (ligne héritée d'avant f2d90e4) : un agrégat
+        // inter-tenant, même limité à un compteur.
+        _count: { select: { referrals: { where: { associationId } } } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -83,7 +86,8 @@ router.get('/:id', requirePermission('doctors', 'read'), async (req: AuthRequest
       where: { id, associationId },
       include: {
         specialty: { select: { id: true, name: true } },
-        _count: { select: { referrals: true } },
+        // Même raison que dans la liste : compter uniquement nos orientations.
+        _count: { select: { referrals: { where: { associationId } } } },
       },
     });
 
@@ -215,6 +219,11 @@ router.get('/:id/stats', requirePermission('doctors', 'read'), async (req: AuthR
     const referralsByDay = Array.from(dayMap.entries()).map(([day, count]) => ({ day, count }));
 
     // Recent beneficiary referrals (last 50)
+    //
+    // `beneficiary` est une relation non scopée : une orientation héritée
+    // (beneficiaryId écrit sans contrôle avant f2d90e4) exposait le nom et la
+    // référence d'un bénéficiaire d'une autre association. On ne renvoie donc
+    // que les identifiants dont le bénéficiaire nous appartient.
     const recentReferrals = await prisma.medicalReferral.findMany({
       where: { doctorId: id, associationId },
       orderBy: { date: 'desc' },
@@ -230,23 +239,29 @@ router.get('/:id/stats', requirePermission('doctors', 'read'), async (req: AuthR
             firstName: true,
             lastName: true,
             reference: true,
+            associationId: true,
           },
         },
       },
     });
 
-    const referralBeneficiaries = recentReferrals.map((r) => ({
-      id: r.id,
-      date: r.date,
-      status: r.status,
-      beneficiary: r.beneficiary
-        ? {
-            id: r.beneficiary.id,
-            name: `${r.beneficiary.lastName} ${r.beneficiary.firstName}`,
-            reference: r.beneficiary.reference,
-          }
-        : null,
-    }));
+    const referralBeneficiaries = recentReferrals.map((r) => {
+      // `r.beneficiary.associationId` est relu ici pour la seule décision
+      // d'affichage : il n'est jamais renvoyé au client (cf. l'objet ci-dessous).
+      const appartient = !!r.beneficiary && r.beneficiary.associationId === associationId;
+      return {
+        id: r.id,
+        date: r.date,
+        status: r.status,
+        beneficiary: appartient
+          ? {
+              id: r.beneficiary!.id,
+              name: `${r.beneficiary!.lastName} ${r.beneficiary!.firstName}`,
+              reference: r.beneficiary!.reference,
+            }
+          : null,
+      };
+    });
 
     res.json({
       totalReferrals,
@@ -340,7 +355,7 @@ router.put('/:id', requirePermission('doctors', 'update'), async (req: AuthReque
     data.updatedBy = req.user!.userId;
 
     const doctor = await prisma.doctor.update({
-      where: { id },
+      where: { id, associationId },
       data,
       include: { specialty: { select: { id: true, name: true } } },
     });
@@ -384,7 +399,7 @@ router.delete('/:id', requirePermission('doctors', 'delete'), async (req: AuthRe
       return;
     }
 
-    await prisma.doctor.delete({ where: { id } });
+    await prisma.doctor.delete({ where: { id, associationId } });
 
     await logAudit(req, {
       action: 'delete',
@@ -462,7 +477,7 @@ router.put('/specialties/:id', requirePermission('specialties', 'update'), async
     if (name !== undefined) data.name = name;
 
     const specialty = await prisma.doctorSpecialty.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -498,7 +513,7 @@ router.delete('/specialties/:id', requirePermission('specialties', 'delete'), as
       return;
     }
 
-    await prisma.doctorSpecialty.delete({ where: { id } });
+    await prisma.doctorSpecialty.delete({ where: { id, associationId } });
     res.json({ message: 'Specialty deleted successfully' });
   } catch (error) {
     console.error('Error deleting specialty:', error);

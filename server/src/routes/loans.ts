@@ -20,7 +20,10 @@ router.get('/', requirePermission('loans', 'read'), async (req: AuthRequest, res
 
     const loans = await prisma.loan.findMany({
       where,
-      include: { beneficiary: true },
+      // `beneficiaryId` n'était pas validé avant le commit f2d90e4 : un prêt
+      // hérité peut pointer le bénéficiaire d'une autre association. On charge
+      // son associationId pour pouvoir neutraliser la relation ci-dessous.
+      include: { beneficiary: { select: { id: true, associationId: true, firstName: true, lastName: true, reference: true } } },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -34,20 +37,28 @@ router.get('/', requirePermission('loans', 'read'), async (req: AuthRequest, res
     });
     const articleMap = new Map(allArticles.map((a) => [a.id, a]));
 
-    const result = loans.map((l: any) => ({
-      ...l,
-      items: (l.items as any[] || []).map((item: any) => {
-        const article = articleMap.get(item.articleId);
-        return {
-          ...item,
-          articleName: article?.name || '',
-          articleReference: article?.reference || '',
-          categoryName: article?.category?.name || '',
-        };
-      }),
-      beneficiaryName: l.beneficiary ? `${l.beneficiary.firstName} ${l.beneficiary.lastName}` : '',
-      beneficiaryReference: l.beneficiary?.reference || '',
-    }));
+    const result = loans.map((l: any) => {
+      // Relation neutralisée hors périmètre plutôt que renvoyée telle quelle :
+      // sinon A lisait l'état civil complet d'un bénéficiaire de B.
+      const { beneficiary, ...reste } = l;
+      const bene = beneficiary && beneficiary.associationId === associationId ? beneficiary : null;
+      return {
+        ...reste,
+        beneficiaryId: bene ? bene.id : l.beneficiaryId,
+        beneficiary: bene ? { id: bene.id, firstName: bene.firstName, lastName: bene.lastName, reference: bene.reference } : null,
+        items: (l.items as any[] || []).map((item: any) => {
+          const article = articleMap.get(item.articleId);
+          return {
+            ...item,
+            articleName: article?.name || '',
+            articleReference: article?.reference || '',
+            categoryName: article?.category?.name || '',
+          };
+        }),
+        beneficiaryName: bene ? `${bene.firstName} ${bene.lastName}` : '',
+        beneficiaryReference: bene?.reference || '',
+      };
+    });
 
     res.json(result);
   } catch (error) {
@@ -82,21 +93,38 @@ router.post('/', requirePermission('loans', 'create'), async (req: AuthRequest, 
 
     // Verify items exist and update available quantities
     // Chaque ligne d'item reçoit un identifiant d'occurrence unique (source de vérité).
-const loanItems: any[] = (items as any[]).map((item: any) => ({
-  ...item,
-  itemKey: crypto.randomUUID(),
-}));
+    // `...item` laissait passer `returnedQuantity` fourni par le client : un prêt
+    // créé déjà « rendu » alors que le stock allait être décrémenté (unités
+    // perdues). On ne garde que les champs attendus, et la quantité doit être un
+    // entier positif (même règle que PUT /:id et add-item) : une quantité
+    // négative passait le test `available < -5` puis *incrémentait* le stock.
+    const loanItems: any[] = (items as any[]).map((item: any) => {
+      const qty = Number(item.quantity);
+      if (!Number.isFinite(qty) || !Number.isInteger(qty) || qty <= 0) {
+        throw Object.assign(new Error('INVALID_QUANTITY'), { status: 400, message: 'الكمية غير صالحة' });
+      }
+      const { returnedQuantity: _ignored, ...rest } = item;
+      return { ...rest, quantity: qty, returnedQuantity: 0, itemKey: crypto.randomUUID() };
+    });
+
+    // Les `findFirst` ci-dessous sont hors transaction : deux lignes du même
+    // article étaient chacune comparées au stock complet. On cumule par article.
+    const qtyParArticle = new Map<string, number>();
     for (const item of loanItems) {
+      qtyParArticle.set(item.articleId, (qtyParArticle.get(item.articleId) || 0) + item.quantity);
+    }
+
+    for (const [articleIdCible, qtyTotale] of qtyParArticle) {
       const article = await prisma.article.findFirst({
-        where: { id: item.articleId, associationId },
+        where: { id: articleIdCible, associationId },
       });
 
       if (!article) {
-        res.status(400).json({ error: `Article ${item.articleId} not found` });
+        res.status(400).json({ error: `Article ${articleIdCible} not found` });
         return;
       }
 
-      if (article.availableQuantity < item.quantity) {
+      if (article.availableQuantity < qtyTotale) {
         res.status(400).json({ error: `Insufficient quantity for article ${article.name}` });
         return;
       }
@@ -116,12 +144,16 @@ const loanItems: any[] = (items as any[]).map((item: any) => ({
         },
       });
 
-      // Decrease available quantities
+      // Decrease available quantities. `updateMany` + `associationId` : les
+      // `articleId` viennent du body et n'ont été vérifiés que hors transaction.
       for (const item of loanItems) {
-        await tx.article.update({
-          where: { id: item.articleId },
+        const decremented = await tx.article.updateMany({
+          where: { id: item.articleId, associationId },
           data: { availableQuantity: { decrement: item.quantity } },
         });
+        if (decremented.count !== 1) {
+          throw new Error('ARTICLE_NOT_IN_ASSOCIATION');
+        }
       }
 
       return loan;
@@ -129,7 +161,12 @@ const loanItems: any[] = (items as any[]).map((item: any) => ({
 
     await logAudit(req, { action: 'create', resource: 'loan', resourceId: result.id, description: 'Prêt créé' });
     res.status(201).json(result);
-  } catch (error) {
+  } catch (error: any) {
+    // Une quantité invalide est une faute du client, pas du serveur.
+    if (error?.status === 400) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
     console.error('Error creating loan:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -151,6 +188,12 @@ router.get('/:id', requirePermission('loans', 'read'), async (req: AuthRequest, 
       return;
     }
 
+    // Prêt hérité : `beneficiaryId` pouvait être écrit sans contrôle avant
+    // f2d90e4. On masque la fiche si elle sort de l'association — `...loan`
+    // la renvoyait entièrement (adresse, téléphone, CIN, données de santé).
+    const beneLie = (loan as any).beneficiary;
+    const beneValide = beneLie && beneLie.associationId === associationId ? beneLie : null;
+
     const articles = await prisma.article.findMany({
       where: { associationId },
       select: { id: true, name: true, reference: true, category: { select: { name: true } } },
@@ -159,6 +202,9 @@ router.get('/:id', requirePermission('loans', 'read'), async (req: AuthRequest, 
 
     const result = {
       ...loan,
+      beneficiary: beneValide
+        ? { id: beneValide.id, firstName: beneValide.firstName, lastName: beneValide.lastName, reference: beneValide.reference }
+        : null,
       items: ((loan.items as any[]) || []).map((item: any) => {
         const article = articleMap.get(item.articleId);
         return {
@@ -168,8 +214,8 @@ router.get('/:id', requirePermission('loans', 'read'), async (req: AuthRequest, 
           categoryName: article?.category?.name || item.categoryName || '',
         };
       }),
-      beneficiaryName: loan.beneficiary ? `${(loan.beneficiary as any).firstName} ${(loan.beneficiary as any).lastName}` : '',
-      beneficiaryReference: (loan.beneficiary as any)?.reference || '',
+      beneficiaryName: beneValide ? `${beneValide.firstName} ${beneValide.lastName}` : '',
+      beneficiaryReference: beneValide?.reference || '',
     };
 
     res.json(result);
@@ -319,7 +365,7 @@ router.put('/:id', requirePermission('loans', 'update'), async (req: AuthRequest
       }
 
       return tx.loan.update({
-        where: { id },
+        where: { id, associationId },
         data: { ...data, updatedBy: req.user!.userId },
       });
     });
@@ -369,7 +415,7 @@ router.delete('/:id', requirePermission('loans', 'delete'), async (req: AuthRequ
         }
       }
 
-      await tx.loan.delete({ where: { id } });
+      await tx.loan.delete({ where: { id, associationId } });
     });
 
     await logAudit(req, { action: 'delete', resource: 'loan', resourceId: id, description: 'Prêt supprimé' });
@@ -445,11 +491,18 @@ router.post('/:id/return', requirePermission('loans', 'update'), async (req: Aut
         loanItem.returnedQuantity = dejaRendu + returnedQty;
         if (condition) loanItem.conditionOnReturn = condition;
 
-        // Restore available quantity (utilise l'article de la ligne ciblée)
-        await tx.article.update({
-          where: { id: loanItem.articleId },
+        // Restore available quantity (utilise l'article de la ligne ciblée).
+        // `articleId` vient du JSON `items`, écrit sans validation avant le
+        // commit f2d90e4 : sur un prêt hérité il peut désigner un article d'une
+        // autre association. On borne l'écriture et on refuse plutôt que
+        // d'incrémenter le stock du voisin.
+        const restored = await tx.article.updateMany({
+          where: { id: loanItem.articleId, associationId },
           data: { availableQuantity: { increment: returnedQty } },
         });
+        if (restored.count === 0) {
+          throw new Error(`ARTICLE_NOT_IN_ASSOCIATION: ${loanItem.articleId}`);
+        }
       }
 
       // Determine new status
@@ -468,7 +521,7 @@ router.post('/:id/return', requirePermission('loans', 'update'), async (req: Aut
       }
 
       const updatedLoan = await tx.loan.update({
-        where: { id },
+        where: { id, associationId },
         data: {
           items: currentItems,
           status: newStatus,
@@ -579,19 +632,27 @@ router.post('/:id/add-item', requirePermission('loans', 'update'), async (req: A
           articleName,
           categoryName,
           quantity: newQty,
-          returnedQuantity: returnedQuantity ?? 0,
+          // Une nouvelle ligne ne peut pas être déjà rendue : `returnedQuantity`
+          // venait du body sans borne, ce qui créait une ligne « rendue » alors
+          // que le stock venait d'être décrémenté (unités perdues, sans sortie).
+          returnedQuantity: 0,
           conditionOnLoan,
           expectedReturnDate: newDate,
         });
       }
 
-      await tx.article.update({
-        where: { id: articleId },
+      // `associationId` dans le WHERE : `articleId` a bien été vérifié plus
+      // haut, mais rescoper l'écriture ferme la classe de bug (cf. E1).
+      const decremented = await tx.article.updateMany({
+        where: { id: articleId, associationId },
         data: { availableQuantity: { decrement: newQty } },
       });
+      if (decremented.count !== 1) {
+        throw new Error('ARTICLE_NOT_IN_ASSOCIATION');
+      }
 
       const updatedLoan = await tx.loan.update({
-        where: { id },
+        where: { id, associationId },
         data: { items: currentItems },
       });
 
@@ -642,16 +703,21 @@ router.delete('/:id/remove-item/:itemKey', requirePermission('loans', 'update'),
     const result = await prisma.$transaction(async (tx) => {
       const remainingQuantity = removedItem.quantity - (removedItem.returnedQuantity || 0);
       if (remainingQuantity > 0) {
-        await tx.article.update({
-          where: { id: removedItem.articleId },
+        // Même raison qu'au retour : `removedItem.articleId` vient du JSON
+        // `items` d'un prêt éventuellement antérieur au contrôle d'écriture.
+        const restored = await tx.article.updateMany({
+          where: { id: removedItem.articleId, associationId },
           data: { availableQuantity: { increment: remainingQuantity } },
         });
+        if (restored.count === 0) {
+          throw new Error(`ARTICLE_NOT_IN_ASSOCIATION: ${removedItem.articleId}`);
+        }
       }
 
       currentItems.splice(itemIndex, 1);
 
       const updatedLoan = await tx.loan.update({
-        where: { id },
+        where: { id, associationId },
         data: { items: currentItems },
       });
 
@@ -705,7 +771,7 @@ router.put('/:id/mark-definitive', requirePermission('loans', 'update'), async (
       }
 
       return tx.loan.update({
-        where: { id },
+        where: { id, associationId },
         data: {
           items,
           status: 'definitif',

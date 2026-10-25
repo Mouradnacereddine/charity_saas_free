@@ -65,6 +65,15 @@ export function useAuth() {
   });
 
   const logout = () => {
+    // Révoquer côté serveur AVANT d'effacer les jetons : sinon `tokenVersion`
+    // n'est jamais incrémenté et un refresh token volé reste valable 7 jours.
+    // On n'attend pas la réponse — la déconnexion locale ne doit pas dépendre
+    // du réseau — mais le Bearer doit être figé ici : l'intercepteur lit
+    // `localStorage` au moment de la requête, qui serait déjà vide.
+    const accessToken = localStorage.getItem('accessToken');
+    authApi.logout(accessToken).catch(() => {
+      // Hors ligne ou jeton déjà expiré : rien d'utile à faire côté client.
+    });
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     queryClient.removeQueries({ queryKey: ['auth', 'me'] });

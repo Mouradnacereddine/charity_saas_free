@@ -94,13 +94,20 @@ export function useSocketSync() {
     import('socket.io-client').then(({ io }) => {
       if (cleanup) return;
 
+      // Le serveur authentifie désormais le handshake et impose la room à partir
+      // du jeton : `associationId` n'est plus envoyé (il était de toute façon
+      // ignoré, et c'était la seule valeur de tenant transmise par le client).
       const socket = io(API_BASE, {
         transports: ['websocket', 'polling'],
+        auth: { token: localStorage.getItem('accessToken') || '' },
       });
 
       socket.on('connect', () => {
         console.log('🔌 Socket connected');
-        socket.emit('join-association', user.associationId);
+      });
+
+      socket.on('connect_error', (err: any) => {
+        console.warn('🔌 Socket auth failed:', err?.message || err);
       });
 
       socket.on('invalidate', (data: { resource: string }) => {

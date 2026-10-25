@@ -85,9 +85,17 @@ router.put('/:attribut', requirePermission('beneficiary_attributs', 'update'), a
 
     // If key changed, update all real beneficiaries + dummy
     if (newKey !== attribut) {
+      // `firstName` ne sert de libellé d'affichage que pour la ligne factice
+      // (celle qui porte DUMMY_PHONE). L'écrire sur *tous* les bénéficiaires
+      // réécrivait le prénom réel de chaque personne portant cet attribut :
+      // une perte de données à chaque renommage.
       await prisma.beneficiary.updateMany({
         where: { associationId, attribut },
-        data: { attribut: newKey, firstName: newKey },
+        data: { attribut: newKey },
+      });
+      await prisma.beneficiary.updateMany({
+        where: { associationId, attribut: newKey, phone: DUMMY_PHONE },
+        data: { firstName: newKey },
       });
     } else {
       // Just update the dummy's display name

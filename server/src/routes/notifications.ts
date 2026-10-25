@@ -18,7 +18,12 @@ router.get('/', requirePermission('notifications', 'read'), async (req: AuthRequ
       where.read = read === 'true';
     }
 
-    const take = limit ? parseInt(String(limit), 10) : 50;
+    // `limit` n'était pas plafonné (`?limit=1000000` = requête lourde), alors
+    // que l'audit borne déjà à 200. Même règle ici.
+    const parsedLimit = limit ? parseInt(String(limit), 10) : 50;
+    const take = Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? Math.min(parsedLimit, 200)
+      : 50;
 
     const notifications = await prisma.notification.findMany({
       where,
@@ -52,8 +57,10 @@ router.put('/:id/read', requirePermission('notifications', 'update'), async (req
       return;
     }
 
+    // `associationId` dans le WHERE : l'écriture reste bornée au tenant même si
+    // le pré-contrôle ci-dessus est un jour déplacé (défense en profondeur).
     const notification = await prisma.notification.update({
-      where: { id },
+      where: { id, associationId },
       data: { read: true },
     });
 

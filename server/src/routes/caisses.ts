@@ -120,7 +120,7 @@ router.put('/:id', requirePermission('caisses', 'update'), async (req: AuthReque
     data.updatedBy = req.user!.userId;
 
     const caisse = await prisma.caisse.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -170,7 +170,14 @@ router.delete('/:id', requirePermission('caisses', 'delete'), async (req: AuthRe
       return;
     }
 
-    await prisma.caisse.delete({ where: { id } });
+    // `deleteMany` avec `associationId` plutôt que `delete({ id })` : l'écriture
+    // reste bornée au tenant même si le pré-contrôle ci-dessus est un jour
+    // déplacé (défense en profondeur, cf. audit d'isolation).
+    const deleted = await prisma.caisse.deleteMany({ where: { id, associationId } });
+    if (deleted.count === 0) {
+      res.status(404).json({ error: 'Caisse not found' });
+      return;
+    }
 
     await logAudit(req, {
       action: 'delete',

@@ -83,15 +83,37 @@ router.post('/articles', requirePermission('articles', 'create'), async (req: Au
     // Auto-generate reference if not provided
     const ref = reference || generateRef('ART');
 
-    // Resolve isPermanent from the selected custom status
+    // `categoryId` et `storageLocationId` viennent du body et atterrissent dans
+    // des clés étrangères. Sans contrôle, un article de A pouvait pointer la
+    // catégorie ou l'emplacement de B ; `GET /articles` fait ensuite
+    // `include: { category: true, storageLocation: true }` et renvoyait donc le
+    // libellé d'une autre association.
+    const [ownedCategory, ownedLocation] = await Promise.all([
+      prisma.articleCategory.findFirst({ where: { id: resolvedCategoryId, associationId }, select: { id: true } }),
+      prisma.storageLocation.findFirst({ where: { id: resolvedStorageLocationId, associationId }, select: { id: true } }),
+    ]);
+    if (!ownedCategory) {
+      res.status(400).json({ error: 'Category not found' });
+      return;
+    }
+    if (!ownedLocation) {
+      res.status(400).json({ error: 'Storage location not found' });
+      return;
+    }
+
+    // Resolve isPermanent from the selected custom status. Le statut est aussi
+    // écrit : s'il n'appartient pas à l'association, on refuse au lieu de
+    // persister une FK étrangère en retombant silencieusement sur `false`.
     let isPermanentValue = false;
     if (statusId) {
       const statusType = await prisma.articleStatusType.findFirst({
         where: { id: statusId, associationId },
       });
-      if (statusType) {
-        isPermanentValue = statusType.isPermanent;
+      if (!statusType) {
+        res.status(400).json({ error: 'Status not found' });
+        return;
       }
+      isPermanentValue = statusType.isPermanent;
     }
 
     const article = await prisma.article.create({
@@ -168,8 +190,21 @@ router.put('/articles/:id', requirePermission('articles', 'update'), async (req:
     if (reference !== undefined) data.reference = reference;
     if (name !== undefined) data.name = name;
     if (description !== undefined) data.description = description;
-    if (categoryId !== undefined) data.categoryId = categoryId;
-    if (category !== undefined) data.categoryId = category;
+    // `categoryId` / `storageLocationId` : ces valeurs du body finissent dans des
+    // clés étrangères, et la liste renvoie `include: { category, storageLocation }`.
+    // Sans contrôle d'appartenance, l'article de A affichait le libellé d'une
+    // catégorie ou d'un emplacement de B (même faille qu'à la création).
+    const resolvedCategoryIdUpd = categoryId ?? category;
+    if (resolvedCategoryIdUpd !== undefined) {
+      const ownedCategory = await prisma.articleCategory.findFirst({
+        where: { id: resolvedCategoryIdUpd, associationId }, select: { id: true },
+      });
+      if (!ownedCategory) {
+        res.status(400).json({ error: 'Category not found' });
+        return;
+      }
+      data.categoryId = resolvedCategoryIdUpd;
+    }
 
     // Quantité totale : entier positif. `parseInt` laissait passer NaN (stock
     // NaN, contrôles contournés) et les négatifs.
@@ -219,27 +254,40 @@ router.put('/articles/:id', requirePermission('articles', 'update'), async (req:
     }
     if (status !== undefined) data.status = status;
     if (statusId !== undefined) {
-      data.statusId = statusId;
-      // Auto-resolve isPermanent from the selected custom status
+      // Auto-resolve isPermanent from the selected custom status. Un statut
+      // étranger est refusé plutôt qu'écrit en FK : sinon l'article de A
+      // affichait le libellé du statut de B via `include: { statusModel: true }`.
       if (statusId) {
         const statusType = await prisma.articleStatusType.findFirst({
           where: { id: statusId, associationId },
         });
-        if (statusType) {
-          data.isPermanent = statusType.isPermanent;
+        if (!statusType) {
+          res.status(400).json({ error: 'Status not found' });
+          return;
         }
+        data.isPermanent = statusType.isPermanent;
       } else {
         data.isPermanent = false;
       }
+      data.statusId = statusId;
     }
-    if (storageLocationId !== undefined) data.storageLocationId = storageLocationId;
-    if (storageLocation !== undefined) data.storageLocationId = storageLocation;
+    const resolvedLocationIdUpd = storageLocationId ?? storageLocation;
+    if (resolvedLocationIdUpd !== undefined) {
+      const ownedLocation = await prisma.storageLocation.findFirst({
+        where: { id: resolvedLocationIdUpd, associationId }, select: { id: true },
+      });
+      if (!ownedLocation) {
+        res.status(400).json({ error: 'Storage location not found' });
+        return;
+      }
+      data.storageLocationId = resolvedLocationIdUpd;
+    }
     if (isPermanent !== undefined) data.isPermanent = isPermanent;
     if (notes !== undefined) data.notes = notes;
     data.updatedBy = req.user!.userId;
 
     const article = await prisma.article.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -284,7 +332,7 @@ router.delete('/articles/:id', requirePermission('articles', 'delete'), async (r
       return;
     }
 
-    await prisma.article.delete({ where: { id } });
+    await prisma.article.delete({ where: { id, associationId } });
     await logAudit(req, { action: 'delete', resource: 'article', resourceId: id, description: 'Article supprimé' });
     res.json({ message: 'Article deleted successfully' });
   } catch (error) {
@@ -356,7 +404,7 @@ router.put('/article-categories/:id', requirePermission('article_categories', 'u
     if (name !== undefined) data.name = name;
 
     const category = await prisma.articleCategory.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -387,7 +435,7 @@ router.delete('/article-categories/:id', requirePermission('article_categories',
       where: { categoryId: id, associationId },
       data: { categoryId: null },
     });
-    await prisma.articleCategory.delete({ where: { id } });
+    await prisma.articleCategory.delete({ where: { id, associationId } });
     res.json({ message: 'Article category deleted successfully' });
   } catch (error) {
     console.error('Error deleting article category:', error);
@@ -458,7 +506,7 @@ router.put('/storage-locations/:id', requirePermission('storage_locations', 'upd
     if (name !== undefined) data.name = name;
 
     const location = await prisma.storageLocation.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -489,7 +537,7 @@ router.delete('/storage-locations/:id', requirePermission('storage_locations', '
       where: { storageLocationId: id, associationId },
       data: { storageLocationId: null },
     });
-    await prisma.storageLocation.delete({ where: { id } });
+    await prisma.storageLocation.delete({ where: { id, associationId } });
     res.json({ message: 'Storage location deleted successfully' });
   } catch (error) {
     console.error('Error deleting storage location:', error);
@@ -564,7 +612,7 @@ router.put('/school-grades/:id', requirePermission('school_grades', 'update'), a
     if (name !== undefined) data.name = name;
 
     const grade = await prisma.schoolGrade.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -590,7 +638,7 @@ router.delete('/school-grades/:id', requirePermission('school_grades', 'delete')
       return;
     }
 
-    await prisma.schoolGrade.delete({ where: { id } });
+    await prisma.schoolGrade.delete({ where: { id, associationId } });
     res.json({ message: 'School grade deleted successfully' });
   } catch (error) {
     console.error('Error deleting school grade:', error);
@@ -663,7 +711,7 @@ router.put('/article-statuses/:id', requirePermission('article_statuses', 'updat
     if (isPermanent !== undefined) data.isPermanent = isPermanent;
 
     const status = await prisma.articleStatusType.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -702,7 +750,7 @@ router.delete('/article-statuses/:id', requirePermission('article_statuses', 'de
       where: { statusId: id, associationId },
       data: { statusId: null, status: 'disponible' },
     });
-    await prisma.articleStatusType.delete({ where: { id } });
+    await prisma.articleStatusType.delete({ where: { id, associationId } });
     res.json({ message: 'Article status deleted successfully' });
   } catch (error) {
     console.error('Error deleting article status:', error);
@@ -881,7 +929,7 @@ router.put('/stock-takes/:id/items', requirePermission('stock_takes', 'update'),
     });
 
     const saved = await prisma.stockTake.update({
-      where: { id },
+      where: { id, associationId },
       data: { items: updated },
     });
 
@@ -936,7 +984,7 @@ router.post('/stock-takes/:id/complete', requirePermission('stock_takes', 'updat
         }
 
         return tx.stockTake.update({
-          where: { id },
+          where: { id, associationId },
           data: { status: 'completed', completedAt: new Date() },
         });
       });
@@ -972,7 +1020,7 @@ router.delete('/stock-takes/:id', requirePermission('stock_takes', 'delete'), as
     }
 
     await prisma.stockTake.update({
-      where: { id },
+      where: { id, associationId },
       data: { status: 'cancelled', completedAt: new Date() },
     });
 

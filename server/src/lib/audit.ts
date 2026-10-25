@@ -11,21 +11,39 @@ import prisma from './prisma';
 // L'échec d'un log ne doit jamais bloquer l'action principale.
 
 /** Cache mémoire des infos utilisateurs pour limiter les requêtes DB. */
-const userInfoCache = new Map<string, { name: string | null; email: string | null }>();
+const userInfoCache = new Map<string, { name: string | null; email: string | null; expire: number }>();
 
-async function resolveUserInfo(userId: string | undefined): Promise<{ name: string | null; email: string | null }> {
+/** Durée de vie du cache : un nom modifié ne doit pas rester figé indéfiniment. */
+const USER_INFO_TTL_MS = 60_000;
+
+// `associationId` n'est pas décoratif : `findUnique({ id })` seul permettrait de
+// lire le nom et l'email d'un utilisateur d'une AUTRE association si un futur
+// appelant passait un id client dans `override.userId`. On borne donc la
+// lecture au tenant, et la clé de cache inclut l'association pour ne jamais
+// servir une entrée résolue hors périmètre.
+async function resolveUserInfo(
+  userId: string | undefined,
+  associationId: string | undefined,
+): Promise<{ name: string | null; email: string | null }> {
   if (!userId) return { name: null, email: null };
 
-  const cached = userInfoCache.get(userId);
-  if (cached) return cached;
+  const cacheKey = associationId ? `${associationId}:${userId}` : userId;
+  const cached = userInfoCache.get(cacheKey);
+  if (cached && cached.expire > Date.now()) return cached;
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    const user = await prisma.user.findFirst({
+      // Sans association de référence (routes publiques), on ne peut pas borner :
+      // on garde alors la lecture par id, `userId` venant du code serveur.
+      where: { id: userId, ...(associationId ? { associationId } : {}) },
       select: { name: true, email: true },
     });
-    const info = { name: user?.name ?? null, email: user?.email ?? null };
-    userInfoCache.set(userId, info);
+    const info = {
+      name: user?.name ?? null,
+      email: user?.email ?? null,
+      expire: Date.now() + USER_INFO_TTL_MS,
+    };
+    userInfoCache.set(cacheKey, info);
     return info;
   } catch {
     // Ignore — on retourne null si la résolution échoue
@@ -56,7 +74,7 @@ export async function logAudit(
   try {
     const associationId = override?.associationId ?? req.user?.associationId;
     const userId = override?.userId ?? req.user?.userId;
-    const resolved = await resolveUserInfo(userId);
+    const resolved = await resolveUserInfo(userId, associationId);
     const userName = override?.userName ?? resolved.name;
     const userEmail = override?.userEmail ?? resolved.email;
 

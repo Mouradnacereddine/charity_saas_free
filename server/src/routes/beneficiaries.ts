@@ -184,6 +184,19 @@ router.post('/', requirePermission('beneficiaries', 'create'), async (req: AuthR
       return;
     }
 
+    // `caisseId` vient du body et finit dans une clé étrangère. Le détail fait
+    // `include: { caisse: true }` : sans ce contrôle, une fiche de A pointant
+    // la caisse de B renvoyait référence, nom, solde et sous-catégories de B.
+    if (caisseId) {
+      const caisse = await prisma.caisse.findFirst({
+        where: { id: caisseId, associationId }, select: { id: true },
+      });
+      if (!caisse) {
+        res.status(400).json({ error: 'Caisse not found' });
+        return;
+      }
+    }
+
     const beneficiary = await prisma.beneficiary.create({
       data: {
         associationId,
@@ -279,12 +292,25 @@ router.put('/:id', requirePermission('beneficiaries', 'update'), async (req: Aut
     if (healthStatus !== undefined) data.healthStatus = healthStatus;
     if (situation !== undefined) data.situation = situation;
     if (children !== undefined) data.children = children;
-    if (caisseId !== undefined) data.caisseId = caisseId;
+    // Même contrôle qu'à la création : `caisseId` est une FK écrite depuis le
+    // body, et le détail renvoie `include: { caisse: true }`.
+    if (caisseId !== undefined) {
+      if (caisseId) {
+        const caisse = await prisma.caisse.findFirst({
+          where: { id: caisseId, associationId }, select: { id: true },
+        });
+        if (!caisse) {
+          res.status(400).json({ error: 'Caisse not found' });
+          return;
+        }
+      }
+      data.caisseId = caisseId;
+    }
     if (subCategoryId !== undefined) data.subCategoryId = subCategoryId;
     data.updatedBy = req.user!.userId;
 
     const beneficiary = await prisma.beneficiary.update({
-      where: { id },
+      where: { id, associationId },
       data,
     });
 
@@ -317,7 +343,7 @@ router.delete('/:id', requirePermission('beneficiaries', 'delete'), async (req: 
       return;
     }
 
-    await prisma.beneficiary.delete({ where: { id } });
+    await prisma.beneficiary.delete({ where: { id, associationId } });
 
     await logAudit(req, {
       action: 'delete',

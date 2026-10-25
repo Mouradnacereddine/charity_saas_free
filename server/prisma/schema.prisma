@@ -118,6 +118,11 @@ model User {
   role          Role       @default(volunteer)
   isFounder     Boolean    @default(false)
   status        UserStatus @default(approved)
+  // Compteur de génération des refresh tokens. Incrémenté à la déconnexion :
+  // un jeton émis avant porte une version périmée et est refusé. Sans lui, un
+  // refresh token volé restait valable 7 jours et `/logout` n'invalidait rien.
+  // À incrémenter aussi depuis toute future route de changement de mot de passe.
+  tokenVersion  Int        @default(0)
   createdAt     DateTime   @default(now())
 
   association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)

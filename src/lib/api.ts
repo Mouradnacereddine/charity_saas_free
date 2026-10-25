@@ -158,7 +158,15 @@ export const authApi = {
   refresh: (refreshToken: string) =>
     api.post('/auth/refresh', { refreshToken }),
   me: () => api.get('/auth/me'),
-  logout: () => api.post('/auth/logout'),
+  // `token` explicite : au logout, `localStorage` est vidé juste après l'appel,
+  // donc l'intercepteur (qui le relit au moment de la requête) pouvait partir
+  // sans en-tête Authorization et la révocation serveur n'avait jamais lieu.
+  logout: (token?: string) =>
+    api.post(
+      '/auth/logout',
+      undefined,
+      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+    ),
   users: () => api.get('/auth/users'),
   updateUser: (id: string, data: { status?: string; role?: string }) => api.put(`/auth/users/${id}`, data),
   deleteUser: (id: string) => api.delete(`/auth/users/${id}`),
