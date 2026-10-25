@@ -1017,10 +1017,14 @@ router.put('/transactions/:id/cancel', requirePermission('transactions', 'update
           }
         }
 
-        // Decrease donor totalDonated if applicable
+        // Decrease donor totalDonated if applicable. `tx` est bien la nôtre,
+        // mais son `donorId` pouvait pointer un donateur d'une autre
+        // association (FK écrite sans contrôle avant f2d90e4) : décrémenter
+        // sans garde modifiait le total d'un tenant voisin. `updateMany` porte
+        // le contrôle dans le `where`, sans requête supplémentaire.
         if (tx.donorId) {
-          await prismaTx.donor.update({
-            where: { id: tx.donorId },
+          await prismaTx.donor.updateMany({
+            where: { id: tx.donorId, associationId },
             data: { totalDonated: { decrement: amountNum } },
           });
         }
